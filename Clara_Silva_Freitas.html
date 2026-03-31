@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+  <meta charset='UTF-8'/>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+  <title>Honorários — Clara Silva Freitas | Endovascular SP</title>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'></script>
+  <style>
+:root{
+  --azul-escuro:#0B1F3A;--azul-medio:#1A5296;--azul-claro:#D6E8F7;
+  --azul-brilhante:#3A8DD4;--verde:#2D7A3C;--verde-claro:#E8F5EB;
+  --laranja:#D4621A;--cinza-bg:#F2F5F9;--cinza-borda:#DDE4ED;
+  --texto-primario:#0D1E30;--texto-secundario:#4A6278;
+  --vermelho:#C0392B;--sombra:0 2px 14px rgba(11,31,58,0.12);--radius:12px;
+  --header-bg:#0B1F3A;--header-linha:#1A5296;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);color:var(--texto-primario);min-height:100vh;}
+.header{background:var(--header-bg);border-bottom:3px solid var(--header-linha);color:white;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:72px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(11,31,58,0.35);}
+.header-logo{display:flex;align-items:center;gap:16px;}
+.header-logo .logo-svg{width:44px;height:44px;flex-shrink:0;}
+.header-logo h1{font-size:19px;font-weight:700;letter-spacing:0.3px;}
+.header-logo span{font-size:11.5px;opacity:0.70;display:block;margin-top:2px;letter-spacing:0.2px;}
+.header-badge{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;}
+.layout{display:flex;min-height:calc(100vh - 68px);}
+.sidebar{width:260px;background:white;border-right:1px solid var(--cinza-borda);padding:20px 0;flex-shrink:0;box-shadow:2px 0 8px rgba(11,31,58,0.04);}
+.sidebar-section{padding:0 16px;margin-bottom:8px;}
+.sidebar-label{font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--texto-secundario);text-transform:uppercase;padding:8px 4px 4px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--texto-primario);transition:all 0.15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;}
+.sidebar-item:hover{background:var(--cinza-bg);}
+.sidebar-item.active{background:#E8EFF8;color:var(--azul-escuro);font-weight:600;border-left:3px solid var(--azul-medio);}
+.sidebar-item .dot{width:8px;height:8px;border-radius:50%;background:var(--azul-brilhante);flex-shrink:0;}
+.sidebar-divider{height:1px;background:var(--cinza-borda);margin:12px 16px;}
+.main{flex:1;padding:28px 32px;overflow-x:hidden;}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;}
+.metric-card{background:white;border-radius:var(--radius);padding:20px 22px;box-shadow:var(--sombra);border:1px solid var(--cinza-borda);position:relative;overflow:hidden;}
+.metric-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:12px 0 0 12px;}
+.metric-card.azul::before{background:var(--azul-medio);}
+.metric-card.verde::before{background:var(--verde);}
+.metric-card.laranja::before{background:var(--laranja);}
+.metric-card.cinza::before{background:var(--texto-secundario);}
+.metric-label{font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--texto-secundario);margin-bottom:6px;}
+.metric-valor{font-size:26px;font-weight:700;color:var(--texto-primario);line-height:1;margin-bottom:4px;}
+.metric-sub{font-size:12px;color:var(--texto-secundario);}
+.section-title{font-size:16px;font-weight:700;color:var(--texto-primario);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.section-title .badge{background:var(--azul-claro);color:var(--azul-escuro);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:24px;}
+.three-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:24px;}
+.full-col{margin-bottom:24px;}
+.card{background:white;border-radius:var(--radius);padding:22px;box-shadow:var(--sombra);border:1px solid var(--cinza-borda);}
+.repasse-table{width:100%;border-collapse:collapse;}
+.repasse-table th{background:var(--azul-escuro);color:white;font-size:11.5px;font-weight:600;padding:10px 12px;text-align:left;}
+.repasse-table th:first-child{border-radius:8px 0 0 0;}
+.repasse-table th:last-child{border-radius:0 8px 0 0;}
+.repasse-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--cinza-borda);}
+.repasse-table tr:nth-child(even) td{background:var(--cinza-bg);}
+.repasse-table tr:hover td{background:var(--azul-claro);}
+.repasse-table .valor{text-align:right;font-weight:600;color:var(--verde);}
+.repasse-table .prof{font-weight:600;color:var(--azul-escuro);}
+.repasse-table .pct{text-align:center;font-size:12px;font-weight:700;color:var(--texto-secundario);}
+.total-row td{background:var(--azul-claro)!important;font-weight:700;border-top:2px solid var(--azul-medio);}
+.atend-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.atend-table th{background:var(--azul-medio);color:white;padding:8px 10px;text-align:left;font-size:11px;font-weight:600;}
+.atend-table td{padding:8px 10px;border-bottom:1px solid var(--cinza-borda);}
+.atend-table tr:nth-child(even) td{background:var(--cinza-bg);}
+.atend-table .r{text-align:right;}
+.atend-table .cat-badge{background:var(--azul-claro);color:var(--azul-escuro);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.prof-header{background:linear-gradient(135deg,var(--azul-escuro) 0%,var(--azul-medio) 100%);color:white;border-radius:var(--radius);padding:22px 26px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.prof-header h2{font-size:20px;font-weight:700;}
+.prof-header-actions{display:flex;gap:8px;align-items:center;}
+.prof-avatar{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;}
+.btn-export{background:rgba(255,255,255,0.2);color:white;border:1.5px solid rgba(255,255,255,0.4);padding:7px 16px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:inherit;transition:all 0.15s;}
+.btn-export:hover{background:rgba(255,255,255,0.35);}
+.btn-link{background:#EBF3FB;border:1.5px solid #B8D4EE;color:var(--azul-medio);font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:inherit;transition:all 0.15s;white-space:nowrap;}
+.btn-link:hover{background:var(--azul-medio);border-color:var(--azul-medio);color:white;}
+.modo-medico-banner{background:#EBF3FB;border:1px solid #B8D4EE;border-radius:10px;padding:12px 18px;margin-bottom:18px;font-size:13px;color:var(--azul-escuro);display:flex;align-items:center;gap:10px;border-left:4px solid var(--azul-medio);}
+.view{display:none;}
+.view.active{display:block;}
+.chart-wrap{position:relative;height:260px;}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.periodo-bar{display:flex;align-items:center;gap:12px;margin-bottom:24px;font-size:14px;font-weight:600;color:var(--texto-secundario);}
+.toast{position:fixed;bottom:28px;right:28px;background:var(--azul-escuro);color:white;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:999;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+/* ── Origem / Tabela de Preço ── */
+.origem-pills{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.origem-pill{padding:8px 16px;border-radius:24px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.origem-pill.particular{background:#E8F5EB;color:#2D7A3C;border:1.5px solid #b2d8b7;}
+.origem-pill.plano{background:#D6E4F0;color:#1E3A5F;border:1.5px solid #a8c8e8;}
+.origem-bar{height:12px;border-radius:6px;background:var(--cinza-borda);overflow:hidden;margin-bottom:14px;}
+.origem-bar-inner{height:100%;border-radius:6px;background:linear-gradient(90deg,#2D7A3C,#4A9EE0);transition:width 0.6s ease;}
+.tabela-row{display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--cinza-borda);font-size:13px;}
+.tabela-row:last-child{border-bottom:none;}
+.tabela-nome{font-weight:600;color:var(--texto-primario);}
+.tabela-tipo{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;margin-left:8px;}
+.tabela-tipo.part{background:#E8F5EB;color:#2D7A3C;}
+.tabela-tipo.plano{background:#D6E4F0;color:#1E3A5F;}
+.tabela-val{font-weight:700;color:var(--verde);text-align:right;}
+.tabela-pct{font-size:12px;color:var(--texto-secundario);margin-left:8px;min-width:40px;text-align:right;}
+@media(max-width:1100px){.three-col{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}}
+@media(max-width:900px){.sidebar{display:none;}.main{padding:16px;}.two-col,.three-col{grid-template-columns:1fr;}}
+@media print{.sidebar,.prof-header-actions,.btn-export,.modo-medico-banner,.toast{display:none!important;}.card{box-shadow:none;border:1px solid #ccc;}}
+/* ── Seletor de Período ── */
+.periodo-tabs{display:none;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.periodo-tab{padding:6px 16px;border-radius:20px;border:1.5px solid var(--cinza-borda);background:white;color:var(--texto-secundario);font-size:12.5px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.periodo-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.periodo-tab.active{background:var(--azul-medio);border-color:var(--azul-medio);color:white;}
+/* ── Tela de Login ── */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A 0%,#0d2d55 60%,#0B1F3A 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;}
+.login-overlay.saindo{opacity:0;pointer-events:none;}
+.login-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:22px;padding:52px 44px 44px;text-align:center;max-width:400px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+.login-logo-wrap{margin-bottom:20px;}
+.login-titulo{color:white;font-size:26px;font-weight:700;letter-spacing:0.3px;margin-bottom:4px;}
+.login-sub{color:rgba(255,255,255,0.55);font-size:13px;margin-bottom:6px;}
+.login-periodo{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);font-size:12.5px;font-weight:600;padding:5px 16px;border-radius:20px;display:inline-block;margin-bottom:32px;}
+.login-input-wrap{position:relative;margin-bottom:14px;}
+.login-input{width:100%;padding:14px 18px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:white;font-size:16px;font-family:inherit;outline:none;letter-spacing:3px;text-align:center;transition:border 0.2s;}
+.login-input::placeholder{letter-spacing:0px;font-size:13.5px;color:rgba(255,255,255,0.35);}
+.login-input:focus{border-color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.12);}
+.login-btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#1A5296,#3A8DD4);color:white;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.login-btn:hover:not(:disabled){background:linear-gradient(135deg,#1e5faf,#4A9EE0);transform:translateY(-1px);}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.login-erro{color:#F87171;font-size:12.5px;margin-top:12px;min-height:20px;font-weight:500;}
+.login-rodape{color:rgba(255,255,255,0.25);font-size:11px;margin-top:28px;}
+.sidebar{display:none!important;}</style>
+</head>
+<body>
+<div class='login-overlay' id='login-overlay'>
+  <div class='login-card'>
+    <div class='login-logo-wrap'><svg width='56' height='56' viewBox='0 0 44 44' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M22 6 C13.2 6 6 13.2 6 22' stroke='white' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M22 11 C15.4 11 10 16.4 10 22' stroke='white' stroke-width='2.5' stroke-linecap='round' fill='none' opacity='0.85'/><path d='M22 16 C17.6 16 14 19.6 14 24' stroke='white' stroke-width='2' stroke-linecap='round' fill='none' opacity='0.7'/><circle cx='22' cy='29' r='2.5' fill='white' opacity='0.9'/></svg></div>
+    <div class='login-titulo'>Endovascular</div>
+    <div class='login-sub'>Relat&#243;rio de Honor&#225;rios M&#233;dicos</div>
+    <div class='login-periodo'>Março/2026</div>
+    <div class='login-input-wrap'>
+      <input class='login-input' id='login-senha' type='password' placeholder='Seu c&#243;digo de acesso' onkeydown='_loginEnter(event)' autocomplete='current-password'/>
+    </div>
+    <button class='login-btn' id='login-btn' onclick='tentarLogin()'>Acessar &#8594;</button>
+    <div class='login-erro' id='login-erro'></div>
+    <div class='login-rodape'>Endovascular SP &mdash; Acesso restrito</div>
+  </div>
+</div>
+<header class='header'>
+  <div class='header-logo'>
+    <svg class='logo-svg' viewBox='0 0 44 44' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M22 6 C13.2 6 6 13.2 6 22' stroke='white' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M22 11 C15.4 11 10 16.4 10 22' stroke='white' stroke-width='2.5' stroke-linecap='round' fill='none' opacity='0.85'/><path d='M22 16 C17.6 16 14 19.6 14 24' stroke='white' stroke-width='2' stroke-linecap='round' fill='none' opacity='0.7'/><circle cx='22' cy='29' r='2.5' fill='white' opacity='0.9'/></svg>
+    <div><h1>Endovascular</h1><span>Gest&#227;o de Honor&#225;rios M&#233;dicos</span></div>
+  </div>
+  <div style='display:flex;align-items:center;gap:12px;'><span id='header-periodo' style='font-size:13px;opacity:0.85;'></span><span class='header-badge'>&#193;rea do M&#233;dico</span></div>
+</header>
+<div class='toast' id='toast'></div>
+<div class='layout'>
+
+  <main class='main'>
+
+    <div class="modo-medico-banner">
+      <span style="font-size:18px">&#128101;</span>
+      <div><strong>&#193;rea Restrita &#8212; Acesso Individual</strong>
+      <span id="banner-nome" style="display:block;opacity:0.8;font-size:12px;"></span></div>
+    </div>
+    <div id='periodo-tabs' class='periodo-tabs'></div>
+    <div class='periodo-bar' id='periodo-label'></div>
+    <div class='view active' id='view-geral'>
+      <div class='metrics-grid' id='metrics-geral'></div>
+      <div class='two-col'>
+        <div class='card'><div class='section-title'>&#128202; Receita por Profissional</div><div class='chart-wrap'><canvas id='chart-profs'></canvas></div></div>
+        <div class='card'><div class='section-title'>&#128179; Por Tipo de Pagamento</div><div class='chart-wrap'><canvas id='chart-pgto'></canvas></div></div>
+      </div>
+      <div class='two-col'>
+        <div class='card'>
+          <div class='section-title'>&#127982; Origem dos Atendimentos <span class='badge'>Particular vs Planos</span></div>
+          <div id='origem-geral-lista'></div>
+        </div>
+        <div class='card'><div class='section-title'>&#9685; Mix Particular / Planos</div><div class='chart-wrap'><canvas id='chart-origem-geral'></canvas></div></div>
+      </div>
+      <div class='full-col card'>
+        <div class='section-title'>&#128176; Tabela de Repasse Banc&#225;rio <span class='badge' id='badge-profs'></span></div>
+        <div class='table-scroll'>
+          <table class='repasse-table'><thead><tr>
+            <th>Profissional</th>
+            <th style='text-align:right'>Valor Recebido</th>
+            <th style='text-align:right'>Imposto (18%)</th>
+            <th style='text-align:right'>Taxa Cart&#227;o</th>
+            <th style='text-align:right'>Custo</th>
+            <th style='text-align:right'>Valor L&#237;quido</th>
+            <th style='text-align:center'>% Repasse</th>
+            <th style='text-align:right'>Repasse Prof.</th>
+            <th style='text-align:right'>Receita Cl&#237;nica</th>
+            
+          </tr></thead><tbody id='body-repasse'></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class='view' id='view-prof'>
+      <div class='prof-header'>
+        <div><h2 id='prof-nome'></h2><span id='prof-periodo'></span></div>
+        <div class='prof-header-actions'>
+          <button class='btn-export' onclick='exportarCSVProf()'>&#11123; Exportar CSV</button>
+          <button class='btn-export' onclick='window.print()'>&#128438; Imprimir</button>
+          <div class='prof-avatar' id='prof-avatar'></div>
+        </div>
+      </div>
+      <div class='metrics-grid' id='metrics-prof'></div>
+      <div class='three-col'>
+        <div class='card'><div class='section-title'>&#128193; Por Categoria</div><div class='chart-wrap'><canvas id='chart-cat'></canvas></div></div>
+        <div class='card'><div class='section-title'>&#9685; Origem (Particular / Planos)</div><div class='chart-wrap'><canvas id='chart-origem-prof'></canvas></div></div>
+        <div class='card'><div class='section-title'>&#128179; Por Pagamento</div><div class='chart-wrap'><canvas id='chart-pgto-prof'></canvas></div></div>
+      </div>
+      <div class='full-col card'>
+        <div class='section-title'>&#127982; Origem dos Atendimentos <span class='badge'>por Tabela de Pre&#231;o</span></div>
+        <div id='origem-prof-lista'></div>
+      </div>
+      <div class='full-col card'>
+        <div class='section-title'>&#128203; Atendimentos <span class='badge' id='badge-atend'></span></div>
+        <div class='table-scroll'>
+          <table class='atend-table'><thead><tr>
+            <th>Paciente</th><th>Procedimento</th><th>Categoria</th>
+            <th>Pagamento</th><th>Data</th>
+            <th class='r'>Vr. Recebido</th><th class='r'>Vr. L&#237;quido</th><th class='r'>Repasse</th>
+          </tr></thead><tbody id='body-atend'></tbody></table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const MODO_MEDICO = true;
+const PROF_FIXO = "Clara_Silva_Freitas";
+let PERIODO_ID = '';
+let PERIODO_LABEL = '';
+let DADOS_PROFS = {};
+const LINKS = {};
+const TODOS_PERIODOS_ENC = /*PDATA*/{"2026-02": {"label": "Fevereiro/2026", "blob": "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"}, "2026-03": {"label": "Março/2026", "blob": "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"}}/*PDATA*/;
+let TODOS_PERIODOS = {};
+
+
+const CORES=['#2E6DA4','#E07B28','#2D7A3C','#8E44AD','#C0392B','#16A085','#D35400','#2980B9','#27AE60','#F39C12','#1ABC9C','#E74C3C'];
+const COR_PARTICULAR='#2D7A3C';
+const COR_PLANO='#2E6DA4';
+let CHARTS={};
+let PROF_ATUAL=null;
+
+function fmtBRL(v){
+  if(v===null||v===undefined||isNaN(v))return 'R$ —';
+  return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtPct(v){
+  if(!v||isNaN(v))return '—';
+  return(Number(v)*100).toFixed(0)+'%';
+}
+function iniciais(nome){return nome.split(' ').filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase();}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function mostrarView(view,btnEl){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+  if(btnEl)btnEl.classList.add('active');
+}
+function renderChart(id,type,labels,data,label){
+  if(CHARTS[id]){CHARTS[id].destroy();}
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  const isDoughnut=type==='doughnut';
+  CHARTS[id]=new Chart(ctx,{
+    type:type,
+    data:{labels:labels,datasets:[{label:label,data:data,
+      backgroundColor:isDoughnut?CORES:CORES[0],
+      borderColor:isDoughnut?'white':CORES[0],
+      borderWidth:isDoughnut?2:0,borderRadius:isDoughnut?0:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:isDoughnut?'right':'none',labels:{font:{size:11},boxWidth:14,padding:10}},
+        tooltip:{callbacks:{label:(ctx)=>{
+          const num=isDoughnut?ctx.parsed:ctx.parsed.y;
+          return ' '+fmtBRL(num);
+        }}}
+      },
+      scales:isDoughnut?{}:{
+        y:{ticks:{callback:v=>fmtBRL(v).replace('R$ ','R$')},grid:{color:'#eee'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+function abrirPortal(link, nomeCurto){
+  // Abre o portal individual em nova aba
+  window.open(link, '_blank');
+  // Também copia o caminho completo (file://) para área de transferência
+  const base=window.location.href.replace(/[^\/\\\\]*$/, '');
+  const fullUrl=base+link;
+  const copiar=(txt)=>{
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(txt).catch(()=>{});
+    } else {
+      const el=document.createElement('textarea');
+      el.value=txt;el.style.position='fixed';el.style.top='-9999px';
+      document.body.appendChild(el);el.select();
+      document.execCommand('copy');document.body.removeChild(el);
+    }
+  };
+  copiar(fullUrl);
+  showToast('Portal de '+nomeCurto+' aberto \u2014 caminho copiado!');
+}
+
+function renderTabelas(porTabela, containerId, chartId){
+  const container=document.getElementById(containerId);
+  const total=porTabela.reduce((a,t)=>a+(t['Valor recebido']||0),0);
+  const totalPart=porTabela.filter(t=>t.Origem==='Particular').reduce((a,t)=>a+(t['Valor recebido']||0),0);
+  const totalPlano=total-totalPart;
+  const pctPart=total>0?totalPart/total:0;
+
+  const pills=
+    '<div class="origem-pills">'+
+    '<div class="origem-pill particular">&#128200; Particular: '+fmtBRL(totalPart)+' <span style="opacity:0.7">('+
+    (pctPart*100).toFixed(1)+'%)</span></div>'+
+    '<div class="origem-pill plano">&#127973; Planos: '+fmtBRL(totalPlano)+' <span style="opacity:0.7">('+
+    ((1-pctPart)*100).toFixed(1)+'%)</span></div>'+
+    '</div>'+
+    '<div class="origem-bar"><div class="origem-bar-inner" style="width:'+(pctPart*100).toFixed(1)+'%;background:linear-gradient(90deg,'+COR_PARTICULAR+' '+(pctPart*100).toFixed(0)+'%,'+COR_PLANO+' 0%)"></div></div>';
+
+  const sorted=[...porTabela].sort((a,b)=>(b['Valor recebido']||0)-(a['Valor recebido']||0));
+  const linhas=sorted.map(t=>{
+    const v=t['Valor recebido']||0;
+    const tipoClass=t.Origem==='Particular'?'part':'plano';
+    const tipoLabel=t.Origem==='Particular'?'Particular':'Plano';
+    return '<div class="tabela-row">'+
+      '<div style="display:flex;align-items:center">'+
+      '<span class="tabela-nome">'+(t.Tabela||'—')+'</span>'+
+      '<span class="tabela-tipo '+tipoClass+'">'+tipoLabel+'</span></div>'+
+      '<div style="display:flex;align-items:center">'+
+      '<span class="tabela-val">'+fmtBRL(v)+'</span>'+
+      '<span class="tabela-pct">'+(total>0?((v/total)*100).toFixed(1):'0')+'%</span></div>'+
+      '</div>';
+  }).join('');
+
+  container.innerHTML=pills+linhas;
+
+  // Gráfico donut particular vs planos
+  if(chartId){
+    renderChart(chartId,'doughnut',
+      ['Particular','Planos de Saúde'],
+      [totalPart, totalPlano],
+      'Origem');
+  }
+}
+
+function renderGeral(){
+  const todos=Object.values(DADOS_PROFS);
+  if(!todos.length)return;
+  const soma=(key)=>todos.reduce((a,d)=>a+(d.resumo?.[key]||0),0);
+  const totalRec=soma('Valor recebido'),totalLiq=soma('Valor Líquido');
+  const totalRep=soma('Repasse Profissional (R$)'),totalCli=soma('Repasse Clínica (R$)');
+
+  document.getElementById('header-periodo').textContent=PERIODO_LABEL;
+  document.getElementById('periodo-label').textContent='Período: '+PERIODO_LABEL;
+  const bdg=document.getElementById('badge-profs');
+  if(bdg)bdg.textContent=todos.length+' profissionais';
+
+  document.getElementById('metrics-geral').innerHTML=
+    '<div class="metric-card azul"><div class="metric-label">Total Recebido</div><div class="metric-valor">'+fmtBRL(totalRec)+'</div><div class="metric-sub">Valor bruto compensado</div></div>'+
+    '<div class="metric-card cinza"><div class="metric-label">Valor L&iacute;quido</div><div class="metric-valor">'+fmtBRL(totalLiq)+'</div><div class="metric-sub">Ap&oacute;s impostos e taxas</div></div>'+
+    '<div class="metric-card azul"><div class="metric-label">Repasse M&eacute;dicos</div><div class="metric-valor">'+fmtBRL(totalRep)+'</div><div class="metric-sub">'+todos.filter(d=>d.resumo?.['Repasse Profissional (R$)']>0).length+' profissionais</div></div>'+
+    '<div class="metric-card verde"><div class="metric-label">Receita Cl&iacute;nica</div><div class="metric-valor">'+fmtBRL(totalCli)+'</div><div class="metric-sub">'+(totalLiq>0?((totalCli/totalLiq)*100).toFixed(1)+'%':'—')+' do l&iacute;quido</div></div>';
+
+  const sorted=[...todos].sort((a,b)=>(b.resumo?.['Valor recebido']||0)-(a.resumo?.['Valor recebido']||0));
+  let tr_rec=0,tr_imp=0,tr_tax=0,tr_cus=0,tr_liq=0,tr_rep=0,tr_cli=0;
+  const linksCol=typeof LINKS!=='undefined';
+
+  document.getElementById('body-repasse').innerHTML=sorted.map(d=>{
+    const r=d.resumo||{};
+    const rec=r['Valor recebido']||0,imp=r['Imposto (18%)']||0,tax=r['Taxa cartão (3%)']||0;
+    const cus=r['Custo']||0,liq=r['Valor Líquido']||0,rep=r['Repasse Profissional (R$)']||0,cli=r['Repasse Clínica (R$)']||0;
+    const pct=liq>0?rep/liq:0;
+    tr_rec+=rec;tr_imp+=imp;tr_tax+=tax;tr_cus+=cus;tr_liq+=liq;tr_rep+=rep;tr_cli+=cli;
+    const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
+    const linkHtml=(!MODO_MEDICO&&LINKS[id])?
+      '<td style="text-align:center"><button class="btn-link" onclick="event.stopPropagation();abrirPortal(\''+LINKS[id]+'\',\''+d.profissional.split(' ')[0]+'\')">&#128279; Abrir Portal</button></td>':'';
+    return '<tr style="cursor:pointer" onclick="mostrarProf(\''+id+'\')">'+
+      '<td class="prof">'+d.profissional+'</td>'+
+      '<td class="valor">'+fmtBRL(rec)+'</td>'+
+      '<td class="valor" style="color:var(--vermelho)">'+fmtBRL(imp)+'</td>'+
+      '<td class="valor" style="color:var(--laranja)">'+fmtBRL(tax)+'</td>'+
+      '<td class="valor" style="color:var(--laranja)">'+fmtBRL(cus)+'</td>'+
+      '<td class="valor" style="color:var(--azul-medio)">'+fmtBRL(liq)+'</td>'+
+      '<td class="pct">'+fmtPct(pct)+'</td>'+
+      '<td class="valor">'+fmtBRL(rep)+'</td>'+
+      '<td class="valor" style="color:var(--verde)">'+fmtBRL(cli)+'</td>'+
+      linkHtml+'</tr>';
+  }).join('')+
+  '<tr class="total-row"><td>TOTAL GERAL</td>'+
+  '<td class="valor">'+fmtBRL(tr_rec)+'</td><td class="valor">'+fmtBRL(tr_imp)+'</td>'+
+  '<td class="valor">'+fmtBRL(tr_tax)+'</td><td class="valor">'+fmtBRL(tr_cus)+'</td>'+
+  '<td class="valor">'+fmtBRL(tr_liq)+'</td>'+
+  '<td class="pct">'+fmtPct(tr_liq>0?tr_rep/tr_liq:0)+'</td>'+
+  '<td class="valor">'+fmtBRL(tr_rep)+'</td><td class="valor">'+fmtBRL(tr_cli)+'</td>'+
+  (!MODO_MEDICO?'<td></td>':'')+'</tr>';
+
+  // Sidebar
+  const sb=document.getElementById('sidebar-profs');
+  if(sb){
+    sb.innerHTML=sorted.filter(d=>d.resumo?.['Repasse Profissional (R$)']>0).map(d=>{
+      const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
+      return '<button class="sidebar-item" id="sb-'+id+'" onclick="mostrarProf(\''+id+'\',this)"><div class="dot"></div> '+d.profissional.split(' ').slice(0,2).join(' ')+'</button>';
+    }).join('');
+  }
+
+  // Gráficos geral
+  const top=sorted.slice(0,10);
+  renderChart('chart-profs','bar',top.map(d=>d.profissional.split(' ')[0]),top.map(d=>d.resumo?.['Valor recebido']||0),'Valor Recebido');
+  const pgtoAgg={};
+  todos.forEach(d=>{(d.por_pagamento||[]).forEach(p=>{const tp=p['Tipo de pagamento']||'Outros';pgtoAgg[tp]=(pgtoAgg[tp]||0)+(p['Valor recebido']||0);});});
+  renderChart('chart-pgto','doughnut',Object.keys(pgtoAgg),Object.values(pgtoAgg),'Pagamento');
+
+  // Origem global (Particular vs Planos)
+  const todasTabelas=[];
+  const tabAgg={};
+  todos.forEach(d=>{
+    (d.por_tabela||[]).forEach(t=>{
+      const key=t.Tabela||'Outros';
+      if(!tabAgg[key]){tabAgg[key]={Tabela:key,Origem:t.Origem,'Valor recebido':0};}
+      tabAgg[key]['Valor recebido']+=(t['Valor recebido']||0);
+    });
+  });
+  Object.values(tabAgg).forEach(t=>todasTabelas.push(t));
+  if(todasTabelas.length>0 && document.getElementById('origem-geral-lista')){
+    renderTabelas(todasTabelas,'origem-geral-lista','chart-origem-geral');
+  }
+}
+
+function mostrarProf(id,btnEl){
+  PROF_ATUAL=id;
+  const d=DADOS_PROFS[id];
+  if(!d)return;
+  mostrarView('prof',btnEl);
+  const r=d.resumo||{};
+  const rep=r['Repasse Profissional (R$)']||0,liq=r['Valor Líquido']||0;
+  document.getElementById('prof-nome').textContent=d.profissional;
+  document.getElementById('prof-periodo').textContent=d.mes+'/'+d.ano;
+  document.getElementById('prof-avatar').textContent=iniciais(d.profissional);
+  const bnome=document.getElementById('banner-nome');
+  if(bnome)bnome.textContent=d.profissional+' — '+d.mes+'/'+d.ano;
+  document.getElementById('badge-atend').textContent=(d.atendimentos||[]).length+' atendimentos';
+  document.getElementById('metrics-prof').innerHTML=
+    '<div class="metric-card azul"><div class="metric-label">Valor Recebido</div><div class="metric-valor">'+fmtBRL(r['Valor recebido'])+'</div><div class="metric-sub">Bruto compensado</div></div>'+
+    '<div class="metric-card cinza"><div class="metric-label">Valor L&iacute;quido</div><div class="metric-valor">'+fmtBRL(liq)+'</div><div class="metric-sub">Ap&oacute;s impostos e taxas</div></div>'+
+    '<div class="metric-card verde"><div class="metric-label">Repasse do M&ecirc;s</div><div class="metric-valor">'+fmtBRL(rep)+'</div><div class="metric-sub">'+fmtPct(liq>0?rep/liq:0)+' do valor l&iacute;quido</div></div>'+
+    '<div class="metric-card laranja"><div class="metric-label">Atendimentos</div><div class="metric-valor">'+(d.atendimentos||[]).length+'</div><div class="metric-sub">Procedimentos no per&iacute;odo</div></div>';
+
+  const cats={};(d.por_categoria||[]).forEach(c=>{cats[c.Categoria]=(cats[c.Categoria]||0)+(c['Valor recebido']||0);});
+  renderChart('chart-cat','doughnut',Object.keys(cats),Object.values(cats),'Categoria');
+  const pgtos={};(d.por_pagamento||[]).forEach(p=>{const tp=p['Tipo de pagamento']||'Outros';pgtos[tp]=(pgtos[tp]||0)+(p['Valor recebido']||0);});
+  renderChart('chart-pgto-prof','doughnut',Object.keys(pgtos),Object.values(pgtos),'Pagamento');
+
+  // Origem por tabela de preço
+  if(d.por_tabela && d.por_tabela.length>0 && document.getElementById('origem-prof-lista')){
+    renderTabelas(d.por_tabela,'origem-prof-lista','chart-origem-prof');
+  }
+
+  const atends=d.atendimentos||[];
+  document.getElementById('body-atend').innerHTML=atends.length===0
+    ?'<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--texto-secundario)">Sem atendimentos</td></tr>'
+    :atends.map(a=>'<tr>'+
+        '<td>'+(a.Paciente||'—')+'</td><td>'+(a.Procedimento||'—')+'</td>'+
+        '<td><span class="cat-badge">'+(a.Categoria||'—')+'</span></td>'+
+        '<td>'+(a['Tipo de pagamento']||'—')+'</td><td>'+(a['Data agendamento']||'—')+'</td>'+
+        '<td class="r">'+fmtBRL(a['Valor recebido'])+'</td>'+
+        '<td class="r">'+fmtBRL(a['Valor Líquido'])+'</td>'+
+        '<td class="r" style="color:var(--verde);font-weight:600">'+fmtBRL(a['Repasse Profissional (R$)'])+'</td>'+
+      '</tr>').join('');
+}
+
+// ── Login / Descriptografia (só usado em portais com senha) ──
+async function _descriptografar(b64, senha){
+  try{
+    const packed=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+    const salt=packed.slice(0,16),nonce=packed.slice(16,28),ct=packed.slice(28);
+    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(senha),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey(
+      {name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},km,
+      {name:'AES-GCM',length:256},false,['decrypt']);
+    const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv:nonce},key,ct);
+    return JSON.parse(new TextDecoder().decode(dec));
+  }catch(e){return null;}
+}
+
+async function tentarLogin(){
+  const inp=document.getElementById('login-senha');
+  const btn=document.getElementById('login-btn');
+  const erro=document.getElementById('login-erro');
+  const senha=inp.value.trim();
+  if(!senha)return;
+  btn.disabled=true; btn.textContent='Verificando…';
+  const dados=await _descriptografar(DADOS_ENCRIPTADOS,senha);
+  if(dados===null){
+    erro.textContent='Código incorreto. Verifique e tente novamente.';
+    btn.disabled=false; btn.textContent='Acessar →';
+    inp.value=''; inp.focus();
+  } else {
+    // Injeta os dados e inicializa o portal
+    Object.keys(dados).forEach(k=>{ DADOS_PROFS[k]=dados[k]; });
+    const ov=document.getElementById('login-overlay');
+    ov.classList.add('saindo');
+    setTimeout(()=>{ov.style.display='none'; inicializarPortal();},400);
+  }
+}
+
+function _loginEnter(e){ if(e.key==='Enter') tentarLogin(); }
+
+function inicializarPortal(){
+  // Inicialização principal (chamada após login ou direto se sem senha)
+  const pl=document.getElementById('periodo-label');
+  if(pl) pl.textContent='Per\u00edodo: '+(typeof PERIODO_LABEL!=='undefined'?PERIODO_LABEL:'');
+  if(typeof MODO_MEDICO!=='undefined'&&MODO_MEDICO&&typeof PROF_FIXO!=='undefined'&&PROF_FIXO&&DADOS_PROFS[PROF_FIXO]){
+    mostrarProf(PROF_FIXO);
+  } else {
+    renderGeral();
+  }
+}
+
+function exportarCSVGeral(){
+  const BOM='\uFEFF';
+  let linhas=['Profissional,Valor Recebido,Imposto,Taxa Cartao,Custo,Valor Liquido,Repasse Prof,Repasse Clinica'];
+  Object.values(DADOS_PROFS).forEach(d=>{
+    const r=d.resumo||{};
+    linhas.push(['"'+d.profissional+'"',(r['Valor recebido']||0).toFixed(2),(r['Imposto (18%)']||0).toFixed(2),
+      (r['Taxa cartão (3%)']||0).toFixed(2),(r['Custo']||0).toFixed(2),(r['Valor Líquido']||0).toFixed(2),
+      (r['Repasse Profissional (R$)']||0).toFixed(2),(r['Repasse Clínica (R$)']||0).toFixed(2)].join(','));
+  });
+  _download(BOM+linhas.join('\n'),'honorarios_'+PERIODO_ID+'.csv');
+}
+
+function exportarCSVProf(){
+  const d=DADOS_PROFS[PROF_ATUAL];if(!d)return;
+  const BOM='\uFEFF',r=d.resumo||{};
+  let linhas=[
+    '"Relatório de Honorários — '+d.profissional+'"',
+    '"Período: '+d.mes+'/'+d.ano+'"','','"RESUMO"',
+    '"Valor Recebido","'+fmtBRL(r['Valor recebido'])+'"',
+    '"Imposto (18%)","'+fmtBRL(r['Imposto (18%)'])+'"',
+    '"Taxa Cartão (3%)","'+fmtBRL(r['Taxa cartão (3%)'])+'"',
+    '"Custo","'+fmtBRL(r['Custo'])+'"',
+    '"Valor Líquido","'+fmtBRL(r['Valor Líquido'])+'"',
+    '"Repasse do Profissional","'+fmtBRL(r['Repasse Profissional (R$)'])+'"','',
+    '"ORIGEM DOS ATENDIMENTOS"',
+    '"Tabela","Tipo","Valor"',
+  ];
+  (d.por_tabela||[]).sort((a,b)=>(b['Valor recebido']||0)-(a['Valor recebido']||0)).forEach(t=>{
+    linhas.push(['"'+(t.Tabela||'')+'"','"'+(t.Origem||'')+'"',(t['Valor recebido']||0).toFixed(2)].join(','));
+  });
+  linhas.push('','\"ATENDIMENTOS\"',
+    '"Paciente","Procedimento","Categoria","Tabela","Pagamento","Data","Vr. Recebido","Vr. Líquido","Repasse"');
+  (d.atendimentos||[]).forEach(a=>{linhas.push([
+    '"'+(a.Paciente||'')+'"','"'+(a.Procedimento||'')+'"','"'+(a.Categoria||'')+'"',
+    '"'+(a['Tabela']||'')+'"','"'+(a['Tipo de pagamento']||'')+'"','"'+(a['Data agendamento']||'')+'"',
+    (a['Valor recebido']||0).toFixed(2),(a['Valor Líquido']||0).toFixed(2),(a['Repasse Profissional (R$)']||0).toFixed(2)
+  ].join(','));});
+  _download(BOM+linhas.join('\n'),'honorarios_'+d.profissional.replace(/ /g,'_')+'_'+PERIODO_ID+'.csv');
+  showToast('CSV exportado!');
+}
+
+function _download(conteudo,nome){
+  const blob=new Blob([conteudo],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=nome;a.click();URL.revokeObjectURL(a.href);
+}
+
+
+// ── Portais Permanentes: seletor de período ──────────────
+let PERIODO_ATUAL = null;
+
+function inicializarPortalPermanente(){
+  const periodos = Object.keys(TODOS_PERIODOS).sort(); // crescente cronológico
+  if(!periodos.length) return;
+  PERIODO_ATUAL = periodos[periodos.length-1]; // mais recente
+
+  // Monta abas de período (só exibe se >1)
+  const tabsEl = document.getElementById('periodo-tabs');
+  if(tabsEl && periodos.length > 1){
+    tabsEl.style.display = 'flex';
+    tabsEl.innerHTML = periodos.slice().reverse().map(pid => {
+      const lbl = TODOS_PERIODOS[pid].label;
+      return '<button class="periodo-tab'+(pid===PERIODO_ATUAL?' active':'')+
+             '" onclick="mudarPeriodo(\''+pid+'\')">'+ lbl +'</button>';
+    }).join('');
+  }
+
+  mudarPeriodo(PERIODO_ATUAL, false);
+}
+
+function mudarPeriodo(id, updateTabs){
+  PERIODO_ATUAL = id;
+  const pdata = TODOS_PERIODOS[id];
+  if(!pdata) return;
+
+  // Atualiza DADOS_PROFS com dados do período selecionado
+  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
+  Object.assign(DADOS_PROFS, pdata.profs);
+
+  // Atualiza variáveis globais de período
+  PERIODO_LABEL = pdata.label;
+  PERIODO_ID = id;
+
+  // Atualiza aba ativa
+  if(updateTabs !== false){
+    document.querySelectorAll('.periodo-tab').forEach(t => {
+      t.classList.toggle('active', t.textContent === pdata.label);
+    });
+  }
+
+  // Atualiza UI
+  const hp = document.getElementById('header-periodo');
+  if(hp) hp.textContent = pdata.label;
+  const pl = document.getElementById('periodo-label');
+  if(pl) pl.textContent = 'Período: ' + pdata.label;
+
+  // Destrói gráficos existentes antes de recriar
+  Object.keys(CHARTS).forEach(k => { if(CHARTS[k]){ CHARTS[k].destroy(); delete CHARTS[k]; }});
+
+  // Re-renderiza o painel correto
+  if(typeof MODO_MEDICO!=='undefined' && MODO_MEDICO &&
+     typeof PROF_FIXO!=='undefined' && PROF_FIXO && DADOS_PROFS[PROF_FIXO]){
+    mostrarProf(PROF_FIXO);
+  } else {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const gv = document.getElementById('view-geral');
+    if(gv) gv.classList.add('active');
+    document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+    const sb = document.querySelector('.sidebar-item');
+    if(sb) sb.classList.add('active');
+    renderGeral();
+  }
+}
+
+// Override tentarLogin para desencriptar todos os períodos de uma vez
+async function tentarLogin(){
+  const inp = document.getElementById('login-senha');
+  const btn = document.getElementById('login-btn');
+  const erro = document.getElementById('login-erro');
+  const senha = inp.value.trim();
+  if(!senha) return;
+  btn.disabled = true; btn.textContent = 'Verificando\u2026';
+
+  const periodos = Object.entries(TODOS_PERIODOS_ENC);
+  if(!periodos.length){ btn.disabled=false; return; }
+
+  // Valida senha com o primeiro período
+  const [pid0, pdata0] = periodos[0];
+  const dec0 = await _descriptografar(pdata0.blob, senha);
+  if(dec0 === null){
+    erro.textContent = 'Código incorreto. Verifique e tente novamente.';
+    btn.disabled=false; btn.textContent = 'Acessar \u2192';
+    inp.value=''; inp.focus();
+    return;
+  }
+  TODOS_PERIODOS[pid0] = { label: pdata0.label, profs: dec0 };
+
+  // Desencripta períodos restantes (mesma senha)
+  for(let i=1; i<periodos.length; i++){
+    const [pid, pdata] = periodos[i];
+    const dec = await _descriptografar(pdata.blob, senha);
+    if(dec !== null) TODOS_PERIODOS[pid] = { label: pdata.label, profs: dec };
+  }
+
+  const ov = document.getElementById('login-overlay');
+  ov.classList.add('saindo');
+  setTimeout(() => { ov.style.display='none'; inicializarPortalPermanente(); }, 400);
+}
+
+document.getElementById('login-senha').focus();
+</script>
+</body>
+</html>

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+  <meta charset='UTF-8'/>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+  <title>Honorários — Paulo Laredo Pinto | Endovascular SP</title>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'></script>
+  <style>
+:root{
+  --azul-escuro:#0B1F3A;--azul-medio:#1A5296;--azul-claro:#D6E8F7;
+  --azul-brilhante:#3A8DD4;--verde:#2D7A3C;--verde-claro:#E8F5EB;
+  --laranja:#D4621A;--cinza-bg:#F2F5F9;--cinza-borda:#DDE4ED;
+  --texto-primario:#0D1E30;--texto-secundario:#4A6278;
+  --vermelho:#C0392B;--sombra:0 2px 14px rgba(11,31,58,0.12);--radius:12px;
+  --header-bg:#0B1F3A;--header-linha:#1A5296;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);color:var(--texto-primario);min-height:100vh;}
+.header{background:var(--header-bg);border-bottom:3px solid var(--header-linha);color:white;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:72px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(11,31,58,0.35);}
+.header-logo{display:flex;align-items:center;gap:16px;}
+.header-logo .logo-svg{width:44px;height:44px;flex-shrink:0;}
+.header-logo h1{font-size:19px;font-weight:700;letter-spacing:0.3px;}
+.header-logo span{font-size:11.5px;opacity:0.70;display:block;margin-top:2px;letter-spacing:0.2px;}
+.header-badge{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;}
+.layout{display:flex;min-height:calc(100vh - 68px);}
+.sidebar{width:260px;background:white;border-right:1px solid var(--cinza-borda);padding:20px 0;flex-shrink:0;box-shadow:2px 0 8px rgba(11,31,58,0.04);}
+.sidebar-section{padding:0 16px;margin-bottom:8px;}
+.sidebar-label{font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--texto-secundario);text-transform:uppercase;padding:8px 4px 4px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--texto-primario);transition:all 0.15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;}
+.sidebar-item:hover{background:var(--cinza-bg);}
+.sidebar-item.active{background:#E8EFF8;color:var(--azul-escuro);font-weight:600;border-left:3px solid var(--azul-medio);}
+.sidebar-item .dot{width:8px;height:8px;border-radius:50%;background:var(--azul-brilhante);flex-shrink:0;}
+.sidebar-divider{height:1px;background:var(--cinza-borda);margin:12px 16px;}
+.main{flex:1;padding:28px 32px;overflow-x:hidden;}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;}
+.metric-card{background:white;border-radius:var(--radius);padding:20px 22px;box-shadow:var(--sombra);border:1px solid var(--cinza-borda);position:relative;overflow:hidden;}
+.metric-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:12px 0 0 12px;}
+.metric-card.azul::before{background:var(--azul-medio);}
+.metric-card.verde::before{background:var(--verde);}
+.metric-card.laranja::before{background:var(--laranja);}
+.metric-card.cinza::before{background:var(--texto-secundario);}
+.metric-label{font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--texto-secundario);margin-bottom:6px;}
+.metric-valor{font-size:26px;font-weight:700;color:var(--texto-primario);line-height:1;margin-bottom:4px;}
+.metric-sub{font-size:12px;color:var(--texto-secundario);}
+.section-title{font-size:16px;font-weight:700;color:var(--texto-primario);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.section-title .badge{background:var(--azul-claro);color:var(--azul-escuro);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:24px;}
+.three-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:24px;}
+.full-col{margin-bottom:24px;}
+.card{background:white;border-radius:var(--radius);padding:22px;box-shadow:var(--sombra);border:1px solid var(--cinza-borda);}
+.repasse-table{width:100%;border-collapse:collapse;}
+.repasse-table th{background:var(--azul-escuro);color:white;font-size:11.5px;font-weight:600;padding:10px 12px;text-align:left;}
+.repasse-table th:first-child{border-radius:8px 0 0 0;}
+.repasse-table th:last-child{border-radius:0 8px 0 0;}
+.repasse-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--cinza-borda);}
+.repasse-table tr:nth-child(even) td{background:var(--cinza-bg);}
+.repasse-table tr:hover td{background:var(--azul-claro);}
+.repasse-table .valor{text-align:right;font-weight:600;color:var(--verde);}
+.repasse-table .prof{font-weight:600;color:var(--azul-escuro);}
+.repasse-table .pct{text-align:center;font-size:12px;font-weight:700;color:var(--texto-secundario);}
+.total-row td{background:var(--azul-claro)!important;font-weight:700;border-top:2px solid var(--azul-medio);}
+.atend-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.atend-table th{background:var(--azul-medio);color:white;padding:8px 10px;text-align:left;font-size:11px;font-weight:600;}
+.atend-table td{padding:8px 10px;border-bottom:1px solid var(--cinza-borda);}
+.atend-table tr:nth-child(even) td{background:var(--cinza-bg);}
+.atend-table .r{text-align:right;}
+.atend-table .cat-badge{background:var(--azul-claro);color:var(--azul-escuro);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.prof-header{background:linear-gradient(135deg,var(--azul-escuro) 0%,var(--azul-medio) 100%);color:white;border-radius:var(--radius);padding:22px 26px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.prof-header h2{font-size:20px;font-weight:700;}
+.prof-header-actions{display:flex;gap:8px;align-items:center;}
+.prof-avatar{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;}
+.btn-export{background:rgba(255,255,255,0.2);color:white;border:1.5px solid rgba(255,255,255,0.4);padding:7px 16px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:inherit;transition:all 0.15s;}
+.btn-export:hover{background:rgba(255,255,255,0.35);}
+.btn-link{background:#EBF3FB;border:1.5px solid #B8D4EE;color:var(--azul-medio);font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:inherit;transition:all 0.15s;white-space:nowrap;}
+.btn-link:hover{background:var(--azul-medio);border-color:var(--azul-medio);color:white;}
+.modo-medico-banner{background:#EBF3FB;border:1px solid #B8D4EE;border-radius:10px;padding:12px 18px;margin-bottom:18px;font-size:13px;color:var(--azul-escuro);display:flex;align-items:center;gap:10px;border-left:4px solid var(--azul-medio);}
+.view{display:none;}
+.view.active{display:block;}
+.chart-wrap{position:relative;height:260px;}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.periodo-bar{display:flex;align-items:center;gap:12px;margin-bottom:24px;font-size:14px;font-weight:600;color:var(--texto-secundario);}
+.toast{position:fixed;bottom:28px;right:28px;background:var(--azul-escuro);color:white;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:999;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+/* ── Origem / Tabela de Preço ── */
+.origem-pills{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.origem-pill{padding:8px 16px;border-radius:24px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.origem-pill.particular{background:#E8F5EB;color:#2D7A3C;border:1.5px solid #b2d8b7;}
+.origem-pill.plano{background:#D6E4F0;color:#1E3A5F;border:1.5px solid #a8c8e8;}
+.origem-bar{height:12px;border-radius:6px;background:var(--cinza-borda);overflow:hidden;margin-bottom:14px;}
+.origem-bar-inner{height:100%;border-radius:6px;background:linear-gradient(90deg,#2D7A3C,#4A9EE0);transition:width 0.6s ease;}
+.tabela-row{display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--cinza-borda);font-size:13px;}
+.tabela-row:last-child{border-bottom:none;}
+.tabela-nome{font-weight:600;color:var(--texto-primario);}
+.tabela-tipo{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;margin-left:8px;}
+.tabela-tipo.part{background:#E8F5EB;color:#2D7A3C;}
+.tabela-tipo.plano{background:#D6E4F0;color:#1E3A5F;}
+.tabela-val{font-weight:700;color:var(--verde);text-align:right;}
+.tabela-pct{font-size:12px;color:var(--texto-secundario);margin-left:8px;min-width:40px;text-align:right;}
+@media(max-width:1100px){.three-col{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}}
+@media(max-width:900px){.sidebar{display:none;}.main{padding:16px;}.two-col,.three-col{grid-template-columns:1fr;}}
+@media print{.sidebar,.prof-header-actions,.btn-export,.modo-medico-banner,.toast{display:none!important;}.card{box-shadow:none;border:1px solid #ccc;}}
+/* ── Seletor de Período ── */
+.periodo-tabs{display:none;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.periodo-tab{padding:6px 16px;border-radius:20px;border:1.5px solid var(--cinza-borda);background:white;color:var(--texto-secundario);font-size:12.5px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.periodo-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.periodo-tab.active{background:var(--azul-medio);border-color:var(--azul-medio);color:white;}
+/* ── Tela de Login ── */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A 0%,#0d2d55 60%,#0B1F3A 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;}
+.login-overlay.saindo{opacity:0;pointer-events:none;}
+.login-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:22px;padding:52px 44px 44px;text-align:center;max-width:400px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+.login-logo-wrap{margin-bottom:20px;}
+.login-titulo{color:white;font-size:26px;font-weight:700;letter-spacing:0.3px;margin-bottom:4px;}
+.login-sub{color:rgba(255,255,255,0.55);font-size:13px;margin-bottom:6px;}
+.login-periodo{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);font-size:12.5px;font-weight:600;padding:5px 16px;border-radius:20px;display:inline-block;margin-bottom:32px;}
+.login-input-wrap{position:relative;margin-bottom:14px;}
+.login-input{width:100%;padding:14px 18px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:white;font-size:16px;font-family:inherit;outline:none;letter-spacing:3px;text-align:center;transition:border 0.2s;}
+.login-input::placeholder{letter-spacing:0px;font-size:13.5px;color:rgba(255,255,255,0.35);}
+.login-input:focus{border-color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.12);}
+.login-btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#1A5296,#3A8DD4);color:white;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.login-btn:hover:not(:disabled){background:linear-gradient(135deg,#1e5faf,#4A9EE0);transform:translateY(-1px);}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.login-erro{color:#F87171;font-size:12.5px;margin-top:12px;min-height:20px;font-weight:500;}
+.login-rodape{color:rgba(255,255,255,0.25);font-size:11px;margin-top:28px;}
+.sidebar{display:none!important;}</style>
+</head>
+<body>
+<div class='login-overlay' id='login-overlay'>
+  <div class='login-card'>
+    <div class='login-logo-wrap'><svg width='56' height='56' viewBox='0 0 44 44' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M22 6 C13.2 6 6 13.2 6 22' stroke='white' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M22 11 C15.4 11 10 16.4 10 22' stroke='white' stroke-width='2.5' stroke-linecap='round' fill='none' opacity='0.85'/><path d='M22 16 C17.6 16 14 19.6 14 24' stroke='white' stroke-width='2' stroke-linecap='round' fill='none' opacity='0.7'/><circle cx='22' cy='29' r='2.5' fill='white' opacity='0.9'/></svg></div>
+    <div class='login-titulo'>Endovascular</div>
+    <div class='login-sub'>Relat&#243;rio de Honor&#225;rios M&#233;dicos</div>
+    <div class='login-periodo'>Março/2026</div>
+    <div class='login-input-wrap'>
+      <input class='login-input' id='login-senha' type='password' placeholder='Seu c&#243;digo de acesso' onkeydown='_loginEnter(event)' autocomplete='current-password'/>
+    </div>
+    <button class='login-btn' id='login-btn' onclick='tentarLogin()'>Acessar &#8594;</button>
+    <div class='login-erro' id='login-erro'></div>
+    <div class='login-rodape'>Endovascular SP &mdash; Acesso restrito</div>
+  </div>
+</div>
+<header class='header'>
+  <div class='header-logo'>
+    <svg class='logo-svg' viewBox='0 0 44 44' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M22 6 C13.2 6 6 13.2 6 22' stroke='white' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M22 11 C15.4 11 10 16.4 10 22' stroke='white' stroke-width='2.5' stroke-linecap='round' fill='none' opacity='0.85'/><path d='M22 16 C17.6 16 14 19.6 14 24' stroke='white' stroke-width='2' stroke-linecap='round' fill='none' opacity='0.7'/><circle cx='22' cy='29' r='2.5' fill='white' opacity='0.9'/></svg>
+    <div><h1>Endovascular</h1><span>Gest&#227;o de Honor&#225;rios M&#233;dicos</span></div>
+  </div>
+  <div style='display:flex;align-items:center;gap:12px;'><span id='header-periodo' style='font-size:13px;opacity:0.85;'></span><span class='header-badge'>&#193;rea do M&#233;dico</span></div>
+</header>
+<div class='toast' id='toast'></div>
+<div class='layout'>
+
+  <main class='main'>
+
+    <div class="modo-medico-banner">
+      <span style="font-size:18px">&#128101;</span>
+      <div><strong>&#193;rea Restrita &#8212; Acesso Individual</strong>
+      <span id="banner-nome" style="display:block;opacity:0.8;font-size:12px;"></span></div>
+    </div>
+    <div id='periodo-tabs' class='periodo-tabs'></div>
+    <div class='periodo-bar' id='periodo-label'></div>
+    <div class='view active' id='view-geral'>
+      <div class='metrics-grid' id='metrics-geral'></div>
+      <div class='two-col'>
+        <div class='card'><div class='section-title'>&#128202; Receita por Profissional</div><div class='chart-wrap'><canvas id='chart-profs'></canvas></div></div>
+        <div class='card'><div class='section-title'>&#128179; Por Tipo de Pagamento</div><div class='chart-wrap'><canvas id='chart-pgto'></canvas></div></div>
+      </div>
+      <div class='two-col'>
+        <div class='card'>
+          <div class='section-title'>&#127982; Origem dos Atendimentos <span class='badge'>Particular vs Planos</span></div>
+          <div id='origem-geral-lista'></div>
+        </div>
+        <div class='card'><div class='section-title'>&#9685; Mix Particular / Planos</div><div class='chart-wrap'><canvas id='chart-origem-geral'></canvas></div></div>
+      </div>
+      <div class='full-col card'>
+        <div class='section-title'>&#128176; Tabela de Repasse Banc&#225;rio <span class='badge' id='badge-profs'></span></div>
+        <div class='table-scroll'>
+          <table class='repasse-table'><thead><tr>
+            <th>Profissional</th>
+            <th style='text-align:right'>Valor Recebido</th>
+            <th style='text-align:right'>Imposto (18%)</th>
+            <th style='text-align:right'>Taxa Cart&#227;o</th>
+            <th style='text-align:right'>Custo</th>
+            <th style='text-align:right'>Valor L&#237;quido</th>
+            <th style='text-align:center'>% Repasse</th>
+            <th style='text-align:right'>Repasse Prof.</th>
+            <th style='text-align:right'>Receita Cl&#237;nica</th>
+            
+          </tr></thead><tbody id='body-repasse'></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class='view' id='view-prof'>
+      <div class='prof-header'>
+        <div><h2 id='prof-nome'></h2><span id='prof-periodo'></span></div>
+        <div class='prof-header-actions'>
+          <button class='btn-export' onclick='exportarCSVProf()'>&#11123; Exportar CSV</button>
+          <button class='btn-export' onclick='window.print()'>&#128438; Imprimir</button>
+          <div class='prof-avatar' id='prof-avatar'></div>
+        </div>
+      </div>
+      <div class='metrics-grid' id='metrics-prof'></div>
+      <div class='three-col'>
+        <div class='card'><div class='section-title'>&#128193; Por Categoria</div><div class='chart-wrap'><canvas id='chart-cat'></canvas></div></div>
+        <div class='card'><div class='section-title'>&#9685; Origem (Particular / Planos)</div><div class='chart-wrap'><canvas id='chart-origem-prof'></canvas></div></div>
+        <div class='card'><div class='section-title'>&#128179; Por Pagamento</div><div class='chart-wrap'><canvas id='chart-pgto-prof'></canvas></div></div>
+      </div>
+      <div class='full-col card'>
+        <div class='section-title'>&#127982; Origem dos Atendimentos <span class='badge'>por Tabela de Pre&#231;o</span></div>
+        <div id='origem-prof-lista'></div>
+      </div>
+      <div class='full-col card'>
+        <div class='section-title'>&#128203; Atendimentos <span class='badge' id='badge-atend'></span></div>
+        <div class='table-scroll'>
+          <table class='atend-table'><thead><tr>
+            <th>Paciente</th><th>Procedimento</th><th>Categoria</th>
+            <th>Pagamento</th><th>Data</th>
+            <th class='r'>Vr. Recebido</th><th class='r'>Vr. L&#237;quido</th><th class='r'>Repasse</th>
+          </tr></thead><tbody id='body-atend'></tbody></table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const MODO_MEDICO = true;
+const PROF_FIXO = "Paulo_Laredo_Pinto";
+let PERIODO_ID = '';
+let PERIODO_LABEL = '';
+let DADOS_PROFS = {};
+const LINKS = {};
+const TODOS_PERIODOS_ENC = /*PDATA*/{"2026-02": {"label": "Fevereiro/2026", "blob": "C0jAkwXHH3irTKOv9v366Xif9uYoLId8s9uiEpTiOeAYJnzkw5Ns4/imEQ9wFQ1sYXMgDV/gF+Be6GUISeVk3dPMOSr584hcEh07l2hIN+JcnHc3S6BS/TpN7a5DGkIDjUgTCloTq3UTbISNPntSk4z1EhtbEqsvVskomf4gWxIIGOAhKB2URl1dooQQ2GfoIJr3WKQXEIig3g8ohwb0D0G4qOuu9jsDVtnW5RGM6sLY/Ge/RvWSkribpEb5vvhyqNHlvbTabNJM7RfI50UCCEPKJ15OHbE+R+omJD1VV66A4paoqp1clcidyBPc1qsx3o/AD6cz24K2tqnPtKmDpXtKg6Pe0xyKhg9ayQNy9jUxFj67nMOoQxs0Yaf/IeYDsfYHGMeogF6lLhzyV/E3KvCTjs3WT7XBLF6IZfp6xHHQZE2QQsegpm4+hGmkEZfZClLILu7lByq1nsG97Jvii8qRLtfr6qV3CrQTEnSQHfy5uN1cW9GsY0dpQeEd+tmfbi2WcCFvdJd7FOHYsMRxkpGZkhOzqBaf6bAkJYD0XFmxJdDepB2zUnTmT7a7wRb9UTsXSLFLmIbnXbIXq6f524pfLeLuFazmi9Vy8urw147cvQBGF6Xj8hWS+ga9cIFh/KwkAwSlztJ3w0K/OZLhf4OO3+K/hB3vCHoMQRRSmZYTrbV/uHQNPEYeT0ewflqx7qMRj2L3KkFKR86qmtJ9cvlKwUvxDc5gWyBzg3SRQpWp4atkY2OvBAojCRGJCsIwvs4laweWJAm3hHameyvjtH4LUyuV6wbGzPar3UCA39MvCOgptcf0xIaunvdxXIPXydUcinA1RgRlaoXzyINTIzkkcRQc7mRvSinPA2nJiWOcrWY/NEiAtOVq0eFjv+3IR7DUBvIjeOUNE+rKv2pWch9oQsVROuzdcfK2A/jgVoV2Z7uwTf+CN1rcozQ9p+rwmdAHYek44TSDacZ9XmxVqoZIchzqJHS7sAwUfvmuu3uHUH22w8Wc48LH0QGhuArR87DmHz7J4IxGLc5Qt76tKiT0S7gxyOmWljV3q7rDV5xgtbnOd9tlW/OP0e48UU+FekrCDOfvdxBxSt6/XwjpUTPKKo2MTyDjOfSZa5aE3UIJgYbiiSDNd+Nwyu7qP/iKtdOZQmcE5sYTI0N+ri8ykF35cAwJgbLPMoKHza16B8jBD8bKrcptkCLyjavCMIM9yOHL8Fyb0elLkSwYqTXPYb8FVOQfeBCBAobRF7j1AEESkjwRXFVVfb86kFSjkrOZ4XaSecYNR6mB+11FOn/U6yDRq6L/UfAH0LrWw7128RXqvFMpM5AU7Y3iUgbAN9fzZ+YrflwE0bkrG1MW6UVq9+nItt29G/Exrq1UIXjSqk3izbBsMkygnyeKOeNdeDHqy/HIJZtHK76fLetj9kQBALnhgCgREadx8Ar41XrSTslFkYXN74Q7MXiMam3vzP6g5/7Gjr8n5hdOz4F94hK6cSaRVVn+MWrhxulmex2NyKwUwa023b9ykAtbsoPLOu91LLz1pZdcLv8Wf5QFuiOYsrMFrPDAPzths420r7S1GIkNrGC0dzhHn2R7+brFp9ef3VR6xL9nbAkD/oXrjFXIrsT9sLg="}, "2026-03": {"label": "Março/2026", "blob": "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"}}/*PDATA*/;
+let TODOS_PERIODOS = {};
+
+
+const CORES=['#2E6DA4','#E07B28','#2D7A3C','#8E44AD','#C0392B','#16A085','#D35400','#2980B9','#27AE60','#F39C12','#1ABC9C','#E74C3C'];
+const COR_PARTICULAR='#2D7A3C';
+const COR_PLANO='#2E6DA4';
+let CHARTS={};
+let PROF_ATUAL=null;
+
+function fmtBRL(v){
+  if(v===null||v===undefined||isNaN(v))return 'R$ —';
+  return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtPct(v){
+  if(!v||isNaN(v))return '—';
+  return(Number(v)*100).toFixed(0)+'%';
+}
+function iniciais(nome){return nome.split(' ').filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase();}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function mostrarView(view,btnEl){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+  if(btnEl)btnEl.classList.add('active');
+}
+function renderChart(id,type,labels,data,label){
+  if(CHARTS[id]){CHARTS[id].destroy();}
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  const isDoughnut=type==='doughnut';
+  CHARTS[id]=new Chart(ctx,{
+    type:type,
+    data:{labels:labels,datasets:[{label:label,data:data,
+      backgroundColor:isDoughnut?CORES:CORES[0],
+      borderColor:isDoughnut?'white':CORES[0],
+      borderWidth:isDoughnut?2:0,borderRadius:isDoughnut?0:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:isDoughnut?'right':'none',labels:{font:{size:11},boxWidth:14,padding:10}},
+        tooltip:{callbacks:{label:(ctx)=>{
+          const num=isDoughnut?ctx.parsed:ctx.parsed.y;
+          return ' '+fmtBRL(num);
+        }}}
+      },
+      scales:isDoughnut?{}:{
+        y:{ticks:{callback:v=>fmtBRL(v).replace('R$ ','R$')},grid:{color:'#eee'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+function abrirPortal(link, nomeCurto){
+  // Abre o portal individual em nova aba
+  window.open(link, '_blank');
+  // Também copia o caminho completo (file://) para área de transferência
+  const base=window.location.href.replace(/[^\/\\\\]*$/, '');
+  const fullUrl=base+link;
+  const copiar=(txt)=>{
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(txt).catch(()=>{});
+    } else {
+      const el=document.createElement('textarea');
+      el.value=txt;el.style.position='fixed';el.style.top='-9999px';
+      document.body.appendChild(el);el.select();
+      document.execCommand('copy');document.body.removeChild(el);
+    }
+  };
+  copiar(fullUrl);
+  showToast('Portal de '+nomeCurto+' aberto \u2014 caminho copiado!');
+}
+
+function renderTabelas(porTabela, containerId, chartId){
+  const container=document.getElementById(containerId);
+  const total=porTabela.reduce((a,t)=>a+(t['Valor recebido']||0),0);
+  const totalPart=porTabela.filter(t=>t.Origem==='Particular').reduce((a,t)=>a+(t['Valor recebido']||0),0);
+  const totalPlano=total-totalPart;
+  const pctPart=total>0?totalPart/total:0;
+
+  const pills=
+    '<div class="origem-pills">'+
+    '<div class="origem-pill particular">&#128200; Particular: '+fmtBRL(totalPart)+' <span style="opacity:0.7">('+
+    (pctPart*100).toFixed(1)+'%)</span></div>'+
+    '<div class="origem-pill plano">&#127973; Planos: '+fmtBRL(totalPlano)+' <span style="opacity:0.7">('+
+    ((1-pctPart)*100).toFixed(1)+'%)</span></div>'+
+    '</div>'+
+    '<div class="origem-bar"><div class="origem-bar-inner" style="width:'+(pctPart*100).toFixed(1)+'%;background:linear-gradient(90deg,'+COR_PARTICULAR+' '+(pctPart*100).toFixed(0)+'%,'+COR_PLANO+' 0%)"></div></div>';
+
+  const sorted=[...porTabela].sort((a,b)=>(b['Valor recebido']||0)-(a['Valor recebido']||0));
+  const linhas=sorted.map(t=>{
+    const v=t['Valor recebido']||0;
+    const tipoClass=t.Origem==='Particular'?'part':'plano';
+    const tipoLabel=t.Origem==='Particular'?'Particular':'Plano';
+    return '<div class="tabela-row">'+
+      '<div style="display:flex;align-items:center">'+
+      '<span class="tabela-nome">'+(t.Tabela||'—')+'</span>'+
+      '<span class="tabela-tipo '+tipoClass+'">'+tipoLabel+'</span></div>'+
+      '<div style="display:flex;align-items:center">'+
+      '<span class="tabela-val">'+fmtBRL(v)+'</span>'+
+      '<span class="tabela-pct">'+(total>0?((v/total)*100).toFixed(1):'0')+'%</span></div>'+
+      '</div>';
+  }).join('');
+
+  container.innerHTML=pills+linhas;
+
+  // Gráfico donut particular vs planos
+  if(chartId){
+    renderChart(chartId,'doughnut',
+      ['Particular','Planos de Saúde'],
+      [totalPart, totalPlano],
+      'Origem');
+  }
+}
+
+function renderGeral(){
+  const todos=Object.values(DADOS_PROFS);
+  if(!todos.length)return;
+  const soma=(key)=>todos.reduce((a,d)=>a+(d.resumo?.[key]||0),0);
+  const totalRec=soma('Valor recebido'),totalLiq=soma('Valor Líquido');
+  const totalRep=soma('Repasse Profissional (R$)'),totalCli=soma('Repasse Clínica (R$)');
+
+  document.getElementById('header-periodo').textContent=PERIODO_LABEL;
+  document.getElementById('periodo-label').textContent='Período: '+PERIODO_LABEL;
+  const bdg=document.getElementById('badge-profs');
+  if(bdg)bdg.textContent=todos.length+' profissionais';
+
+  document.getElementById('metrics-geral').innerHTML=
+    '<div class="metric-card azul"><div class="metric-label">Total Recebido</div><div class="metric-valor">'+fmtBRL(totalRec)+'</div><div class="metric-sub">Valor bruto compensado</div></div>'+
+    '<div class="metric-card cinza"><div class="metric-label">Valor L&iacute;quido</div><div class="metric-valor">'+fmtBRL(totalLiq)+'</div><div class="metric-sub">Ap&oacute;s impostos e taxas</div></div>'+
+    '<div class="metric-card azul"><div class="metric-label">Repasse M&eacute;dicos</div><div class="metric-valor">'+fmtBRL(totalRep)+'</div><div class="metric-sub">'+todos.filter(d=>d.resumo?.['Repasse Profissional (R$)']>0).length+' profissionais</div></div>'+
+    '<div class="metric-card verde"><div class="metric-label">Receita Cl&iacute;nica</div><div class="metric-valor">'+fmtBRL(totalCli)+'</div><div class="metric-sub">'+(totalLiq>0?((totalCli/totalLiq)*100).toFixed(1)+'%':'—')+' do l&iacute;quido</div></div>';
+
+  const sorted=[...todos].sort((a,b)=>(b.resumo?.['Valor recebido']||0)-(a.resumo?.['Valor recebido']||0));
+  let tr_rec=0,tr_imp=0,tr_tax=0,tr_cus=0,tr_liq=0,tr_rep=0,tr_cli=0;
+  const linksCol=typeof LINKS!=='undefined';
+
+  document.getElementById('body-repasse').innerHTML=sorted.map(d=>{
+    const r=d.resumo||{};
+    const rec=r['Valor recebido']||0,imp=r['Imposto (18%)']||0,tax=r['Taxa cartão (3%)']||0;
+    const cus=r['Custo']||0,liq=r['Valor Líquido']||0,rep=r['Repasse Profissional (R$)']||0,cli=r['Repasse Clínica (R$)']||0;
+    const pct=liq>0?rep/liq:0;
+    tr_rec+=rec;tr_imp+=imp;tr_tax+=tax;tr_cus+=cus;tr_liq+=liq;tr_rep+=rep;tr_cli+=cli;
+    const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
+    const linkHtml=(!MODO_MEDICO&&LINKS[id])?
+      '<td style="text-align:center"><button class="btn-link" onclick="event.stopPropagation();abrirPortal(\''+LINKS[id]+'\',\''+d.profissional.split(' ')[0]+'\')">&#128279; Abrir Portal</button></td>':'';
+    return '<tr style="cursor:pointer" onclick="mostrarProf(\''+id+'\')">'+
+      '<td class="prof">'+d.profissional+'</td>'+
+      '<td class="valor">'+fmtBRL(rec)+'</td>'+
+      '<td class="valor" style="color:var(--vermelho)">'+fmtBRL(imp)+'</td>'+
+      '<td class="valor" style="color:var(--laranja)">'+fmtBRL(tax)+'</td>'+
+      '<td class="valor" style="color:var(--laranja)">'+fmtBRL(cus)+'</td>'+
+      '<td class="valor" style="color:var(--azul-medio)">'+fmtBRL(liq)+'</td>'+
+      '<td class="pct">'+fmtPct(pct)+'</td>'+
+      '<td class="valor">'+fmtBRL(rep)+'</td>'+
+      '<td class="valor" style="color:var(--verde)">'+fmtBRL(cli)+'</td>'+
+      linkHtml+'</tr>';
+  }).join('')+
+  '<tr class="total-row"><td>TOTAL GERAL</td>'+
+  '<td class="valor">'+fmtBRL(tr_rec)+'</td><td class="valor">'+fmtBRL(tr_imp)+'</td>'+
+  '<td class="valor">'+fmtBRL(tr_tax)+'</td><td class="valor">'+fmtBRL(tr_cus)+'</td>'+
+  '<td class="valor">'+fmtBRL(tr_liq)+'</td>'+
+  '<td class="pct">'+fmtPct(tr_liq>0?tr_rep/tr_liq:0)+'</td>'+
+  '<td class="valor">'+fmtBRL(tr_rep)+'</td><td class="valor">'+fmtBRL(tr_cli)+'</td>'+
+  (!MODO_MEDICO?'<td></td>':'')+'</tr>';
+
+  // Sidebar
+  const sb=document.getElementById('sidebar-profs');
+  if(sb){
+    sb.innerHTML=sorted.filter(d=>d.resumo?.['Repasse Profissional (R$)']>0).map(d=>{
+      const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
+      return '<button class="sidebar-item" id="sb-'+id+'" onclick="mostrarProf(\''+id+'\',this)"><div class="dot"></div> '+d.profissional.split(' ').slice(0,2).join(' ')+'</button>';
+    }).join('');
+  }
+
+  // Gráficos geral
+  const top=sorted.slice(0,10);
+  renderChart('chart-profs','bar',top.map(d=>d.profissional.split(' ')[0]),top.map(d=>d.resumo?.['Valor recebido']||0),'Valor Recebido');
+  const pgtoAgg={};
+  todos.forEach(d=>{(d.por_pagamento||[]).forEach(p=>{const tp=p['Tipo de pagamento']||'Outros';pgtoAgg[tp]=(pgtoAgg[tp]||0)+(p['Valor recebido']||0);});});
+  renderChart('chart-pgto','doughnut',Object.keys(pgtoAgg),Object.values(pgtoAgg),'Pagamento');
+
+  // Origem global (Particular vs Planos)
+  const todasTabelas=[];
+  const tabAgg={};
+  todos.forEach(d=>{
+    (d.por_tabela||[]).forEach(t=>{
+      const key=t.Tabela||'Outros';
+      if(!tabAgg[key]){tabAgg[key]={Tabela:key,Origem:t.Origem,'Valor recebido':0};}
+      tabAgg[key]['Valor recebido']+=(t['Valor recebido']||0);
+    });
+  });
+  Object.values(tabAgg).forEach(t=>todasTabelas.push(t));
+  if(todasTabelas.length>0 && document.getElementById('origem-geral-lista')){
+    renderTabelas(todasTabelas,'origem-geral-lista','chart-origem-geral');
+  }
+}
+
+function mostrarProf(id,btnEl){
+  PROF_ATUAL=id;
+  const d=DADOS_PROFS[id];
+  if(!d)return;
+  mostrarView('prof',btnEl);
+  const r=d.resumo||{};
+  const rep=r['Repasse Profissional (R$)']||0,liq=r['Valor Líquido']||0;
+  document.getElementById('prof-nome').textContent=d.profissional;
+  document.getElementById('prof-periodo').textContent=d.mes+'/'+d.ano;
+  document.getElementById('prof-avatar').textContent=iniciais(d.profissional);
+  const bnome=document.getElementById('banner-nome');
+  if(bnome)bnome.textContent=d.profissional+' — '+d.mes+'/'+d.ano;
+  document.getElementById('badge-atend').textContent=(d.atendimentos||[]).length+' atendimentos';
+  document.getElementById('metrics-prof').innerHTML=
+    '<div class="metric-card azul"><div class="metric-label">Valor Recebido</div><div class="metric-valor">'+fmtBRL(r['Valor recebido'])+'</div><div class="metric-sub">Bruto compensado</div></div>'+
+    '<div class="metric-card cinza"><div class="metric-label">Valor L&iacute;quido</div><div class="metric-valor">'+fmtBRL(liq)+'</div><div class="metric-sub">Ap&oacute;s impostos e taxas</div></div>'+
+    '<div class="metric-card verde"><div class="metric-label">Repasse do M&ecirc;s</div><div class="metric-valor">'+fmtBRL(rep)+'</div><div class="metric-sub">'+fmtPct(liq>0?rep/liq:0)+' do valor l&iacute;quido</div></div>'+
+    '<div class="metric-card laranja"><div class="metric-label">Atendimentos</div><div class="metric-valor">'+(d.atendimentos||[]).length+'</div><div class="metric-sub">Procedimentos no per&iacute;odo</div></div>';
+
+  const cats={};(d.por_categoria||[]).forEach(c=>{cats[c.Categoria]=(cats[c.Categoria]||0)+(c['Valor recebido']||0);});
+  renderChart('chart-cat','doughnut',Object.keys(cats),Object.values(cats),'Categoria');
+  const pgtos={};(d.por_pagamento||[]).forEach(p=>{const tp=p['Tipo de pagamento']||'Outros';pgtos[tp]=(pgtos[tp]||0)+(p['Valor recebido']||0);});
+  renderChart('chart-pgto-prof','doughnut',Object.keys(pgtos),Object.values(pgtos),'Pagamento');
+
+  // Origem por tabela de preço
+  if(d.por_tabela && d.por_tabela.length>0 && document.getElementById('origem-prof-lista')){
+    renderTabelas(d.por_tabela,'origem-prof-lista','chart-origem-prof');
+  }
+
+  const atends=d.atendimentos||[];
+  document.getElementById('body-atend').innerHTML=atends.length===0
+    ?'<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--texto-secundario)">Sem atendimentos</td></tr>'
+    :atends.map(a=>'<tr>'+
+        '<td>'+(a.Paciente||'—')+'</td><td>'+(a.Procedimento||'—')+'</td>'+
+        '<td><span class="cat-badge">'+(a.Categoria||'—')+'</span></td>'+
+        '<td>'+(a['Tipo de pagamento']||'—')+'</td><td>'+(a['Data agendamento']||'—')+'</td>'+
+        '<td class="r">'+fmtBRL(a['Valor recebido'])+'</td>'+
+        '<td class="r">'+fmtBRL(a['Valor Líquido'])+'</td>'+
+        '<td class="r" style="color:var(--verde);font-weight:600">'+fmtBRL(a['Repasse Profissional (R$)'])+'</td>'+
+      '</tr>').join('');
+}
+
+// ── Login / Descriptografia (só usado em portais com senha) ──
+async function _descriptografar(b64, senha){
+  try{
+    const packed=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+    const salt=packed.slice(0,16),nonce=packed.slice(16,28),ct=packed.slice(28);
+    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(senha),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey(
+      {name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},km,
+      {name:'AES-GCM',length:256},false,['decrypt']);
+    const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv:nonce},key,ct);
+    return JSON.parse(new TextDecoder().decode(dec));
+  }catch(e){return null;}
+}
+
+async function tentarLogin(){
+  const inp=document.getElementById('login-senha');
+  const btn=document.getElementById('login-btn');
+  const erro=document.getElementById('login-erro');
+  const senha=inp.value.trim();
+  if(!senha)return;
+  btn.disabled=true; btn.textContent='Verificando…';
+  const dados=await _descriptografar(DADOS_ENCRIPTADOS,senha);
+  if(dados===null){
+    erro.textContent='Código incorreto. Verifique e tente novamente.';
+    btn.disabled=false; btn.textContent='Acessar →';
+    inp.value=''; inp.focus();
+  } else {
+    // Injeta os dados e inicializa o portal
+    Object.keys(dados).forEach(k=>{ DADOS_PROFS[k]=dados[k]; });
+    const ov=document.getElementById('login-overlay');
+    ov.classList.add('saindo');
+    setTimeout(()=>{ov.style.display='none'; inicializarPortal();},400);
+  }
+}
+
+function _loginEnter(e){ if(e.key==='Enter') tentarLogin(); }
+
+function inicializarPortal(){
+  // Inicialização principal (chamada após login ou direto se sem senha)
+  const pl=document.getElementById('periodo-label');
+  if(pl) pl.textContent='Per\u00edodo: '+(typeof PERIODO_LABEL!=='undefined'?PERIODO_LABEL:'');
+  if(typeof MODO_MEDICO!=='undefined'&&MODO_MEDICO&&typeof PROF_FIXO!=='undefined'&&PROF_FIXO&&DADOS_PROFS[PROF_FIXO]){
+    mostrarProf(PROF_FIXO);
+  } else {
+    renderGeral();
+  }
+}
+
+function exportarCSVGeral(){
+  const BOM='\uFEFF';
+  let linhas=['Profissional,Valor Recebido,Imposto,Taxa Cartao,Custo,Valor Liquido,Repasse Prof,Repasse Clinica'];
+  Object.values(DADOS_PROFS).forEach(d=>{
+    const r=d.resumo||{};
+    linhas.push(['"'+d.profissional+'"',(r['Valor recebido']||0).toFixed(2),(r['Imposto (18%)']||0).toFixed(2),
+      (r['Taxa cartão (3%)']||0).toFixed(2),(r['Custo']||0).toFixed(2),(r['Valor Líquido']||0).toFixed(2),
+      (r['Repasse Profissional (R$)']||0).toFixed(2),(r['Repasse Clínica (R$)']||0).toFixed(2)].join(','));
+  });
+  _download(BOM+linhas.join('\n'),'honorarios_'+PERIODO_ID+'.csv');
+}
+
+function exportarCSVProf(){
+  const d=DADOS_PROFS[PROF_ATUAL];if(!d)return;
+  const BOM='\uFEFF',r=d.resumo||{};
+  let linhas=[
+    '"Relatório de Honorários — '+d.profissional+'"',
+    '"Período: '+d.mes+'/'+d.ano+'"','','"RESUMO"',
+    '"Valor Recebido","'+fmtBRL(r['Valor recebido'])+'"',
+    '"Imposto (18%)","'+fmtBRL(r['Imposto (18%)'])+'"',
+    '"Taxa Cartão (3%)","'+fmtBRL(r['Taxa cartão (3%)'])+'"',
+    '"Custo","'+fmtBRL(r['Custo'])+'"',
+    '"Valor Líquido","'+fmtBRL(r['Valor Líquido'])+'"',
+    '"Repasse do Profissional","'+fmtBRL(r['Repasse Profissional (R$)'])+'"','',
+    '"ORIGEM DOS ATENDIMENTOS"',
+    '"Tabela","Tipo","Valor"',
+  ];
+  (d.por_tabela||[]).sort((a,b)=>(b['Valor recebido']||0)-(a['Valor recebido']||0)).forEach(t=>{
+    linhas.push(['"'+(t.Tabela||'')+'"','"'+(t.Origem||'')+'"',(t['Valor recebido']||0).toFixed(2)].join(','));
+  });
+  linhas.push('','\"ATENDIMENTOS\"',
+    '"Paciente","Procedimento","Categoria","Tabela","Pagamento","Data","Vr. Recebido","Vr. Líquido","Repasse"');
+  (d.atendimentos||[]).forEach(a=>{linhas.push([
+    '"'+(a.Paciente||'')+'"','"'+(a.Procedimento||'')+'"','"'+(a.Categoria||'')+'"',
+    '"'+(a['Tabela']||'')+'"','"'+(a['Tipo de pagamento']||'')+'"','"'+(a['Data agendamento']||'')+'"',
+    (a['Valor recebido']||0).toFixed(2),(a['Valor Líquido']||0).toFixed(2),(a['Repasse Profissional (R$)']||0).toFixed(2)
+  ].join(','));});
+  _download(BOM+linhas.join('\n'),'honorarios_'+d.profissional.replace(/ /g,'_')+'_'+PERIODO_ID+'.csv');
+  showToast('CSV exportado!');
+}
+
+function _download(conteudo,nome){
+  const blob=new Blob([conteudo],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=nome;a.click();URL.revokeObjectURL(a.href);
+}
+
+
+// ── Portais Permanentes: seletor de período ──────────────
+let PERIODO_ATUAL = null;
+
+function inicializarPortalPermanente(){
+  const periodos = Object.keys(TODOS_PERIODOS).sort(); // crescente cronológico
+  if(!periodos.length) return;
+  PERIODO_ATUAL = periodos[periodos.length-1]; // mais recente
+
+  // Monta abas de período (só exibe se >1)
+  const tabsEl = document.getElementById('periodo-tabs');
+  if(tabsEl && periodos.length > 1){
+    tabsEl.style.display = 'flex';
+    tabsEl.innerHTML = periodos.slice().reverse().map(pid => {
+      const lbl = TODOS_PERIODOS[pid].label;
+      return '<button class="periodo-tab'+(pid===PERIODO_ATUAL?' active':'')+
+             '" onclick="mudarPeriodo(\''+pid+'\')">'+ lbl +'</button>';
+    }).join('');
+  }
+
+  mudarPeriodo(PERIODO_ATUAL, false);
+}
+
+function mudarPeriodo(id, updateTabs){
+  PERIODO_ATUAL = id;
+  const pdata = TODOS_PERIODOS[id];
+  if(!pdata) return;
+
+  // Atualiza DADOS_PROFS com dados do período selecionado
+  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
+  Object.assign(DADOS_PROFS, pdata.profs);
+
+  // Atualiza variáveis globais de período
+  PERIODO_LABEL = pdata.label;
+  PERIODO_ID = id;
+
+  // Atualiza aba ativa
+  if(updateTabs !== false){
+    document.querySelectorAll('.periodo-tab').forEach(t => {
+      t.classList.toggle('active', t.textContent === pdata.label);
+    });
+  }
+
+  // Atualiza UI
+  const hp = document.getElementById('header-periodo');
+  if(hp) hp.textContent = pdata.label;
+  const pl = document.getElementById('periodo-label');
+  if(pl) pl.textContent = 'Período: ' + pdata.label;
+
+  // Destrói gráficos existentes antes de recriar
+  Object.keys(CHARTS).forEach(k => { if(CHARTS[k]){ CHARTS[k].destroy(); delete CHARTS[k]; }});
+
+  // Re-renderiza o painel correto
+  if(typeof MODO_MEDICO!=='undefined' && MODO_MEDICO &&
+     typeof PROF_FIXO!=='undefined' && PROF_FIXO && DADOS_PROFS[PROF_FIXO]){
+    mostrarProf(PROF_FIXO);
+  } else {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const gv = document.getElementById('view-geral');
+    if(gv) gv.classList.add('active');
+    document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+    const sb = document.querySelector('.sidebar-item');
+    if(sb) sb.classList.add('active');
+    renderGeral();
+  }
+}
+
+// Override tentarLogin para desencriptar todos os períodos de uma vez
+async function tentarLogin(){
+  const inp = document.getElementById('login-senha');
+  const btn = document.getElementById('login-btn');
+  const erro = document.getElementById('login-erro');
+  const senha = inp.value.trim();
+  if(!senha) return;
+  btn.disabled = true; btn.textContent = 'Verificando\u2026';
+
+  const periodos = Object.entries(TODOS_PERIODOS_ENC);
+  if(!periodos.length){ btn.disabled=false; return; }
+
+  // Valida senha com o primeiro período
+  const [pid0, pdata0] = periodos[0];
+  const dec0 = await _descriptografar(pdata0.blob, senha);
+  if(dec0 === null){
+    erro.textContent = 'Código incorreto. Verifique e tente novamente.';
+    btn.disabled=false; btn.textContent = 'Acessar \u2192';
+    inp.value=''; inp.focus();
+    return;
+  }
+  TODOS_PERIODOS[pid0] = { label: pdata0.label, profs: dec0 };
+
+  // Desencripta períodos restantes (mesma senha)
+  for(let i=1; i<periodos.length; i++){
+    const [pid, pdata] = periodos[i];
+    const dec = await _descriptografar(pdata.blob, senha);
+    if(dec !== null) TODOS_PERIODOS[pid] = { label: pdata.label, profs: dec };
+  }
+
+  const ov = document.getElementById('login-overlay');
+  ov.classList.add('saindo');
+  setTimeout(() => { ov.style.display='none'; inicializarPortalPermanente(); }, 400);
+}
+
+document.getElementById('login-senha').focus();
+</script>
+</body>
+</html>
