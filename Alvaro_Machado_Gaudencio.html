@@ -103,6 +103,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
 .periodo-tab{padding:6px 16px;border-radius:20px;border:1.5px solid var(--cinza-borda);background:white;color:var(--texto-secundario);font-size:12.5px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
 .periodo-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
 .periodo-tab.active{background:var(--azul-medio);border-color:var(--azul-medio);color:white;}
+/* ── Filtro de Empresa ── */
+.empresa-filtro{display:none;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;padding:10px 14px;background:#EEF4FB;border-radius:10px;border:1px solid #C5D9EE;}
+.empresa-filtro::before{content:'Empresa:';font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--texto-secundario);text-transform:uppercase;white-space:nowrap;}
+.empresa-tab{padding:5px 14px;border-radius:16px;border:1.5px solid #B0C8E4;background:white;color:var(--azul-escuro);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.empresa-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.empresa-tab.active{background:var(--azul-escuro);border-color:var(--azul-escuro);color:white;}
 /* ── Tela de Login ── */
 .login-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A 0%,#0d2d55 60%,#0B1F3A 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;}
 .login-overlay.saindo{opacity:0;pointer-events:none;}
@@ -141,6 +147,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
       <span id="banner-nome" style="display:block;opacity:0.8;font-size:12px;"></span></div>
     </div>
     <div id='periodo-tabs' class='periodo-tabs'></div>
+    <div id='empresa-filtro' class='empresa-filtro'></div>
     <div class='periodo-bar' id='periodo-label'></div>
     <div class='view active' id='view-geral'>
       <div class='metrics-grid' id='metrics-geral'></div>
@@ -212,7 +219,7 @@ let PERIODO_ID = '';
 let PERIODO_LABEL = '';
 let DADOS_PROFS = {};
 const LINKS = {};
-const TODOS_PERIODOS = /*PDATA*/{"2026-03": {"label": "Março/2026", "profs": {"Alvaro_Machado_Gaudencio": {"profissional": "Alvaro Machado Gaudencio", "mes": "Março", "ano": 2026, "periodo_id": "2026-03", "resumo": {"Profissional": "Alvaro Machado Gaudencio", "Valor recebido": 0.0, "Imposto (18%)": 0.0, "Taxa cartão (3%)": 0.0, "Custo": 0.0, "Valor Líquido": 0.0, "Repasse Profissional (R$)": 0.0, "Repasse Clínica (R$)": 0.0}, "por_categoria": [{"Profissional": "Alvaro Machado Gaudencio", "Categoria": "Consultas", "Valor recebido": 0.0, "Valor Líquido": 0.0, "Repasse Profissional (R$)": 0.0}], "por_pagamento": [{"Profissional": "Alvaro Machado Gaudencio", "Tipo de pagamento": "Cartão de débito", "Valor recebido": 0.0}], "por_tabela": [{"Profissional": "Alvaro Machado Gaudencio", "Tabela": "PARTICULAR", "Origem": "Particular", "Valor recebido": 0.0}], "atendimentos": [{"Paciente": "Marcia Borrelli", "Procedimento": "Consulta em consultório (no horário normal ou preestabelecido)", "Categoria": "Consultas", "Tabela": "PARTICULAR", "Origem": "Particular", "Tipo de pagamento": "Cartão de débito", "Data agendamento": "06/03/2026", "Valor recebido": 0.0, "Imposto (18%)": 0.0, "Taxa cartão (3%)": 0.0, "Custo": 0.0, "Valor Líquido": 0.0, "% Repasse Prof": 0.0, "Repasse Profissional (R$)": 0.0}]}}}}/*PDATA*/;
+const TODOS_PERIODOS = /*PDATA*/{"2026-03": {"label": "Março/2026", "profs": {"Alvaro_Machado_Gaudencio": {"profissional": "Alvaro Machado Gaudencio", "empresa": "Endovascular SP", "mes": "Março", "ano": 2026, "periodo_id": "2026-03", "resumo": {"Profissional": "Alvaro Machado Gaudencio", "Valor recebido": 0.0, "Imposto (18%)": 0.0, "Taxa cartão (3%)": 0.0, "Custo": 0.0, "Valor Líquido": 0.0, "Repasse Profissional (R$)": 0.0, "Repasse Clínica (R$)": 0.0}, "por_categoria": [{"Profissional": "Alvaro Machado Gaudencio", "Categoria": "Consultas", "Valor recebido": 0.0, "Valor Líquido": 0.0, "Repasse Profissional (R$)": 0.0}], "por_pagamento": [{"Profissional": "Alvaro Machado Gaudencio", "Tipo de pagamento": "Cartão de débito", "Valor recebido": 0.0}], "por_tabela": [{"Profissional": "Alvaro Machado Gaudencio", "Tabela": "PARTICULAR", "Origem": "Particular", "Valor recebido": 0.0}], "atendimentos": [{"Paciente": "Marcia Borrelli", "Procedimento": "Consulta em consultório (no horário normal ou preestabelecido)", "Categoria": "Consultas", "Tabela": "PARTICULAR", "Origem": "Particular", "Tipo de pagamento": "Cartão de débito", "Data agendamento": "06/03/2026", "Valor recebido": 0.0, "Imposto (18%)": 0.0, "Taxa cartão (3%)": 0.0, "Custo": 0.0, "Valor Líquido": 0.0, "% Repasse Prof": 0.0, "Repasse Profissional (R$)": 0.0}]}}}}/*PDATA*/;
 
 
 const CORES=['#2E6DA4','#E07B28','#2D7A3C','#8E44AD','#C0392B','#16A085','#D35400','#2980B9','#27AE60','#F39C12','#1ABC9C','#E74C3C'];
@@ -361,8 +368,10 @@ function renderGeral(){
     const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
     const linkHtml=(!MODO_MEDICO&&LINKS[id])?
       '<td style="text-align:center"><button class="btn-link" onclick="event.stopPropagation();abrirPortal(\''+LINKS[id]+'\',\''+d.profissional.split(' ')[0]+'\')">&#128279; Abrir Portal</button></td>':'';
+    const empAtual=d.empresa||'Endovascular SP';
+    const empBadge=(empAtual!=='Endovascular SP')?'<span style="font-size:10px;background:#E8F5EB;color:#2D7A3C;border-radius:4px;padding:1px 6px;margin-left:7px;font-weight:700">'+empAtual.replace('Endovascular SP','Endo').replace('Oxy Recovery','Oxy')+'</span>':'';
     return '<tr style="cursor:pointer" onclick="mostrarProf(\''+id+'\')">'+
-      '<td class="prof">'+d.profissional+'</td>'+
+      '<td class="prof">'+d.profissional+empBadge+'</td>'+
       '<td class="valor">'+fmtBRL(rec)+'</td>'+
       '<td class="valor" style="color:var(--vermelho)">'+fmtBRL(imp)+'</td>'+
       '<td class="valor" style="color:var(--laranja)">'+fmtBRL(tax)+'</td>'+
