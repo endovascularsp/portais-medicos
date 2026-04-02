@@ -103,6 +103,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
 .periodo-tab{padding:6px 16px;border-radius:20px;border:1.5px solid var(--cinza-borda);background:white;color:var(--texto-secundario);font-size:12.5px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
 .periodo-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
 .periodo-tab.active{background:var(--azul-medio);border-color:var(--azul-medio);color:white;}
+/* ── Filtro de Empresa ── */
+.empresa-filtro{display:none;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;padding:10px 14px;background:#EEF4FB;border-radius:10px;border:1px solid #C5D9EE;}
+.empresa-filtro::before{content:'Empresa:';font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--texto-secundario);text-transform:uppercase;white-space:nowrap;}
+.empresa-tab{padding:5px 14px;border-radius:16px;border:1.5px solid #B0C8E4;background:white;color:var(--azul-escuro);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.empresa-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.empresa-tab.active{background:var(--azul-escuro);border-color:var(--azul-escuro);color:white;}
 /* ── Tela de Login ── */
 .login-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A 0%,#0d2d55 60%,#0B1F3A 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;}
 .login-overlay.saindo{opacity:0;pointer-events:none;}
@@ -155,6 +161,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
       <span id="banner-nome" style="display:block;opacity:0.8;font-size:12px;"></span></div>
     </div>
     <div id='periodo-tabs' class='periodo-tabs'></div>
+    <div id='empresa-filtro' class='empresa-filtro'></div>
     <div class='periodo-bar' id='periodo-label'></div>
     <div class='view active' id='view-geral'>
       <div class='metrics-grid' id='metrics-geral'></div>
@@ -226,7 +233,7 @@ let PERIODO_ID = '';
 let PERIODO_LABEL = '';
 let DADOS_PROFS = {};
 const LINKS = {};
-const TODOS_PERIODOS_ENC = /*PDATA*/{"2026-02": {"label": "Fevereiro/2026", "blob": "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"}}/*PDATA*/;
+const TODOS_PERIODOS_ENC = /*PDATA*/{"2026-02": {"label": "Fevereiro/2026", "blob": "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"}}/*PDATA*/;
 let TODOS_PERIODOS = {};
 
 
@@ -376,8 +383,10 @@ function renderGeral(){
     const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
     const linkHtml=(!MODO_MEDICO&&LINKS[id])?
       '<td style="text-align:center"><button class="btn-link" onclick="event.stopPropagation();abrirPortal(\''+LINKS[id]+'\',\''+d.profissional.split(' ')[0]+'\')">&#128279; Abrir Portal</button></td>':'';
+    const empAtual=d.empresa||'Endovascular SP';
+    const empBadge=(empAtual!=='Endovascular SP')?'<span style="font-size:10px;background:#E8F5EB;color:#2D7A3C;border-radius:4px;padding:1px 6px;margin-left:7px;font-weight:700">'+empAtual.replace('Endovascular SP','Endo').replace('Oxy Recovery','Oxy')+'</span>':'';
     return '<tr style="cursor:pointer" onclick="mostrarProf(\''+id+'\')">'+
-      '<td class="prof">'+d.profissional+'</td>'+
+      '<td class="prof">'+d.profissional+empBadge+'</td>'+
       '<td class="valor">'+fmtBRL(rec)+'</td>'+
       '<td class="valor" style="color:var(--vermelho)">'+fmtBRL(imp)+'</td>'+
       '<td class="valor" style="color:var(--laranja)">'+fmtBRL(tax)+'</td>'+

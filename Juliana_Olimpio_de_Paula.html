@@ -103,6 +103,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
 .periodo-tab{padding:6px 16px;border-radius:20px;border:1.5px solid var(--cinza-borda);background:white;color:var(--texto-secundario);font-size:12.5px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
 .periodo-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
 .periodo-tab.active{background:var(--azul-medio);border-color:var(--azul-medio);color:white;}
+/* ── Filtro de Empresa ── */
+.empresa-filtro{display:none;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;padding:10px 14px;background:#EEF4FB;border-radius:10px;border:1px solid #C5D9EE;}
+.empresa-filtro::before{content:'Empresa:';font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--texto-secundario);text-transform:uppercase;white-space:nowrap;}
+.empresa-tab{padding:5px 14px;border-radius:16px;border:1.5px solid #B0C8E4;background:white;color:var(--azul-escuro);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.empresa-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.empresa-tab.active{background:var(--azul-escuro);border-color:var(--azul-escuro);color:white;}
 /* ── Tela de Login ── */
 .login-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A 0%,#0d2d55 60%,#0B1F3A 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;}
 .login-overlay.saindo{opacity:0;pointer-events:none;}
@@ -155,6 +161,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
       <span id="banner-nome" style="display:block;opacity:0.8;font-size:12px;"></span></div>
     </div>
     <div id='periodo-tabs' class='periodo-tabs'></div>
+    <div id='empresa-filtro' class='empresa-filtro'></div>
     <div class='periodo-bar' id='periodo-label'></div>
     <div class='view active' id='view-geral'>
       <div class='metrics-grid' id='metrics-geral'></div>
@@ -226,7 +233,7 @@ let PERIODO_ID = '';
 let PERIODO_LABEL = '';
 let DADOS_PROFS = {};
 const LINKS = {};
-const TODOS_PERIODOS_ENC = /*PDATA*/{"2026-02": {"label": "Fevereiro/2026", "blob": "5+gaie1Y1YHMSXkQ8F1tKdks8VubGuzex6APfRJjIVbniZujB+PlK7rSH0ZuYpGABM/zsPaN9t8Ur+j24DfYYlTZ6hoBtNQBz0CP5w80qsr5n+Cg3oVO4qgg9f+J3GBOyPF5Q6UXguN5CYULkQFRzcpCoj7nf2AML1nmZh+D16vhoyg7rNSblP0AYAgnc9LuHR1y3ZuIALKKbMPZUvvbb9PxKxqna1FDLJ2QPCba7d1jIvDIQsS+apeLqHJJMFTs+tmZhho769G9/pMBoU5AWoU4kJnZ601LVOS50V10BHCfC1ybQR4E73qTHRysm43+rTKcSPS1ydFi1IJSaBEqByIp7qUq0sAFaDslTWOKvtbZ0eBzqBU03zw3brO9EbKoEjawBiqESAdHbOyDPd9Gq+cW7IchRDooG8Y67Aw1kqC0b+eDH/EvofHeJo8XoxL9ZfaIXOts0QY5NL784QGG7lC4y2+JQocCUvZy8HVjidj4cRw2MneNEoOBDeMnWAxoib9d8onzRyEtTOmvCdIceLBUSzOeaN8NPd5HMS9lzemoe4JWVllfgQZ6YyCGafYm41hN0i7S4Bt8XtHTBt3izZqD6JlE1TZ1NHNH7wcTk7MuRyDqtaxngGx3M4hI3tFvQW182PEQMwLynIR0Q4O/xHG2TXkRIRGAt2V0yEGX+HUlYGdpImYt69SBRdQVf/ByqmfYHm5TsX9/sx2X4du1bSbF9ejAra3Xa3x1Mau5i7f2AadHlnDpOFo6r1hEpTE+9k+3fc+3PLt3qqnCb3wq6X3lU8WMpM/2PGaUSxm769OTZXeEuviS9DY4kJrTj8eCQF0vTprWVCOcLpTaKbNOJGqAf+Rm7aYV/r6lNTh0NA38zGisoKAnRPgnGrdVEHOzULE4SipN7Ke1jRZQxBYW7cbqn/H+kfSeEVh/sig3njhSIkRm6TB9c/F6jEi6QObUpKIuEj13/fliw1fiy4dZpXDUzgXStEptvKtRJmTY6VdTQpyPkEnPPOimY3Bx+rANwYlwkQ9ccpr8ZakOehl3AforT86gma15J7tCdnwJbdTtZ0xnUK3DPZnytaWv+OmPr+EbXId82Qhq0Q60J6x5bGwBmZ7RrMm7VDjNAwOiLhJufibLttOwM4rGvJXRzlUwboCp9DN/TJKxTSmq5FUaciO3MYmwt0UyFS8d+o83hYPZuwWjFstPuGE0uqyES1dVbRLY7xpgQ20mbrP/amxa3h7ZTrDn2OPEgzn/nipArImqBOY6AKtK0ulh3CQScMO3xfH55slw3yqk/9cxMjSg0J98qY09Vk1it7as7P+shyToqsD6YRoldTMYCGhv6tax6cN4tJSYUBdGAXmMJ90AZ/hUJ9fsZ3f32D9UqC91xPSLBViqVYve0LDODgw8TOFG9owaJH1OEDe6S8/BFwjBdozk7IskvMNDnvpWD6VB3wU/w6ID+I0Lq/NKbY0H7lH6iccnHNKrjVi4x2s2HF3VnanWITxwNioL+47DwDMqViEHdkGY5mM4YWmz4QGeFck1pJJpLMSw7VnQ1rQlxsCALVpmEeXs4IDpLRee8taTFrrKA/AQ/VASz2vY9Zt0E52KJN4LEoolGBc0dzw9h6mWdx2wpg8M4Slamlncc5WibZpb2MS4F2G4hlBTc2o6VAPjDrG7ci5SCXQX7SGMaasztvrmNqGnd54DXeXvhhUQ/5IVlTxsghF2ZNqEVn4h"}}/*PDATA*/;
+const TODOS_PERIODOS_ENC = /*PDATA*/{"2026-02": {"label": "Fevereiro/2026", "blob": "cx7w2+9tluQsE8SjdrPBDnKKesHLeuXl24LdgJrcNqigkCW6SR8nN0/CQ6gOWZ/riEpeyF+5SPa0nmktwabjKZTd3pimMNTdKbOikws7ahbOgwL+JugVJEJ5RywMtrinRGqZSnM1GHq2ZpH4GqJNj7FAJLiItdOlD6rgsLZUGxDd7XDeRNDxnG9sFJJq3MfrRLomYqmXDyg7+BFFLN48iZJmdai8OyWFXwpnXKSUx4FPqHG+uqvkT+2+Trc1FLYUYFOhS+KFQQOYLN3+5MIMu5UeHdtgTkGsNgRut2DzwUWivZXZFv0jwNIdow2KnHRAHSBjvHyIKwN8H8Z6rTmH1HKfgHtg/GkLEi/Cd3Fc2Ipdi+GWIyqfpjpl6sod6l/bmLkAFyvxeK8Wz3n99J3zB9igv33YTYFCmoe+yAdgnV9RY0dAfrkBJYY5mELnMgnVjC6xPIrs/48Uk9IxqGcxT38JEUndZWXewuGNAqm8PTVO6k8a8KZp3ssh/14hCOScNY6zCt0Q4aXp4UwvKx6LlhLOfwZKo+9ODKUMBaS1mqwPIeecrHCCYzwoEguisE1lfyAgEofSpY3RmvQhw+Dq47kUvF3OZxmYumg2NQV2vizeg8Sx4LPvUScXoMgPVXI//RWmS/yOmwmj3eRZdUQIQQjNOkxf7UvOHXak5PQbDqjjubJSsRf4IDAVx1P1rjl/L1UtsrQv/fg86dy+AFgY0Dld4I1ON5OSZzjCVzXzhOEjFqVC6DTbBRxYkPaAYolbetcthLLKTr/xLqKqbBh4zuf3V+gJ+XxsoYCCNnyXl02BbnpgE83GACrYSmiQKCLl4gOvDg1x6Fdx6PFKX1vRWMwU/Cz0+yZovs1OxYZ9aaZ3T/AG16AmnbH12DddfBzvjTh2BfpPps5Z30USDfhsrPAp4Vo06SXyx1dmE8WUev6GD7xFlOYIMFwrf0LjPMYWAV51pA7nvapuTjnDKxOUQ2KQZNYbF8sjOTdNgZ9I1iWzYibHDkl2umyRWV20aSuW1MziQTLKvfkFTKOTjARDXnZb/K+AjGtSwsL602OBlYHN6uFrNGCnUG3r7iy3aARQ37tqAYASj0xrjqh+Efp3dtijQiV2i7DBEbRFbUVoOFOuEHx/lvAvBarBcU/X2cIoH0t2DpUaXNd7a+OsUW+FHifRk3NrDyTnpfmaXrgfufauI+Y/456VyJViy9h2+777k1iITmxoJUEXjEVv4S/3xVG5BVeN+U7kXH44inqZbomC7XD6cpKdHZCYG5i25xL2wiPewAoUw1HbzcYVuK+/VSeLA7bRn/qYSpNvK1W1k4/cf7pv7Oh4cNcuelVbbqT/I8RRpd5HicEc+VFzjg/f48ooh0Pomoca4d90ofG0uBxvW6Rc1i96moP1oAf5vaJR78rbksW/fivZ6+Dn+Av0YrRDICeHOM5yQAEgioVhSnKH1S8AvdoVT+h4FTOcdLJjqXNQjMsErg/pIkec62zo/KcdzLFarKL2favBcZ81JEqbVtbGm5a+NuuTAezi2rWVCshmcsUbmImm79z5tYpdHvZZXwBzG5KJVMqmjongB/7UfC0Tl7FZYmUIQDirBNAmxKyX11uzAlrJ490WnuQ1PLssNvZNWijQp5c23GKQDxSgtc7zB0G8Qg0NcMqIa9WHpOdAFujzgkby2oJq+9cCNRVyKfKy4iu6f7bs8nArHEu+zWU92oBcUNNs6P8j2UQdmZhTD+R9/pM8TarUnE1mxPD5LkC4tsvHQuzO8OauD16KhAB/fhq/cBj8hiHzRQFxsDlYq4VSb+3BOopZQG8Y5bLpYZ+ikzC+BWPpbOqUeEyYxvQ4u+B938+MFNGNg9whHbLD4/Ktin+d684WejKX3sMbSgRU"}}/*PDATA*/;
 let TODOS_PERIODOS = {};
 
 
@@ -376,8 +383,10 @@ function renderGeral(){
     const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
     const linkHtml=(!MODO_MEDICO&&LINKS[id])?
       '<td style="text-align:center"><button class="btn-link" onclick="event.stopPropagation();abrirPortal(\''+LINKS[id]+'\',\''+d.profissional.split(' ')[0]+'\')">&#128279; Abrir Portal</button></td>':'';
+    const empAtual=d.empresa||'Endovascular SP';
+    const empBadge=(empAtual!=='Endovascular SP')?'<span style="font-size:10px;background:#E8F5EB;color:#2D7A3C;border-radius:4px;padding:1px 6px;margin-left:7px;font-weight:700">'+empAtual.replace('Endovascular SP','Endo').replace('Oxy Recovery','Oxy')+'</span>':'';
     return '<tr style="cursor:pointer" onclick="mostrarProf(\''+id+'\')">'+
-      '<td class="prof">'+d.profissional+'</td>'+
+      '<td class="prof">'+d.profissional+empBadge+'</td>'+
       '<td class="valor">'+fmtBRL(rec)+'</td>'+
       '<td class="valor" style="color:var(--vermelho)">'+fmtBRL(imp)+'</td>'+
       '<td class="valor" style="color:var(--laranja)">'+fmtBRL(tax)+'</td>'+
