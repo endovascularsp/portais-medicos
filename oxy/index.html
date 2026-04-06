@@ -356,7 +356,7 @@ function renderTabelas(porTabela, containerId, chartId){
 }
 
 function renderGeral(){
-  const todos=Object.values(DADOS_PROFS);
+  const todos=Object.entries(DADOS_PROFS).map(([k,v])=>({...v,_key:k}));
   if(!todos.length)return;
   const soma=(key)=>todos.reduce((a,d)=>a+(d.resumo?.[key]||0),0);
   const totalRec=soma('Valor recebido'),totalLiq=soma('Valor Líquido');
@@ -383,7 +383,7 @@ function renderGeral(){
     const cus=r['Custo']||0,liq=r['Valor Líquido']||0,rep=r['Repasse Profissional (R$)']||0,cli=r['Repasse Clínica (R$)']||0;
     const pct=liq>0?rep/liq:0;
     tr_rec+=rec;tr_imp+=imp;tr_tax+=tax;tr_cus+=cus;tr_liq+=liq;tr_rep+=rep;tr_cli+=cli;
-    const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
+    const id=d._key;
     const linkHtml=(!MODO_MEDICO&&LINKS[id])?
       '<td style="text-align:center"><button class="btn-link" onclick="event.stopPropagation();abrirPortal(\''+LINKS[id]+'\',\''+d.profissional.split(' ')[0]+'\')">&#128279; Abrir Portal</button></td>':'';
     const empAtual=d.empresa||'Endovascular SP';
@@ -412,7 +412,7 @@ function renderGeral(){
   const sb=document.getElementById('sidebar-profs');
   if(sb){
     sb.innerHTML=sorted.filter(d=>d.resumo?.['Repasse Profissional (R$)']>0).map(d=>{
-      const id=d.profissional.replace(/ /g,'_').replace(/\//g,'-');
+      const id=d._key;
       return '<button class="sidebar-item" id="sb-'+id+'" onclick="mostrarProf(\''+id+'\',this)"><div class="dot"></div> '+d.profissional.split(' ').slice(0,2).join(' ')+'</button>';
     }).join('');
   }
