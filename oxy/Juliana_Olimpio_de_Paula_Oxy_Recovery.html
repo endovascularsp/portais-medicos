@@ -165,6 +165,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
   </div>
   <div style='display:flex;align-items:center;gap:12px;'><span id='header-periodo' style='font-size:13px;opacity:0.85;'></span><span class='header-badge'>&#193;rea do M&#233;dico</span></div>
 </header>
+<div class='portais-nav'><span class='portais-nav-label'>Meus Portais:</span><a href='../Juliana_Olimpio_de_Paula.html' class='portais-nav-btn endo'>🏥 Endovascular SP</a><a class='portais-nav-btn oxy active'>💊 Oxy Recovery</a></div>
 <div class='toast' id='toast'></div>
 <div class='layout'>
 
@@ -686,12 +687,22 @@ async function tentarLogin(){
     if(dec !== null) TODOS_PERIODOS[pid] = { label: pdata.label, profs: dec };
   }
 
+  sessionStorage.setItem('_xp', senha);
   const ov = document.getElementById('login-overlay');
   ov.classList.add('saindo');
   setTimeout(() => { ov.style.display='none'; inicializarPortalPermanente(); }, 400);
 }
 
 document.getElementById('login-senha').focus();
+/* ── auto-login cross-portal ── */
+(function(){
+  const _cp = sessionStorage.getItem('_xp');
+  if(_cp){
+    sessionStorage.removeItem('_xp');
+    const _inp = document.getElementById('login-senha');
+    if(_inp){ _inp.value = _cp; tentarLogin(); }
+  }
+})();
 </script>
 </body>
 </html>
