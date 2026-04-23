@@ -127,6 +127,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
 .login-erro{color:#F87171;font-size:12.5px;margin-top:12px;min-height:20px;font-weight:500;}
 .login-rodape{color:rgba(255,255,255,0.25);font-size:11px;margin-top:28px;}
 .sidebar{display:none!important;}</style>
+
+  <style id="portais-nav-css">
+  .portais-nav{background:#162d50;border-bottom:1px solid rgba(255,255,255,0.10);
+    padding:8px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .portais-nav-label{color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.5px;margin-right:4px;}
+  .portais-nav-btn{display:inline-flex;align-items:center;gap:6px;
+    padding:5px 13px;border-radius:20px;border:1px solid;font-size:12px;font-weight:600;
+    cursor:pointer;text-decoration:none;transition:all .18s;}
+  .portais-nav-btn.hub{color:#94a3b8;border-color:rgba(148,163,184,0.35);background:rgba(148,163,184,0.08);}
+  .portais-nav-btn.hub:hover{background:rgba(148,163,184,0.20);border-color:#94a3b8;}
+  </style>
 </head>
 <body>
 <div class='login-overlay' id='login-overlay'>
@@ -150,6 +162,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
   </div>
   <div style='display:flex;align-items:center;gap:12px;'><span id='header-periodo' style='font-size:13px;opacity:0.85;'></span><span class='header-badge'>&#193;rea do M&#233;dico</span></div>
 </header>
+<div class='portais-nav'><span class='portais-nav-label'>Meus Portais:</span><a href='../../hub/Augusto_Ferreira_de_Carvalho_Caparica_Hub.html' class='portais-nav-btn hub'>🏠 Hub</a></div>
 <div class='toast' id='toast'></div>
 <div class='layout'>
 
