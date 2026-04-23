@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Portal — Gabriela Richards | Endovascular SP</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff}
+
+    /* ── LOGIN OVERLAY ── */
+    #login-overlay{
+      position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000;
+    }
+    .login-box{
+      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;
+      backdrop-filter:blur(10px);
+    }
+    .login-logo{font-size:36px;margin-bottom:8px}
+    .login-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:28px}
+    .login-input{
+      width:100%;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.08);color:#fff;font-size:15px;
+      outline:none;transition:border .2s;margin-bottom:14px;letter-spacing:2px;
+    }
+    .login-input:focus{border-color:rgba(126,184,247,0.6)}
+    .login-input::placeholder{letter-spacing:0;color:rgba(255,255,255,0.3)}
+    .login-btn{
+      width:100%;padding:13px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#1e4d8c,#2e6fc0);color:#fff;
+      font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;
+    }
+    .login-btn:hover{opacity:.88}
+    .login-erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
+
+    /* ── MAIN ── */
+    #main{display:none;min-height:100vh;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%)}
+
+    header{
+      background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:20px 32px;display:flex;align-items:center;gap:16px;
+    }
+    .header-logo{font-size:28px}
+    .header-info h1{font-size:16px;font-weight:700;color:#fff;letter-spacing:.3px}
+    .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+
+    .hub-body{
+      max-width:860px;margin:0 auto;padding:52px 24px 60px;
+    }
+    .hub-greeting{
+      font-size:28px;font-weight:700;color:#fff;margin-bottom:8px;
+    }
+    .hub-greeting span{color:#7eb8f7}
+    .hub-sub{
+      font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:44px;
+    }
+
+    /* ── CARDS ── */
+    .hub-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .hub-cards.single{grid-template-columns:1fr;max-width:420px}
+    .hub-card{
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
+      border-radius:20px;padding:32px 28px;transition:border-color .2s,background .2s;
+    }
+    .hub-card.prod{border-color:rgba(192,132,252,0.25)}
+    .hub-card.prod:hover{border-color:rgba(192,132,252,0.5);background:rgba(192,132,252,0.06)}
+    .hub-card.rec{border-color:rgba(126,184,247,0.25)}
+    .hub-card.rec:hover{border-color:rgba(126,184,247,0.5);background:rgba(126,184,247,0.06)}
+    .hub-card-icon{font-size:36px;margin-bottom:14px}
+    .hub-card-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px}
+    .hub-card-desc{font-size:13px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:24px}
+
+    /* Sub-buttons dentro dos cards */
+    .hub-card-links{display:flex;flex-direction:column;gap:10px}
+    .hub-sub-btn{
+      display:flex;align-items:center;gap:10px;padding:13px 18px;
+      border-radius:12px;border:1px solid;font-size:14px;font-weight:600;
+      cursor:pointer;text-decoration:none;transition:all .18s;
+    }
+    .hub-sub-btn.endo{
+      color:#7eb8f7;border-color:rgba(126,184,247,0.35);background:rgba(126,184,247,0.08);
+    }
+    .hub-sub-btn.endo:hover{background:rgba(126,184,247,0.20);border-color:#7eb8f7}
+    .hub-sub-btn.oxy{
+      color:#6dd5a0;border-color:rgba(109,213,160,0.35);background:rgba(109,213,160,0.08);
+    }
+    .hub-sub-btn.oxy:hover{background:rgba(109,213,160,0.20);border-color:#6dd5a0}
+    .hub-sub-btn.cir{
+      color:#f5a623;border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.08);
+    }
+    .hub-sub-btn.cir:hover{background:rgba(245,166,35,0.20);border-color:#f5a623}
+    .hub-sub-btn.prod-btn{
+      color:#c084fc;border-color:rgba(192,132,252,0.35);background:rgba(192,132,252,0.08);
+    }
+    .hub-sub-btn.prod-btn:hover{background:rgba(192,132,252,0.20);border-color:#c084fc}
+
+    /* Badge "Em breve" */
+    .hub-badge-em-breve{
+      display:inline-block;padding:3px 10px;border-radius:20px;
+      background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+      font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;
+    }
+
+    /* Rodapé */
+    .hub-footer{
+      text-align:center;font-size:11px;color:rgba(255,255,255,0.2);
+      margin-top:60px;padding-bottom:20px;
+    }
+
+    @media(max-width:600px){
+      .hub-cards{grid-template-columns:1fr}
+      .hub-greeting{font-size:22px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">🏥</div>
+    <div class="login-title">Portal do Profissional</div>
+    <div class="login-sub">Endovascular SP</div>
+    <input id="login-senha" class="login-input" type="password"
+           placeholder="Sua senha de acesso"
+           onkeydown="if(event.key==='Enter') tentarLogin()"/>
+    <button class="login-btn" onclick="tentarLogin()">Acessar →</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <header>
+    <div class="header-logo">🏥</div>
+    <div class="header-info">
+      <h1>Endovascular SP</h1>
+      <p>Portal do Profissional</p>
+    </div>
+  </header>
+
+  <div class="hub-body">
+    <div class="hub-greeting">Olá, <span id="nome-exibido"></span> 👋</div>
+    <div class="hub-sub">Selecione o módulo que deseja acessar:</div>
+
+    <div class="hub-cards single">
+      
+      
+        <div class="hub-card rec" id="card-rec">
+          <div class="hub-card-icon">💰</div>
+          <div class="hub-card-title">Recebimento</div>
+          <div class="hub-card-desc">Honorários e repasses<br>por competência</div>
+          <div class="hub-card-links">
+              <a href="../Gabriela_Richards.html" onclick="navegar(this,event)" class="hub-sub-btn endo">
+                🏥 Endovascular SP
+              </a>
+          </div>
+        </div>
+    </div>
+
+    <div class="hub-footer">Endovascular SP © 2026 · Dados protegidos com criptografia AES-256</div>
+  </div>
+</div>
+
+<script>
+const BLOB = "rMSCYlMyrCMZAZoypPufk5p+thXRqsZL8Y71YRtQJf3wfjbIaRj3EGdi7U8zY82YJfb+GwdlKKMILKUC+PZZ3U8rI/6dkt1vUDQiROkUuxtUUELCZpo1kXxQyN2WSLN67u5ykQpyXX4W0Yr256wt3C82IsVBscLGme0WhdH9+ki/RjLGSoasem8E/K20y318gwgeDA5kuCgjkIwD2KeAh2H2SdHoJnC96dGD";
+
+async function derivarChave(senha, salt) {
+  const enc = new TextEncoder();
+  const mat = await crypto.subtle.importKey("raw", enc.encode(senha), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt, iterations:100000, hash:"SHA-256"},
+    mat, {name:"AES-GCM", length:256}, false, ["decrypt"]
+  );
+}
+
+async function decryptBlob(blob, senha) {
+  const raw  = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
+  const salt = raw.slice(0, 16);
+  const iv   = raw.slice(16, 28);
+  const ct   = raw.slice(28);
+  const key  = await derivarChave(senha, salt);
+  const pt   = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+async function tentarLogin() {
+  const senha = document.getElementById('login-senha').value.trim();
+  if (!senha) return;
+  try {
+    const dados = await decryptBlob(BLOB, senha);
+    // Salva senha para auto-login nos portais filhos
+    sessionStorage.setItem('_xp', senha);
+    // Exibe o main
+    const primeiro = dados.profissional.split(' ')[0];
+    document.getElementById('nome-exibido').textContent = primeiro;
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+  } catch(e) {
+    const el = document.getElementById('login-erro');
+    el.textContent = 'Senha incorreta. Tente novamente.';
+    setTimeout(() => el.textContent = '', 3000);
+    document.getElementById('login-senha').value = '';
+    document.getElementById('login-senha').focus();
+  }
+}
+
+function navegar(el, e) {
+  e.preventDefault();
+  // Garante que a senha esteja salva antes de navegar
+  const s = sessionStorage.getItem('_xp');
+  if (s) sessionStorage.setItem('_xp', s);
+  window.location.href = el.href;
+}
+
+// Auto-login via sessionStorage (vindo de outro portal)
+window.addEventListener('load', async () => {
+  const s = sessionStorage.getItem('_xp');
+  if (s) {
+    sessionStorage.removeItem('_xp');
+    document.getElementById('login-senha').value = s;
+    await tentarLogin();
+  } else {
+    document.getElementById('login-senha').focus();
+  }
+});
+</script>
+</body>
+</html>

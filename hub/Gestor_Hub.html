@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Hub Gestores — Endovascular SP</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff}
+
+    #login-overlay{
+      position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000;
+    }
+    .login-box{
+      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;
+      backdrop-filter:blur(10px);
+    }
+    .login-logo{font-size:36px;margin-bottom:8px}
+    .login-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:6px}
+    .login-badge{display:inline-block;margin-bottom:22px;padding:3px 14px;border-radius:20px;
+      background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.45);
+      color:#f5c842;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+    .login-input{
+      width:100%;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.08);color:#fff;font-size:15px;
+      outline:none;transition:border .2s;margin-bottom:14px;letter-spacing:2px;
+    }
+    .login-input:focus{border-color:rgba(245,166,35,0.6)}
+    .login-input::placeholder{letter-spacing:0;color:rgba(255,255,255,0.3)}
+    .login-btn{
+      width:100%;padding:13px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#1e4d8c,#2e6fc0);color:#fff;
+      font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;
+    }
+    .login-btn:hover{opacity:.88}
+    .login-erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
+
+    #main{display:none;min-height:100vh;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%)}
+
+    header{
+      background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:20px 32px;display:flex;align-items:center;gap:16px;
+    }
+    .header-logo{font-size:28px}
+    .header-info h1{font-size:16px;font-weight:700;color:#fff}
+    .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+    .header-badge{margin-left:auto;padding:4px 14px;border-radius:20px;
+      background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.45);
+      color:#f5c842;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+
+    .hub-body{max-width:860px;margin:0 auto;padding:52px 24px 60px}
+    .hub-greeting{font-size:26px;font-weight:700;color:#fff;margin-bottom:8px}
+    .hub-greeting span{color:#f5c842}
+    .hub-sub{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:44px}
+
+    .hub-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .hub-card{
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
+      border-radius:20px;padding:32px 28px;transition:border-color .2s,background .2s;
+    }
+    .hub-card.prod{border-color:rgba(192,132,252,0.25)}
+    .hub-card.prod:hover{border-color:rgba(192,132,252,0.5);background:rgba(192,132,252,0.06)}
+    .hub-card.rec{border-color:rgba(126,184,247,0.25)}
+    .hub-card.rec:hover{border-color:rgba(126,184,247,0.5);background:rgba(126,184,247,0.06)}
+    .hub-card-icon{font-size:36px;margin-bottom:14px}
+    .hub-card-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px}
+    .hub-card-desc{font-size:13px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:24px}
+    .hub-card-links{display:flex;flex-direction:column;gap:10px}
+
+    .hub-sub-btn{
+      display:flex;align-items:center;gap:10px;padding:13px 18px;
+      border-radius:12px;border:1px solid;font-size:14px;font-weight:600;
+      cursor:pointer;text-decoration:none;transition:all .18s;
+    }
+    .hub-sub-btn.endo{color:#7eb8f7;border-color:rgba(126,184,247,0.35);background:rgba(126,184,247,0.08);}
+    .hub-sub-btn.endo:hover{background:rgba(126,184,247,0.20);border-color:#7eb8f7}
+    .hub-sub-btn.oxy{color:#6dd5a0;border-color:rgba(109,213,160,0.35);background:rgba(109,213,160,0.08);}
+    .hub-sub-btn.oxy:hover{background:rgba(109,213,160,0.20);border-color:#6dd5a0}
+    .hub-sub-btn.cir{color:#f5a623;border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.08);}
+    .hub-sub-btn.cir:hover{background:rgba(245,166,35,0.20);border-color:#f5a623}
+    .hub-sub-btn.prod-endo{color:#c084fc;border-color:rgba(192,132,252,0.35);background:rgba(192,132,252,0.08);}
+    .hub-sub-btn.prod-endo:hover{background:rgba(192,132,252,0.20);border-color:#c084fc}
+    .hub-sub-btn.prod-oxy{color:#6dd5a0;border-color:rgba(109,213,160,0.35);background:rgba(109,213,160,0.08);}
+    .hub-sub-btn.prod-oxy:hover{background:rgba(109,213,160,0.20);border-color:#6dd5a0}
+
+    .hub-footer{
+      text-align:center;font-size:11px;color:rgba(255,255,255,0.2);
+      margin-top:60px;padding-bottom:20px;
+    }
+
+    @media(max-width:600px){.hub-cards{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">🔐</div>
+    <div class="login-title">Acesso Gestores</div>
+    <div class="login-sub">Endovascular SP</div>
+    <div class="login-badge">Admin</div>
+    <input id="login-senha" class="login-input" type="password"
+           placeholder="Senha de gestão"
+           onkeydown="if(event.key==='Enter') tentarLogin()"/>
+    <button class="login-btn" onclick="tentarLogin()">Acessar →</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<div id="main">
+  <header>
+    <div class="header-logo">🏥</div>
+    <div class="header-info">
+      <h1>Endovascular SP</h1>
+      <p>Painel de Gestão</p>
+    </div>
+    <div class="header-badge">Admin</div>
+  </header>
+
+  <div class="hub-body">
+    <div class="hub-greeting">Bem-vindo, <span>Gestor</span> 👋</div>
+    <div class="hub-sub">Selecione o módulo que deseja acessar:</div>
+
+    <div class="hub-cards">
+
+      <div class="hub-card prod">
+        <div class="hub-card-icon">📊</div>
+        <div class="hub-card-title">Produtividade</div>
+        <div class="hub-card-desc">Atendimentos realizados por profissional e período</div>
+        <div class="hub-card-links">
+          <a href="../produtividade/" onclick="navegar(this,event)" class="hub-sub-btn prod-endo">
+            🏥 Endovascular SP
+          </a>
+          <a href="../oxy-produtividade/" onclick="navegar(this,event)" class="hub-sub-btn prod-oxy">
+            💊 Oxy Recovery
+          </a>
+        </div>
+      </div>
+
+      <div class="hub-card rec">
+        <div class="hub-card-icon">💰</div>
+        <div class="hub-card-title">Recebimento</div>
+        <div class="hub-card-desc">Honorários, repasses e compensações por profissional</div>
+        <div class="hub-card-links">
+          <a href="../" onclick="navegar(this,event)" class="hub-sub-btn endo">
+            🏥 Endovascular SP
+          </a>
+          <a href="../oxy/" onclick="navegar(this,event)" class="hub-sub-btn oxy">
+            💊 Oxy Recovery
+          </a>
+          <a href="../cirurgias/" onclick="navegar(this,event)" class="hub-sub-btn cir">
+            🔬 Cirurgias
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="hub-footer">Endovascular SP © 2026 · Acesso restrito — não compartilhar</div>
+  </div>
+</div>
+
+<script>
+const HASH = '123cd8b4a5b4b2076e11633ff7e6813548f356d4b77780fad532b28e42f1f735';
+const SK   = 'gestor_hub_auth';
+
+async function tentarLogin() {
+  const senha = document.getElementById('login-senha').value.trim();
+  if (!senha) return;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(senha));
+  const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  if (hex === HASH) {
+    sessionStorage.setItem(SK, '1');
+    sessionStorage.setItem('_xpa', senha);
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+  } else {
+    const el = document.getElementById('login-erro');
+    el.textContent = 'Senha incorreta.';
+    setTimeout(() => el.textContent = '', 3000);
+    document.getElementById('login-senha').value = '';
+    document.getElementById('login-senha').focus();
+  }
+}
+
+function navegar(el, e) {
+  e.preventDefault();
+  const s = sessionStorage.getItem('_xpa');
+  if (s) sessionStorage.setItem('_xpa', s);
+  window.location.href = el.href;
+}
+
+window.addEventListener('load', async () => {
+  if (sessionStorage.getItem(SK) === '1') {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    return;
+  }
+  const s = sessionStorage.getItem('_xpa');
+  if (s) {
+    sessionStorage.removeItem('_xpa');
+    document.getElementById('login-senha').value = s;
+    await tentarLogin();
+  } else {
+    document.getElementById('login-senha').focus();
+  }
+});
+</script>
+</body>
+</html>
