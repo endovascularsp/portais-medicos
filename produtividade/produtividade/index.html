@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — Produtividade Endovascular SP</title>
+<style>
+:root{
+  --navy:#0B1F3A;--azul:#1A5296;--cinza:#F2F5F9;--borda:#DDE4ED;
+  --texto:#0D1E30;--texto2:#4A6278;--gold:#A18960;--verde:#2D7A3C;
+  --sombra:0 2px 14px rgba(11,31,58,0.12);--radius:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza);color:var(--texto);}
+.senha-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A,#0d2d55 60%,#0B1F3A);
+  display:flex;align-items:center;justify-content:center;z-index:9999;}
+.senha-overlay.hidden{display:none;}
+.senha-box{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px;padding:48px 40px;width:340px;text-align:center;backdrop-filter:blur(12px);}
+.senha-box h2{color:#fff;font-size:20px;margin-bottom:6px;}
+.senha-box p{color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:24px;}
+.senha-input{width:100%;padding:13px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.08);color:#fff;font-size:15px;text-align:center;
+  letter-spacing:3px;outline:none;}
+.senha-btn{width:100%;margin-top:12px;padding:13px;border-radius:10px;
+  background:linear-gradient(135deg,#1A5296,#0B1F3A);border:none;color:#fff;
+  font-size:15px;font-weight:700;cursor:pointer;}
+.senha-erro{color:#ff7070;font-size:13px;margin-top:8px;min-height:18px;}
+.header{background:var(--navy);padding:0 32px;min-height:64px;display:flex;
+  align-items:center;justify-content:space-between;}
+.header-left h1{color:#fff;font-size:18px;font-weight:700;}
+.header-left p{color:rgba(255,255,255,0.5);font-size:12px;}
+.header-tag{background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.5);
+  color:#f5c842;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 10px;
+  border-radius:20px;text-transform:uppercase;}
+.admin-nav{background:#162d50;border-bottom:1px solid rgba(255,255,255,0.08);
+  padding:8px 32px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.admin-nav-label{color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;
+  letter-spacing:0.6px;text-transform:uppercase;}
+.admin-nav-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 14px;
+  border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;border:1.5px solid;transition:all 0.15s;}
+.admin-nav-btn.endo{color:#7eb8f7;border-color:rgba(126,184,247,0.35);background:rgba(126,184,247,0.06);}
+.admin-nav-btn.endo:hover{background:rgba(126,184,247,0.18);border-color:#7eb8f7;}
+.admin-nav-btn.prod{color:#f5a623;border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.08);opacity:0.4;cursor:default;pointer-events:none;}
+.main{padding:28px 32px;max-width:1400px;margin:0 auto;}
+.periodo-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+.tab{padding:8px 20px;border-radius:20px;border:1.5px solid var(--borda);background:#fff;
+  font-size:13px;font-weight:600;cursor:pointer;color:var(--texto2);transition:all 0.15s;}
+.tab.active{background:var(--azul);border-color:var(--azul);color:#fff;}
+.tab:hover:not(.active){border-color:var(--azul);color:var(--azul);}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+.kpi{background:#fff;border-radius:var(--radius);padding:18px 20px;box-shadow:var(--sombra);
+  border:1px solid var(--borda);border-top:3px solid var(--azul);}
+.kpi.gold{border-top-color:var(--gold);}
+.kpi-label{font-size:11px;color:var(--texto2);font-weight:600;letter-spacing:0.5px;
+  text-transform:uppercase;margin-bottom:6px;}
+.kpi-val{font-size:20px;font-weight:800;}
+.table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--sombra);
+  border:1px solid var(--borda);overflow:hidden;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--cinza);color:var(--texto2);font-size:11px;font-weight:700;
+  letter-spacing:0.4px;text-transform:uppercase;padding:10px 14px;text-align:left;
+  border-bottom:2px solid var(--borda);}
+td{padding:12px 14px;border-bottom:1px solid #eef2f8;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f8fbff;}
+.prof-link{color:var(--azul);text-decoration:none;font-weight:600;}
+.prof-link:hover{text-decoration:underline;}
+.val-cell{font-weight:700;text-align:right;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class='senha-overlay' id='senha-overlay'>
+  <div class='senha-box'>
+    <h2>🏥 Gestor — Produtividade</h2>
+    <p>Endovascular SP</p>
+    <input class='senha-input' id='senha-input' type='password' placeholder='Senha de acesso'/>
+    <button class='senha-btn' onclick='verificarSenha()'>Entrar</button>
+    <div class='senha-erro' id='senha-erro'></div>
+  </div>
+</div>
+
+<div id='conteudo' style='display:none'>
+<header class='header'>
+  <div class='header-left'>
+    <h1>📊 Dashboard de Produtividade</h1>
+    <p>Endovascular SP — Visão Gestores</p>
+  </div>
+  <div class='header-tag'>Admin</div>
+</header>
+<nav class='admin-nav'>
+  <span class='admin-nav-label'>Portal:</span>
+  <a href='../' class='admin-nav-btn endo'>🏥 Compensação Endo</a>
+  <a href='../oxy/' class='admin-nav-btn endo'>💊 Compensação Oxy</a>
+  <a href='../cirurgias/' class='admin-nav-btn endo'>🔬 Cirurgias</a>
+  <a href='#' class='admin-nav-btn prod'>📊 Produtividade</a>
+</nav>
+<div class='main'>
+  <div class='periodo-tabs' id='periodo-tabs'></div>
+  <div class='kpi-row' id='kpi-row'></div>
+  <div class='table-wrap'>
+    <table>
+      <thead>
+        <tr>
+          <th>Profissional</th>
+          <th style='text-align:right'>Total Produzido</th>
+          <th style='text-align:right'>Pacientes</th>
+          <th style='text-align:right'>Atendimentos</th>
+          <th>Crt. Crédito</th>
+          <th>Transferência</th>
+          <th>Portal</th>
+        </tr>
+      </thead>
+      <tbody id='tbody'></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<script>
+const DADOS   = {"Igor Rafael Sincos": {"2026-02": {"label": "Fevereiro/2026", "total": 329794.35, "n_atend": 93, "n_pacientes": 71, "por_pagamento": {"Transferência bancária": {"valor": 162718.36, "qtd": 50}, "Cartão de crédito": {"valor": 162275.98, "qtd": 40}, "Cartão de débito": {"valor": 4800.01, "qtd": 3}}}, "2026-01": {"label": "Janeiro/2026", "total": 290187.78, "n_atend": 110, "n_pacientes": 74, "por_pagamento": {"Cartão de crédito": {"valor": 149881.51, "qtd": 36}, "Transferência bancária": {"valor": 99071.91, "qtd": 67}, "Convênio": {"valor": 22624.15, "qtd": 2}, "Cartão de débito": {"valor": 12110.21, "qtd": 4}, "Dinheiro": {"valor": 6500.0, "qtd": 1}}}, "2026-03": {"label": "Março/2026", "total": 410931.74, "n_atend": 96, "n_pacientes": 72, "por_pagamento": {"Transferência bancária": {"valor": 153887.44, "qtd": 34}, "Cartão de crédito": {"valor": 207046.3, "qtd": 47}, "Dinheiro": {"valor": 3700.0, "qtd": 2}, "Cartão de débito": {"valor": 46298.0, "qtd": 13}}}}, "Simone Matsuda Torricelli": {"2026-03": {"label": "Março/2026", "total": 97545.0, "n_atend": 104, "n_pacientes": 102, "por_pagamento": {"Cartão de débito": {"valor": 12100.0, "qtd": 11}, "Transferência bancária": {"valor": 25770.0, "qtd": 29}, "Cartão de crédito": {"valor": 56875.0, "qtd": 62}, "Dinheiro": {"valor": 2800.0, "qtd": 2}}}, "2026-01": {"label": "Janeiro/2026", "total": 67873.05, "n_atend": 102, "n_pacientes": 68, "por_pagamento": {"Cartão de crédito": {"valor": 48000.0, "qtd": 75}, "Dinheiro": {"valor": 1793.05, "qtd": 2}, "Transferência bancária": {"valor": 8530.0, "qtd": 14}, "Cartão de débito": {"valor": 9550.0, "qtd": 11}}}, "2026-02": {"label": "Fevereiro/2026", "total": 66150.0, "n_atend": 73, "n_pacientes": 66, "por_pagamento": {"Transferência bancária": {"valor": 17250.0, "qtd": 19}, "Cartão de crédito": {"valor": 43750.0, "qtd": 49}, "Cartão de débito": {"valor": 5150.0, "qtd": 5}}}}, "Manoel Augusto Lobato": {"2026-02": {"label": "Fevereiro/2026", "total": 46001.04, "n_atend": 26, "n_pacientes": 24, "por_pagamento": {"Cartão de crédito": {"valor": 23900.0, "qtd": 10}, "Transferência bancária": {"valor": 20001.04, "qtd": 14}, "Cartão de débito": {"valor": 2100.0, "qtd": 2}}}, "2026-01": {"label": "Janeiro/2026", "total": 93146.61, "n_atend": 19, "n_pacientes": 16, "por_pagamento": {"Cartão de débito": {"valor": 7999.0, "qtd": 5}, "Cartão de crédito": {"valor": 84404.11, "qtd": 11}, "Transferência bancária": {"valor": 743.5, "qtd": 3}}}, "2026-03": {"label": "Março/2026", "total": 72968.81, "n_atend": 33, "n_pacientes": 26, "por_pagamento": {"Dinheiro": {"valor": 1190.0, "qtd": 2}, "Cartão de débito": {"valor": 1200.0, "qtd": 1}, "Transferência bancária": {"valor": 44488.75, "qtd": 20}, "Cartão de crédito": {"valor": 26090.06, "qtd": 10}}}}, "Clara Silva Freitas": {"2026-02": {"label": "Fevereiro/2026", "total": 8344.02, "n_atend": 5, "n_pacientes": 4, "por_pagamento": {"Cartão de crédito": {"valor": 8344.02, "qtd": 5}}}, "2026-01": {"label": "Janeiro/2026", "total": 5100.0, "n_atend": 3, "n_pacientes": 3, "por_pagamento": {"Cartão de crédito": {"valor": 3900.0, "qtd": 2}, "Cartão de débito": {"valor": 1200.0, "qtd": 1}}}, "2026-03": {"label": "Março/2026", "total": 4500.0, "n_atend": 1, "n_pacientes": 1, "por_pagamento": {"Transferência bancária": {"valor": 4500.0, "qtd": 1}}}}, "Jonathan Batista Souza": {"2026-01": {"label": "Janeiro/2026", "total": 8767.53, "n_atend": 16, "n_pacientes": 12, "por_pagamento": {"Transferência bancária": {"valor": 4817.53, "qtd": 13}, "Cartão de crédito": {"valor": 900.0, "qtd": 1}, "Cartão de débito": {"valor": 3050.0, "qtd": 2}}}, "2026-03": {"label": "Março/2026", "total": 10118.17, "n_atend": 13, "n_pacientes": 11, "por_pagamento": {"Transferência bancária": {"valor": 4418.17, "qtd": 8}, "Cartão de crédito": {"valor": 4700.0, "qtd": 4}, "Cartão de débito": {"valor": 1000.0, "qtd": 1}}}, "2026-02": {"label": "Fevereiro/2026", "total": 3842.87, "n_atend": 8, "n_pacientes": 7, "por_pagamento": {"Transferência bancária": {"valor": 3242.87, "qtd": 7}, "Cartão de crédito": {"valor": 600.0, "qtd": 1}}}}, "Christiane Sayuri Lopes Inoue": {"2026-02": {"label": "Fevereiro/2026", "total": 1200.0, "n_atend": 3, "n_pacientes": 3, "por_pagamento": {"Convênio": {"valor": 800.0, "qtd": 2}, "Transferência bancária": {"valor": 400.0, "qtd": 1}}}}, "Carolina Mardegan": {"2026-01": {"label": "Janeiro/2026", "total": 20273.66, "n_atend": 15, "n_pacientes": 11, "por_pagamento": {"Transferência bancária": {"valor": 15573.66, "qtd": 10}, "Cartão de crédito": {"valor": 4700.0, "qtd": 5}}}, "2026-02": {"label": "Fevereiro/2026", "total": 10840.34, "n_atend": 8, "n_pacientes": 7, "por_pagamento": {"Transferência bancária": {"valor": 8440.34, "qtd": 7}, "Cartão de crédito": {"valor": 2400.0, "qtd": 1}}}, "2026-03": {"label": "Março/2026", "total": 14112.87, "n_atend": 11, "n_pacientes": 10, "por_pagamento": {"Transferência bancária": {"valor": 1712.87, "qtd": 3}, "Cartão de crédito": {"valor": 12400.0, "qtd": 8}}}}, "Paulo Laredo Pinto": {"2026-03": {"label": "Março/2026", "total": 83090.07, "n_atend": 19, "n_pacientes": 10, "por_pagamento": {"Cartão de débito": {"valor": 3475.0, "qtd": 2}, "Transferência bancária": {"valor": 29000.0, "qtd": 7}, "Cartão de crédito": {"valor": 32657.9, "qtd": 7}, "Dinheiro": {"valor": 11000.0, "qtd": 2}, "PIX": {"valor": 6957.17, "qtd": 1}}}}, "João Fukuda": {"2026-03": {"label": "Março/2026", "total": 14620.0, "n_atend": 14, "n_pacientes": 11, "por_pagamento": {"Cartão de crédito": {"valor": 13420.0, "qtd": 13}, "Cartão de débito": {"valor": 1200.0, "qtd": 1}}}, "2026-02": {"label": "Fevereiro/2026", "total": 7240.0, "n_atend": 4, "n_pacientes": 4, "por_pagamento": {"Cartão de crédito": {"valor": 4200.0, "qtd": 3}, "Transferência bancária": {"valor": 3040.0, "qtd": 1}}}, "2026-01": {"label": "Janeiro/2026", "total": 9200.0, "n_atend": 8, "n_pacientes": 7, "por_pagamento": {"Transferência bancária": {"valor": 2400.0, "qtd": 3}, "Cartão de crédito": {"valor": 6800.0, "qtd": 5}}}}, "Larissa Medeiros Santos": {"2026-01": {"label": "Janeiro/2026", "total": 4600.0, "n_atend": 4, "n_pacientes": 4, "por_pagamento": {"Cartão de crédito": {"valor": 4600.0, "qtd": 4}}}}, "Andrea Ostaszewski Klepacz": {"2026-02": {"label": "Fevereiro/2026", "total": 16000.0, "n_atend": 14, "n_pacientes": 14, "por_pagamento": {"Cartão de crédito": {"valor": 9680.0, "qtd": 8}, "Transferência bancária": {"valor": 5340.0, "qtd": 5}, "Cartão de débito": {"valor": 980.0, "qtd": 1}}}, "2026-03": {"label": "Março/2026", "total": 49626.0, "n_atend": 25, "n_pacientes": 21, "por_pagamento": {"Cartão de débito": {"valor": 5560.0, "qtd": 5}, "Cartão de crédito": {"valor": 42866.0, "qtd": 19}, "Transferência bancária": {"valor": 1200.0, "qtd": 1}}}, "2026-01": {"label": "Janeiro/2026", "total": 7867.5, "n_atend": 6, "n_pacientes": 5, "por_pagamento": {"Cartão de crédito": {"valor": 5517.5, "qtd": 4}, "Transferência bancária": {"valor": 2350.0, "qtd": 2}}}}, "Daniela Viese Roth": {"2026-01": {"label": "Janeiro/2026", "total": 5850.0, "n_atend": 6, "n_pacientes": 6, "por_pagamento": {"Cartão de débito": {"valor": 2970.0, "qtd": 3}, "Transferência bancária": {"valor": 1890.0, "qtd": 2}, "Dinheiro": {"valor": 990.0, "qtd": 1}}}, "2026-03": {"label": "Março/2026", "total": 25980.0, "n_atend": 3, "n_pacientes": 3, "por_pagamento": {"Cartão de crédito": {"valor": 24990.0, "qtd": 2}, "Transferência bancária": {"valor": 990.0, "qtd": 1}}}, "2026-02": {"label": "Fevereiro/2026", "total": 1980.0, "n_atend": 2, "n_pacientes": 2, "por_pagamento": {"Cartão de crédito": {"valor": 1980.0, "qtd": 2}}}}, "Alvaro Machado Gaudencio": {"2026-03": {"label": "Março/2026", "total": 900.0, "n_atend": 1, "n_pacientes": 1, "por_pagamento": {"Cartão de débito": {"valor": 900.0, "qtd": 1}}}}, "Eduardo Araujo Pires": {"2026-02": {"label": "Fevereiro/2026", "total": 600.0, "n_atend": 1, "n_pacientes": 1, "por_pagamento": {"Cartão de crédito": {"valor": 600.0, "qtd": 1}}}}, "Maria Fernanda R Fernandes": {"2026-01": {"label": "Janeiro/2026", "total": 1900.0, "n_atend": 2, "n_pacientes": 1, "por_pagamento": {"Cartão de crédito": {"valor": 1900.0, "qtd": 2}}}}, "Fernanda Liporaci Villela Zuchi": {"2026-02": {"label": "Fevereiro/2026", "total": 960.0, "n_atend": 2, "n_pacientes": 1, "por_pagamento": {"Transferência bancária": {"valor": 960.0, "qtd": 2}}}}};
+const PORDER  = ["2026-01", "2026-02", "2026-03"];
+const HASH    = '123cd8b4a5b4b2076e11633ff7e6813548f356d4b77780fad532b28e42f1f735';
+const SK      = 'prod_admin_auth';
+
+function br(v){return 'R\u00a0'+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+
+async function verificarSenha(){
+  const val = document.getElementById('senha-input').value;
+  if(!val){document.getElementById('senha-erro').textContent='Digite a senha.';return;}
+  const buf = await crypto.subtle.digest('SHA-256',new TextEncoder().encode(val));
+  const hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(hex===HASH){
+    sessionStorage.setItem(SK,'1');
+    sessionStorage.setItem('_xpa',val);
+    document.getElementById('senha-overlay').classList.add('hidden');
+    document.getElementById('conteudo').style.display='block';
+    inicializar();
+  }else{
+    document.getElementById('senha-erro').textContent='Senha incorreta.';
+    document.getElementById('senha-input').value='';
+    document.getElementById('senha-input').focus();
+  }
+}
+document.getElementById('senha-input').addEventListener('keydown',e=>{if(e.key==='Enter')verificarSenha();});
+
+function inicializar(){
+  const pids = PORDER.filter(p=>Object.values(DADOS).some(d=>d[p]));
+  const tabs = document.getElementById('periodo-tabs');
+  pids.forEach((pid,i)=>{
+    const lbl = Object.values(DADOS).find(d=>d[pid])?.[ pid]?.label || pid;
+    const t = document.createElement('button');
+    t.className='tab'+(i===pids.length-1?' active':'');
+    t.textContent = lbl;
+    t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+                    t.classList.add('active');renderPeriodo(pid);};
+    tabs.appendChild(t);
+  });
+  if(pids.length) renderPeriodo(pids[pids.length-1]);
+}
+
+function renderPeriodo(pid){
+  let totGlobal=0,patGlobal=new Set(),atGlobal=0;
+  const rows=[];
+  Object.entries(DADOS).forEach(([prof,periodos])=>{
+    if(!periodos[pid]) return;
+    const r=periodos[pid];
+    totGlobal+=r.total; atGlobal+=r.n_atend;
+    const cc=(r.por_pagamento['Cartão de crédito']?.valor||0);
+    const ted=(r.por_pagamento['Transferência bancária']?.valor||0);
+    rows.push({prof,r,cc,ted});
+  });
+  rows.sort((a,b)=>b.r.total-a.r.total);
+
+  document.getElementById('kpi-row').innerHTML=`
+    <div class="kpi gold"><div class="kpi-label">Total Produzido</div><div class="kpi-val">${br(totGlobal)}</div></div>
+    <div class="kpi"><div class="kpi-label">Profissionais Ativos</div><div class="kpi-val">${rows.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Total Atendimentos</div><div class="kpi-val">${atGlobal}</div></div>`;
+
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+  rows.forEach(({prof,r,cc,ted})=>{
+    const slugged = prof.replace(/[^A-Za-z0-9\u00C0-\u00FF]/g,'_').replace(/^_+|_+$/g,'');
+    tbody.innerHTML+=`<tr>
+      <td><strong>${prof}</strong></td>
+      <td class="val-cell">${br(r.total)}</td>
+      <td style="text-align:right">${r.n_pacientes}</td>
+      <td style="text-align:right">${r.n_atend}</td>
+      <td style="color:#e65100;font-weight:600">${cc>0?br(cc):'—'}</td>
+      <td style="color:#2e7d32;font-weight:600">${ted>0?br(ted):'—'}</td>
+      <td><a href="${slugged}_Produtividade.html" class="prof-link">Abrir →</a></td>
+    </tr>`;
+  });
+}
+
+if(sessionStorage.getItem(SK)==='1'){
+  document.getElementById('senha-overlay').classList.add('hidden');
+  document.getElementById('conteudo').style.display='block';
+  inicializar();
+} else {
+  const _cp=sessionStorage.getItem('_xpa');
+  if(_cp){
+    sessionStorage.removeItem('_xpa');
+    (async()=>{
+      const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(_cp));
+      const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      if(hex===HASH){sessionStorage.setItem(SK,'1');document.getElementById('senha-overlay').classList.add('hidden');document.getElementById('conteudo').style.display='block';inicializar();}
+      else{document.getElementById('senha-input').focus();}
+    })();
+  }
+}
+</script>
+</body>
+</html>
