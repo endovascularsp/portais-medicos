@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Portal de Produtividade — Clara Silva Freitas</title>
+<style>
+:root{
+  --navy:#0B1F3A;--azul:#1A5296;--azul-cl:#D6E8F7;--gold:#A18960;
+  --verde:#2D7A3C;--verde-cl:#E8F5EB;--cinza:#F2F5F9;--borda:#DDE4ED;
+  --texto:#0D1E30;--texto2:#4A6278;--vermelho:#C0392B;
+  --sombra:0 2px 14px rgba(11,31,58,0.12);--radius:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza);color:var(--texto);min-height:100vh;}
+
+/* ── LOGIN OVERLAY ── */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A 0%,#0d2d55 60%,#0B1F3A 100%);
+  display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;}
+.login-overlay.saindo{opacity:0;pointer-events:none;}
+.login-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px;padding:48px 40px;width:360px;text-align:center;backdrop-filter:blur(12px);}
+.login-logo{font-size:32px;margin-bottom:8px;}
+.login-title{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px;}
+.login-sub{color:rgba(255,255,255,0.55);font-size:13px;margin-bottom:28px;}
+.login-badge{display:inline-block;background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.4);
+  color:#f5c842;font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 12px;
+  border-radius:20px;margin-bottom:20px;text-transform:uppercase;}
+.login-input{width:100%;padding:13px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.08);color:#fff;font-size:15px;text-align:center;
+  letter-spacing:3px;outline:none;transition:border-color 0.2s;}
+.login-input::placeholder{letter-spacing:0;color:rgba(255,255,255,0.35);}
+.login-input:focus{border-color:rgba(255,255,255,0.5);}
+.login-btn{width:100%;margin-top:14px;padding:13px;border-radius:10px;
+  background:linear-gradient(135deg,#1A5296,#0B1F3A);border:none;color:#fff;
+  font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.2s;}
+.login-btn:hover{opacity:0.85;}
+.login-erro{color:#ff7070;font-size:13px;margin-top:10px;min-height:18px;}
+
+/* ── HEADER ── */
+.header{background:var(--navy);padding:0 32px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;min-height:64px;}
+.header-marca{display:flex;align-items:center;gap:12px;}
+.header-nome{color:#fff;font-size:16px;font-weight:700;}
+.header-sub{color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:0.5px;}
+.header-tag{background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.5);
+  color:#f5c842;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 10px;
+  border-radius:20px;text-transform:uppercase;white-space:nowrap;}
+
+/* ── NAV MULTI-PORTAL ── */
+.portais-nav{background:#162d50;border-bottom:1px solid rgba(255,255,255,0.10);
+  padding:7px 32px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.portais-nav-label{color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;
+  letter-spacing:0.6px;text-transform:uppercase;white-space:nowrap;}
+.portais-nav-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;
+  border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;
+  transition:all 0.15s;white-space:nowrap;border:1.5px solid;}
+
+.portais-nav-btn.hub{color:#94a3b8;border-color:rgba(148,163,184,0.35);background:rgba(148,163,184,0.08);}
+.portais-nav-btn.hub:hover{background:rgba(148,163,184,0.20);border-color:#94a3b8;}
+.portais-nav-btn.endo{color:#7eb8f7;border-color:rgba(126,184,247,0.35);background:rgba(126,184,247,0.06);}
+.portais-nav-btn.endo:hover{background:rgba(126,184,247,0.18);border-color:#7eb8f7;}
+.portais-nav-btn.prod{color:#f5a623;border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.06);}
+.portais-nav-btn.prod:hover{background:rgba(245,166,35,0.18);border-color:#f5a623;}
+.portais-nav-btn.active{opacity:0.4;cursor:default;pointer-events:none;}
+
+/* ── LAYOUT ── */
+.main{padding:28px 32px;max-width:1200px;margin:0 auto;}
+
+/* ── BANNER ── */
+.banner-prod{background:linear-gradient(135deg,#1a3a6e,#0B1F3A);border-radius:var(--radius);
+  padding:18px 24px;margin-bottom:24px;display:flex;align-items:center;gap:14px;color:#fff;}
+.banner-prod-icon{font-size:28px;}
+.banner-prod-title{font-size:16px;font-weight:700;}
+.banner-prod-sub{font-size:12px;opacity:0.65;margin-top:2px;}
+
+/* ── PERIOD TABS ── */
+.periodo-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+.tab{padding:8px 20px;border-radius:20px;border:1.5px solid var(--borda);background:#fff;
+  font-size:13px;font-weight:600;cursor:pointer;color:var(--texto2);transition:all 0.15s;}
+.tab.active{background:var(--azul);border-color:var(--azul);color:#fff;}
+.tab:hover:not(.active){border-color:var(--azul);color:var(--azul);}
+
+/* ── SUMMARY CARDS ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+.card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--sombra);
+  border:1px solid var(--borda);border-top:3px solid var(--azul);}
+.card.gold{border-top-color:var(--gold);}
+.card.verde{border-top-color:var(--verde);}
+.card-label{font-size:11px;color:var(--texto2);font-weight:600;letter-spacing:0.5px;
+  text-transform:uppercase;margin-bottom:8px;}
+.card-value{font-size:22px;font-weight:800;color:var(--texto);}
+.card-value.grande{font-size:18px;}
+
+/* ── PAGAMENTO BREAKDOWN ── */
+.pag-section{background:#fff;border-radius:var(--radius);padding:20px 24px;
+  box-shadow:var(--sombra);border:1px solid var(--borda);margin-bottom:24px;}
+.section-title{font-size:14px;font-weight:700;color:var(--texto);margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;}
+.pag-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.pag-card{background:var(--cinza);border-radius:10px;padding:12px 14px;border:1px solid var(--borda);}
+.pag-tipo{font-size:11px;font-weight:600;color:var(--texto2);margin-bottom:4px;}
+.pag-val{font-size:15px;font-weight:700;color:var(--texto);}
+.pag-qtd{font-size:11px;color:var(--texto2);margin-top:2px;}
+.aviso-parcel{background:#fff8e6;border:1px solid #f5c842;border-radius:8px;
+  padding:10px 14px;font-size:12px;color:#7a5c00;margin-top:12px;display:flex;gap:8px;}
+
+/* ── TABELA ATENDIMENTOS ── */
+.table-section{background:#fff;border-radius:var(--radius);padding:20px 24px;
+  box-shadow:var(--sombra);border:1px solid var(--borda);}
+.table-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.table-count{font-size:12px;color:var(--texto2);background:var(--cinza);
+  padding:4px 12px;border-radius:20px;border:1px solid var(--borda);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--cinza);color:var(--texto2);font-weight:700;font-size:11px;
+  letter-spacing:0.4px;text-transform:uppercase;padding:10px 12px;text-align:left;
+  border-bottom:2px solid var(--borda);}
+td{padding:11px 12px;border-bottom:1px solid #eef2f8;vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f8fbff;}
+.paciente-nome{font-weight:600;color:var(--texto);}
+.proc-list{margin-top:3px;}
+.proc-item{font-size:11px;color:var(--texto2);}
+.badge-pag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+  padding:3px 8px;border-radius:10px;white-space:nowrap;}
+.badge-pag.cc{background:#fff3e0;color:#e65100;}
+.badge-pag.ted{background:#e8f5e9;color:#2e7d32;}
+.badge-pag.deb{background:#e3f2fd;color:#1565c0;}
+.badge-pag.pix{background:#f3e5f5;color:#6a1b9a;}
+.badge-pag.din{background:#f1f8e9;color:#558b2f;}
+.badge-pag.conv{background:#e8eaf6;color:#283593;}
+.badge-pag.outro{background:#f5f5f5;color:#555;}
+.parc-badge{font-size:10px;color:#e65100;font-weight:700;margin-top:2px;}
+.valor-cell{font-weight:700;text-align:right;white-space:nowrap;}
+.empty-msg{text-align:center;padding:40px;color:var(--texto2);font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class='login-overlay' id='login-overlay'>
+  <div class='login-box'>
+    <div class='login-logo'>📊</div>
+    <div class='login-title'>Clara</div>
+    <div class='login-sub'>Portal de Produtividade</div>
+    <div class='login-badge'>Acesso Restrito</div>
+    <input class='login-input' id='login-senha' type='password'
+           placeholder='Seu código de acesso'
+           onkeydown='if(event.key==="Enter")tentarLogin()'
+           autocomplete='current-password'/>
+    <button class='login-btn' onclick='tentarLogin()'>Entrar</button>
+    <div class='login-erro' id='login-erro'></div>
+  </div>
+</div>
+
+<div id='portal' style='display:none'>
+  <header class='header'>
+    <div class='header-marca'>
+      <div>
+        <div class='header-nome' id='hdr-nome'></div>
+        <div class='header-sub'>Endovascular SP</div>
+      </div>
+    </div>
+    <div class='header-tag'>📊 Produtividade</div>
+  </header>
+  <div class='portais-nav'><span class='portais-nav-label'>Meus Portais:</span><a href='../hub/Clara_Silva_Freitas_Hub.html' class='portais-nav-btn hub'>🏠 Hub</a><a href='../Clara_Silva_Freitas.html' class='portais-nav-btn endo'>🏥 Compensação Endo</a><a href='../oxy/Clara_Silva_Freitas_Oxy_Recovery.html' class='portais-nav-btn endo'>💊 Compensação Oxy</a><a href='../cirurgias/Clara_Silva_Freitas.html' class='portais-nav-btn endo'>🔬 Cirurgias</a><a class='portais-nav-btn prod active'>📊 Produtividade</a></div>
+  <div class='main'>
+    <div class='banner-prod'>
+      <div class='banner-prod-icon'>📋</div>
+      <div>
+        <div class='banner-prod-title'>Relatório de Produtividade</div>
+        <div class='banner-prod-sub'>O que você produziu (atendeu) — independente de quando irá receber</div>
+      </div>
+    </div>
+    <div class='periodo-tabs' id='periodo-tabs'></div>
+    <div class='cards' id='cards'></div>
+    <div class='pag-section'>
+      <div class='section-title'>💳 Distribuição por Forma de Pagamento</div>
+      <div class='pag-grid' id='pag-grid'></div>
+      <div class='aviso-parcel' id='aviso-parcel' style='display:none'>
+        ⏳ <span id='aviso-parcel-txt'></span>
+      </div>
+    </div>
+    <div class='table-section'>
+      <div class='table-header'>
+        <div class='section-title' style='margin:0'>🗓️ Lista de Atendimentos</div>
+        <div class='table-count' id='table-count'></div>
+      </div>
+      <div class='table-wrap'>
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Paciente</th>
+              <th>Procedimentos</th>
+              <th>Pagamento</th>
+              <th style='text-align:right'>Valor</th>
+            </tr>
+          </thead>
+          <tbody id='tbody'></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DADOS_ENC = /*PDATA*/'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'/*PDATA*/;
+const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03"];
+
+function br(v){
+  return 'R\u00a0' + v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+}
+
+function badgePag(tipo){
+  const cls = {
+    'Cartão de crédito':'cc','Cartão de débito':'deb',
+    'Transferência bancária':'ted','PIX':'pix',
+    'Dinheiro':'din','Convênio':'conv'
+  };
+  const ic = {
+    'Cartão de crédito':'💳','Cartão de débito':'💳',
+    'Transferência bancária':'🏦','PIX':'⚡','Dinheiro':'💵','Convênio':'🏥'
+  };
+  const c = cls[tipo]||'outro', i = ic[tipo]||'💰';
+  return `<span class="badge-pag ${c}">${i} ${tipo}</span>`;
+}
+
+let DADOS = null;
+let periodoAtual = null;
+
+async function tentarLogin(){
+  const inp = document.getElementById('login-senha');
+  const senha = inp.value.trim();
+  if(!senha){document.getElementById('login-erro').textContent='Digite a senha.';return;}
+  try{
+    const buf = await crypto.subtle.importKey('raw',new TextEncoder().encode(senha),'PBKDF2',false,['deriveKey']);
+    const raw = atob(DADOS_ENC);
+    const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0));
+    const salt = bytes.slice(0,16), iv = bytes.slice(16,28), ct = bytes.slice(28);
+    const key = await crypto.subtle.deriveKey(
+      {name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},buf,
+      {name:'AES-GCM',length:256},false,['decrypt']);
+    const plain = await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);
+    DADOS = JSON.parse(new TextDecoder().decode(plain));
+    sessionStorage.setItem('_xp', senha);
+    const ov = document.getElementById('login-overlay');
+    ov.classList.add('saindo');
+    setTimeout(()=>{ov.style.display='none';},400);
+    document.getElementById('portal').style.display='block';
+    inicializar();
+  } catch(e){
+    document.getElementById('login-erro').textContent='Código incorreto. Verifique e tente novamente.';
+    inp.value=''; inp.focus();
+  }
+}
+
+function inicializar(){
+  const prof = Object.keys(DADOS)[0];
+  const info = DADOS[prof];
+  document.getElementById('hdr-nome').textContent = info.profissional || prof;
+  document.title = 'Produtividade — ' + (info.profissional || prof);
+
+  const pids = PERIODOS_ORDER.filter(p => info.periodos && info.periodos[p]);
+  if(!pids.length){document.querySelector('.main').innerHTML='<p class="empty-msg">Nenhum dado disponível.</p>';return;}
+
+  const tabs = document.getElementById('periodo-tabs');
+  pids.forEach((pid,i)=>{
+    const t = document.createElement('button');
+    t.className = 'tab' + (i===pids.length-1?' active':'');
+    t.textContent = info.periodos[pid].label;
+    t.onclick = ()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+                      t.classList.add('active'); renderPeriodo(prof, pid); };
+    tabs.appendChild(t);
+  });
+  renderPeriodo(prof, pids[pids.length-1]);
+}
+
+function renderPeriodo(prof, pid){
+  periodoAtual = pid;
+  const info = DADOS[prof];
+  const p = info.periodos[pid];
+  const r = p.resumo;
+
+  // Cards
+  document.getElementById('cards').innerHTML = `
+    <div class="card gold">
+      <div class="card-label">Total Produzido</div>
+      <div class="card-value grande">${br(r.total)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Pacientes Atendidos</div>
+      <div class="card-value">${r.n_pacientes}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Atendimentos</div>
+      <div class="card-value">${r.n_atend}</div>
+    </div>`;
+
+  // Pagamento
+  const grid = document.getElementById('pag-grid');
+  grid.innerHTML = '';
+  let temParcel = false, valParcel = 0;
+  Object.entries(r.por_pagamento).sort((a,b)=>b[1].valor-a[1].valor).forEach(([tipo,d])=>{
+    const div = document.createElement('div');
+    div.className = 'pag-card';
+    div.innerHTML = `<div class="pag-tipo">${tipo}</div>
+      <div class="pag-val">${br(d.valor)}</div>
+      <div class="pag-qtd">${d.qtd} atendimento${d.qtd!==1?'s':''}</div>`;
+    grid.appendChild(div);
+    if(tipo==='Cartão de crédito'){temParcel=true;valParcel=d.valor;}
+  });
+  const av = document.getElementById('aviso-parcel');
+  if(temParcel){
+    av.style.display='flex';
+    document.getElementById('aviso-parcel-txt').textContent =
+      `${br(valParcel)} em cartão de crédito: o repasse ocorre após a compensação da operadora (geralmente 30–60 dias). ` +
+      `Esses valores aparecerão no seu Portal de Compensação nos próximos meses.`;
+  } else {
+    av.style.display='none';
+  }
+
+  // Tabela
+  const atends = p.atendimentos;
+  document.getElementById('table-count').textContent = `${atends.length} registro${atends.length!==1?'s':''}`;
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  atends.forEach(a=>{
+    const procs = a.procedimentos.map(p=>`<div class="proc-item">• ${p.nome}${p.qtd>1?' ('+p.qtd+')':''}</div>`).join('');
+    const parc  = a.parcelas>1?`<div class="parc-badge">📅 ${a.parcelas}x</div>`:'';
+    tbody.innerHTML += `<tr>
+      <td style="white-space:nowrap;color:var(--texto2)">${a.data}</td>
+      <td><div class="paciente-nome">${a.paciente}</div><div class="proc-list">${procs}</div></td>
+      <td></td>
+      <td>${badgePag(a.pagamento)}${parc}</td>
+      <td class="valor-cell">${br(a.valor)}</td>
+    </tr>`;
+  });
+}
+
+/* ── auto-login cross-portal ── */
+(function(){
+  const _cp = sessionStorage.getItem('_xp');
+  if(_cp){
+    sessionStorage.removeItem('_xp');
+    const inp = document.getElementById('login-senha');
+    if(inp){inp.value=_cp;tentarLogin();}
+  } else {
+    document.getElementById('login-senha').focus();
+  }
+})();
+</script>
+</body>
+</html>
