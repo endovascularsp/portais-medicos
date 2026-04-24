@@ -133,7 +133,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
 .login-btn:disabled{opacity:0.6;cursor:not-allowed;}
 .login-erro{color:#F87171;font-size:12.5px;margin-top:12px;min-height:20px;font-weight:500;}
 .login-rodape{color:rgba(255,255,255,0.25);font-size:11px;margin-top:28px;}
-.sidebar{display:none!important;}</style>
+.sidebar{display:none!important;}/* mobile-600 */
+@media(max-width:600px){
+  .header{padding:0 14px;}
+  .portais-nav{padding:7px 14px;}
+  .metric-valor{font-size:21px;}
+  .metric-card{padding:14px 16px;}
+  .chart-wrap{height:220px;}
+}
+</style>
 
   <style>
   .portais-nav{background:#162d50;border-bottom:1px solid rgba(255,255,255,0.10);
