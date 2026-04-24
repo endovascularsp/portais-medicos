@@ -167,6 +167,11 @@ def slugify(name):
 def is_cirurgia(cat):
     return 'cirurgia' in str(cat).lower() if pd.notna(cat) else False
 
+def origem_de(tabela):
+    """Classifica Tabela em Particular/Plano. Plano = contém OMINT ou SULAM."""
+    import re
+    return 'Plano' if re.search(r'OMINT|SULAM', str(tabela or ''), re.IGNORECASE) else 'Particular'
+
 TODOS_PERIODOS = {}
 
 for mes in df['Mês'].unique():
@@ -202,6 +207,10 @@ for mes in df['Mês'].unique():
                 }
                 # por_categoria, por_pagamento, por_tabela, atendimentos:
                 # (ver script completo em honorarios_auto/gerar_pdata.py)
+                # IMPORTANTE: ao montar `por_tabela` e `atendimentos`, preencher o campo `Origem`
+                # com `origem_de(tabela)`. NÃO deixar string vazia nem usar o campo de indicador.
+                # Ex.: por_tabela.append({'Profissional': prof_name, 'Tabela': tab,
+                #                         'Origem': origem_de(tab), 'Valor recebido': valor})
                 profs[slug] = {
                     'profissional': prof_name, 'empresa': emp_label,
                     'mes': mes, 'ano': 2026, 'periodo_id': pid,
@@ -243,4 +252,5 @@ Para injetar no `index.html`, substituir o bloco entre `/*PDATA*/` e o `;` segui
 - O `index.html` tem ~1.1 MB quando o PDATA de 3 meses está injetado — é normal
 - Não usar `load_workbook(..., data_only=True)` e salvar — destrói as fórmulas da planilha
 - O campo `% Profissional` na planilha é **valor em R$**, não percentual
+- O campo `Origem` no PDATA deve ser derivado da coluna `Tabela`: se contém `OMINT` ou `SULAM` → `"Plano"`; caso contrário → `"Particular"`. O JS dos portais (display e CSV) já deriva da Tabela, mas o PDATA stored também deve carregar o valor correto
 - Todos os perfis ativos usam `MODO_MEDICO = true` (acesso protegido por senha, PDATA criptografado)

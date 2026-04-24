@@ -568,7 +568,7 @@ function exportarCSVProf(){
     '"Tabela","Tipo","Valor"',
   ];
   (d.por_tabela||[]).sort((a,b)=>(b['Valor recebido']||0)-(a['Valor recebido']||0)).forEach(t=>{
-    linhas.push(['"'+(t.Tabela||'')+'"','"'+(t.Origem||'')+'"',(t['Valor recebido']||0).toFixed(2)].join(','));
+    linhas.push(['"'+(t.Tabela||'')+'"','"'+(!/OMINT|SULAM/i.test(t.Tabela||'')?'Particular':'Plano')+'"',(t['Valor recebido']||0).toFixed(2)].join(','));
   });
   linhas.push('','\"ATENDIMENTOS\"',
     '"Paciente","Procedimento","Categoria","Tabela","Pagamento","Data","Vr. Recebido","Vr. Líquido","Repasse"');
