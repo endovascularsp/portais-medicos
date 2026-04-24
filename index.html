@@ -318,7 +318,7 @@ function abrirPortal(link, nomeCurto){
 function renderTabelas(porTabela, containerId, chartId){
   const container=document.getElementById(containerId);
   const total=porTabela.reduce((a,t)=>a+(t['Valor recebido']||0),0);
-  const totalPart=porTabela.filter(t=>t.Origem==='Particular').reduce((a,t)=>a+(t['Valor recebido']||0),0);
+  const totalPart=porTabela.filter(t=>!/OMINT|SULAM/i.test(t.Tabela||'')).reduce((a,t)=>a+(t['Valor recebido']||0),0);
   const totalPlano=total-totalPart;
   const pctPart=total>0?totalPart/total:0;
 
@@ -334,8 +334,8 @@ function renderTabelas(porTabela, containerId, chartId){
   const sorted=[...porTabela].sort((a,b)=>(b['Valor recebido']||0)-(a['Valor recebido']||0));
   const linhas=sorted.map(t=>{
     const v=t['Valor recebido']||0;
-    const tipoClass=t.Origem==='Particular'?'part':'plano';
-    const tipoLabel=t.Origem==='Particular'?'Particular':'Plano';
+    const tipoClass=!/OMINT|SULAM/i.test(t.Tabela||'')?'part':'plano';
+    const tipoLabel=!/OMINT|SULAM/i.test(t.Tabela||'')?'Particular':'Plano';
     return '<div class="tabela-row">'+
       '<div style="display:flex;align-items:center">'+
       '<span class="tabela-nome">'+(t.Tabela||'—')+'</span>'+
