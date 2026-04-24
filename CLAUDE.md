@@ -117,8 +117,7 @@ Cada portal HTML contém um bloco `const TODOS_PERIODOS = /*PDATA*/{...};` com o
 | Eduardo Araujo Pires | `Eduardo_Araujo_Pires` | edu2026 | Eduardo_Araujo_Pires_Hub.html |
 | Daniela Viese Roth | `Daniela_Viese_Roth` | dan2026 | Daniela_Viese_Roth_Hub.html |
 | Fernanda Liporaci Villela Zuchi | `Fernanda_Liporaci_Villela_Zuchi` | — | Fernanda_Liporaci_Villela_Zuchi_Hub.html |
-| Gabriela Richards | `Gabriela_Richards` | — (sem senha) | Gabriela_Richards_Hub.html |
-| Alvaro Machado Gaudencio | `Alvaro_Machado_Gaudencio` | — (sem senha) | Alvaro_Machado_Gaudencio_Hub.html |
+| Gabriela Richards | `Gabriela_Richards` | gab2026 | Gabriela_Richards_Hub.html |
 
 ---
 
@@ -244,4 +243,4 @@ Para injetar no `index.html`, substituir o bloco entre `/*PDATA*/` e o `;` segui
 - O `index.html` tem ~1.1 MB quando o PDATA de 3 meses está injetado — é normal
 - Não usar `load_workbook(..., data_only=True)` e salvar — destrói as fórmulas da planilha
 - O campo `% Profissional` na planilha é **valor em R$**, não percentual
-- Perfis sem senha (Gabriela Richards, Alvaro Machado Gaudencio) têm `MODO_MEDICO = false` desabilitado — acesso livre
+- Todos os perfis ativos usam `MODO_MEDICO = true` (acesso protegido por senha, PDATA criptografado)
