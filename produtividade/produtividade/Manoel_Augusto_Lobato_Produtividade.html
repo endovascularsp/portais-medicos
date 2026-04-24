@@ -8,7 +8,7 @@
 <style>
 :root{
   --navy:#0B1F3A;--azul:#1A5296;--azul-md:#2E6DA4;--azul-cl:#D6E8F7;
-  --bg:#E8F0FA;--cinza-cl:#F7FAFD;--borda:#C4D4E8;--borda-fr:#A8C1DE;
+  --bg:#0B1F3A;--cinza-cl:#F7FAFD;--borda:#C4D4E8;--borda-fr:#A8C1DE;
   --texto:#0D1E30;--texto2:#4A6278;--gold:#A18960;--verde:#2D7A3C;--verde-cl:#E8F5EB;
   --vermelho:#C0392B;--sombra:0 2px 14px rgba(11,31,58,0.08);--radius:12px;
 }
@@ -40,7 +40,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .header{background:#fff;padding:0 32px;display:flex;align-items:center;
   justify-content:space-between;gap:16px;min-height:68px;border-bottom:3px solid var(--azul);
   box-shadow:0 1px 8px rgba(11,31,58,0.04);}
-.header-marca{display:flex;align-items:center;gap:12px;}
+.header-marca{display:flex;align-items:center;gap:14px;}
+.header-logo{font-size:28px;line-height:1;display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:var(--azul-cl);border-radius:12px;border:1px solid var(--borda);flex-shrink:0;}
 .header-nome{color:var(--navy);font-size:18px;font-weight:800;}
 .header-sub{color:var(--texto2);font-size:11px;letter-spacing:0.5px;margin-top:2px;}
 .header-tag{background:var(--azul);color:#fff;font-size:10px;font-weight:700;
@@ -64,7 +65,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 .main{padding:28px 32px;max-width:1200px;margin:0 auto;}
 
-.banner-prod{background:linear-gradient(135deg,var(--azul),var(--navy));border-radius:var(--radius);
+.banner-prod{background:linear-gradient(135deg,var(--azul-md),var(--azul));border-radius:var(--radius);
   padding:18px 24px;margin-bottom:22px;display:flex;align-items:center;gap:14px;color:#fff;
   box-shadow:0 4px 18px rgba(26,82,150,0.20);}
 .banner-prod-icon{font-size:28px;}
@@ -171,6 +172,7 @@ tr:hover td{background:var(--azul-cl);}
 <div id='portal' style='display:none'>
   <header class='header'>
     <div class='header-marca'>
+      <div class='header-logo'>📊</div>
       <div>
         <div class='header-nome' id='hdr-nome'></div>
         <div class='header-sub'>Endovascular SP</div>
