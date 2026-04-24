@@ -189,6 +189,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
   .metric-card{padding:14px 16px;}
   .chart-wrap{height:220px;}
 }
+/* mobile-600-v2 */
+@media(max-width:600px){
+  .kpi-row,.cards,.metrics-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .admin-nav,.portais-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .admin-nav::-webkit-scrollbar,.portais-nav::-webkit-scrollbar{display:none;}
+  .admin-nav-btn,.portais-nav-btn{flex-shrink:0;}
+}
 </style>
 </head>
 <body>
