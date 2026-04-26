@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dashboard de Insights — Endovascular SP</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff}
+
+    #login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .login-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;backdrop-filter:blur(10px);}
+    .login-logo{font-size:36px;margin-bottom:8px}
+    .login-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:6px}
+    .login-badge{display:inline-block;margin-bottom:22px;padding:3px 14px;border-radius:20px;
+      background:rgba(244,114,182,0.15);border:1px solid rgba(244,114,182,0.45);
+      color:#f472b6;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+    .login-input{width:100%;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.08);color:#fff;font-size:15px;outline:none;transition:border .2s;
+      margin-bottom:14px;letter-spacing:2px;}
+    .login-input:focus{border-color:rgba(244,114,182,0.6)}
+    .login-input::placeholder{letter-spacing:0;color:rgba(255,255,255,0.3)}
+    .login-btn{width:100%;padding:13px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#9d2161,#d63384);color:#fff;font-size:15px;font-weight:700;
+      cursor:pointer;transition:opacity .2s;}
+    .login-btn:hover{opacity:.88}
+    .login-erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
+
+    #main{display:none;min-height:100vh;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%)}
+
+    header{background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:20px 32px;display:flex;align-items:center;gap:16px;}
+    .header-logo{font-size:28px}
+    .header-info h1{font-size:16px;font-weight:700;color:#fff}
+    .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+    .header-badge{margin-left:auto;padding:4px 14px;border-radius:20px;
+      background:rgba(244,114,182,0.15);border:1px solid rgba(244,114,182,0.45);
+      color:#f472b6;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+
+    .admin-portais-nav{background:#0d1e36;border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:8px 32px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .admin-portais-nav-label{color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;
+      letter-spacing:0.6px;text-transform:uppercase;white-space:nowrap;}
+    .admin-portais-nav-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
+      font-size:12px;font-weight:600;text-decoration:none;transition:all 0.15s;white-space:nowrap;border:1.5px solid;}
+    .admin-portais-nav-btn.hub{color:#94a3b8;border-color:rgba(148,163,184,0.35);background:rgba(148,163,184,0.08);}
+    .admin-portais-nav-btn.hub:hover{background:rgba(148,163,184,0.20);border-color:#94a3b8;}
+    .admin-portais-nav-btn.insights{color:#f472b6;border-color:rgba(244,114,182,0.35);background:rgba(244,114,182,0.08);}
+    .admin-portais-nav-btn.insights.active{opacity:0.85;cursor:default;pointer-events:none;font-weight:700;}
+
+    .body-wrap{max-width:1180px;margin:0 auto;padding:36px 24px 60px}
+    .greeting{font-size:24px;font-weight:700;color:#fff;margin-bottom:6px}
+    .greeting span{color:#f472b6}
+    .greeting-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:28px}
+
+    .filtros{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin-bottom:28px;
+      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+      border-radius:12px;padding:14px 18px;}
+    .filtro-label{font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;
+      letter-spacing:0.6px;text-transform:uppercase;}
+    .filtro-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+    .filtro-tab{padding:6px 14px;border-radius:18px;border:1.5px solid rgba(255,255,255,0.15);
+      background:transparent;color:rgba(255,255,255,0.65);font-size:12px;font-weight:600;
+      cursor:pointer;transition:all .15s;}
+    .filtro-tab:hover{background:rgba(255,255,255,0.06);color:#fff}
+    .filtro-tab.active{background:rgba(244,114,182,0.18);border-color:#f472b6;color:#f472b6}
+
+    .insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+    .insight-card{background:rgba(255,255,255,0.05);border:1px solid rgba(244,114,182,0.20);
+      border-radius:16px;padding:24px;}
+    .insight-card-title{font-size:14px;font-weight:700;color:#f472b6;
+      letter-spacing:0.4px;text-transform:uppercase;margin-bottom:4px;}
+    .insight-card-sub{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:18px;}
+
+    .top-list{list-style:none;display:flex;flex-direction:column;gap:10px;}
+    .top-item{display:flex;align-items:center;gap:12px;padding:12px 14px;
+      border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+      transition:background .15s;}
+    .top-item:hover{background:rgba(255,255,255,0.06)}
+    .top-rank{font-size:18px;font-weight:800;color:#f472b6;min-width:28px;text-align:center;}
+    .top-rank.rank-1{color:#fbbf24}
+    .top-rank.rank-2{color:#cbd5e1}
+    .top-rank.rank-3{color:#fb923c}
+    .top-info{flex:1;min-width:0;}
+    .top-name{font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .top-meta{font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;}
+    .top-valor{font-size:14px;font-weight:700;color:#6dd5a0;text-align:right;white-space:nowrap;}
+    .top-qtd{font-size:11px;color:rgba(255,255,255,0.45);text-align:right;margin-top:2px;}
+
+    .empty-state{padding:32px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px;}
+    .loading{padding:32px;text-align:center;color:rgba(255,255,255,0.6);font-size:13px;}
+
+    .footer{text-align:center;font-size:11px;color:rgba(255,255,255,0.2);
+      margin-top:40px;padding-bottom:20px;}
+
+    @media(max-width:760px){.insights-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">💡</div>
+    <div class="login-title">Dashboard de Insights</div>
+    <div class="login-sub">Endovascular SP</div>
+    <div class="login-badge">Admin</div>
+    <input id="login-senha" class="login-input" type="password"
+           placeholder="Senha de gestão"
+           onkeydown="if(event.key==='Enter') tentarLogin()"/>
+    <button class="login-btn" onclick="tentarLogin()">Acessar →</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<div id="main">
+  <header>
+    <div class="header-logo">💡</div>
+    <div class="header-info">
+      <h1>Dashboard de Insights</h1>
+      <p>Endovascular SP — Painel de indicadores</p>
+    </div>
+    <div class="header-badge">Admin</div>
+  </header>
+
+  <div class="admin-portais-nav">
+    <span class="admin-portais-nav-label">Portal:</span>
+    <a href="../hub/Gestor_Hub.html" class="admin-portais-nav-btn hub">🏠 Hub</a>
+    <a href="#" class="admin-portais-nav-btn insights active">💡 Dashboard de Insights</a>
+  </div>
+
+  <div class="body-wrap">
+    <div class="greeting">Insights, <span>Gestor</span> 📈</div>
+    <div class="greeting-sub">Top pacientes e top procedimentos com base nos atendimentos compensados</div>
+
+    <div class="filtros">
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <span class="filtro-label">Empresa</span>
+        <div class="filtro-tabs" id="filtro-empresa"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <span class="filtro-label">Período</span>
+        <div class="filtro-tabs" id="filtro-periodo"></div>
+      </div>
+    </div>
+
+    <div class="insights-grid">
+      <div class="insight-card">
+        <div class="insight-card-title">🥇 Top 5 Pacientes</div>
+        <div class="insight-card-sub">Por valor recebido total</div>
+        <ul class="top-list" id="top-pacientes">
+          <li class="loading">Carregando dados...</li>
+        </ul>
+      </div>
+      <div class="insight-card">
+        <div class="insight-card-title">🔬 Top 5 Procedimentos</div>
+        <div class="insight-card-sub">Por valor recebido total</div>
+        <ul class="top-list" id="top-procedimentos">
+          <li class="loading">Carregando dados...</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">Endovascular SP © 2026 · Acesso restrito — não compartilhar</div>
+  </div>
+</div>
+
+<script>
+const HASH = '123cd8b4a5b4b2076e11633ff7e6813548f356d4b77780fad532b28e42f1f735';
+const SK   = 'gestor_hub_auth';
+
+// Fontes de dados (PDATA plaintext)
+const FONTES = [
+  { url: '../index.html',           empresa: 'Endovascular SP' },
+  { url: '../oxy/index.html',       empresa: 'Oxy Recovery'    },
+  { url: '../cirurgias/index.html', empresa: 'Cirurgias'       }
+];
+
+let _DADOS = null; // estrutura: { 'periodo-id': { label, atendimentosPorEmpresa: { Endo: [...], Oxy: [...], Cir: [...] } } }
+let _EMPRESA_ATIVA = 'Todas';
+let _PERIODO_ATIVO = null;
+
+async function tentarLogin() {
+  const senha = document.getElementById('login-senha').value.trim();
+  if (!senha) return;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(senha));
+  const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  if (hex === HASH) {
+    sessionStorage.setItem(SK, '1');
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    inicializar();
+  } else {
+    const el = document.getElementById('login-erro');
+    el.textContent = 'Senha incorreta.';
+    setTimeout(() => el.textContent = '', 3000);
+    document.getElementById('login-senha').value = '';
+    document.getElementById('login-senha').focus();
+  }
+}
+
+function extrairPdata(html) {
+  // Captura o conteúdo após `TODOS_PERIODOS = /*PDATA*/` até o `;` que fecha a atribuição.
+  const marker = 'TODOS_PERIODOS = /*PDATA*/';
+  const idx = html.indexOf(marker);
+  if (idx < 0) return null;
+  let i = idx + marker.length;
+  // Pular espaços
+  while (i < html.length && /\s/.test(html[i])) i++;
+  if (html[i] !== '{') return null;
+  // Parse JSON balanceado considerando strings
+  let depth = 0, inStr = false, esc = false;
+  const start = i;
+  for (; i < html.length; i++) {
+    const ch = html[i];
+    if (inStr) {
+      if (esc) { esc = false; continue; }
+      if (ch === '\\') { esc = true; continue; }
+      if (ch === '"') { inStr = false; }
+      continue;
+    }
+    if (ch === '"') { inStr = true; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') { depth--; if (depth === 0) { i++; break; } }
+  }
+  const json = html.substring(start, i);
+  try { return JSON.parse(json); } catch(e) { console.error('PDATA parse err:', e); return null; }
+}
+
+async function carregarFontes() {
+  const out = {}; // por periodo
+  for (const fonte of FONTES) {
+    try {
+      const resp = await fetch(fonte.url);
+      const html = await resp.text();
+      const todos = extrairPdata(html);
+      if (!todos) continue;
+      for (const periodoId of Object.keys(todos)) {
+        const periodo = todos[periodoId];
+        if (!out[periodoId]) out[periodoId] = { label: periodo.label, atendimentos: { 'Endovascular SP': [], 'Oxy Recovery': [], 'Cirurgias': [] } };
+        const profs = periodo.profs || {};
+        for (const slug of Object.keys(profs)) {
+          const prof = profs[slug];
+          const atts = prof.atendimentos || [];
+          // A "empresa" em prof.empresa é a definitiva (Endovascular SP / Oxy Recovery / Cirurgias)
+          const empProf = prof.empresa || fonte.empresa;
+          if (!out[periodoId].atendimentos[empProf]) out[periodoId].atendimentos[empProf] = [];
+          for (const att of atts) {
+            out[periodoId].atendimentos[empProf].push({ ...att, _profissional: prof.profissional });
+          }
+        }
+      }
+    } catch(e) { console.error('Falha ao carregar', fonte.url, e); }
+  }
+  return out;
+}
+
+function montarTabsEmpresa() {
+  const cont = document.getElementById('filtro-empresa');
+  const opcoes = ['Todas', 'Endovascular SP', 'Oxy Recovery', 'Cirurgias'];
+  cont.innerHTML = '';
+  for (const op of opcoes) {
+    const btn = document.createElement('button');
+    btn.className = 'filtro-tab' + (op === _EMPRESA_ATIVA ? ' active' : '');
+    btn.textContent = op;
+    btn.onclick = () => { _EMPRESA_ATIVA = op; montarTabsEmpresa(); renderizar(); };
+    cont.appendChild(btn);
+  }
+}
+
+function montarTabsPeriodo() {
+  const cont = document.getElementById('filtro-periodo');
+  cont.innerHTML = '';
+  const periodos = Object.keys(_DADOS).sort().reverse();
+  if (!_PERIODO_ATIVO || !periodos.includes(_PERIODO_ATIVO)) _PERIODO_ATIVO = periodos[0];
+  // Inclui opção "Todos" no início
+  const opcoes = [{id:'__todos', label:'Todos'}].concat(periodos.map(id => ({id, label:_DADOS[id].label})));
+  for (const op of opcoes) {
+    const btn = document.createElement('button');
+    btn.className = 'filtro-tab' + (op.id === _PERIODO_ATIVO ? ' active' : '');
+    btn.textContent = op.label;
+    btn.onclick = () => { _PERIODO_ATIVO = op.id; montarTabsPeriodo(); renderizar(); };
+    cont.appendChild(btn);
+  }
+}
+
+function coletarAtendimentos() {
+  const out = [];
+  const periodos = _PERIODO_ATIVO === '__todos' ? Object.keys(_DADOS) : [_PERIODO_ATIVO];
+  const empresas = _EMPRESA_ATIVA === 'Todas' ? ['Endovascular SP','Oxy Recovery','Cirurgias'] : [_EMPRESA_ATIVA];
+  for (const pid of periodos) {
+    if (!_DADOS[pid]) continue;
+    for (const emp of empresas) {
+      const arr = _DADOS[pid].atendimentos[emp] || [];
+      for (const a of arr) out.push(a);
+    }
+  }
+  return out;
+}
+
+function fmtBRL(v) {
+  return (v || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
+
+function calcularTop(atts, campo, n=5) {
+  const map = new Map();
+  for (const a of atts) {
+    const k = (a[campo] || '').toString().trim();
+    if (!k) continue;
+    const cur = map.get(k) || { valor: 0, qtd: 0 };
+    cur.valor += Number(a['Valor recebido'] || 0);
+    cur.qtd += 1;
+    map.set(k, cur);
+  }
+  return Array.from(map.entries())
+    .map(([nome, v]) => ({ nome, valor: v.valor, qtd: v.qtd }))
+    .sort((a,b) => b.valor - a.valor)
+    .slice(0, n);
+}
+
+function renderTop(elId, items, labelSing, labelPlur) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  if (!items.length) {
+    el.innerHTML = '<li class="empty-state">Sem dados para o filtro selecionado.</li>';
+    return;
+  }
+  items.forEach((it, i) => {
+    const li = document.createElement('li');
+    li.className = 'top-item';
+    const rankCls = i < 3 ? ' rank-' + (i+1) : '';
+    li.innerHTML = `
+      <div class="top-rank${rankCls}">#${i+1}</div>
+      <div class="top-info">
+        <div class="top-name">${escapeHtml(it.nome)}</div>
+        <div class="top-meta">${it.qtd} ${it.qtd === 1 ? labelSing : labelPlur}</div>
+      </div>
+      <div>
+        <div class="top-valor">${fmtBRL(it.valor)}</div>
+      </div>`;
+    el.appendChild(li);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function renderizar() {
+  const atts = coletarAtendimentos();
+  const topPac = calcularTop(atts, 'Paciente');
+  const topProc = calcularTop(atts, 'Procedimento');
+  renderTop('top-pacientes', topPac, 'atendimento', 'atendimentos');
+  renderTop('top-procedimentos', topProc, 'realização', 'realizações');
+}
+
+async function inicializar() {
+  document.getElementById('top-pacientes').innerHTML = '<li class="loading">Carregando dados...</li>';
+  document.getElementById('top-procedimentos').innerHTML = '<li class="loading">Carregando dados...</li>';
+  _DADOS = await carregarFontes();
+  if (!_DADOS || Object.keys(_DADOS).length === 0) {
+    document.getElementById('top-pacientes').innerHTML = '<li class="empty-state">Sem dados disponíveis.</li>';
+    document.getElementById('top-procedimentos').innerHTML = '<li class="empty-state">Sem dados disponíveis.</li>';
+    return;
+  }
+  montarTabsEmpresa();
+  montarTabsPeriodo();
+  renderizar();
+}
+
+window.addEventListener('load', () => {
+  if (sessionStorage.getItem(SK) === '1') {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    inicializar();
+  } else {
+    document.getElementById('login-senha').focus();
+  }
+});
+</script>
+</body>
+</html>

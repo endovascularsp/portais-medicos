@@ -48,7 +48,7 @@
     .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
 
     .hub-body{
-      max-width:860px;margin:0 auto;padding:52px 24px 60px;
+      max-width:1180px;margin:0 auto;padding:52px 24px 60px;
     }
     .hub-greeting{
       font-size:28px;font-weight:700;color:#fff;margin-bottom:8px;
@@ -59,7 +59,7 @@
     }
 
     /* ── CARDS ── */
-    .hub-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .hub-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}
     .hub-cards.single{grid-template-columns:1fr;max-width:420px}
     .hub-card{
       background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
@@ -69,6 +69,8 @@
     .hub-card.prod:hover{border-color:rgba(192,132,252,0.5);background:rgba(192,132,252,0.06)}
     .hub-card.rec{border-color:rgba(126,184,247,0.25)}
     .hub-card.rec:hover{border-color:rgba(126,184,247,0.5);background:rgba(126,184,247,0.06)}
+    .hub-card.insights{border-color:rgba(244,114,182,0.25)}
+    .hub-card.insights:hover{border-color:rgba(244,114,182,0.5);background:rgba(244,114,182,0.06)}
     .hub-card-icon{font-size:36px;margin-bottom:14px}
     .hub-card-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px}
     .hub-card-desc{font-size:13px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:24px}
@@ -110,6 +112,7 @@
       margin-top:60px;padding-bottom:20px;
     }
 
+    @media(max-width:960px){.hub-cards{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){
       .hub-cards{grid-template-columns:1fr}
       .hub-greeting{font-size:22px}
@@ -119,6 +122,11 @@
   color:#6dd5a0;border-color:rgba(109,213,160,0.35);background:rgba(109,213,160,0.08);
 }
 .hub-sub-btn.oxy-prod:hover{background:rgba(109,213,160,0.20);border-color:#6dd5a0;}
+.hub-sub-btn.insights{
+  color:#f472b6;border-color:rgba(244,114,182,0.35);background:rgba(244,114,182,0.08);
+}
+.hub-sub-btn.insights:hover{background:rgba(244,114,182,0.20);border-color:#f472b6;}
+
   </style>
 </head>
 <body>
@@ -161,6 +169,16 @@
           <div class="hub-card-links">
               <a href="../oxy/Julia_do_Valle_Bargieri_Oxy_Recovery.html" onclick="navegar(this,event)" class="hub-sub-btn oxy">
                 💊 Oxy Recovery
+              </a>
+          </div>
+        </div>
+        <div class="hub-card insights" id="card-insights">
+          <div class="hub-card-icon">&#x1F4A1;</div>
+          <div class="hub-card-title">Dashboard de Insights</div>
+          <div class="hub-card-desc">Top pacientes, top procedimentos<br>e indicadores de performance</div>
+          <div class="hub-card-links">
+              <a href="../dashboard-insights/Julia_do_Valle_Bargieri_Insights.html" onclick="navegar(this,event)" class="hub-sub-btn insights">
+                &#x1F4C8; Acessar Insights
               </a>
           </div>
         </div>

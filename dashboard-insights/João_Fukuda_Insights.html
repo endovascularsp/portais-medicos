@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Insights — João Fukuda | Endovascular SP</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff}
+
+    #login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .login-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;backdrop-filter:blur(10px);}
+    .login-logo{font-size:36px;margin-bottom:8px}
+    .login-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:28px}
+    .login-input{width:100%;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.08);color:#fff;font-size:15px;outline:none;transition:border .2s;
+      margin-bottom:14px;letter-spacing:2px;}
+    .login-input:focus{border-color:rgba(244,114,182,0.6)}
+    .login-input::placeholder{letter-spacing:0;color:rgba(255,255,255,0.3)}
+    .login-btn{width:100%;padding:13px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#9d2161,#d63384);color:#fff;font-size:15px;font-weight:700;
+      cursor:pointer;transition:opacity .2s;}
+    .login-btn:hover{opacity:.88}
+    .login-btn:disabled{opacity:.55;cursor:wait}
+    .login-erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
+
+    #main{display:none;min-height:100vh;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%)}
+    header{background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:20px 32px;display:flex;align-items:center;gap:16px;}
+    .header-logo{font-size:28px}
+    .header-info h1{font-size:16px;font-weight:700;color:#fff}
+    .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+
+    .portais-nav{background:#162d50;border-bottom:1px solid rgba(255,255,255,0.10);
+      padding:8px 32px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .portais-nav-label{color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;
+      letter-spacing:0.6px;text-transform:uppercase;white-space:nowrap;}
+    .portais-nav-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
+      font-size:12px;font-weight:600;text-decoration:none;transition:all 0.15s;white-space:nowrap;border:1.5px solid;}
+    .portais-nav-btn.hub{color:#94a3b8;border-color:rgba(148,163,184,0.35);background:rgba(148,163,184,0.08);}
+    .portais-nav-btn.hub:hover{background:rgba(148,163,184,0.20);border-color:#94a3b8;}
+    .portais-nav-btn.insights{color:#f472b6;border-color:rgba(244,114,182,0.35);background:rgba(244,114,182,0.08);}
+    .portais-nav-btn.insights.active{opacity:0.85;cursor:default;pointer-events:none;font-weight:700;}
+
+    .body-wrap{max-width:1180px;margin:0 auto;padding:36px 24px 60px}
+    .greeting{font-size:24px;font-weight:700;color:#fff;margin-bottom:6px}
+    .greeting span{color:#f472b6}
+    .greeting-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:28px}
+
+    .filtros{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin-bottom:28px;
+      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+      border-radius:12px;padding:14px 18px;}
+    .filtro-label{font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;
+      letter-spacing:0.6px;text-transform:uppercase;}
+    .filtro-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+    .filtro-tab{padding:6px 14px;border-radius:18px;border:1.5px solid rgba(255,255,255,0.15);
+      background:transparent;color:rgba(255,255,255,0.65);font-size:12px;font-weight:600;
+      cursor:pointer;transition:all .15s;}
+    .filtro-tab:hover{background:rgba(255,255,255,0.06);color:#fff}
+    .filtro-tab.active{background:rgba(244,114,182,0.18);border-color:#f472b6;color:#f472b6}
+
+    .insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+    .insight-card{background:rgba(255,255,255,0.05);border:1px solid rgba(244,114,182,0.20);
+      border-radius:16px;padding:24px;}
+    .insight-card-title{font-size:14px;font-weight:700;color:#f472b6;
+      letter-spacing:0.4px;text-transform:uppercase;margin-bottom:4px;}
+    .insight-card-sub{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:18px;}
+
+    .top-list{list-style:none;display:flex;flex-direction:column;gap:10px;}
+    .top-item{display:flex;align-items:center;gap:12px;padding:12px 14px;
+      border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+      transition:background .15s;}
+    .top-item:hover{background:rgba(255,255,255,0.06)}
+    .top-rank{font-size:18px;font-weight:800;color:#f472b6;min-width:28px;text-align:center;}
+    .top-rank.rank-1{color:#fbbf24}
+    .top-rank.rank-2{color:#cbd5e1}
+    .top-rank.rank-3{color:#fb923c}
+    .top-info{flex:1;min-width:0;}
+    .top-name{font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .top-meta{font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;}
+    .top-valor{font-size:14px;font-weight:700;color:#6dd5a0;text-align:right;white-space:nowrap;}
+
+    .empty-state{padding:32px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px;}
+    .loading{padding:32px;text-align:center;color:rgba(255,255,255,0.6);font-size:13px;}
+
+    .footer{text-align:center;font-size:11px;color:rgba(255,255,255,0.2);
+      margin-top:40px;padding-bottom:20px;}
+
+    @media(max-width:760px){.insights-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">💡</div>
+    <div class="login-title">Dashboard de Insights</div>
+    <div class="login-sub">João Fukuda</div>
+    <input id="login-senha" class="login-input" type="password"
+           placeholder="Sua senha de acesso"
+           onkeydown="if(event.key==='Enter') tentarLogin()"/>
+    <button id="login-btn" class="login-btn" onclick="tentarLogin()">Acessar →</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<div id="main">
+  <header>
+    <div class="header-logo">💡</div>
+    <div class="header-info">
+      <h1>João Fukuda</h1>
+      <p>Dashboard de Insights · Endovascular SP</p>
+    </div>
+  </header>
+
+  <div class="portais-nav">
+    <span class="portais-nav-label">Meus Portais:</span>
+    <a href="../hub/João_Fukuda_Hub.html" class="portais-nav-btn hub">🏠 Hub</a>
+    <a href="#" class="portais-nav-btn insights active">💡 Insights</a>
+  </div>
+
+  <div class="body-wrap">
+    <div class="greeting">Olá, <span id="primeiro-nome">João</span> 📈</div>
+    <div class="greeting-sub">Top pacientes e top procedimentos com base nos seus atendimentos compensados</div>
+
+    <div class="filtros">
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <span class="filtro-label">Origem</span>
+        <div class="filtro-tabs" id="filtro-origem"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <span class="filtro-label">Período</span>
+        <div class="filtro-tabs" id="filtro-periodo"></div>
+      </div>
+    </div>
+
+    <div class="insights-grid">
+      <div class="insight-card">
+        <div class="insight-card-title">🥇 Top 5 Pacientes</div>
+        <div class="insight-card-sub">Por valor recebido total</div>
+        <ul class="top-list" id="top-pacientes">
+          <li class="loading">Carregando dados...</li>
+        </ul>
+      </div>
+      <div class="insight-card">
+        <div class="insight-card-title">🔬 Top 5 Procedimentos</div>
+        <div class="insight-card-sub">Por valor recebido total</div>
+        <ul class="top-list" id="top-procedimentos">
+          <li class="loading">Carregando dados...</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">Endovascular SP © 2026 · Dados protegidos com criptografia AES-256</div>
+  </div>
+</div>
+
+<script>
+const SLUG = 'João_Fukuda';
+const FONTES = [
+  { url: '../João_Fukuda.html',                              origem: 'Endovascular SP' },
+  { url: '../oxy/João_Fukuda_Oxy_Recovery.html',             origem: 'Oxy Recovery'    },
+  { url: '../cirurgias/João_Fukuda.html',                    origem: 'Cirurgias'       }
+];
+
+let _DADOS = {}; // { 'periodo-id': { label, atendimentos: { Endo: [...], Oxy: [...], Cir: [...] } } }
+let _ORIGEM_ATIVA = 'Todas';
+let _PERIODO_ATIVO = null;
+
+async function _descriptografar(b64, senha){
+  try {
+    const packed = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const salt = packed.slice(0,16), iv = packed.slice(16,28), ct = packed.slice(28);
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(senha), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      {name:'PBKDF2', salt, iterations:100000, hash:'SHA-256'}, km,
+      {name:'AES-GCM', length:256}, false, ['decrypt']);
+    const dec = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
+    return JSON.parse(new TextDecoder().decode(dec));
+  } catch(e) { return null; }
+}
+
+function extrairTodosEnc(html) {
+  const marker = 'TODOS_PERIODOS_ENC = /*PDATA*/';
+  const idx = html.indexOf(marker);
+  if (idx < 0) return null;
+  let i = idx + marker.length;
+  while (i < html.length && /\s/.test(html[i])) i++;
+  if (html[i] !== '{') return null;
+  const start = i;
+  let depth = 0, inStr = false, esc = false;
+  for (; i < html.length; i++) {
+    const ch = html[i];
+    if (inStr) { if (esc) {esc=false;continue;} if (ch==='\\') {esc=true;continue;} if (ch==='"') inStr=false; continue; }
+    if (ch === '"') { inStr = true; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') { depth--; if (depth===0) { i++; break; } }
+  }
+  try { return JSON.parse(html.substring(start, i)); } catch(e) { return null; }
+}
+
+async function carregarFonte(fonte, senha) {
+  try {
+    const resp = await fetch(fonte.url);
+    if (!resp.ok) return null;
+    const html = await resp.text();
+    const todosEnc = extrairTodosEnc(html);
+    if (!todosEnc) return null;
+    const out = {};
+    for (const periodoId of Object.keys(todosEnc)) {
+      const blobInfo = todosEnc[periodoId];
+      const decrypted = await _descriptografar(blobInfo.blob, senha);
+      if (!decrypted) continue;
+      // decrypted é o `profs` do período, keyed by slug com sufixos (_Cir, _Oxy)
+      out[periodoId] = { label: blobInfo.label, profs: decrypted };
+    }
+    return out;
+  } catch(e) { return null; }
+}
+
+async function tentarLogin() {
+  const senha = document.getElementById('login-senha').value.trim();
+  const btn = document.getElementById('login-btn');
+  const erro = document.getElementById('login-erro');
+  if (!senha) return;
+  btn.disabled = true; btn.textContent = 'Verificando…';
+
+  // Tenta descriptografar pelo menos 1 fonte para validar a senha.
+  let validado = false;
+  const dadosPorFonte = {}; // { 'Endovascular SP': { 'periodo': profs }, ... }
+  for (const fonte of FONTES) {
+    const dados = await carregarFonte(fonte, senha);
+    if (dados && Object.keys(dados).length > 0) {
+      dadosPorFonte[fonte.origem] = dados;
+      validado = true;
+    }
+  }
+
+  if (!validado) {
+    erro.textContent = 'Senha incorreta ou dados indisponíveis.';
+    btn.disabled = false; btn.textContent = 'Acessar →';
+    document.getElementById('login-senha').value = '';
+    document.getElementById('login-senha').focus();
+    setTimeout(() => erro.textContent = '', 3500);
+    return;
+  }
+
+  sessionStorage.setItem('_xp', senha);
+
+  // Agrega em _DADOS
+  for (const origem of Object.keys(dadosPorFonte)) {
+    const fonteData = dadosPorFonte[origem];
+    for (const periodoId of Object.keys(fonteData)) {
+      const periodo = fonteData[periodoId];
+      if (!_DADOS[periodoId]) _DADOS[periodoId] = { label: periodo.label, atendimentos: {} };
+      // Coleta atendimentos do médico (filtra por slug match em prof.profissional ou usa todos do prof retornado)
+      const profs = periodo.profs || {};
+      for (const profSlug of Object.keys(profs)) {
+        const prof = profs[profSlug];
+        const atts = prof.atendimentos || [];
+        // A "origem" real vem de prof.empresa quando disponível (Endovascular SP, Cirurgias, Oxy Recovery)
+        const empProf = prof.empresa || origem;
+        if (!_DADOS[periodoId].atendimentos[empProf]) _DADOS[periodoId].atendimentos[empProf] = [];
+        for (const att of atts) _DADOS[periodoId].atendimentos[empProf].push(att);
+      }
+    }
+  }
+
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  inicializar();
+}
+
+function montarTabsOrigem() {
+  const cont = document.getElementById('filtro-origem');
+  const origensPresentes = new Set();
+  for (const pid of Object.keys(_DADOS)) {
+    for (const emp of Object.keys(_DADOS[pid].atendimentos)) {
+      if ((_DADOS[pid].atendimentos[emp] || []).length > 0) origensPresentes.add(emp);
+    }
+  }
+  const opcoes = ['Todas'].concat(Array.from(origensPresentes).sort());
+  cont.innerHTML = '';
+  for (const op of opcoes) {
+    const btn = document.createElement('button');
+    btn.className = 'filtro-tab' + (op === _ORIGEM_ATIVA ? ' active' : '');
+    btn.textContent = op;
+    btn.onclick = () => { _ORIGEM_ATIVA = op; montarTabsOrigem(); renderizar(); };
+    cont.appendChild(btn);
+  }
+}
+
+function montarTabsPeriodo() {
+  const cont = document.getElementById('filtro-periodo');
+  cont.innerHTML = '';
+  const periodos = Object.keys(_DADOS).sort().reverse();
+  if (!_PERIODO_ATIVO || (_PERIODO_ATIVO !== '__todos' && !periodos.includes(_PERIODO_ATIVO))) {
+    _PERIODO_ATIVO = periodos[0];
+  }
+  const opcoes = [{id:'__todos', label:'Todos'}].concat(periodos.map(id => ({id, label:_DADOS[id].label})));
+  for (const op of opcoes) {
+    const btn = document.createElement('button');
+    btn.className = 'filtro-tab' + (op.id === _PERIODO_ATIVO ? ' active' : '');
+    btn.textContent = op.label;
+    btn.onclick = () => { _PERIODO_ATIVO = op.id; montarTabsPeriodo(); renderizar(); };
+    cont.appendChild(btn);
+  }
+}
+
+function coletarAtendimentos() {
+  const out = [];
+  const periodos = _PERIODO_ATIVO === '__todos' ? Object.keys(_DADOS) : [_PERIODO_ATIVO];
+  for (const pid of periodos) {
+    if (!_DADOS[pid]) continue;
+    const empresas = _ORIGEM_ATIVA === 'Todas' ? Object.keys(_DADOS[pid].atendimentos) : [_ORIGEM_ATIVA];
+    for (const emp of empresas) {
+      const arr = _DADOS[pid].atendimentos[emp] || [];
+      for (const a of arr) out.push(a);
+    }
+  }
+  return out;
+}
+
+function fmtBRL(v) { return (v || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
+
+function calcularTop(atts, campo, n=5) {
+  const map = new Map();
+  for (const a of atts) {
+    const k = (a[campo] || '').toString().trim();
+    if (!k) continue;
+    const cur = map.get(k) || { valor: 0, qtd: 0 };
+    cur.valor += Number(a['Valor recebido'] || 0);
+    cur.qtd += 1;
+    map.set(k, cur);
+  }
+  return Array.from(map.entries())
+    .map(([nome, v]) => ({ nome, valor: v.valor, qtd: v.qtd }))
+    .sort((a,b) => b.valor - a.valor)
+    .slice(0, n);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function renderTop(elId, items, labelSing, labelPlur) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  if (!items.length) { el.innerHTML = '<li class="empty-state">Sem dados para o filtro selecionado.</li>'; return; }
+  items.forEach((it, i) => {
+    const li = document.createElement('li');
+    li.className = 'top-item';
+    const rankCls = i < 3 ? ' rank-' + (i+1) : '';
+    li.innerHTML =
+      '<div class="top-rank' + rankCls + '">#' + (i+1) + '</div>' +
+      '<div class="top-info">' +
+        '<div class="top-name">' + escapeHtml(it.nome) + '</div>' +
+        '<div class="top-meta">' + it.qtd + ' ' + (it.qtd === 1 ? labelSing : labelPlur) + '</div>' +
+      '</div>' +
+      '<div><div class="top-valor">' + fmtBRL(it.valor) + '</div></div>';
+    el.appendChild(li);
+  });
+}
+
+function renderizar() {
+  const atts = coletarAtendimentos();
+  renderTop('top-pacientes', calcularTop(atts, 'Paciente'), 'atendimento', 'atendimentos');
+  renderTop('top-procedimentos', calcularTop(atts, 'Procedimento'), 'realização', 'realizações');
+}
+
+function inicializar() {
+  if (!_DADOS || Object.keys(_DADOS).length === 0) {
+    document.getElementById('top-pacientes').innerHTML = '<li class="empty-state">Sem dados disponíveis.</li>';
+    document.getElementById('top-procedimentos').innerHTML = '<li class="empty-state">Sem dados disponíveis.</li>';
+    return;
+  }
+  montarTabsOrigem();
+  montarTabsPeriodo();
+  renderizar();
+}
+
+window.addEventListener('load', async () => {
+  const s = sessionStorage.getItem('_xp');
+  if (s) {
+    sessionStorage.removeItem('_xp');
+    document.getElementById('login-senha').value = s;
+    await tentarLogin();
+  } else {
+    document.getElementById('login-senha').focus();
+  }
+});
+</script>
+</body>
+</html>

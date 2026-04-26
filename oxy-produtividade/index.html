@@ -40,6 +40,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza);color:v
   border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;border:1.5px solid;transition:all 0.15s;}
 .admin-nav-btn.endo{color:#7eb8f7;border-color:rgba(126,184,247,0.35);background:rgba(126,184,247,0.06);}
 .admin-nav-btn.endo:hover{background:rgba(126,184,247,0.18);border-color:#7eb8f7;}
+.admin-nav-btn.hub{color:#94a3b8;border-color:rgba(148,163,184,0.35);background:rgba(148,163,184,0.08);}
+.admin-nav-btn.hub:hover{background:rgba(148,163,184,0.20);border-color:#94a3b8;}
+.admin-nav-btn.prod{color:#c084fc;border-color:rgba(192,132,252,0.35);background:rgba(192,132,252,0.08);}
+.admin-nav-btn.prod:hover{background:rgba(192,132,252,0.20);border-color:#c084fc;}
 .admin-nav-btn.oxy{color:#6dd5a0;border-color:rgba(109,213,160,0.35);background:rgba(109,213,160,0.06);}
 .admin-nav-btn.oxy:hover{background:rgba(109,213,160,0.18);border-color:#6dd5a0;}
 .admin-nav-btn.active{opacity:0.4;cursor:default;pointer-events:none;}
@@ -91,11 +95,9 @@ tr:hover td{background:#f8fbff;}
 </header>
 <nav class='admin-nav'>
   <span class='admin-nav-label'>Portal:</span>
-  <a href='../' class='admin-nav-btn endo'>🏥 Comp. Endo</a>
-  <a href='../oxy/' class='admin-nav-btn oxy'>💊 Comp. Oxy</a>
-  <a href='../cirurgias/' class='admin-nav-btn endo'>🔬 Cirurgias</a>
-  <a href='../produtividade/' class='admin-nav-btn endo'>📊 Prod. Endo</a>
-  <a href='#' class='admin-nav-btn oxy active'>💊 Prod. Oxy</a>
+  <a href='../hub/Gestor_Hub.html' class='admin-nav-btn hub'>🏠 Hub</a>
+  <a href='../produtividade/' class='admin-nav-btn prod'>🏥 Endovascular SP</a>
+  <a href='#' class='admin-nav-btn oxy active'>💊 Oxy Recovery</a>
 </nav>
 <div class='main'>
   <div class='periodo-tabs' id='periodo-tabs'></div>

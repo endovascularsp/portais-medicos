@@ -47,6 +47,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   border:1.5px solid;transition:all 0.15s;background:#fff;}
 .admin-nav-btn.endo{color:var(--azul);border-color:var(--borda-fr);}
 .admin-nav-btn.endo:hover{background:var(--azul);color:#fff;border-color:var(--azul);}
+.admin-nav-btn.hub{color:#94a3b8;border-color:rgba(148,163,184,0.35);background:rgba(148,163,184,0.08);}
+.admin-nav-btn.hub:hover{background:rgba(148,163,184,0.20);border-color:#94a3b8;}
+.admin-nav-btn.prod-oxy{color:#6dd5a0;border-color:rgba(109,213,160,0.35);background:rgba(109,213,160,0.08);}
+.admin-nav-btn.prod-oxy:hover{background:rgba(109,213,160,0.20);border-color:#6dd5a0;}
+.admin-nav-btn.active{opacity:0.85;cursor:default;pointer-events:none;font-weight:700;}
 .admin-nav-btn.prod{color:#fff;border-color:var(--azul);background:var(--azul);opacity:0.85;cursor:default;pointer-events:none;}
 
 .main{padding:28px 32px;max-width:1400px;margin:0 auto;}
@@ -151,10 +156,9 @@ tr:hover td{background:var(--azul-cl);}
 </header>
 <nav class='admin-nav'>
   <span class='admin-nav-label'>Portal:</span>
-  <a href='../' class='admin-nav-btn endo'>🏥 Compensação Endo</a>
-  <a href='../oxy/' class='admin-nav-btn endo'>💊 Compensação Oxy</a>
-  <a href='../cirurgias/' class='admin-nav-btn endo'>🔬 Cirurgias</a>
-  <a href='#' class='admin-nav-btn prod'>📊 Produtividade</a>
+  <a href='../hub/Gestor_Hub.html' class='admin-nav-btn hub'>🏠 Hub</a>
+  <a href='#' class='admin-nav-btn prod active'>🏥 Endovascular SP</a>
+  <a href='../oxy-produtividade/' class='admin-nav-btn prod-oxy'>💊 Oxy Recovery</a>
 </nav>
 <div class='main'>
   <div class='periodo-bloco'>
