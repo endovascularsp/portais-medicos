@@ -3,6 +3,8 @@
 Projeto de gestão financeira e portais de honorários médicos da clínica Endovascular SP.
 Publicado via GitHub Pages em: **https://endovascularsp.github.io/portais-medicos/**
 
+> **Este é o CLAUDE.md autoritativo.** A pasta `C:\Users\thiag\Documents\portais-medicos\` (onde este arquivo vive) é o clone git e a única fonte da verdade. Pastas em `OneDrive\Documentos\Claude\Projects\Gestor Financeiro Endovascular\*` são históricas e não devem ser editadas.
+
 ---
 
 ## Estrutura do Repositório GitHub
@@ -14,16 +16,10 @@ portais-medicos/              ← raiz do repositório (GitHub Pages)
 ├── produtividade/            ← Portais de produtividade (Endovascular SP)
 ├── oxy/                      ← Portais individuais Oxy Recovery
 ├── cirurgias/                ← Portais individuais Cirurgias
-└── oxy-produtividade/        ← Portais de produtividade Oxy Recovery
+├── oxy-produtividade/        ← Portais de produtividade Oxy Recovery
+├── dashboard-insights/       ← Dashboards de insights
+└── *.html (raiz)             ← Portais de Recebimento (Endovascular SP)
 ```
-
-A pasta local equivalente ao repositório é:
-`Gestor Financeiro Endovascular/Portal Público/` → arquivos que vão na **raiz** do repo
-`Gestor Financeiro Endovascular/hub/`            → pasta `hub/` do repo
-`Gestor Financeiro Endovascular/produtividade/`  → pasta `produtividade/` do repo
-`Gestor Financeiro Endovascular/Portal Público Oxy/` → arquivos que vão em `oxy/`
-`Gestor Financeiro Endovascular/Portal Público Cirurgias/` → arquivos que vão em `cirurgias/`
-`Gestor Financeiro Endovascular/oxy-produtividade/` → pasta `oxy-produtividade/` do repo
 
 ---
 
