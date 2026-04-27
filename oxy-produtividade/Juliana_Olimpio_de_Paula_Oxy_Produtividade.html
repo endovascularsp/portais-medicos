@@ -89,6 +89,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza);color:v
   border:1px solid var(--borda);border-top:3px solid var(--azul);}
 .card.gold{border-top-color:var(--gold);}
 .card.verde{border-top-color:var(--verde);}
+.card.navy{border-top-color:var(--navy);}
 .card-label{font-size:11px;color:var(--texto2);font-weight:600;letter-spacing:0.5px;
   text-transform:uppercase;margin-bottom:8px;}
 .card-value{font-size:22px;font-weight:800;color:var(--texto);}
@@ -285,10 +286,15 @@ function renderPeriodo(prof, pid){
   const r = p.resumo;
 
   // Cards
+  const ticketMedio = r.n_pacientes > 0 ? r.total / r.n_pacientes : 0;
   document.getElementById('cards').innerHTML = `
     <div class="card gold">
       <div class="card-label">Total Produzido</div>
       <div class="card-value grande">${br(r.total)}</div>
+    </div>
+    <div class="card navy">
+      <div class="card-label">Ticket Médio</div>
+      <div class="card-value grande">${br(ticketMedio)}</div>
     </div>
     <div class="card">
       <div class="card-label">Pacientes Atendidos</div>
