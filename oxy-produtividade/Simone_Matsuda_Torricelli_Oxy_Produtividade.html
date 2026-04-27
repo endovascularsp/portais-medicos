@@ -212,7 +212,7 @@ const DADOS_ENC = /*PDATA*/'MQbIPMYwNlL/M2eArCprbJ/K2pFH903vrhE8ROxl2oCkW46fdBuO
 const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03"];
 
 function br(v){
-  return 'R\u00a0' + v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return 'R$ ' + v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 }
 
 function badgePag(tipo){
