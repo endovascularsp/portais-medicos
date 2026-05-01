@@ -96,6 +96,7 @@
   .kpi-card{background:rgba(255,255,255,0.05);border:1px solid rgba(109,213,160,0.20);
     border-radius:14px;padding:20px 22px;transition:border-color .2s}
   .kpi-card:hover{border-color:rgba(109,213,160,0.4)}
+  .kpi-card-wide{grid-column:span 2}
   .kpi-label{font-size:11px;color:#6dd5a0;font-weight:700;letter-spacing:1px;text-transform:uppercase;
     margin-bottom:10px}
   .kpi-value{font-size:30px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:6px}
@@ -269,11 +270,6 @@
         </div>
       </div>
 
-      <label class="filtro-toggle">
-        <input id="filter-excluir-ig" type="checkbox" checked />
-        Excluir <strong>Direct Instagram</strong> da conversão
-      </label>
-
       <div class="filtro-spacer"></div>
 
       <button id="btn-refresh" class="filtro-refresh-btn">↻ Atualizar</button>
@@ -287,7 +283,7 @@
         <div class="kpi-value" id="kpi-em-espera">--</div>
         <div class="kpi-sub" id="kpi-em-espera-sub">aguardando agente</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card kpi-card-wide">
         <div class="kpi-label">Taxa de conversão</div>
         <div class="kpi-gauge">
           <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
@@ -303,11 +299,6 @@
         <div class="kpi-label">TME · 1ª resposta</div>
         <div class="kpi-value" id="kpi-ttfr">--</div>
         <div class="kpi-sub" id="kpi-ttfr-sub">meta ≤ 3 min</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Agendamentos</div>
-        <div class="kpi-value" id="kpi-agendamentos">--</div>
-        <div class="kpi-sub" id="kpi-agendamentos-sub">--</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Total atendimentos</div>
@@ -626,13 +617,14 @@ function renderGaugeConversao(pct) {
 
 /* ---------- RENDER ---------- */
 function renderKpis() {
-  const excluirIG = $('filter-excluir-ig').checked;
   const dados = dadosFiltrados();
   const finalizadas = dados.filter(a => a.finished_at);
-  const finalParaConv = excluirIG
-    ? finalizadas.filter(a => !/instagram/i.test(a.tabulation || ''))
-    : finalizadas;
-  const agendou = finalParaConv.filter(a => /agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || ''));
+
+  // Conversão = Agendou ÷ (Agendou + Não agendou)
+  // Confirmou, Reagendou, Cancelou, Informação e Direct Instagram NÃO entram no cálculo
+  const agendou = finalizadas.filter(a => /agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || ''));
+  const naoAgendou = finalizadas.filter(a => /n[ãa]o agendou/i.test(a.tabulation || ''));
+  const totalConv = agendou.length + naoAgendou.length;
 
   // Em espera é geral (fila não tem agente associado ainda)
   const emEspera = dadosAtuais.filter(a =>
@@ -643,18 +635,14 @@ function renderKpis() {
     ? 'fila vazia ✓'
     : (emEspera.length === 1 ? 'paciente aguardando' : 'pacientes aguardando');
 
-  const conv = finalParaConv.length > 0 ? (agendou.length / finalParaConv.length * 100) : 0;
+  const conv = totalConv > 0 ? (agendou.length / totalConv * 100) : 0;
   renderGaugeConversao(conv);
-  $('kpi-conversao-sub').textContent = agendou.length + ' agendaram de ' + finalParaConv.length +
-    (excluirIG ? ' (excl. Instagram) · meta 70%' : ' · meta 70%');
+  $('kpi-conversao-sub').textContent = agendou.length + ' agendaram · ' + naoAgendou.length + ' não agendaram · meta 70%';
 
   const ttfrValores = dados.map(a => a.ttfr_seconds).filter(v => v != null && v >= 0);
   const ttfrMedio = ttfrValores.length > 0
     ? Math.round(ttfrValores.reduce((s,v) => s+v, 0) / ttfrValores.length) : null;
   $('kpi-ttfr').textContent = ttfrMedio != null ? fmtSeconds(ttfrMedio).replace(/<[^>]+>/g,'') : '—';
-
-  $('kpi-agendamentos').textContent = agendou.length;
-  $('kpi-agendamentos-sub').textContent = excluirIG ? 'sem Instagram' : 'inclui Instagram';
 
   $('kpi-total').textContent = dados.length;
   $('kpi-total-sub').textContent = finalizadas.length + ' finalizadas · ' +
@@ -827,7 +815,6 @@ function aplicarRangeCustom() {
 $('data-inicio').addEventListener('change', aplicarRangeCustom);
 $('data-fim').addEventListener('change', aplicarRangeCustom);
 
-$('filter-excluir-ig').addEventListener('change', renderKpis);
 $('btn-refresh').addEventListener('click', carregarTudo);
 
 $('agente-tabs').addEventListener('click', (e) => {
