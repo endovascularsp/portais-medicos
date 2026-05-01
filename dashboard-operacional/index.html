@@ -100,6 +100,8 @@
     margin-bottom:10px}
   .kpi-value{font-size:30px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:6px}
   .kpi-sub{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.4}
+  .kpi-gauge{position:relative;height:90px;margin:8px 0 2px}
+  .kpi-gauge svg{width:100%;height:100%;display:block}
 
   /* ---------- PANELS ---------- */
   .panel{background:rgba(255,255,255,0.05);border:1px solid rgba(109,213,160,0.20);
@@ -260,6 +262,13 @@
         </div>
       </div>
 
+      <div class="filtro-grupo">
+        <div class="filtro-label">Agente</div>
+        <div class="filtro-tabs" id="agente-tabs">
+          <button class="filtro-tab active" data-agente="">Todas</button>
+        </div>
+      </div>
+
       <label class="filtro-toggle">
         <input id="filter-excluir-ig" type="checkbox" checked />
         Excluir <strong>Direct Instagram</strong> da conversão
@@ -280,8 +289,15 @@
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Taxa de conversão</div>
-        <div class="kpi-value" id="kpi-conversao">--</div>
-        <div class="kpi-sub" id="kpi-conversao-sub">--</div>
+        <div class="kpi-gauge">
+          <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
+            <path d="M 12 50 A 38 38 0 0 1 88 50" stroke="rgba(255,255,255,0.08)" stroke-width="9" fill="none" stroke-linecap="round"/>
+            <path id="gauge-fill" d="" stroke="#6dd5a0" stroke-width="9" fill="none" stroke-linecap="round"/>
+            <line id="gauge-meta-line" x1="50" y1="14" x2="50" y2="6" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+            <text id="gauge-value-text" x="50" y="48" text-anchor="middle" fill="#fff" font-size="16" font-weight="800" font-family="Segoe UI, Arial, sans-serif">--</text>
+          </svg>
+        </div>
+        <div class="kpi-sub" id="kpi-conversao-sub">meta 70%</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">TME · 1ª resposta</div>
@@ -391,6 +407,25 @@ let agentMap = {};
 let dadosAtuais = [];
 let chartTrend = null;
 let periodoAtivo = '7d';
+let agenteFiltrado = null;
+
+function dadosFiltrados() {
+  if (!agenteFiltrado) return dadosAtuais;
+  return dadosAtuais.filter(a => a.agent_id === agenteFiltrado);
+}
+
+function popularBotoesAgente() {
+  const cont = $('agente-tabs');
+  const agents = Object.entries(agentMap).sort((a, b) => a[1].localeCompare(b[1]));
+  const ativo = agenteFiltrado;
+  let html = '<button class="filtro-tab' + (ativo ? '' : ' active') + '" data-agente="">Todas</button>';
+  html += agents.map(([id, nome]) => {
+    const primeiro = nome.split(' ')[0];
+    const cls = (id === ativo) ? 'filtro-tab active' : 'filtro-tab';
+    return '<button class="' + cls + '" data-agente="' + id + '">' + primeiro + '</button>';
+  }).join('');
+  cont.innerHTML = html;
+}
 
 /* ---------- AUTH ---------- */
 async function checarSessao() {
@@ -495,6 +530,7 @@ async function carregarTudo() {
   $('btn-refresh').disabled = true;
   $('last-updated').textContent = 'atualizando...';
   await Promise.all([carregarAgentes(), carregarAtendimentos()]);
+  popularBotoesAgente();
   renderTudo();
   $('btn-refresh').disabled = false;
   $('last-updated').textContent = 'atualizado ' + new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
@@ -548,15 +584,57 @@ function fmtDateTime(iso) {
          d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
 }
 
+/* ---------- GAUGE (velocímetro Taxa de Conversão) ---------- */
+function gaugeArc(pct) {
+  pct = Math.max(0, Math.min(100, pct));
+  if (pct <= 0) return '';
+  const angle = Math.PI * (1 - pct / 100);
+  const cx = 50, cy = 50, r = 38;
+  const x = cx + r * Math.cos(angle);
+  const y = cy - r * Math.sin(angle);
+  const largeArc = pct > 50 ? 1 : 0;
+  return 'M 12 50 A ' + r + ' ' + r + ' 0 ' + largeArc + ' 1 ' + x.toFixed(2) + ' ' + y.toFixed(2);
+}
+
+function pontoNoArco(pct, raio) {
+  const angle = Math.PI * (1 - pct / 100);
+  const cx = 50, cy = 50;
+  return { x: cx + raio * Math.cos(angle), y: cy - raio * Math.sin(angle) };
+}
+
+function renderGaugeConversao(pct) {
+  const fill = $('gauge-fill');
+  fill.setAttribute('d', gaugeArc(pct));
+
+  // Cor: vermelho < 50, amarelo 50-69, verde >= 70 (meta)
+  let cor = '#ef4444';
+  if (pct >= 70) cor = '#6dd5a0';
+  else if (pct >= 50) cor = '#f5a623';
+  fill.setAttribute('stroke', cor);
+
+  // Marca da meta 70% (linha curta no arco)
+  const pIn = pontoNoArco(70, 33);
+  const pOut = pontoNoArco(70, 44);
+  const linha = $('gauge-meta-line');
+  linha.setAttribute('x1', pIn.x.toFixed(2));
+  linha.setAttribute('y1', pIn.y.toFixed(2));
+  linha.setAttribute('x2', pOut.x.toFixed(2));
+  linha.setAttribute('y2', pOut.y.toFixed(2));
+
+  $('gauge-value-text').textContent = pct.toFixed(1) + '%';
+}
+
 /* ---------- RENDER ---------- */
 function renderKpis() {
   const excluirIG = $('filter-excluir-ig').checked;
-  const finalizadas = dadosAtuais.filter(a => a.finished_at);
+  const dados = dadosFiltrados();
+  const finalizadas = dados.filter(a => a.finished_at);
   const finalParaConv = excluirIG
     ? finalizadas.filter(a => !/instagram/i.test(a.tabulation || ''))
     : finalizadas;
   const agendou = finalParaConv.filter(a => /agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || ''));
 
+  // Em espera é geral (fila não tem agente associado ainda)
   const emEspera = dadosAtuais.filter(a =>
     a.wait_started_at && !a.human_started_at && !a.finished_at
   );
@@ -566,11 +644,11 @@ function renderKpis() {
     : (emEspera.length === 1 ? 'paciente aguardando' : 'pacientes aguardando');
 
   const conv = finalParaConv.length > 0 ? (agendou.length / finalParaConv.length * 100) : 0;
-  $('kpi-conversao').textContent = conv.toFixed(1) + '%';
+  renderGaugeConversao(conv);
   $('kpi-conversao-sub').textContent = agendou.length + ' agendaram de ' + finalParaConv.length +
-    (excluirIG ? ' (excl. Instagram)' : '');
+    (excluirIG ? ' (excl. Instagram) · meta 70%' : ' · meta 70%');
 
-  const ttfrValores = dadosAtuais.map(a => a.ttfr_seconds).filter(v => v != null && v >= 0);
+  const ttfrValores = dados.map(a => a.ttfr_seconds).filter(v => v != null && v >= 0);
   const ttfrMedio = ttfrValores.length > 0
     ? Math.round(ttfrValores.reduce((s,v) => s+v, 0) / ttfrValores.length) : null;
   $('kpi-ttfr').textContent = ttfrMedio != null ? fmtSeconds(ttfrMedio).replace(/<[^>]+>/g,'') : '—';
@@ -578,9 +656,9 @@ function renderKpis() {
   $('kpi-agendamentos').textContent = agendou.length;
   $('kpi-agendamentos-sub').textContent = excluirIG ? 'sem Instagram' : 'inclui Instagram';
 
-  $('kpi-total').textContent = dadosAtuais.length;
+  $('kpi-total').textContent = dados.length;
   $('kpi-total-sub').textContent = finalizadas.length + ' finalizadas · ' +
-    (dadosAtuais.length - finalizadas.length) + ' em andamento';
+    (dados.length - finalizadas.length) + ' em andamento';
 }
 
 const COR_CATEGORIA = {
@@ -593,7 +671,7 @@ const COR_CATEGORIA = {
 function renderTabulacoesPorCategoria() {
   const buckets = { positivas: {}, operacionais: {}, negativas: {}, origem: {} };
 
-  dadosAtuais.forEach(a => {
+  dadosFiltrados().forEach(a => {
     if (!a.finished_at || !a.tabulation) return;
     const cat = categorizar(a.tabulation);
     if (cat === 'outro') return;
@@ -655,7 +733,7 @@ function renderListaAgentes() {
 
 function renderTendenciaPorHora() {
   const buckets = Array.from({ length: 24 }, () => ({ total: 0, agendou: 0 }));
-  dadosAtuais.forEach(a => {
+  dadosFiltrados().forEach(a => {
     if (!a.finished_at) return;
     const hour = new Date(a.finished_at).getHours();
     buckets[hour].total++;
@@ -697,7 +775,7 @@ function renderTendenciaPorHora() {
 
 function renderTabela() {
   const tb = $('tbody-atendimentos');
-  const recentes = [...dadosAtuais].slice(0, 30);
+  const recentes = [...dadosFiltrados()].slice(0, 30);
   if (recentes.length === 0) {
     tb.innerHTML = '<tr><td colspan="8" class="empty-state">Sem atendimentos no período</td></tr>';
     return;
@@ -751,6 +829,15 @@ $('data-fim').addEventListener('change', aplicarRangeCustom);
 
 $('filter-excluir-ig').addEventListener('change', renderKpis);
 $('btn-refresh').addEventListener('click', carregarTudo);
+
+$('agente-tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-agente]');
+  if (!btn) return;
+  document.querySelectorAll('#agente-tabs .filtro-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  agenteFiltrado = btn.dataset.agente || null;
+  renderTudo();
+});
 
 /* ---------- INIT ---------- */
 checarSessao();
