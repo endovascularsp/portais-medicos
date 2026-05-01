@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Dashboard Operacional · Endovascular SP</title>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E" />
+
+<link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css" rel="stylesheet" />
+
+<style>
+  :root { --tblr-primary: #0B1F3A; --tblr-primary-rgb: 11, 31, 58; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+
+  /* Login overlay */
+  #login-overlay { position: fixed; inset: 0; background: linear-gradient(160deg, #0B1F3A 0%, #0d2d55 60%, #0B1F3A 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .4s; }
+  #login-overlay.saindo { opacity: 0; pointer-events: none; }
+  .login-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 22px; padding: 52px 44px 44px; text-align: center; max-width: 420px; width: 92%; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .login-titulo { color: white; font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .login-sub { color: rgba(255,255,255,0.55); font-size: 13px; margin-bottom: 6px; }
+  .login-tag { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); font-size: 12.5px; font-weight: 600; padding: 5px 16px; border-radius: 20px; display: inline-block; margin-bottom: 32px; }
+  .login-input { width: 100%; padding: 14px 18px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: white; font-size: 15px; font-family: inherit; outline: none; transition: border .2s; margin-bottom: 14px; }
+  .login-input::placeholder { color: rgba(255,255,255,0.35); }
+  .login-input:focus { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.12); }
+  .login-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #1A5296, #3A8DD4); color: white; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .2s; margin-top: 4px; }
+  .login-btn:hover:not(:disabled) { background: linear-gradient(135deg, #1e5faf, #4A9EE0); transform: translateY(-1px); }
+  .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .login-erro { color: #F87171; font-size: 12.5px; margin-top: 12px; min-height: 20px; font-weight: 500; }
+  .login-rodape { color: rgba(255,255,255,0.25); font-size: 11px; margin-top: 28px; }
+
+  /* App */
+  .navbar-vertical .navbar-brand { padding: 1rem 0; }
+  .kpi-card .kpi-value { font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+  .kpi-card .kpi-label { color: var(--tblr-secondary); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .kpi-card .kpi-sub { font-size: 0.75rem; color: var(--tblr-secondary); margin-top: 4px; }
+  .empty-state { padding: 40px; text-align: center; color: var(--tblr-secondary); }
+  .tab-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .tab-agendou { background: #d1fae5; color: #065f46; }
+  .tab-confirmou { background: #dbeafe; color: #1e40af; }
+  .tab-instagram { background: #fce7f3; color: #9f1239; }
+  .tab-outro { background: #f3f4f6; color: #374151; }
+
+  /* Filters bar */
+  .filter-bar { background: white; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--tblr-border-color); margin-bottom: 16px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+
+  @media (max-width: 768px) {
+    .filter-bar { flex-direction: column; align-items: stretch; }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ============== LOGIN ============== -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-titulo">Endovascular SP</div>
+    <div class="login-sub">Dashboard Operacional</div>
+    <div class="login-tag">Acesso restrito · Admin</div>
+
+    <button id="btn-google" class="login-btn" type="button" style="display:flex;align-items:center;justify-content:center;gap:10px;background:white;color:#1f1f1f;">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Entrar com Google
+    </button>
+    <div id="login-erro" class="login-erro"></div>
+
+    <div class="login-rodape">Endovascular SP · Confidencial</div>
+  </div>
+</div>
+
+<!-- ============== APP ============== -->
+<div id="app" class="page" hidden>
+
+  <!-- Sidebar condensed -->
+  <aside class="navbar navbar-vertical navbar-expand-lg navbar-dark" data-bs-theme="dark">
+    <div class="container-fluid">
+      <h1 class="navbar-brand navbar-brand-autodark">
+        <a href="." style="color:white;text-decoration:none;font-size:1.05rem;line-height:1.1;">
+          Endovascular<br /><small style="opacity:0.7;font-size:0.7rem;">Operacional</small>
+        </a>
+      </h1>
+      <div class="collapse navbar-collapse" id="navbar-menu">
+        <ul class="navbar-nav pt-lg-3">
+          <li class="nav-item active">
+            <a class="nav-link" href="#" data-view="overview" title="Visão geral">
+              <span class="nav-link-icon"><i class="ti ti-layout-dashboard"></i></span>
+              <span class="nav-link-title">Visão geral</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-view="atendimentos" title="Atendimentos">
+              <span class="nav-link-icon"><i class="ti ti-message-circle"></i></span>
+              <span class="nav-link-title">Atendimentos</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-view="agentes" title="Por agente">
+              <span class="nav-link-icon"><i class="ti ti-users"></i></span>
+              <span class="nav-link-title">Por agente</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-view="tabulacoes" title="Por tabulação">
+              <span class="nav-link-icon"><i class="ti ti-tags"></i></span>
+              <span class="nav-link-title">Por tabulação</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Page wrapper -->
+  <div class="page-wrapper">
+
+    <!-- Topbar -->
+    <header class="navbar navbar-expand-md d-print-none">
+      <div class="container-xl">
+        <div class="navbar-nav flex-row order-md-last">
+          <div class="nav-item dropdown">
+            <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+              <span class="avatar avatar-sm" style="background:#0B1F3A;color:white;" id="topbar-avatar">--</span>
+              <div class="d-none d-xl-block ps-2">
+                <div id="topbar-nome" style="font-weight:600;">--</div>
+                <div class="mt-1 small text-secondary">Admin</div>
+              </div>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a href="#" class="dropdown-item" id="logout-link">
+                <i class="ti ti-logout me-2"></i>Sair
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page header -->
+    <div class="page-header d-print-none">
+      <div class="container-xl">
+        <div class="row g-2 align-items-center">
+          <div class="col">
+            <div class="page-pretitle">Bloco Comercial · Tier 1</div>
+            <h2 class="page-title">Dashboard Operacional</h2>
+          </div>
+          <div class="col-auto ms-auto">
+            <span class="badge bg-success-lt" id="conn-status"><i class="ti ti-wifi me-1"></i>Conectado</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page body -->
+    <div class="page-body">
+      <div class="container-xl">
+
+        <!-- Filters -->
+        <div class="filter-bar">
+          <div>
+            <label class="form-label mb-1 small text-secondary">Período</label>
+            <select id="filter-periodo" class="form-select form-select-sm" style="min-width:180px;">
+              <option value="hoje">Hoje</option>
+              <option value="7d" selected>Últimos 7 dias</option>
+              <option value="30d">Últimos 30 dias</option>
+              <option value="mes">Este mês</option>
+              <option value="tudo">Tudo</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-check form-switch mt-3">
+              <input id="filter-excluir-ig" class="form-check-input" type="checkbox" checked />
+              <span class="form-check-label small">Excluir <strong>Direct Instagram</strong> da conversão</span>
+            </label>
+          </div>
+          <div class="ms-auto">
+            <button id="btn-refresh" class="btn btn-sm btn-outline-primary">
+              <i class="ti ti-refresh me-1"></i>Atualizar
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="row row-deck row-cards mb-3" id="kpi-row">
+          <div class="col-sm-6 col-lg-3">
+            <div class="card kpi-card">
+              <div class="card-body">
+                <div class="kpi-label">Taxa de conversão</div>
+                <div class="kpi-value" id="kpi-conversao">--</div>
+                <div class="kpi-sub" id="kpi-conversao-sub">--</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="card kpi-card">
+              <div class="card-body">
+                <div class="kpi-label">Tempo médio 1ª resposta</div>
+                <div class="kpi-value" id="kpi-ttfr">--</div>
+                <div class="kpi-sub" id="kpi-ttfr-sub">meta &lt; 30 min</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="card kpi-card">
+              <div class="card-body">
+                <div class="kpi-label">Agendamentos</div>
+                <div class="kpi-value" id="kpi-agendamentos">--</div>
+                <div class="kpi-sub" id="kpi-agendamentos-sub">--</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="card kpi-card">
+              <div class="card-body">
+                <div class="kpi-label">Total de atendimentos</div>
+                <div class="kpi-value" id="kpi-total">--</div>
+                <div class="kpi-sub" id="kpi-total-sub">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="row row-cards mb-3">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Tendência diária</h3>
+              </div>
+              <div class="card-body">
+                <div style="position:relative;height:280px;">
+                  <canvas id="chart-trend"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabulações -->
+        <div class="row row-cards mb-3">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">Distribuição por tabulação</h3></div>
+              <div class="card-body">
+                <div id="lista-tabulacoes"><div class="empty-state">Carregando...</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">Por agente</h3></div>
+              <div class="card-body">
+                <div id="lista-agentes"><div class="empty-state">Carregando...</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="row row-cards">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Últimos atendimentos</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                  <thead>
+                    <tr>
+                      <th>Protocolo</th>
+                      <th>Contato</th>
+                      <th>Canal</th>
+                      <th>Agente</th>
+                      <th>1ª resposta</th>
+                      <th>Duração</th>
+                      <th>Tabulação</th>
+                      <th>Finalizado em</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody-atendimentos">
+                    <tr><td colspan="8" class="empty-state">Carregando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <footer class="footer footer-transparent d-print-none">
+      <div class="container-xl">
+        <div class="row text-center align-items-center flex-row-reverse">
+          <div class="col-12 text-secondary">
+            <small>Endovascular SP · Dashboard Operacional · <span id="last-updated">--</span></small>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<!-- ============== SCRIPTS ============== -->
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ============== CONFIG ==============
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============== STATE ==============
+let agentMap = {};      // { agent_id: name }
+let dadosAtuais = [];   // attendances do período filtrado
+let chartTrend = null;
+
+// ============== AUTH ==============
+async function checarSessao() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+
+  const email = (session.user.email || '').toLowerCase();
+  const { data: userInfo, error } = await sb.from('users')
+    .select('email, name, role, slug')
+    .eq('email', email)
+    .single();
+
+  const erroBox = document.getElementById('login-erro');
+  if (error || !userInfo) {
+    erroBox.textContent = 'Seu e-mail Google não está cadastrado no sistema. Contate o administrador.';
+    return;
+  }
+  if (userInfo.role !== 'admin') {
+    erroBox.innerHTML = 'Este dashboard é restrito a administradores.<br/>Acesse seu portal individual pela URL específica.';
+    return;
+  }
+  entrarApp(session.user, userInfo);
+}
+
+document.getElementById('btn-google').addEventListener('click', async () => {
+  const erroBox = document.getElementById('login-erro');
+  erroBox.textContent = '';
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) erroBox.textContent = 'Erro ao iniciar login: ' + error.message;
+});
+
+document.getElementById('logout-link').addEventListener('click', async (e) => {
+  e.preventDefault();
+  await sb.auth.signOut();
+  location.reload();
+});
+
+function entrarApp(user, userInfo) {
+  const ov = document.getElementById('login-overlay');
+  ov.classList.add('saindo');
+  setTimeout(() => { ov.style.display = 'none'; }, 400);
+  document.getElementById('app').hidden = false;
+
+  const nome = userInfo.name || (user.email || '').split('@')[0];
+  document.getElementById('topbar-nome').textContent = nome;
+  document.getElementById('topbar-avatar').textContent = nome.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
+
+  carregarTudo();
+}
+
+// ============== DATA ==============
+function intervaloPeriodo(p) {
+  const agora = new Date();
+  const start = new Date(agora);
+  if (p === 'hoje') start.setHours(0, 0, 0, 0);
+  else if (p === '7d') start.setDate(agora.getDate() - 7);
+  else if (p === '30d') start.setDate(agora.getDate() - 30);
+  else if (p === 'mes') { start.setDate(1); start.setHours(0, 0, 0, 0); }
+  else return null;
+  return start.toISOString();
+}
+
+async function carregarAgentes() {
+  const { data, error } = await sb.from('agents').select('id, name');
+  if (error) { console.warn('Erro ao buscar agents:', error); return; }
+  agentMap = {};
+  (data || []).forEach(a => { agentMap[a.id] = a.name; });
+}
+
+async function carregarAtendimentos() {
+  const periodo = document.getElementById('filter-periodo').value;
+  const dt = intervaloPeriodo(periodo);
+  let q = sb.from('attendances').select('*').neq('protocol', 'TESTE-MANUAL-001').order('finished_at', { ascending: false, nullsFirst: false });
+  if (dt) q = q.or(`finished_at.gte.${dt},finished_at.is.null`);
+  q = q.limit(2000);
+  const { data, error } = await q;
+  if (error) { console.error(error); return; }
+  dadosAtuais = data || [];
+}
+
+async function carregarTudo() {
+  setStatus('atualizando');
+  await Promise.all([carregarAgentes(), carregarAtendimentos()]);
+  renderTudo();
+  setStatus('conectado');
+  document.getElementById('last-updated').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+}
+
+function setStatus(s) {
+  const el = document.getElementById('conn-status');
+  if (s === 'conectado') el.innerHTML = '<i class="ti ti-wifi me-1"></i>Conectado';
+  else if (s === 'atualizando') el.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Atualizando';
+  else el.innerHTML = '<i class="ti ti-wifi-off me-1"></i>Erro';
+}
+
+// ============== RENDER ==============
+function nomeAgente(id) {
+  if (!id) return '—';
+  if (agentMap[id]) return agentMap[id];
+  return '<span class="text-secondary" title="' + id + '">ID: ' + id.slice(-6) + '</span>';
+}
+
+function tabulacaoLabel(t) {
+  if (!t) return '<span class="text-secondary">—</span>';
+  let cls = 'tab-outro';
+  if (/agendou/i.test(t)) cls = 'tab-agendou';
+  else if (/confirmou/i.test(t)) cls = 'tab-confirmou';
+  else if (/instagram/i.test(t)) cls = 'tab-instagram';
+  return '<span class="tab-pill ' + cls + '">' + t + '</span>';
+}
+
+function fmtSecondsAsMin(sec) {
+  if (sec == null) return '—';
+  if (sec < 60) return sec + 's';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m + 'm ' + (s ? s + 's' : '');
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderKpis() {
+  const excluirIG = document.getElementById('filter-excluir-ig').checked;
+  const finalizadas = dadosAtuais.filter(a => a.finished_at);
+  const finalForConversao = excluirIG
+    ? finalizadas.filter(a => !/instagram/i.test(a.tabulation || ''))
+    : finalizadas;
+  const agendou = finalForConversao.filter(a => /agendou/i.test(a.tabulation || ''));
+
+  const conv = finalForConversao.length > 0 ? (agendou.length / finalForConversao.length * 100) : 0;
+  document.getElementById('kpi-conversao').textContent = conv.toFixed(1) + '%';
+  document.getElementById('kpi-conversao-sub').textContent =
+    agendou.length + ' de ' + finalForConversao.length + ' atendimentos' + (excluirIG ? ' (sem Instagram)' : '');
+
+  const ttfrValores = dadosAtuais.map(a => a.ttfr_seconds).filter(v => v != null && v >= 0);
+  const ttfrMedio = ttfrValores.length > 0 ? Math.round(ttfrValores.reduce((s, v) => s + v, 0) / ttfrValores.length) : null;
+  document.getElementById('kpi-ttfr').textContent = ttfrMedio != null ? fmtSecondsAsMin(ttfrMedio) : '—';
+
+  document.getElementById('kpi-agendamentos').textContent = agendou.length;
+  document.getElementById('kpi-agendamentos-sub').textContent = excluirIG ? 'sem Instagram' : 'inclui Instagram';
+
+  document.getElementById('kpi-total').textContent = dadosAtuais.length;
+  document.getElementById('kpi-total-sub').textContent = finalizadas.length + ' finalizadas · ' + (dadosAtuais.length - finalizadas.length) + ' em andamento';
+}
+
+function renderTrend() {
+  const buckets = {};
+  dadosAtuais.forEach(a => {
+    if (!a.finished_at) return;
+    const d = a.finished_at.slice(0, 10);
+    if (!buckets[d]) buckets[d] = { total: 0, agendou: 0 };
+    buckets[d].total++;
+    if (/agendou/i.test(a.tabulation || '')) buckets[d].agendou++;
+  });
+  const labels = Object.keys(buckets).sort();
+  const total = labels.map(d => buckets[d].total);
+  const agendou = labels.map(d => buckets[d].agendou);
+
+  if (chartTrend) chartTrend.destroy();
+  const ctx = document.getElementById('chart-trend').getContext('2d');
+  chartTrend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels.map(d => d.slice(8, 10) + '/' + d.slice(5, 7)),
+      datasets: [
+        { label: 'Atendimentos', data: total, borderColor: '#0B1F3A', backgroundColor: 'rgba(11,31,58,0.1)', tension: 0.3, fill: true },
+        { label: 'Agendamentos', data: agendou, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.3, fill: true }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+}
+
+function renderListaTabulacoes() {
+  const cont = {};
+  dadosAtuais.forEach(a => {
+    if (!a.finished_at) return;
+    const t = a.tabulation || '(sem tabulação)';
+    cont[t] = (cont[t] || 0) + 1;
+  });
+  const total = Object.values(cont).reduce((s, v) => s + v, 0);
+  const items = Object.entries(cont).sort((a, b) => b[1] - a[1]);
+  const el = document.getElementById('lista-tabulacoes');
+  if (items.length === 0) { el.innerHTML = '<div class="empty-state">Sem dados no período</div>'; return; }
+  el.innerHTML = items.map(([t, n]) => {
+    const pct = (n / total * 100).toFixed(1);
+    return '<div class="d-flex align-items-center mb-2">' +
+      '<div class="flex-fill">' + tabulacaoLabel(t) + '</div>' +
+      '<div class="text-secondary me-2 small">' + pct + '%</div>' +
+      '<div style="font-weight:600;min-width:32px;text-align:right;">' + n + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function renderListaAgentes() {
+  const cont = {};
+  dadosAtuais.forEach(a => {
+    if (!a.agent_id) return;
+    if (!cont[a.agent_id]) cont[a.agent_id] = { total: 0, agendou: 0 };
+    cont[a.agent_id].total++;
+    if (/agendou/i.test(a.tabulation || '')) cont[a.agent_id].agendou++;
+  });
+  const items = Object.entries(cont).sort((a, b) => b[1].total - a[1].total);
+  const el = document.getElementById('lista-agentes');
+  if (items.length === 0) { el.innerHTML = '<div class="empty-state">Sem dados no período</div>'; return; }
+  el.innerHTML = items.map(([id, v]) => {
+    const conv = v.total > 0 ? (v.agendou / v.total * 100).toFixed(0) : 0;
+    return '<div class="d-flex align-items-center mb-2">' +
+      '<div class="flex-fill">' + nomeAgente(id) + '</div>' +
+      '<div class="text-secondary me-2 small">' + conv + '% conv.</div>' +
+      '<div style="font-weight:600;min-width:32px;text-align:right;">' + v.total + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function renderTabela() {
+  const tb = document.getElementById('tbody-atendimentos');
+  const recentes = [...dadosAtuais].slice(0, 30);
+  if (recentes.length === 0) {
+    tb.innerHTML = '<tr><td colspan="8" class="empty-state">Sem atendimentos no período selecionado</td></tr>';
+    return;
+  }
+  tb.innerHTML = recentes.map(a => {
+    return '<tr>' +
+      '<td><span class="text-secondary small">' + (a.protocol || '—') + '</span></td>' +
+      '<td>' + (a.contact_name || '<span class="text-secondary">—</span>') + '<div class="small text-secondary">' + (a.contact_phone || '') + '</div></td>' +
+      '<td><span class="small">' + (a.channel || '—') + '</span></td>' +
+      '<td>' + nomeAgente(a.agent_id) + '</td>' +
+      '<td>' + fmtSecondsAsMin(a.ttfr_seconds) + '</td>' +
+      '<td>' + fmtSecondsAsMin(a.duration_seconds) + '</td>' +
+      '<td>' + tabulacaoLabel(a.tabulation) + '</td>' +
+      '<td><span class="small">' + fmtDateTime(a.finished_at) + '</span></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function renderTudo() {
+  renderKpis();
+  renderTrend();
+  renderListaTabulacoes();
+  renderListaAgentes();
+  renderTabela();
+}
+
+// ============== EVENTS ==============
+document.getElementById('filter-periodo').addEventListener('change', carregarTudo);
+document.getElementById('filter-excluir-ig').addEventListener('change', renderKpis);
+document.getElementById('btn-refresh').addEventListener('click', carregarTudo);
+
+// ============== INIT ==============
+checarSessao();
+</script>
+
+</body>
+</html>
