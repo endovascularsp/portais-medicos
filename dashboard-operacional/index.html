@@ -73,6 +73,12 @@
     transition:all .15s;font-family:inherit}
   .filtro-tab:hover{background:rgba(255,255,255,0.06);color:#fff}
   .filtro-tab.active{background:rgba(109,213,160,0.18);border-color:#6dd5a0;color:#6dd5a0}
+  .filtro-date-wrap{display:flex;gap:6px;align-items:center}
+  .filtro-date{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);
+    border-radius:8px;padding:5px 10px;color:#fff;font-size:12px;font-family:inherit;
+    color-scheme:dark}
+  .filtro-date:focus{border-color:#6dd5a0;outline:none;background:rgba(109,213,160,0.05)}
+  .filtro-date-sep{color:rgba(255,255,255,0.4);font-size:11.5px}
   .filtro-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
     color:rgba(255,255,255,0.7);font-size:12.5px;font-weight:500}
   .filtro-toggle input{width:16px;height:16px;accent-color:#6dd5a0;cursor:pointer}
@@ -95,32 +101,63 @@
   .kpi-value{font-size:30px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:6px}
   .kpi-sub{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.4}
 
-  /* ---------- CARDS GRANDES ---------- */
+  /* ---------- PANELS ---------- */
   .panel{background:rgba(255,255,255,0.05);border:1px solid rgba(109,213,160,0.20);
     border-radius:14px;padding:22px;margin-bottom:24px}
   .panel-title{font-size:14px;font-weight:700;color:#6dd5a0;
     letter-spacing:0.5px;text-transform:uppercase;margin-bottom:16px;
-    display:flex;align-items:center;justify-content:space-between}
+    display:flex;align-items:center;justify-content:space-between;gap:10px}
   .panel-sub{font-size:12px;color:rgba(255,255,255,0.45);font-weight:500;text-transform:none;letter-spacing:0}
 
-  .panel-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
+  .chart-wrap{position:relative;height:300px}
 
-  .chart-wrap{position:relative;height:280px}
+  /* ---------- TABULAÇÃO POR CATEGORIA ---------- */
+  .tab-cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:24px}
+  .tab-cat-card{background:rgba(255,255,255,0.05);border:1px solid;border-radius:14px;padding:20px}
+  .tab-cat-card.positivas{border-color:rgba(109,213,160,0.30)}
+  .tab-cat-card.operacionais{border-color:rgba(245,166,35,0.30)}
+  .tab-cat-card.negativas{border-color:rgba(239,68,68,0.30)}
+  .tab-cat-card.origem{border-color:rgba(162,28,175,0.30)}
+  .tab-cat-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .tab-cat-title{font-size:13px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
+  .tab-cat-card.positivas .tab-cat-title{color:#6dd5a0}
+  .tab-cat-card.operacionais .tab-cat-title{color:#f5a623}
+  .tab-cat-card.negativas .tab-cat-title{color:#ef4444}
+  .tab-cat-card.origem .tab-cat-title{color:#c084fc}
+  .tab-cat-total{font-size:22px;font-weight:800;color:#fff}
+  .tab-cat-total small{font-size:11px;font-weight:500;color:rgba(255,255,255,0.45);margin-left:4px}
 
-  /* ---------- LISTAS (tabulação/agente) ---------- */
+  .bar-item{margin-bottom:9px}
+  .bar-item:last-child{margin-bottom:0}
+  .bar-label{font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:4px;
+    display:flex;justify-content:space-between;gap:8px}
+  .bar-label-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-label-pct{color:rgba(255,255,255,0.4);font-size:11px;flex-shrink:0}
+  .bar-container{position:relative;height:18px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden}
+  .bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:5px;transition:width .4s ease;
+    display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+  .bar-value{font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.4)}
+  .tab-cat-empty{padding:18px 8px;text-align:center;color:rgba(255,255,255,0.35);font-size:12px;font-style:italic}
+
+  /* ---------- LISTA AGENTES ---------- */
   .lista-item{display:flex;align-items:center;gap:12px;padding:10px 12px;
     border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
     margin-bottom:8px;transition:background .15s}
   .lista-item:hover{background:rgba(255,255,255,0.06)}
-  .lista-pill{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
-  .pill-agendou{background:rgba(109,213,160,0.18);color:#6dd5a0}
-  .pill-confirmou{background:rgba(126,184,247,0.18);color:#7eb8f7}
-  .pill-instagram{background:rgba(244,114,182,0.18);color:#f472b6}
-  .pill-outro{background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.7)}
   .lista-item-name{flex:1;font-size:13.5px;font-weight:600;color:#fff;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lista-item-pct{font-size:11.5px;color:rgba(255,255,255,0.45);margin-right:10px}
   .lista-item-qtd{font-size:14px;font-weight:700;color:#6dd5a0;min-width:36px;text-align:right}
+
+  .lista-pill{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
+  .pill-agendou{background:rgba(109,213,160,0.18);color:#6dd5a0}
+  .pill-confirmou{background:rgba(126,184,247,0.18);color:#7eb8f7}
+  .pill-instagram{background:rgba(162,28,175,0.18);color:#c084fc}
+  .pill-reagendou{background:rgba(245,166,35,0.18);color:#f5a623}
+  .pill-cancelou{background:rgba(245,166,35,0.18);color:#f5a623}
+  .pill-info{background:rgba(245,166,35,0.18);color:#f5a623}
+  .pill-naoagendou{background:rgba(239,68,68,0.18);color:#ef4444}
+  .pill-outro{background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.7)}
 
   /* ---------- TABELA ---------- */
   .tabela-wrap{overflow-x:auto}
@@ -144,7 +181,7 @@
   }
   @media(max-width:960px){
     .kpi-row{grid-template-columns:repeat(2,1fr)}
-    .panel-row{grid-template-columns:1fr}
+    .tab-cat-grid{grid-template-columns:1fr}
     header{padding:16px 18px;flex-wrap:wrap;gap:12px}
     .header-info h1{font-size:14px}
     .body-wrap{padding:24px 16px 40px}
@@ -214,6 +251,15 @@
         </div>
       </div>
 
+      <div class="filtro-grupo">
+        <div class="filtro-label">Ou intervalo específico</div>
+        <div class="filtro-date-wrap">
+          <input id="data-inicio" type="date" class="filtro-date" />
+          <span class="filtro-date-sep">até</span>
+          <input id="data-fim" type="date" class="filtro-date" />
+        </div>
+      </div>
+
       <label class="filtro-toggle">
         <input id="filter-excluir-ig" type="checkbox" checked />
         Excluir <strong>Direct Instagram</strong> da conversão
@@ -221,9 +267,7 @@
 
       <div class="filtro-spacer"></div>
 
-      <button id="btn-refresh" class="filtro-refresh-btn">
-        ↻ Atualizar
-      </button>
+      <button id="btn-refresh" class="filtro-refresh-btn">↻ Atualizar</button>
       <span id="last-updated" class="filtro-status"></span>
     </div>
 
@@ -256,22 +300,51 @@
       </div>
     </div>
 
-    <!-- CHART -->
-    <div class="panel">
-      <div class="panel-title">Tendência diária <span class="panel-sub">atendimentos × agendamentos</span></div>
-      <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+    <!-- TABULAÇÃO POR CATEGORIA -->
+    <div class="tab-cat-grid">
+      <div class="tab-cat-card positivas">
+        <div class="tab-cat-header">
+          <div class="tab-cat-title">✓ Conversões positivas</div>
+          <div class="tab-cat-total" id="cat-positivas-total">0<small>conversas</small></div>
+        </div>
+        <div id="cat-positivas-bars"><div class="tab-cat-empty">Sem dados no período</div></div>
+      </div>
+
+      <div class="tab-cat-card negativas">
+        <div class="tab-cat-header">
+          <div class="tab-cat-title">✗ Não agendou</div>
+          <div class="tab-cat-total" id="cat-negativas-total">0<small>conversas</small></div>
+        </div>
+        <div id="cat-negativas-bars"><div class="tab-cat-empty">Sem dados no período</div></div>
+      </div>
+
+      <div class="tab-cat-card operacionais">
+        <div class="tab-cat-header">
+          <div class="tab-cat-title">⟳ Operacional</div>
+          <div class="tab-cat-total" id="cat-operacionais-total">0<small>conversas</small></div>
+        </div>
+        <div id="cat-operacionais-bars"><div class="tab-cat-empty">Sem dados no período</div></div>
+      </div>
+
+      <div class="tab-cat-card origem">
+        <div class="tab-cat-header">
+          <div class="tab-cat-title">📱 Origem Instagram</div>
+          <div class="tab-cat-total" id="cat-origem-total">0<small>conversas</small></div>
+        </div>
+        <div id="cat-origem-bars"><div class="tab-cat-empty">Sem dados no período</div></div>
+      </div>
     </div>
 
-    <!-- TABULAÇÃO + AGENTES -->
-    <div class="panel-row">
-      <div class="panel">
-        <div class="panel-title">Distribuição por tabulação</div>
-        <div id="lista-tabulacoes"><div class="loading">Carregando...</div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-title">Performance por agente <span class="panel-sub">total · % conversão</span></div>
-        <div id="lista-agentes"><div class="loading">Carregando...</div></div>
-      </div>
+    <!-- POR AGENTE -->
+    <div class="panel">
+      <div class="panel-title">Performance por agente <span class="panel-sub">total · % conversão</span></div>
+      <div id="lista-agentes"><div class="loading">Carregando...</div></div>
+    </div>
+
+    <!-- TENDÊNCIA POR HORÁRIO -->
+    <div class="panel">
+      <div class="panel-title">Tendência por horário do dia <span class="panel-sub">distribuição de atendimentos × agendamentos</span></div>
+      <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
     </div>
 
     <!-- TABELA -->
@@ -372,15 +445,24 @@ function entrarApp(userInfo) {
 }
 
 /* ---------- DATA ---------- */
-function intervaloPeriodo(p) {
+function intervaloFiltro() {
+  if (periodoAtivo === 'custom') {
+    const di = $('data-inicio').value;
+    const df = $('data-fim').value;
+    if (di && df) {
+      return { gte: new Date(di + 'T00:00:00').toISOString(), lte: new Date(df + 'T23:59:59').toISOString() };
+    }
+    return null;
+  }
+  if (periodoAtivo === 'tudo') return null;
+
   const agora = new Date();
   const start = new Date(agora);
-  if (p === 'hoje') start.setHours(0,0,0,0);
-  else if (p === '7d') start.setDate(agora.getDate() - 7);
-  else if (p === '30d') start.setDate(agora.getDate() - 30);
-  else if (p === 'mes') { start.setDate(1); start.setHours(0,0,0,0); }
-  else return null;
-  return start.toISOString();
+  if (periodoAtivo === 'hoje') start.setHours(0,0,0,0);
+  else if (periodoAtivo === '7d') start.setDate(agora.getDate() - 7);
+  else if (periodoAtivo === '30d') start.setDate(agora.getDate() - 30);
+  else if (periodoAtivo === 'mes') { start.setDate(1); start.setHours(0,0,0,0); }
+  return { gte: start.toISOString(), lte: null };
 }
 
 async function carregarAgentes() {
@@ -391,11 +473,18 @@ async function carregarAgentes() {
 }
 
 async function carregarAtendimentos() {
-  const dt = intervaloPeriodo(periodoAtivo);
+  const intervalo = intervaloFiltro();
   let q = sb.from('attendances').select('*')
     .neq('protocol', 'TESTE-MANUAL-001')
     .order('finished_at', { ascending: false, nullsFirst: false });
-  if (dt) q = q.or(`finished_at.gte.${dt},finished_at.is.null`);
+
+  if (intervalo) {
+    if (intervalo.gte && intervalo.lte) {
+      q = q.gte('finished_at', intervalo.gte).lte('finished_at', intervalo.lte);
+    } else if (intervalo.gte) {
+      q = q.or(`finished_at.gte.${intervalo.gte},finished_at.is.null`);
+    }
+  }
   q = q.limit(2000);
   const { data, error } = await q;
   if (error) { console.error(error); return; }
@@ -411,7 +500,7 @@ async function carregarTudo() {
   $('last-updated').textContent = 'atualizado ' + new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
 }
 
-/* ---------- RENDER ---------- */
+/* ---------- HELPERS ---------- */
 function nomeAgente(id) {
   if (!id) return '<span style="color:rgba(255,255,255,0.4)">—</span>';
   if (agentMap[id]) return agentMap[id];
@@ -421,10 +510,25 @@ function nomeAgente(id) {
 function tabulacaoLabel(t) {
   if (!t) return '<span style="color:rgba(255,255,255,0.4)">—</span>';
   let cls = 'pill-outro';
-  if (/agendou/i.test(t)) cls = 'pill-agendou';
-  else if (/confirmou/i.test(t)) cls = 'pill-confirmou';
-  else if (/instagram/i.test(t)) cls = 'pill-instagram';
+  const l = t.toLowerCase();
+  if (/instagram/.test(l)) cls = 'pill-instagram';
+  else if (/agendou/.test(l) && !/n[ãa]o agendou/.test(l)) cls = 'pill-agendou';
+  else if (/confirmou/.test(l)) cls = 'pill-confirmou';
+  else if (/reagendou/.test(l)) cls = 'pill-reagendou';
+  else if (/cancelou/.test(l)) cls = 'pill-cancelou';
+  else if (/informa[çc]/.test(l) || /suporte/.test(l)) cls = 'pill-info';
+  else if (/n[ãa]o agendou/.test(l)) cls = 'pill-naoagendou';
   return '<span class="lista-pill ' + cls + '">' + t + '</span>';
+}
+
+function categorizar(t) {
+  if (!t) return 'outro';
+  const l = t.toLowerCase();
+  if (/instagram/.test(l)) return 'origem';
+  if (/n[ãa]o agendou/.test(l)) return 'negativas';
+  if (/agendou|confirmou/.test(l)) return 'positivas';
+  if (/reagendou|cancelou|informa[çc]|suporte/.test(l)) return 'operacionais';
+  return 'outro';
 }
 
 function fmtSeconds(sec) {
@@ -444,15 +548,15 @@ function fmtDateTime(iso) {
          d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
 }
 
+/* ---------- RENDER ---------- */
 function renderKpis() {
   const excluirIG = $('filter-excluir-ig').checked;
   const finalizadas = dadosAtuais.filter(a => a.finished_at);
   const finalParaConv = excluirIG
     ? finalizadas.filter(a => !/instagram/i.test(a.tabulation || ''))
     : finalizadas;
-  const agendou = finalParaConv.filter(a => /agendou/i.test(a.tabulation || ''));
+  const agendou = finalParaConv.filter(a => /agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || ''));
 
-  // Em espera: tem wait_started_at, mas ainda não foi aceita nem finalizada
   const emEspera = dadosAtuais.filter(a =>
     a.wait_started_at && !a.human_started_at && !a.finished_at
   );
@@ -479,67 +583,51 @@ function renderKpis() {
     (dadosAtuais.length - finalizadas.length) + ' em andamento';
 }
 
-function renderTrend() {
-  const buckets = {};
-  dadosAtuais.forEach(a => {
-    if (!a.finished_at) return;
-    const d = a.finished_at.slice(0, 10);
-    if (!buckets[d]) buckets[d] = { total: 0, agendou: 0 };
-    buckets[d].total++;
-    if (/agendou/i.test(a.tabulation || '')) buckets[d].agendou++;
-  });
-  const labels = Object.keys(buckets).sort();
-  const total = labels.map(d => buckets[d].total);
-  const agendou = labels.map(d => buckets[d].agendou);
+const COR_CATEGORIA = {
+  positivas: '#6dd5a0',
+  operacionais: '#f5a623',
+  negativas: '#ef4444',
+  origem: '#c084fc'
+};
 
-  if (chartTrend) chartTrend.destroy();
-  const ctx = $('chart-trend').getContext('2d');
-  chartTrend = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels.map(d => d.slice(8, 10) + '/' + d.slice(5, 7)),
-      datasets: [
-        { label: 'Atendimentos', data: total,
-          borderColor: '#6dd5a0', backgroundColor: 'rgba(109,213,160,0.12)',
-          tension: 0.3, fill: true, borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#6dd5a0' },
-        { label: 'Agendamentos', data: agendou,
-          borderColor: '#7eb8f7', backgroundColor: 'rgba(126,184,247,0.10)',
-          tension: 0.3, fill: true, borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#7eb8f7' }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom', labels: { color: 'rgba(255,255,255,0.7)', font: { size: 12 } } }
-      },
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1, color: 'rgba(255,255,255,0.5)' },
-             grid: { color: 'rgba(255,255,255,0.05)' } },
-        x: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { display: false } }
-      }
+function renderTabulacoesPorCategoria() {
+  const buckets = { positivas: {}, operacionais: {}, negativas: {}, origem: {} };
+
+  dadosAtuais.forEach(a => {
+    if (!a.finished_at || !a.tabulation) return;
+    const cat = categorizar(a.tabulation);
+    if (cat === 'outro') return;
+    buckets[cat][a.tabulation] = (buckets[cat][a.tabulation] || 0) + 1;
+  });
+
+  ['positivas', 'operacionais', 'negativas', 'origem'].forEach(cat => {
+    const items = Object.entries(buckets[cat]).sort((a, b) => b[1] - a[1]);
+    const total = items.reduce((s, [, n]) => s + n, 0);
+    const max = items.length > 0 ? items[0][1] : 1;
+
+    $('cat-' + cat + '-total').innerHTML = total + '<small> conversa' + (total === 1 ? '' : 's') + '</small>';
+
+    const containerEl = $('cat-' + cat + '-bars');
+    if (items.length === 0) {
+      containerEl.innerHTML = '<div class="tab-cat-empty">Sem dados no período</div>';
+      return;
     }
+    const cor = COR_CATEGORIA[cat];
+    const corRgba = cor === '#6dd5a0' ? '109,213,160'
+                  : cor === '#f5a623' ? '245,166,35'
+                  : cor === '#ef4444' ? '239,68,68'
+                  : '192,132,252';
+    containerEl.innerHTML = items.map(([t, n]) => {
+      const pct = total > 0 ? (n / total * 100).toFixed(0) : 0;
+      const widthPct = (n / max * 100).toFixed(1);
+      return '<div class="bar-item">' +
+        '<div class="bar-label"><span class="bar-label-name">' + t + '</span>' +
+        '<span class="bar-label-pct">' + pct + '%</span></div>' +
+        '<div class="bar-container">' +
+        '<div class="bar-fill" style="width:' + widthPct + '%;background:linear-gradient(90deg, rgba(' + corRgba + ',0.85), rgba(' + corRgba + ',0.6))">' +
+        '<span class="bar-value">' + n + '</span></div></div></div>';
+    }).join('');
   });
-}
-
-function renderListaTabulacoes() {
-  const cont = {};
-  dadosAtuais.forEach(a => {
-    if (!a.finished_at) return;
-    const t = a.tabulation || '(sem tabulação)';
-    cont[t] = (cont[t] || 0) + 1;
-  });
-  const total = Object.values(cont).reduce((s, v) => s + v, 0);
-  const items = Object.entries(cont).sort((a, b) => b[1] - a[1]);
-  const el = $('lista-tabulacoes');
-  if (items.length === 0) { el.innerHTML = '<div class="empty-state">Sem dados no período</div>'; return; }
-  el.innerHTML = items.map(([t, n]) => {
-    const pct = total > 0 ? (n / total * 100).toFixed(1) : 0;
-    return '<div class="lista-item">' +
-      '<div class="lista-item-name">' + tabulacaoLabel(t) + '</div>' +
-      '<div class="lista-item-pct">' + pct + '%</div>' +
-      '<div class="lista-item-qtd">' + n + '</div>' +
-    '</div>';
-  }).join('');
 }
 
 function renderListaAgentes() {
@@ -548,7 +636,9 @@ function renderListaAgentes() {
     if (!a.agent_id) return;
     if (!cont[a.agent_id]) cont[a.agent_id] = { total: 0, agendou: 0 };
     cont[a.agent_id].total++;
-    if (/agendou/i.test(a.tabulation || '')) cont[a.agent_id].agendou++;
+    if (/agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || '')) {
+      cont[a.agent_id].agendou++;
+    }
   });
   const items = Object.entries(cont).sort((a, b) => b[1].total - a[1].total);
   const el = $('lista-agentes');
@@ -557,10 +647,52 @@ function renderListaAgentes() {
     const conv = v.total > 0 ? (v.agendou / v.total * 100).toFixed(0) : 0;
     return '<div class="lista-item">' +
       '<div class="lista-item-name">' + nomeAgente(id) + '</div>' +
-      '<div class="lista-item-pct">' + conv + '%</div>' +
+      '<div class="lista-item-pct">' + conv + '% conv.</div>' +
       '<div class="lista-item-qtd">' + v.total + '</div>' +
     '</div>';
   }).join('');
+}
+
+function renderTendenciaPorHora() {
+  const buckets = Array.from({ length: 24 }, () => ({ total: 0, agendou: 0 }));
+  dadosAtuais.forEach(a => {
+    if (!a.finished_at) return;
+    const hour = new Date(a.finished_at).getHours();
+    buckets[hour].total++;
+    if (/agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || '')) {
+      buckets[hour].agendou++;
+    }
+  });
+  const labels = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0') + 'h');
+  const total = buckets.map(b => b.total);
+  const agendou = buckets.map(b => b.agendou);
+
+  if (chartTrend) chartTrend.destroy();
+  const ctx = $('chart-trend').getContext('2d');
+  chartTrend = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Atendimentos', data: total,
+          backgroundColor: 'rgba(109,213,160,0.65)', borderColor: '#6dd5a0', borderWidth: 1, borderRadius: 4 },
+        { label: 'Agendamentos', data: agendou,
+          backgroundColor: 'rgba(126,184,247,0.65)', borderColor: '#7eb8f7', borderWidth: 1, borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: 'rgba(255,255,255,0.7)', font: { size: 12 } } },
+        tooltip: { callbacks: { title: (items) => 'Horário ' + items[0].label } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, color: 'rgba(255,255,255,0.5)' },
+             grid: { color: 'rgba(255,255,255,0.05)' } },
+        x: { ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
 }
 
 function renderTabela() {
@@ -587,9 +719,9 @@ function renderTabela() {
 
 function renderTudo() {
   renderKpis();
-  renderTrend();
-  renderListaTabulacoes();
+  renderTabulacoesPorCategoria();
   renderListaAgentes();
+  renderTendenciaPorHora();
   renderTabela();
 }
 
@@ -600,8 +732,22 @@ $('periodo-tabs').addEventListener('click', (e) => {
   document.querySelectorAll('#periodo-tabs .filtro-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   periodoAtivo = btn.dataset.periodo;
+  $('data-inicio').value = '';
+  $('data-fim').value = '';
   carregarTudo();
 });
+
+function aplicarRangeCustom() {
+  const di = $('data-inicio').value;
+  const df = $('data-fim').value;
+  if (!di || !df) return;
+  if (di > df) { $('data-fim').value = di; }
+  document.querySelectorAll('#periodo-tabs .filtro-tab').forEach(b => b.classList.remove('active'));
+  periodoAtivo = 'custom';
+  carregarTudo();
+}
+$('data-inicio').addEventListener('change', aplicarRangeCustom);
+$('data-fim').addEventListener('change', aplicarRangeCustom);
 
 $('filter-excluir-ig').addEventListener('change', renderKpis);
 $('btn-refresh').addEventListener('click', carregarTudo);
