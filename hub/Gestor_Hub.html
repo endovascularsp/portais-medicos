@@ -57,7 +57,7 @@
     .hub-greeting span{color:#f5c842}
     .hub-sub{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:44px}
 
-    .hub-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}
+    .hub-cards{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px}
     .hub-card{
       background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
       border-radius:20px;padding:32px 28px;transition:border-color .2s,background .2s;
@@ -68,6 +68,8 @@
     .hub-card.rec:hover{border-color:rgba(126,184,247,0.5);background:rgba(126,184,247,0.06)}
     .hub-card.insights{border-color:rgba(244,114,182,0.25)}
     .hub-card.insights:hover{border-color:rgba(244,114,182,0.5);background:rgba(244,114,182,0.06)}
+    .hub-card.operacional{border-color:rgba(109,213,160,0.25)}
+    .hub-card.operacional:hover{border-color:rgba(109,213,160,0.5);background:rgba(109,213,160,0.06)}
     .hub-card-icon{font-size:36px;margin-bottom:14px}
     .hub-card-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px}
     .hub-card-desc{font-size:13px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:24px}
@@ -90,13 +92,15 @@
     .hub-sub-btn.prod-oxy:hover{background:rgba(109,213,160,0.20);border-color:#6dd5a0}
     .hub-sub-btn.insights{color:#f472b6;border-color:rgba(244,114,182,0.35);background:rgba(244,114,182,0.08);}
     .hub-sub-btn.insights:hover{background:rgba(244,114,182,0.20);border-color:#f472b6}
+    .hub-sub-btn.op{color:#6dd5a0;border-color:rgba(109,213,160,0.35);background:rgba(109,213,160,0.08);}
+    .hub-sub-btn.op:hover{background:rgba(109,213,160,0.20);border-color:#6dd5a0}
 
     .hub-footer{
       text-align:center;font-size:11px;color:rgba(255,255,255,0.2);
       margin-top:60px;padding-bottom:20px;
     }
 
-    @media(max-width:960px){.hub-cards{grid-template-columns:1fr 1fr}}
+    @media(max-width:1200px){.hub-cards{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.hub-cards{grid-template-columns:1fr}}
   </style>
 </head>
@@ -170,6 +174,17 @@
         <div class="hub-card-links">
           <a href="../dashboard-insights/" onclick="navegar(this,event)" class="hub-sub-btn insights">
             📈 Acessar Insights
+          </a>
+        </div>
+      </div>
+
+      <div class="hub-card operacional">
+        <div class="hub-card-icon">💬</div>
+        <div class="hub-card-title">Dashboard Operacional</div>
+        <div class="hub-card-desc">KPIs do atendimento WhatsApp/Instagram (Tier 1): conversão, tempo de resposta, ranking</div>
+        <div class="hub-card-links">
+          <a href="../dashboard-operacional/" class="hub-sub-btn op">
+            💬 Acessar Operacional
           </a>
         </div>
       </div>
