@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Acessar — Endovascular SP</title>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%90%3C/text%3E%3C/svg%3E" />
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #0d1b2e 0%, #162d50 100%);
+    min-height: 100vh; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .login-box {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 44px 38px;
+    width: 100%; max-width: 400px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .login-logo { font-size: 40px; margin-bottom: 10px; }
+  .login-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+  .login-badge {
+    display: inline-block;
+    margin-bottom: 28px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    background: rgba(245,166,35,0.15);
+    border: 1px solid rgba(245,166,35,0.45);
+    color: #f5c842;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  .login-google-btn {
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 10px;
+    border: none;
+    background: white;
+    color: #1f1f1f;
+    font-size: 15px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px;
+    transition: opacity .2s, transform .15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .login-google-btn:hover:not(:disabled) { opacity: .92; transform: translateY(-1px); }
+  .login-google-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+  .login-erro {
+    color: #ff7b7b;
+    font-size: 13px;
+    margin-top: 16px;
+    min-height: 18px;
+    line-height: 1.45;
+  }
+
+  .login-loading {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    margin-top: 16px;
+    min-height: 18px;
+  }
+
+  .login-rodape {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    margin-top: 32px;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-box">
+  <div class="login-logo">🔐</div>
+  <div class="login-title">Endovascular SP</div>
+  <div class="login-sub">Painel de Gestão</div>
+  <div class="login-badge">Acesso restrito</div>
+
+  <button id="btn-google" class="login-google-btn">
+    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    <span id="btn-label">Entrar com Google</span>
+  </button>
+
+  <div id="login-loading" class="login-loading"></div>
+  <div id="login-erro" class="login-erro"></div>
+
+  <div class="login-rodape">Endovascular SP © 2026 · Acesso restrito</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (id) => document.getElementById(id);
+
+function setLoading(msg) {
+  $('login-loading').textContent = msg || '';
+  $('login-erro').textContent = '';
+}
+
+function setErro(msg) {
+  $('login-loading').textContent = '';
+  $('login-erro').innerHTML = msg;
+  $('btn-google').disabled = false;
+  $('btn-label').textContent = 'Entrar com Google';
+}
+
+$('btn-google').addEventListener('click', async () => {
+  $('btn-google').disabled = true;
+  $('btn-label').textContent = 'Aguarde...';
+  setLoading('Redirecionando ao Google...');
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) setErro('Erro ao iniciar login: ' + error.message);
+});
+
+async function rotear() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+
+  $('btn-google').disabled = true;
+  $('btn-label').textContent = 'Validando...';
+  setLoading('Verificando seu acesso...');
+
+  const email = (session.user.email || '').toLowerCase();
+
+  const [usrRes, secRes] = await Promise.all([
+    sb.from('users').select('email, name, role, slug').eq('email', email).maybeSingle(),
+    sb.from('user_secrets').select('legacy_password').eq('email', email).maybeSingle()
+  ]);
+
+  if (usrRes.error || !usrRes.data) {
+    setErro('Seu e-mail Google <strong>' + email + '</strong> não está autorizado.<br/>Contate o administrador.');
+    await sb.auth.signOut();
+    return;
+  }
+
+  const user = usrRes.data;
+
+  if (secRes.data && secRes.data.legacy_password) {
+    sessionStorage.setItem('_xpa', secRes.data.legacy_password);
+  }
+
+  setLoading('Bem-vindo, ' + (user.name || email) + '. Redirecionando...');
+
+  const baseUrl = window.location.origin + window.location.pathname.replace(/\/login\/?$/, '');
+
+  if (user.role === 'admin') {
+    window.location.href = baseUrl + '/hub/Gestor_Hub.html';
+  } else if (user.role === 'medico' && user.slug) {
+    window.location.href = baseUrl + '/hub/' + encodeURIComponent(user.slug) + '_Hub.html';
+  } else {
+    setErro('Configuração de usuário incompleta (role: ' + user.role + ', slug: ' + (user.slug || 'vazio') + ').<br/>Contate o administrador.');
+    await sb.auth.signOut();
+  }
+}
+
+rotear();
+</script>
+
+</body>
+</html>
