@@ -368,11 +368,10 @@
               <th>1ª resposta</th>
               <th>Duração</th>
               <th>Tabulação</th>
-              <th>Finalizado</th>
             </tr>
           </thead>
           <tbody id="tbody-atendimentos">
-            <tr><td colspan="8" class="empty-state">Carregando...</td></tr>
+            <tr><td colspan="7" class="empty-state">Carregando...</td></tr>
           </tbody>
         </table>
       </div>
@@ -553,8 +552,8 @@ function categorizar(t) {
   const l = t.toLowerCase();
   if (/instagram/.test(l)) return 'origem';
   if (/n[ãa]o agendou/.test(l)) return 'negativas';
-  if (/agendou|confirmou/.test(l)) return 'positivas';
-  if (/reagendou|cancelou|informa[çc]|suporte/.test(l)) return 'operacionais';
+  if (/agendou/.test(l)) return 'positivas';
+  if (/confirmou|reagendou|cancelou|informa[çc]|suporte/.test(l)) return 'operacionais';
   return 'outro';
 }
 
@@ -566,6 +565,15 @@ function fmtSeconds(sec) {
   if (m < 60) return m + 'm' + (s ? ' ' + s + 's' : '');
   const h = Math.floor(m / 60);
   return h + 'h' + (m % 60 ? ' ' + (m % 60) + 'm' : '');
+}
+
+function fmtMinutes(sec) {
+  if (sec == null) return '<span style="color:rgba(255,255,255,0.4)">—</span>';
+  const m = Math.round(sec / 60);
+  if (m < 1) return '< 1 min';
+  if (m < 60) return m + ' min';
+  const h = Math.floor(m / 60);
+  return h + 'h ' + (m % 60) + 'min';
 }
 
 function fmtDateTime(iso) {
@@ -639,7 +647,11 @@ function renderKpis() {
   renderGaugeConversao(conv);
   $('kpi-conversao-sub').textContent = agendou.length + ' agendaram · ' + naoAgendou.length + ' não agendaram · meta 70%';
 
-  const ttfrValores = dados.map(a => a.ttfr_seconds).filter(v => v != null && v >= 0);
+  // TME exclui Direct Instagram (reação automática, não é atendimento real)
+  const ttfrValores = dados
+    .filter(a => !/instagram/i.test(a.tabulation || ''))
+    .map(a => a.ttfr_seconds)
+    .filter(v => v != null && v >= 0);
   const ttfrMedio = ttfrValores.length > 0
     ? Math.round(ttfrValores.reduce((s,v) => s+v, 0) / ttfrValores.length) : null;
   $('kpi-ttfr').textContent = ttfrMedio != null ? fmtSeconds(ttfrMedio).replace(/<[^>]+>/g,'') : '—';
@@ -723,9 +735,12 @@ function renderTendenciaPorHora() {
   const buckets = Array.from({ length: 24 }, () => ({ total: 0, agendou: 0 }));
   dadosFiltrados().forEach(a => {
     if (!a.finished_at) return;
+    const tab = (a.tabulation || '').toLowerCase();
+    // Excluir Confirmou (template ativo enviado por nós) e Direct Instagram (reação automática)
+    if (/confirmou|instagram/.test(tab)) return;
     const hour = new Date(a.finished_at).getHours();
     buckets[hour].total++;
-    if (/agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || '')) {
+    if (/agendou/.test(tab) && !/n[ãa]o agendou/.test(tab)) {
       buckets[hour].agendou++;
     }
   });
@@ -763,9 +778,12 @@ function renderTendenciaPorHora() {
 
 function renderTabela() {
   const tb = $('tbody-atendimentos');
-  const recentes = [...dadosFiltrados()].slice(0, 30);
+  // Tabela exclui Direct Instagram (reação automática sem atendimento real)
+  const recentes = dadosFiltrados()
+    .filter(a => !/instagram/i.test(a.tabulation || ''))
+    .slice(0, 30);
   if (recentes.length === 0) {
-    tb.innerHTML = '<tr><td colspan="8" class="empty-state">Sem atendimentos no período</td></tr>';
+    tb.innerHTML = '<tr><td colspan="7" class="empty-state">Sem atendimentos no período</td></tr>';
     return;
   }
   tb.innerHTML = recentes.map(a => {
@@ -776,9 +794,8 @@ function renderTabela() {
       '<td><span style="font-size:12px">' + (a.channel || '—') + '</span></td>' +
       '<td>' + nomeAgente(a.agent_id) + '</td>' +
       '<td>' + fmtSeconds(a.ttfr_seconds) + '</td>' +
-      '<td>' + fmtSeconds(a.duration_seconds) + '</td>' +
+      '<td>' + fmtMinutes(a.duration_seconds) + '</td>' +
       '<td>' + tabulacaoLabel(a.tabulation) + '</td>' +
-      '<td><span style="font-size:11.5px;color:rgba(255,255,255,0.65)">' + fmtDateTime(a.finished_at) + '</span></td>' +
     '</tr>';
   }).join('');
 }
