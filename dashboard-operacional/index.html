@@ -94,14 +94,15 @@
   /* ---------- KPI CARDS ---------- */
   .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
   .kpi-card{background:rgba(255,255,255,0.05);border:1px solid rgba(109,213,160,0.20);
-    border-radius:14px;padding:20px 22px;transition:border-color .2s}
+    border-radius:14px;padding:22px 24px;transition:border-color .2s;
+    display:flex;flex-direction:column;justify-content:center;min-height:180px}
   .kpi-card:hover{border-color:rgba(109,213,160,0.4)}
   .kpi-card-wide{grid-column:span 2}
   .kpi-label{font-size:11px;color:#6dd5a0;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-    margin-bottom:10px}
-  .kpi-value{font-size:30px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:6px}
-  .kpi-sub{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.4}
-  .kpi-gauge{position:relative;height:90px;margin:8px 0 2px}
+    margin-bottom:14px}
+  .kpi-value{font-size:42px;font-weight:800;color:#fff;line-height:1.05;margin-bottom:8px}
+  .kpi-sub{font-size:12.5px;color:rgba(255,255,255,0.5);line-height:1.45}
+  .kpi-gauge{position:relative;height:120px;margin:0 0 4px}
   .kpi-gauge svg{width:100%;height:100%;display:block}
 
   /* ---------- PANELS ---------- */
@@ -538,12 +539,12 @@ function tabulacaoLabel(t) {
   let cls = 'pill-outro';
   const l = t.toLowerCase();
   if (/instagram/.test(l)) cls = 'pill-instagram';
-  else if (/agendou/.test(l) && !/n[ãa]o agendou/.test(l)) cls = 'pill-agendou';
+  else if (/n[ãa]o agendou/.test(l)) cls = 'pill-naoagendou';
   else if (/confirmou/.test(l)) cls = 'pill-confirmou';
   else if (/reagendou/.test(l)) cls = 'pill-reagendou';
   else if (/cancelou/.test(l)) cls = 'pill-cancelou';
   else if (/informa[çc]/.test(l) || /suporte/.test(l)) cls = 'pill-info';
-  else if (/n[ãa]o agendou/.test(l)) cls = 'pill-naoagendou';
+  else if (/\bagendou/.test(l)) cls = 'pill-agendou';
   return '<span class="lista-pill ' + cls + '">' + t + '</span>';
 }
 
@@ -552,9 +553,18 @@ function categorizar(t) {
   const l = t.toLowerCase();
   if (/instagram/.test(l)) return 'origem';
   if (/n[ãa]o agendou/.test(l)) return 'negativas';
-  if (/agendou/.test(l)) return 'positivas';
   if (/confirmou|reagendou|cancelou|informa[çc]|suporte/.test(l)) return 'operacionais';
+  if (/\bagendou/.test(l)) return 'positivas';
   return 'outro';
+}
+
+function isAgendou(tab) {
+  const t = (tab || '').toLowerCase();
+  return /\bagendou/.test(t) && !/n[ãa]o agendou/.test(t);
+}
+
+function isNaoAgendou(tab) {
+  return /n[ãa]o agendou/i.test(tab || '');
 }
 
 function fmtSeconds(sec) {
@@ -630,8 +640,8 @@ function renderKpis() {
 
   // Conversão = Agendou ÷ (Agendou + Não agendou)
   // Confirmou, Reagendou, Cancelou, Informação e Direct Instagram NÃO entram no cálculo
-  const agendou = finalizadas.filter(a => /agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || ''));
-  const naoAgendou = finalizadas.filter(a => /n[ãa]o agendou/i.test(a.tabulation || ''));
+  const agendou = finalizadas.filter(a => isAgendou(a.tabulation));
+  const naoAgendou = finalizadas.filter(a => isNaoAgendou(a.tabulation));
   const totalConv = agendou.length + naoAgendou.length;
 
   // Em espera é geral (fila não tem agente associado ainda)
@@ -714,9 +724,7 @@ function renderListaAgentes() {
     if (!a.agent_id) return;
     if (!cont[a.agent_id]) cont[a.agent_id] = { total: 0, agendou: 0 };
     cont[a.agent_id].total++;
-    if (/agendou/i.test(a.tabulation || '') && !/n[ãa]o agendou/i.test(a.tabulation || '')) {
-      cont[a.agent_id].agendou++;
-    }
+    if (isAgendou(a.tabulation)) cont[a.agent_id].agendou++;
   });
   const items = Object.entries(cont).sort((a, b) => b[1].total - a[1].total);
   const el = $('lista-agentes');
@@ -740,9 +748,7 @@ function renderTendenciaPorHora() {
     if (/confirmou|instagram/.test(tab)) return;
     const hour = new Date(a.finished_at).getHours();
     buckets[hour].total++;
-    if (/agendou/.test(tab) && !/n[ãa]o agendou/.test(tab)) {
-      buckets[hour].agendou++;
-    }
+    if (isAgendou(a.tabulation)) buckets[hour].agendou++;
   });
   const labels = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0') + 'h');
   const total = buckets.map(b => b.total);
