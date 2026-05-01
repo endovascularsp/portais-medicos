@@ -86,7 +86,7 @@
   .filtro-status{font-size:11px;color:rgba(255,255,255,0.4);margin-left:6px}
 
   /* ---------- KPI CARDS ---------- */
-  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:24px}
+  .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
   .kpi-card{background:rgba(255,255,255,0.05);border:1px solid rgba(109,213,160,0.20);
     border-radius:14px;padding:20px 22px;transition:border-color .2s}
   .kpi-card:hover{border-color:rgba(109,213,160,0.4)}
@@ -139,8 +139,11 @@
     margin-top:30px;padding:24px 0}
 
   /* ---------- RESPONSIVO ---------- */
+  @media(max-width:1180px){
+    .kpi-row{grid-template-columns:repeat(3,1fr)}
+  }
   @media(max-width:960px){
-    .kpi-row{grid-template-columns:1fr 1fr}
+    .kpi-row{grid-template-columns:repeat(2,1fr)}
     .panel-row{grid-template-columns:1fr}
     header{padding:16px 18px;flex-wrap:wrap;gap:12px}
     .header-info h1{font-size:14px}
@@ -227,14 +230,19 @@
     <!-- KPI CARDS -->
     <div class="kpi-row">
       <div class="kpi-card">
+        <div class="kpi-label">Em espera</div>
+        <div class="kpi-value" id="kpi-em-espera">--</div>
+        <div class="kpi-sub" id="kpi-em-espera-sub">aguardando agente</div>
+      </div>
+      <div class="kpi-card">
         <div class="kpi-label">Taxa de conversão</div>
         <div class="kpi-value" id="kpi-conversao">--</div>
         <div class="kpi-sub" id="kpi-conversao-sub">--</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Tempo médio 1ª resposta</div>
+        <div class="kpi-label">TME · 1ª resposta</div>
         <div class="kpi-value" id="kpi-ttfr">--</div>
-        <div class="kpi-sub" id="kpi-ttfr-sub">meta &lt; 30 min</div>
+        <div class="kpi-sub" id="kpi-ttfr-sub">meta ≤ 3 min</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Agendamentos</div>
@@ -443,6 +451,15 @@ function renderKpis() {
     ? finalizadas.filter(a => !/instagram/i.test(a.tabulation || ''))
     : finalizadas;
   const agendou = finalParaConv.filter(a => /agendou/i.test(a.tabulation || ''));
+
+  // Em espera: tem wait_started_at, mas ainda não foi aceita nem finalizada
+  const emEspera = dadosAtuais.filter(a =>
+    a.wait_started_at && !a.human_started_at && !a.finished_at
+  );
+  $('kpi-em-espera').textContent = emEspera.length;
+  $('kpi-em-espera-sub').textContent = emEspera.length === 0
+    ? 'fila vazia ✓'
+    : (emEspera.length === 1 ? 'paciente aguardando' : 'pacientes aguardando');
 
   const conv = finalParaConv.length > 0 ? (agendou.length / finalParaConv.length * 100) : 0;
   $('kpi-conversao').textContent = conv.toFixed(1) + '%';
