@@ -161,6 +161,10 @@ async function rotear() {
     sessionStorage.setItem('_xpa', secRes.data.legacy_password);
   }
 
+  if (user.name) {
+    sessionStorage.setItem('_xname', user.name.split(' ')[0]);
+  }
+
   setLoading('Bem-vindo, ' + (user.name || email) + '. Redirecionando...');
 
   const baseUrl = window.location.origin + window.location.pathname.replace(/\/login\/?$/, '');

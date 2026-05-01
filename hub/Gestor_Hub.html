@@ -211,6 +211,11 @@ function navegar(el, e) {
 }
 
 window.addEventListener('load', async () => {
+  const xname = sessionStorage.getItem('_xname');
+  if (xname) {
+    const span = document.querySelector('.hub-greeting span');
+    if (span) span.textContent = xname;
+  }
   if (sessionStorage.getItem(SK) === '1') {
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('main').style.display = 'block';
