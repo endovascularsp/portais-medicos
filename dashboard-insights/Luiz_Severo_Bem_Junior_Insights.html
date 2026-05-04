@@ -275,7 +275,7 @@ async function tentarLogin() {
     return;
   }
 
-  sessionStorage.setItem('_xp', senha);
+  sessionStorage.setItem('_xpa', senha);
 
   // Agrega em _DADOS
   for (const origem of Object.keys(dadosPorFonte)) {
@@ -410,9 +410,8 @@ function inicializar() {
 }
 
 window.addEventListener('load', async () => {
-  const s = sessionStorage.getItem('_xp');
+  const s = sessionStorage.getItem('_xpa');
   if (s) {
-    sessionStorage.removeItem('_xp');
     document.getElementById('login-senha').value = s;
     await tentarLogin();
   } else {

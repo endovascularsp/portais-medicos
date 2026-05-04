@@ -273,7 +273,7 @@ async function tentarLogin(){
       {name:'AES-GCM',length:256},false,['decrypt']);
     const plain = await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);
     DADOS = JSON.parse(new TextDecoder().decode(plain));
-    sessionStorage.setItem('_xp', senha);
+    sessionStorage.setItem('_xpa', senha);
     const ov = document.getElementById('login-overlay');
     ov.classList.add('saindo');
     setTimeout(()=>{ov.style.display='none';},400);
@@ -375,9 +375,8 @@ function renderPeriodo(prof, pid){
 
 /* ── auto-login cross-portal ── */
 (function(){
-  const _cp = sessionStorage.getItem('_xp');
+  const _cp = sessionStorage.getItem('_xpa');
   if(_cp){
-    sessionStorage.removeItem('_xp');
     const inp = document.getElementById('login-senha');
     if(inp){inp.value=_cp;tentarLogin();}
   } else {

@@ -8,8 +8,8 @@
   <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'>
     function navProd(el,e){
       e.preventDefault();
-      const s=sessionStorage.getItem('_xp');
-      if(s) sessionStorage.setItem('_xp',s);
+      const s=sessionStorage.getItem('_xpa');
+      if(s) sessionStorage.setItem('_xpa',s);
       window.location.href=el.href;
     }
   </script>
@@ -714,7 +714,7 @@ async function tentarLogin(){
     if(dec !== null) TODOS_PERIODOS[pid] = { label: pdata.label, profs: dec };
   }
 
-  sessionStorage.setItem('_xp', senha);
+  sessionStorage.setItem('_xpa', senha);
   const ov = document.getElementById('login-overlay');
   ov.classList.add('saindo');
   setTimeout(() => { ov.style.display='none'; inicializarPortalPermanente(); }, 400);
@@ -723,9 +723,8 @@ async function tentarLogin(){
 document.getElementById('login-senha').focus();
 /* ── auto-login cross-portal ── */
 (function(){
-  const _cp = sessionStorage.getItem('_xp');
+  const _cp = sessionStorage.getItem('_xpa');
   if(_cp){
-    sessionStorage.removeItem('_xp');
     const _inp = document.getElementById('login-senha');
     if(_inp){ _inp.value = _cp; tentarLogin(); }
   }

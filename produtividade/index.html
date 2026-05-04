@@ -407,7 +407,6 @@ if(sessionStorage.getItem(SK)==='1'){
 } else {
   const _cp=sessionStorage.getItem('_xpa');
   if(_cp){
-    sessionStorage.removeItem('_xpa');
     (async()=>{
       const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(_cp));
       const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');

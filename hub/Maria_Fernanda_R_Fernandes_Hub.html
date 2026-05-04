@@ -236,7 +236,7 @@ async function tentarLogin() {
   try {
     const dados = await decryptBlob(BLOB, senha);
     // Salva senha para auto-login nos portais filhos
-    sessionStorage.setItem('_xp', senha);
+    sessionStorage.setItem('_xpa', senha);
     // Exibe o main
     const primeiro = dados.profissional.split(' ')[0];
     document.getElementById('nome-exibido').textContent = primeiro;
@@ -254,16 +254,15 @@ async function tentarLogin() {
 function navegar(el, e) {
   e.preventDefault();
   // Garante que a senha esteja salva antes de navegar
-  const s = sessionStorage.getItem('_xp');
-  if (s) sessionStorage.setItem('_xp', s);
+  const s = sessionStorage.getItem('_xpa');
+  if (s) sessionStorage.setItem('_xpa', s);
   window.location.href = el.href;
 }
 
 // Auto-login via sessionStorage (vindo de outro portal)
 window.addEventListener('load', async () => {
-  const s = sessionStorage.getItem('_xp');
+  const s = sessionStorage.getItem('_xpa');
   if (s) {
-    sessionStorage.removeItem('_xp');
     document.getElementById('login-senha').value = s;
     await tentarLogin();
   } else {

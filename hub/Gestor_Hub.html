@@ -240,7 +240,6 @@ window.addEventListener('load', async () => {
   }
   const s = sessionStorage.getItem('_xpa');
   if (s) {
-    sessionStorage.removeItem('_xpa');
     document.getElementById('login-senha').value = s;
     await tentarLogin();
   } else {
