@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Gestão Administrativa — Endovascular SP</title>
+<link rel="icon" href="../assets/logo.png" type="image/png" />
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0B1F3A;
+  --navy-2: #0d2d55;
+  --gold: #A18960;
+  --gold-2: #c9a875;
+  --blue: #859EBD;
+  --lblue: #D6DCE7;
+  --gray: #646463;
+  --bg: #0B1F3A;
+  --card: rgba(255,255,255,0.04);
+  --card-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.10);
+  --border-strong: rgba(255,255,255,0.20);
+  --text: #f5f5f5;
+  --text-2: rgba(255,255,255,0.65);
+  --text-3: rgba(255,255,255,0.40);
+}
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 60%, var(--navy) 100%);
+  min-height: 100vh; color: var(--text);
+}
+
+/* === LOGIN === */
+#login-overlay {
+  position: fixed; inset: 0;
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 60%, var(--navy) 100%);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+  transition: opacity 0.4s;
+}
+#login-overlay.saindo { opacity: 0; pointer-events: none; }
+.login-box {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 44px 38px;
+  width: 100%; max-width: 400px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.login-icon { font-size: 40px; margin-bottom: 10px; }
+.login-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.login-sub { font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
+.login-badge {
+  display: inline-block;
+  margin-bottom: 28px;
+  padding: 4px 14px; border-radius: 20px;
+  background: rgba(161,137,96,0.15);
+  border: 1px solid rgba(161,137,96,0.45);
+  color: var(--gold-2);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.btn-google {
+  width: 100%; padding: 13px 16px;
+  border-radius: 10px; border: none;
+  background: white; color: #1f1f1f;
+  font-size: 15px; font-weight: 600; font-family: inherit;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px;
+  transition: opacity .2s, transform .15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.btn-google:hover:not(:disabled) { opacity: .92; transform: translateY(-1px); }
+.btn-google:disabled { opacity: .55; cursor: not-allowed; }
+.login-erro { color: #ff7b7b; font-size: 13px; margin-top: 16px; min-height: 18px; line-height: 1.45; }
+.login-loading { color: var(--text-2); font-size: 13px; margin-top: 16px; min-height: 18px; }
+.login-rodape { text-align: center; font-size: 11px; color: var(--text-3); margin-top: 32px; }
+
+/* === MAIN === */
+#main { display: none; max-width: 1400px; margin: 0 auto; padding: 24px 28px 60px; }
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.header-left h1 {
+  font-size: 22px; font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-2), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header-left p { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.header-right {
+  display: flex; align-items: center; gap: 14px;
+}
+.header-greeting { font-size: 13px; color: var(--text-2); }
+.header-greeting strong { color: var(--gold-2); }
+.btn-home {
+  padding: 7px 14px; border-radius: 18px;
+  background: rgba(148,163,184,0.15);
+  border: 1px solid rgba(148,163,184,0.4);
+  color: #94a3b8;
+  font-size: 12px; font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-home:hover { background: rgba(148,163,184,0.25); color: #b9c6d4; }
+.last-updated {
+  font-size: 11px; color: var(--text-3);
+  font-style: italic;
+}
+
+/* === TABS === */
+.tabs {
+  display: flex; gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 10px 18px;
+  background: none; border: none;
+  color: var(--text-2);
+  font-size: 13.5px; font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--gold-2);
+  border-bottom-color: var(--gold);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* === STATS BAR (topo de cada aba) === */
+.stats {
+  display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  flex: 0 1 auto; min-width: 140px;
+}
+.stat-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 22px; font-weight: 700; color: var(--gold-2); margin-top: 4px; }
+
+/* === FILTROS === */
+.filtros {
+  display: flex; gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.filtro-tab {
+  padding: 6px 14px; border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12.5px; font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filtro-tab:hover { background: rgba(255,255,255,0.10); color: var(--text); }
+.filtro-tab.active {
+  background: rgba(161,137,96,0.20);
+  border-color: rgba(161,137,96,0.55);
+  color: var(--gold-2);
+}
+
+/* === TABELA === */
+.tbl-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); background: var(--card); }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.tbl th {
+  text-align: left; padding: 11px 14px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--border);
+  color: var(--gold-2);
+  font-weight: 600; font-size: 11.5px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+table.tbl td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); }
+table.tbl tr:hover td { background: rgba(255,255,255,0.03); }
+table.tbl tr:last-child td { border-bottom: none; }
+.cell-strong { font-weight: 600; color: var(--text); }
+.cell-mono { font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; color: var(--text-2); }
+
+/* Pills (status, contrato etc) */
+.pill {
+  display: inline-block; padding: 3px 10px; border-radius: 12px;
+  font-size: 11px; font-weight: 600;
+}
+.pill-clt { background: rgba(126,184,247,0.15); color: #7eb8f7; border: 1px solid rgba(126,184,247,0.3); }
+.pill-pj { background: rgba(192,132,252,0.15); color: #c084fc; border: 1px solid rgba(192,132,252,0.3); }
+.pill-estagio { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+.pill-contrato { background: rgba(245,166,35,0.15); color: #f5a623; border: 1px solid rgba(245,166,35,0.3); }
+.pill-ativo { background: rgba(109,213,160,0.15); color: #6dd5a0; border: 1px solid rgba(109,213,160,0.3); }
+.pill-experiencia { background: rgba(245,200,90,0.15); color: #f5c85a; border: 1px solid rgba(245,200,90,0.3); }
+.pill-afastado { background: rgba(245,166,35,0.15); color: #f5a623; border: 1px solid rgba(245,166,35,0.3); }
+.pill-desligado { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+.pill-em-aberto { background: rgba(245,200,90,0.15); color: #f5c85a; border: 1px solid rgba(245,200,90,0.3); }
+.pill-em-transicao { background: rgba(245,166,35,0.15); color: #f5a623; border: 1px solid rgba(245,166,35,0.3); }
+.pill-inativo { background: rgba(148,163,184,0.10); color: var(--text-3); border: 1px solid rgba(148,163,184,0.2); }
+.pill-incluso { background: rgba(109,213,160,0.15); color: #6dd5a0; }
+.pill-solicitado { background: rgba(245,200,90,0.15); color: #f5c85a; }
+.pill-naoaderiu { background: rgba(148,163,184,0.10); color: var(--text-3); }
+.pill-bloco-comercial { background: rgba(126,184,247,0.15); color: #7eb8f7; }
+.pill-bloco-operacional { background: rgba(245,166,35,0.15); color: #f5a623; }
+.pill-bloco-lideranca { background: rgba(192,132,252,0.15); color: #c084fc; }
+
+/* === CARGO CARDS (aba Cargos & Escopos) === */
+.cargos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.cargo-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cargo-card:hover {
+  background: var(--card-hover);
+  border-color: rgba(161,137,96,0.45);
+  transform: translateY(-2px);
+}
+.cargo-card-title {
+  font-size: 15px; font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.cargo-card-meta {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.cargo-card-resumo {
+  font-size: 12.5px; color: var(--text-2);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* === MODAL DE CARGO === */
+#modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 9000;
+  align-items: center; justify-content: center;
+  padding: 30px 20px;
+  backdrop-filter: blur(4px);
+}
+#modal-overlay.show { display: flex; }
+.modal {
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%);
+  border: 1px solid rgba(161,137,96,0.30);
+  border-radius: 14px;
+  width: 100%; max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+}
+.modal-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: rgba(255,255,255,0.18); }
+.modal-header {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title {
+  font-size: 22px; font-weight: 700; color: var(--gold-2);
+  margin-bottom: 8px;
+}
+.modal-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+.modal-body {
+  padding: 22px 28px 30px;
+  font-size: 13.5px; line-height: 1.65;
+  color: var(--text);
+}
+.modal-body h2 {
+  font-size: 16px; color: var(--gold-2);
+  margin: 22px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-body h2:first-child { margin-top: 0; }
+.modal-body h3 { font-size: 14.5px; color: var(--text); margin: 16px 0 8px; }
+.modal-body h4 { font-size: 13.5px; color: var(--blue); margin: 12px 0 6px; }
+.modal-body p { margin: 8px 0; color: var(--text-2); }
+.modal-body ul, .modal-body ol { margin: 8px 0 12px 22px; }
+.modal-body li { margin: 4px 0; color: var(--text-2); }
+.modal-body strong { color: var(--text); }
+.modal-body hr { border: none; height: 1px; background: var(--border); margin: 18px 0; }
+.modal-body code {
+  background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+  font-size: 12.5px;
+}
+.modal-body blockquote {
+  border-left: 3px solid var(--gold);
+  padding: 6px 14px;
+  background: rgba(161,137,96,0.06);
+  margin: 10px 0;
+  font-style: italic;
+  color: var(--text-2);
+}
+.modal-body .callout {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+.modal-body .todo { padding: 3px 0; color: var(--text-2); }
+.modal-body table.nt {
+  width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px;
+}
+.modal-body table.nt th, .modal-body table.nt td {
+  padding: 8px 10px; border: 1px solid var(--border);
+  text-align: left; vertical-align: top;
+}
+.modal-body table.nt th {
+  background: rgba(161,137,96,0.10);
+  color: var(--gold-2);
+  font-weight: 600;
+}
+.modal-body table.nt td { color: var(--text-2); }
+.modal-body table.nt tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* === EMPTY STATE === */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-3);
+  font-size: 14px;
+}
+.empty .ico { font-size: 40px; margin-bottom: 12px; }
+
+/* === TIMELINE (Movimentações) === */
+.timeline { position: relative; padding: 12px 0 12px 28px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  padding: 8px 0 16px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -24px; top: 14px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--navy);
+}
+.timeline-date { font-size: 11px; color: var(--text-3); text-transform: uppercase; }
+.timeline-title { font-weight: 600; margin: 2px 0; }
+.timeline-meta { font-size: 12px; color: var(--text-2); }
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 11px; color: var(--text-3);
+  padding: 30px 0 0;
+  margin-top: 40px;
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<!-- ======= LOGIN ======= -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-icon">🗂️</div>
+    <div class="login-title">Gestão Administrativa</div>
+    <div class="login-sub">Endovascular SP</div>
+    <div class="login-badge">Acesso restrito</div>
+
+    <button id="btn-google" class="btn-google">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      <span id="btn-label">Entrar com Google</span>
+    </button>
+    <div id="login-loading" class="login-loading"></div>
+    <div id="login-erro" class="login-erro"></div>
+    <div class="login-rodape">Endovascular SP © 2026 · Acesso restrito</div>
+  </div>
+</div>
+
+<!-- ======= MAIN ======= -->
+<div id="main">
+  <header class="header">
+    <div class="header-left">
+      <h1>🗂️ Gestão Administrativa</h1>
+      <p>Funcionários · Cargos & Escopos · Folha · Movimentações · POPs</p>
+    </div>
+    <div class="header-right">
+      <span class="header-greeting">Olá, <strong id="greeting-nome">Gestor</strong></span>
+      <span class="last-updated" id="last-updated"></span>
+      <a href="../hub/Gestor_Hub.html" class="btn-home">🏠 Hub</a>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="funcionarios">Funcionários</button>
+    <button class="tab-btn" data-tab="cargos">Cargos & Escopos</button>
+    <button class="tab-btn" data-tab="folha">Folha & Remuneração</button>
+    <button class="tab-btn" data-tab="movimentacoes">Movimentações</button>
+    <button class="tab-btn" data-tab="pops">POPs</button>
+  </nav>
+
+  <!-- FUNCIONÁRIOS -->
+  <section class="tab-content active" id="tab-funcionarios">
+    <div class="stats" id="stats-func"></div>
+    <div class="filtros" id="filtros-func"></div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl-func"></table></div>
+  </section>
+
+  <!-- CARGOS -->
+  <section class="tab-content" id="tab-cargos">
+    <div class="stats" id="stats-cargos"></div>
+    <div class="filtros" id="filtros-cargos"></div>
+    <div class="cargos-grid" id="grid-cargos"></div>
+  </section>
+
+  <!-- FOLHA -->
+  <section class="tab-content" id="tab-folha">
+    <div class="stats" id="stats-folha"></div>
+    <div id="folha-content"></div>
+  </section>
+
+  <!-- MOVIMENTAÇÕES -->
+  <section class="tab-content" id="tab-movimentacoes">
+    <div id="mov-content"></div>
+  </section>
+
+  <!-- POPs -->
+  <section class="tab-content" id="tab-pops">
+    <div id="pops-content"></div>
+  </section>
+
+  <div class="footer">Endovascular SP © 2026 · Dados sincronizados do Notion · Read-only</div>
+</div>
+
+<!-- Modal de cargo (detalhe) -->
+<div id="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">×</button>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-meta" id="modal-meta"></div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ======= SCRIPTS ======= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const PORTAL_DATA = /*PDATA*/ {"generated_at":"2026-05-05T13:07:21","cargos":[{"id":"356fcd0c-38e2-810f-9f0d-c5248b315cbd","url":"https://www.notion.so/L-der-de-Recep-o-356fcd0c38e2810f9f0dc5248b315cbd","properties":{"Nível":"Líder","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-81a8-83bd-d9734cf484af"],"Resumo do Cargo":"Liderança operacional do time de Recepção + Agendamento. Garante padrão de atendimento, escalas e cumprimento de POPs.","Área":"Tier 1 - Recepção","Status do Cargo":"Ativo","Bloco":"Comercial","Cargo":"Líder de Recepção"},"html":"<h2>Missão do Cargo</h2>\n<p>Liderar e desenvolver o time de Recepção e Agendamento, garantindo a aplicação do padrão premium da clínica em todos os pontos de contato diários.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Camily Nunes do Nascimento</strong></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Gestão do Time de Recepção</strong></td><td>Liderar e orientar recepcionistas e atendentes no dia-a-dia · Organizar escalas, folgas e coberturas · Garantir cumprimento de horários, postura e padrão de atendimento</td></tr><tr><td><strong>Padrão de Atendimento</strong></td><td>Garantir aplicação do padrão de atendimento da clínica · Treinar equipe · Realizar atendimento presencial, telefônico e WhatsApp quando necessário · Recepcionar pacientes com cordialidade e padrão premium · Garantir resposta em até 3 min no Envya · Corrigir desvios de conduta e atendimento</td></tr><tr><td><strong>Fluxo de Atendimento</strong></td><td>Organizar fluxo de entrada e saída de pacientes · Reduzir tempo de espera e filas · Alinhar agenda com atendimento, enfermagem e médicos</td></tr><tr><td><strong>Agenda e Confirmações</strong></td><td>Apoiar confirmações e organização da agenda · Apoiar na redução de no-show · Sinalizar gargalos de agenda</td></tr><tr><td><strong>Qualidade e Experiência do Paciente</strong></td><td>Monitorar satisfação do paciente na recepção · Tratar reclamações e intercorrências iniciais · Garantir ambiente organizado e acolhedor</td></tr><tr><td><strong>Processos e Controles</strong></td><td>Garantir cumprimento dos POPs de recepção · Conferir registros, check-in e check-out · Sinalizar falhas operacionais</td></tr><tr><td><strong>Interface com Liderança</strong></td><td>Reportar indicadores e ocorrências à Coordenadora Comercial · Propor melhorias de fluxo e atendimento · Apoiar decisões operacionais</td></tr></table>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Rotina diária</h3>\n<div class='todo'>○ Conferência da escala e presença da equipe</div>\n<div class='todo'>○ Briefing matinal rápido com a equipe</div>\n<div class='todo'>○ Acompanhar fluxo da sala de espera ao longo do dia</div>\n<div class='todo'>○ Atender escalonamentos e reclamações</div>\n<div class='todo'>○ Auditar registros do sistema</div>\n<h3>Rotina semanal</h3>\n<div class='todo'>○ 1:1 com cada recepcionista/atendente</div>\n<div class='todo'>○ Revisão dos KPIs de no-show e confirmação</div>\n<div class='todo'>○ Reunião com Coordenadora Comercial</div>\n<h3>Rotina mensal</h3>\n<div class='todo'>○ Avaliação de performance da equipe</div>\n<div class='todo'>○ Atualização de POPs quando necessário</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Gestão de equipes operacionais</strong></li>\n<li><strong>Sistema de gestão clínica</strong> — domínio funcional completo</li>\n<li><strong>Plataforma Envya</strong> — supervisão de atendimentos e tabulações</li>\n<li><strong>Pacote Office</strong> — escala, planilhas de controle</li>\n<li><strong>Indicadores de atendimento</strong> — NPS, no-show, tempo de resposta</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Liderança humanizada</strong> — corrige sem humilhar</li>\n<li><strong>Postura premium</strong> — referencial para a equipe</li>\n<li><strong>Comunicação clara e firme</strong></li>\n<li><strong>Resiliência em pico de demanda</strong></li>\n<li><strong>Empatia com paciente e equipe</strong></li>\n<li><strong>Senso de pertencimento e responsabilidade</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Ensino médio completo. Superior em Adm, Gestão ou correlatas é diferencial</li>\n<li>Experiência em recepção de clínica/hospital ou hospitalidade premium</li>\n<li>Experiência em liderança (formal ou informal)</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<p><em>Fonte: Plano de Reestruturação 2026 (Tier 1 — Recepção).</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Assiduidade da equipe</td><td>100%</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora Comercial</strong> (Heloisa Reis)</p>\n<h2>Reportam a este cargo</h2>\n<ul>\n<li>Recepcionistas (Samanta Neves, Julia Beserra)</li>\n<li>Recepcionistas Atendentes / Agendamento (Mayara Soares, Ana Luiza)</li>\n</ul>"},{"id":"356fcd0c-38e2-8134-9b01-d3d27d4f1571","url":"https://www.notion.so/Diretor-M-dico-Fundador-356fcd0c38e281349b01d3d27d4f1571","properties":{"Nível":"Head","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-819d-8d0b-d5762a7eb6b2"],"Resumo do Cargo":"Fundador da Endovascular SP. Cirurgião vascular e endovascular, referência nacional e internacional. Define visão estratégica e propulsor clínico da clínica.","Área":"Liderança Geral","Status do Cargo":"Ativo","Bloco":"Liderança","Cargo":"Diretor Médico / Fundador"},"html":"<h2>Missão do Cargo</h2>\n<p>Liderar a Endovascular SP em sua visão de unir ciência, tecnologia e acolhimento em um novo padrão de cuidado vascular e endovascular. Referência clínica e principal motor de credibilidade e faturamento da clínica.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Dr. Igor Sincos</strong></p>\n<hr/>\n<h2>Áreas de Responsabilidade</h2>\n<table class='nt'><tr><th>Área</th><th>Funções Principais</th></tr><tr><td><strong>Visão e Estratégia</strong></td><td>Definir o rumo estratégico da clínica · Validar grandes decisões de negócio · Aprovar investimentos estratégicos</td></tr><tr><td><strong>Referência Clínica</strong></td><td>Atender pacientes em sua especialidade (cirurgia vascular e endovascular) · Manter o mais alto padrão técnico e científico · Representar a clínica em congressos e publicações</td></tr><tr><td><strong>Liderança do Corpo Clínico</strong></td><td>Validar inclusão de novos médicos · Garantir alinhamento clínico-científico do corpo clínico · Mentorar médicos e equipe assistencial</td></tr><tr><td><strong>Governança Geral</strong></td><td>Acompanhar resultados via Head de Operações · Validar mudanças estruturais (organograma, novos serviços) · Garantir integridade e ética institucional</td></tr><tr><td><strong>Reputação e Marca</strong></td><td>Ser embaixador da marca Endovascular SP · Defender o posicionamento premium e a promessa científica da marca · Atuar como porta-voz em situações estratégicas</td></tr></table>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<p><em>Fonte: Plano de Reestruturação 2026.</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>NPS global da clínica</td><td>≥ 90</td></tr><tr><td>Crescimento de receita YoY</td><td>A definir trimestralmente com o Head de Operações</td></tr><tr><td>Diversificação de receita (redução de dependência do Dr. Igor)</td><td>Ampliar contribuição do corpo clínico ao faturamento total</td></tr></table>\n<hr/>\n<h2>Reporta a</h2>\n<p><em>Não se aplica — cargo de topo da estrutura.</em></p>\n<h2>Reportam a este cargo</h2>\n<p>Head de Operações</p>"},{"id":"356fcd0c-38e2-8147-ae44-eefa00ed5571","url":"https://www.notion.so/Concierge-3-vaga-em-aberto-356fcd0c38e28147ae44eefa00ed5571","properties":{"Nível":"Pleno","POPs Vinculados":[],"Funcionários ocupando este cargo":[],"Resumo do Cargo":"Vaga em aberto para reforçar o time de Concierge. Mesmo escopo do cargo Concierge.","Área":"Tier 1 - Concierge","Status do Cargo":"Em Aberto","Bloco":"Comercial","Cargo":"Concierge 3 (vaga em aberto)"},"html":"<h2>Status</h2>\n<p><strong>Em Aberto</strong> — vaga prevista no Plano de Reestruturação 2026 para reforçar o time de Concierge da clínica.</p>\n<h2>Escopo</h2>\n<p><em>Mesmo escopo do cargo Concierge — ver página principal do cargo.</em></p>\n<p>Acompanha o paciente ao longo de toda a jornada de tratamento. Apresenta procedimentos, negocia, fideliza. Diferencial competitivo da Endovascular SP.</p>\n<h2>Pré-requisitos para a vaga</h2>\n<ul>\n<li>Ensino médio completo (mínimo). Superior em Adm, Marketing, Gestão de Saúde ou correlatas é diferencial</li>\n<li>Experiência mínima de 1 ano em vendas consultivas premium ou hotelaria de alto padrão</li>\n<li>Apresentação pessoal premium</li>\n<li>Perfil alinhado ao DNA de Marca: cordialidade, postura, capacidade analítica e ensinável</li>\n</ul>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora Comercial</strong> (Heloisa Reis)</p>"},{"id":"356fcd0c-38e2-815d-895d-f7f612220dd6","url":"https://www.notion.so/Enfermeira-J-nior-356fcd0c38e2815d895df7f612220dd6","properties":{"Nível":"Júnior","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-81e6-b09e-d284f20c6539"],"Resumo do Cargo":"Apoia procedimentos clínicos e atendimento assistencial sob supervisão da Enfermeira RT. Em desenvolvimento técnico.","Área":"Operacional - Assistencial","Status do Cargo":"Ativo","Bloco":"Operacional","Cargo":"Enfermeira Júnior"},"html":"<h2>Missão do Cargo</h2>\n<p>Apoiar procedimentos clínicos e o cuidado assistencial dos pacientes da Endovascular SP, sob supervisão da Enfermeira/Liderança Assistencial, em conformidade com POPs e protocolos da clínica.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Luana Specchio da Silva</strong></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Assistência ao Paciente</strong></td><td>Prestar assistência direta ao paciente · Preparar pacientes para consultas e procedimentos · Garantir conforto e segurança · Garantir que o paciente não circule sozinho pela clínica</td></tr><tr><td><strong>Apoio a Procedimentos</strong></td><td>Auxiliar médicos e enfermeira RT durante procedimentos · Organizar sala, materiais e equipamentos</td></tr><tr><td><strong>POPs e Vigilância Sanitária</strong></td><td>Cumprir rigorosamente os POPs assistenciais · Seguir normas de biossegurança e segurança do paciente</td></tr><tr><td><strong>Controle de Materiais</strong></td><td>Controlar uso de materiais e insumos · Comunicar necessidades de reposição · Evitar desperdícios</td></tr><tr><td><strong>Registros Assistenciais</strong></td><td>Realizar registros assistenciais conforme orientação · Garantir informações corretas e completas</td></tr><tr><td><strong>Desenvolvimento Técnico</strong></td><td>Desenvolver competências técnicas em cirurgia vascular/endovascular · Manter-se atualizada sobre exames e procedimentos da clínica</td></tr><tr><td><strong>Conduta Profissional</strong></td><td>Manter postura ética e profissional · Cumprir horários e escalas · Seguir orientações da Enfermeira RT</td></tr></table>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Formação em Enfermagem com COREN ativo</strong></li>\n<li><strong>POPs assistenciais e biossegurança</strong></li>\n<li><strong>Sistema de gestão clínica</strong> — registros assistenciais</li>\n<li><strong>Suporte básico de vida (BLS)</strong> — desejável</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Atenção ao detalhe</strong></li>\n<li><strong>Empatia com paciente</strong></li>\n<li><strong>Capacidade de aprender com a Enfermeira RT (mentalidade ensinável)</strong></li>\n<li><strong>Postura profissional</strong></li>\n<li><strong>Discrição</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Formação superior em Enfermagem com COREN ativo</li>\n<li>Experiência inicial (até 2 anos) em clínica/hospital</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Conformidade com POPs (auditoria mensal)</td><td>100%</td></tr><tr><td>Assiduidade</td><td>100%</td></tr><tr><td>Zero incidentes por negligência</td><td>0 ocorrências</td></tr></table>\n<p><em>KPIs detalhados a serem refinados junto à Coordenadora de Operações.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Enfermeira / Liderança Assistencial</strong> (Camilla de Lima Gomes)</p>"},{"id":"356fcd0c-38e2-8162-a046-e79ad9b34620","url":"https://www.notion.so/Enfermeira-Lideran-a-Assistencial-356fcd0c38e28162a046e79ad9b34620","properties":{"Nível":"Líder","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-8111-aae4-f00597f78e6f"],"Resumo do Cargo":"Responsável técnica pela enfermagem da clínica. Lidera técnica e estagiárias, garante POPs assistenciais e conformidade com Vigilância Sanitária.","Área":"Operacional - Assistencial","Status do Cargo":"Ativo","Bloco":"Operacional","Cargo":"Enfermeira / Liderança Assistencial"},"html":"<h2>Missão do Cargo</h2>\n<p>Garantir a excelência assistencial da Endovascular SP, atuando como responsável técnica pela enfermagem, supervisora da equipe assistencial e guardiã dos POPs e da conformidade regulatória.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Camilla de Lima Gomes</strong></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Supervisão Assistencial</strong></td><td>Supervisionar técnica e estagiários de enfermagem · Garantir execução correta das rotinas assistenciais</td></tr><tr><td><strong>Procedimentos</strong></td><td>Apoiar e atuar em procedimentos conforme protocolo · Garantir preparo adequado de pacientes e salas</td></tr><tr><td><strong>POPs e Vigilância Sanitária</strong></td><td>Garantir cumprimento dos POPs assistenciais · Atuar em conformidade com as exigências da Vigilância Sanitária</td></tr><tr><td><strong>Qualidade e Segurança</strong></td><td>Garantir segurança do paciente e boas práticas · Atuar em intercorrências assistenciais</td></tr><tr><td><strong>Gestão de Materiais</strong></td><td>Controlar e solicitar insumos · Evitar desperdícios e falhas de abastecimento</td></tr><tr><td><strong>Registros Assistenciais</strong></td><td>Garantir registros completos e corretos · Auditar registros da equipe</td></tr><tr><td><strong>Gestão da Equipe</strong></td><td>Organizar escalas e orientar a equipe · Treinar e desenvolver técnica e estagiários</td></tr><tr><td><strong>Interface Operacional</strong></td><td>Atuar integrada com médicos e operação · Comunicar intercorrências à liderança</td></tr><tr><td><strong>Responsabilidade Técnica</strong></td><td>Responder tecnicamente pela enfermagem · Apoiar fiscalizações e auditorias</td></tr></table>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Rotina diária</h3>\n<div class='todo'>○ Conferência da escala da equipe assistencial</div>\n<div class='todo'>○ Briefing com a equipe (intercorrências da véspera, agenda do dia)</div>\n<div class='todo'>○ Acompanhar procedimentos do dia (apoio + supervisão)</div>\n<div class='todo'>○ Auditoria de registros e POPs</div>\n<h3>Rotina semanal</h3>\n<div class='todo'>○ Conferência de insumos e pedidos</div>\n<div class='todo'>○ 1:1 com técnica e estagiárias</div>\n<div class='todo'>○ Reunião com Coordenadora de Operações</div>\n<h3>Rotina mensal</h3>\n<div class='todo'>○ Auditoria de POPs assistenciais</div>\n<div class='todo'>○ Avaliação da equipe</div>\n<div class='todo'>○ Atualização de protocolos quando necessário</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Formação em Enfermagem com COREN ativo</strong></li>\n<li><strong>Especialização ou experiência em cirurgia vascular/endovascular</strong> — desejável</li>\n<li><strong>Domínio de POPs assistenciais e exigências da Vigilância Sanitária</strong></li>\n<li><strong>Sistema de gestão clínica</strong> — prontuário, registros assistenciais</li>\n<li><strong>Gestão de materiais e insumos hospitalares</strong></li>\n<li><strong>Suporte básico de vida (BLS) e ACLS</strong> — desejável</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Liderança técnica</strong> — referencial clínico para a equipe</li>\n<li><strong>Atenção ao detalhe</strong> — nada negocia segurança do paciente</li>\n<li><strong>Comunicação clínica clara</strong></li>\n<li><strong>Empatia com paciente em vulnerabilidade</strong></li>\n<li><strong>Resiliência em emergências</strong></li>\n<li><strong>Postura ética e profissional</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Formação superior em Enfermagem com COREN ativo</li>\n<li>Experiência mínima de 2 anos em clínicas/hospitais</li>\n<li>Experiência em liderança de equipe assistencial é diferencial</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Conformidade com POPs assistenciais (auditoria mensal)</td><td>100%</td></tr><tr><td>Conformidade Vigilância Sanitária</td><td>100%</td></tr><tr><td>Zero incidentes assistenciais por negligência/falha de POP</td><td>0 ocorrências</td></tr><tr><td>NPS assistencial</td><td>≥ 90</td></tr><tr><td>Assiduidade da equipe assistencial</td><td>100%</td></tr></table>\n<p><em>KPIs detalhados a serem refinados junto à Coordenadora de Operações.</em></p>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora de Operações</strong> (a contratar)</p>\n<h2>Reportam a este cargo</h2>\n<ul>\n<li>Enfermeira Júnior</li>\n<li>Técnica de Enfermagem</li>\n<li>Estagiária de Enfermagem</li>\n</ul>"},{"id":"356fcd0c-38e2-8163-88d5-c149d277a6ec","url":"https://www.notion.so/Assistente-Administrativo-Pleno-356fcd0c38e2816388d5c149d277a6ec","properties":{"Nível":"Pleno","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-8183-b63d-de135d760bd9"],"Resumo do Cargo":"Pessoa-chave do back-office: rotinas administrativas, RH, suporte à operação, contratos, fornecedores. Apoia toda a estrutura administrativa da clínica.","Área":"Operacional - Administrativo","Status do Cargo":"Ativo","Bloco":"Operacional","Cargo":"Assistente Administrativo Pleno"},"html":"<h2>Missão do Cargo</h2>\n<p>Ser o principal apoio administrativo da clínica, garantindo a organização de documentos, contratos e rotinas internas, além de coordenar processos de RH e suporte à operação.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Angelina Remberg Lima</strong></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Rotinas Administrativas</strong></td><td>Organizar documentos físicos e digitais · Garantir atualização de cadastros e arquivos · Contato com fornecedores (contratos novos, cancelamentos, alterações contratuais, etc.)</td></tr><tr><td><strong>Pessoas e RH</strong></td><td>Gestão de contratação e desligamento · Contato com Contabilidade e prestadores relacionados aos contratos de trabalho · Supervisionar folha, benefícios e encargos · Apoio no controle de férias, BH, licenças · Apoiar admissões, desligamentos e integração operacional</td></tr><tr><td><strong>Suporte à Operação</strong></td><td>Apoiar demandas administrativas (planos de saúde, compras, uniformes, benefícios) · Registro de chamados junto a prestadores (ar condicionado, internet, PABX, etc.)</td></tr><tr><td><strong>Apoio ao Financeiro</strong></td><td>Apoiar contas a pagar e receber · Organizar documentos financeiros · Apoiar conciliações e controles básicos</td></tr><tr><td><strong>Suporte à Gestão</strong></td><td>Apoiar lideranças administrativas · Preparar relatórios simples e controles · Elaborar e acompanhar orçamentos · Manter dados atualizados</td></tr></table>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Pacote Office avançado</strong> — Excel intermediário (procv, dinâmicas)</li>\n<li><strong>Conhecimento de rotinas trabalhistas</strong> (CLT) — ponto, férias, BH</li>\n<li><strong>Gestão de contratos</strong></li>\n<li><strong>Sistema de gestão clínica e ERP</strong></li>\n<li><strong>Conta Azul ou ERP equivalente</strong> — desejável</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Organização extrema</strong></li>\n<li><strong>Atenção ao detalhe</strong></li>\n<li><strong>Discrição</strong> — lida com dados sensíveis (RH, contratos, salários)</li>\n<li><strong>Comunicação clara com fornecedores</strong></li>\n<li><strong>Proatividade</strong></li>\n<li><strong>Multitarefa com qualidade</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Superior em Adm, Gestão de RH ou correlatas (cursando aceitável)</li>\n<li>Experiência mínima de 2 anos em rotinas administrativas plenas</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Folha e benefícios sem inconsistências</td><td>100%</td></tr><tr><td>Assiduidade</td><td>100%</td></tr></table>\n<p><em>KPIs detalhados a serem refinados junto à Coordenadora de Operações.</em></p>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora de Operações</strong> (a contratar)</p>"},{"id":"356fcd0c-38e2-8164-8ac1-cf7d38bf763b","url":"https://www.notion.so/Recepcionista-Atendente-Agendamento-356fcd0c38e281648ac1cf7d38bf763b","properties":{"Nível":"Júnior","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-81fb-900c-ed55c3cdcce1","356fcd0c-38e2-81ad-b587-caac1b494d58"],"Resumo do Cargo":"Primeiro contato comercial com o paciente via WhatsApp e telefone. Qualificação, agendamento estratégico e conversão de contatos em consultas.","Área":"Tier 1 - Agendamento","Status do Cargo":"Ativo","Bloco":"Comercial","Cargo":"Recepcionista Atendente / Agendamento"},"html":"<h2>Missão do Cargo</h2>\n<p>Ser o primeiro contato do paciente com a Endovascular SP via WhatsApp (Envya) e telefone. Qualificar, agendar estrategicamente e maximizar a conversão de contatos em consultas.</p>\n<hr/>\n<h2>Ocupantes Atuais</h2>\n<ul>\n<li><strong>Mayara Soares Baltazar dos Anjos</strong></li>\n<li><strong>Ana Luiza Souza Soares Fernandes</strong></li>\n</ul>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Agendamento de Consultas e Procedimentos</strong></td><td>Realizar agendamentos conforme protocolos · Sugerir datas e horários estrategicamente · Confirmar informações e requisitos do atendimento</td></tr><tr><td><strong>Gestão de Agenda</strong></td><td>Manter agenda organizada e atualizada · Reduzir buracos e otimizar horários · Sinalizar oportunidades de encaixe</td></tr><tr><td><strong>Experiência do Paciente</strong></td><td>Garantir atendimento cordial e padronizado · Manter comunicação clara e objetiva · Encaminhar corretamente o paciente após o contato</td></tr><tr><td><strong>Interface Interna</strong></td><td>Alinhar informações com recepção presencial e concierge · Reportar dúvidas recorrentes e objeções · Apoiar melhoria contínua do atendimento</td></tr></table>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Início do turno</h3>\n<div class='todo'>○ Verificar mensagens pendentes no Envya (overnight)</div>\n<div class='todo'>○ Conferir agenda do dia e dos próximos 1-2 dias</div>\n<div class='todo'>○ Validar lista de confirmações a fazer</div>\n<h3>Durante o turno</h3>\n<div class='todo'>○ Atender contatos novos no Envya em até 3 minutos</div>\n<div class='todo'>○ Realizar confirmações ativas (proxima 24-48h)</div>\n<div class='todo'>○ Reagendar cancelamentos e oferecer encaixes</div>\n<div class='todo'>○ Manter cadastros atualizados</div>\n<h3>Encerramento do turno</h3>\n<div class='todo'>○ Tabular todos os atendimentos no Envya</div>\n<div class='todo'>○ Reportar pendências à Líder de Recepção</div>\n<div class='todo'>○ Fechar conversas em aberto</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Plataforma Envya</strong> (WhatsApp Business) — atendimento + tabulação</li>\n<li><strong>Sistema de gestão clínica</strong> (Tasy ou equivalente) — agenda, cadastro</li>\n<li><strong>Pacote Office básico</strong></li>\n<li><strong>Português culto</strong> — escrita formal, sem gírias, sem emojis</li>\n<li><strong>Conhecimento dos serviços da clínica</strong> — saber explicar em alto nível cada tipo de consulta/procedimento</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Cordialidade</strong> — acolher antes de agendar</li>\n<li><strong>Comunicação escrita premium</strong> — alinhada ao tom da marca</li>\n<li><strong>Persuasão sutil</strong> — contornar objeções sem pressão</li>\n<li><strong>Organização</strong> — múltiplas conversas em paralelo sem perder qualidade</li>\n<li><strong>Atenção ao detalhe</strong> — dados certos no sistema</li>\n<li><strong>Resiliência</strong> — manter padrão em dias cheios</li>\n<li><strong>Discrição</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Ensino médio completo (mínimo). Cursando Adm, Gestão ou correlatas é diferencial</li>\n<li>Experiência mínima de 6 meses em atendimento ao público (preferencialmente saúde ou serviços premium)</li>\n<li>Redação em português correto</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<p><em>Fonte: Plano de Reestruturação 2026 (Tier 1 — Agendamento).</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>% retornos por dia</td><td>≤ 20%</td></tr><tr><td>Taxa de no-show</td><td>&lt; 10%</td></tr><tr><td>NPS de agendamento</td><td>≥ 90</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Líder de Recepção</strong> (Camily Nunes do Nascimento)</p>\n<h2>Cargo Acima na Hierarquia</h2>\n<p>Líder de Recepção → Coordenadora Comercial → Head de Operações → Diretor Médico</p>"},{"id":"356fcd0c-38e2-816b-9c33-d8b43be7d651","url":"https://www.notion.so/Marketing-Capta-o-Stories-356fcd0c38e2816b9c33d8b43be7d651","properties":{"Nível":"Pleno","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-8136-885e-ca547ff61b6f"],"Resumo do Cargo":"Captação e edição de fotos/vídeos da clínica para redes sociais. Mantem o padrão visual da marca. Time interno; calendário editorial e tráfego com parceiros externos.","Área":"Operacional - Marketing","Status do Cargo":"Ativo","Bloco":"Operacional","Cargo":"Marketing - Captação & Stories"},"html":"<h2>Missão do Cargo</h2>\n<p>Produzir conteúdo audiovisual interno da Endovascular SP — captação e edição de fotos e vídeos para redes sociais e materiais institucionais — mantendo o padrão visual e tom premium da marca em todos os entregáveis.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Thiago Ferreira Neves</strong></p>\n<p><em>Trabalha integrado com parceiros externos: Agência de Marketing (calendário editorial e conteúdo) e Gestor de Tráfego (tráfego pago, remoto).</em></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Edição de Conteúdo</strong></td><td>Editar vídeos e imagens para redes sociais · Adaptar conteúdos para diferentes formatos (feed, stories, reels) · Garantir qualidade técnica de áudio e imagem</td></tr><tr><td><strong>Identidade Visual</strong></td><td>Manter padrão visual da marca (DNA de Marca) · Aplicar identidade visual nos materiais · Garantir coerência estética dos conteúdos</td></tr><tr><td><strong>Interface com Operação</strong></td><td>Alinhar captações com agenda médica e atendimento · Coordenar horários de gravação · Minimizar impacto na rotina clínica</td></tr><tr><td><strong>Interface com Parceiros Externos</strong></td><td>Alinhar com a Agência (calendário editorial) · Apoiar o Gestor de Tráfego com material para campanhas · Garantir entregas dentro do padrão de marca</td></tr></table>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Foto e vídeo profissional</strong> — câmera, iluminação, áudio</li>\n<li><strong>Edição de vídeo</strong> — Premiere, CapCut ou equivalente</li>\n<li><strong>Edição de imagem</strong> — Photoshop, Lightroom</li>\n<li><strong>Conhecimento de formatos de redes sociais</strong> (feed, stories, reels)</li>\n<li><strong>DNA de Marca da Endovascular SP</strong> — paleta, tipografia, sistema de design</li>\n<li><strong>Pacote Office básico</strong></li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Senso estético premium</strong> — alinhado ao posicionamento da marca</li>\n<li><strong>Discrição</strong> — ambiente clínico, paciente em consulta</li>\n<li><strong>Postura profissional</strong> — transitar entre médicos, pacientes e equipe sem atrito</li>\n<li><strong>Cumprimento de prazos</strong></li>\n<li><strong>Adaptabilidade</strong> — atender demandas variadas</li>\n<li><strong>Comunicação clara com parceiros externos</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Formação ou cursando Comunicação, Publicidade, Cinema ou áreas correlatas</li>\n<li>Portfolio com trabalhos audiovisuais (preferencialmente em serviços premium ou saúde)</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Aderencia ao DNA de Marca em entregáveis (auditoria visual)</td><td>100%</td></tr><tr><td>Engajamento das peças produzidas (alcance, salvos, interações)</td><td>A definir com a Agência</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora de Operações</strong> (a contratar)</p>\n<p><em>Interface técnica direta com Agência de Marketing e Gestor de Tráfego (parceiros externos).</em></p>"},{"id":"356fcd0c-38e2-8178-859c-ded92ce27f8c","url":"https://www.notion.so/Recepcionista-356fcd0c38e28178859cded92ce27f8c","properties":{"Nível":"Júnior","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-81ba-9b12-ded5b015deba","356fcd0c-38e2-81a1-bfc4-d087eb3051c0"],"Resumo do Cargo":"Primeira impressão da Endovascular SP. Garante que cada paciente se sinta acolhido com o padrão premium da clínica desde o primeiro contato.","Área":"Tier 1 - Recepção","Status do Cargo":"Ativo","Bloco":"Comercial","Cargo":"Recepcionista"},"html":"<h2>Missão do Cargo</h2>\n<p>Ser a porta de entrada da Endovascular SP, oferecendo atendimento cordial, eficiente e alinhado ao padrão de hospitalidade premium da clínica. A recepcionista é responsável pela primeira e última impressão do paciente em cada visita.</p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções Principais</th></tr><tr><td><strong>Atendimento ao Paciente</strong></td><td>Realizar atendimento presencial, telefônico e WhatsApp · Recepcionar pacientes com cordialidade e padrão da clínica · Responder os pacientes em até 3 minutos na plataforma Envya</td></tr><tr><td><strong>Agenda e Confirmações</strong></td><td>Realizar agendamentos, confirmações e remarcações · Atuar na redução de no-show · Organizar encaixes conforme orientação</td></tr><tr><td><strong>Fluxo de Atendimento</strong></td><td>Garantir check-in e check-out corretos · Organizar fluxo da sala de espera · Comunicar atrasos e intercorrências</td></tr><tr><td><strong>Registros e Sistema</strong></td><td>Registrar atendimentos corretamente no sistema · Conferir dados cadastrais e documentos · Garantir informações completas e corretas</td></tr><tr><td><strong>Experiência do Paciente</strong></td><td>Zelar por ambiente organizado e acolhedor · Apoiar pacientes durante a permanência na clínica · Sinalizar insatisfações ou reclamações</td></tr><tr><td><strong>Processos e Padrões</strong></td><td>Cumprir POPs de recepção · Seguir orientações da Líder de Recepção · Manter postura profissional e padrão de atendimento</td></tr><tr><td><strong>Interface com a Equipe</strong></td><td>Alinhar informações com atendimento, enfermagem e médicos · Reportar ocorrências à liderança</td></tr></table>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Início do turno (primeiros 30 min)</h3>\n<div class='todo'>○ Abrir a recepção e ligar os equipamentos (computador, telefones, sistema)</div>\n<div class='todo'>○ Conferir a agenda do dia no sistema</div>\n<div class='todo'>○ Verificar mensagens não respondidas no Envya da noite anterior</div>\n<div class='todo'>○ Validar consultas agendadas vs confirmações pendentes</div>\n<div class='todo'>○ Alinhar com a Líder de Recepção sobre encaixes e particularidades do dia</div>\n<h3>Durante o turno (rotina contínua)</h3>\n<div class='todo'>○ Atender chamadas, WhatsApp (Envya) e pacientes presenciais conforme demanda</div>\n<div class='todo'>○ Realizar check-in de pacientes que chegam (conferir dados, atualizar cadastro)</div>\n<div class='todo'>○ Confirmar consultas dos próximos 1-2 dias por WhatsApp ou telefone</div>\n<div class='todo'>○ Reagendar pacientes que cancelarem e oferecer encaixe quando possível</div>\n<div class='todo'>○ Realizar check-out (orientar próxima consulta, entregar documentos, despedir-se com cordialidade)</div>\n<div class='todo'>○ Manter sala de espera organizada (revistas, água, ambiente)</div>\n<h3>Encerramento do turno (últimos 30 min)</h3>\n<div class='todo'>○ Conferir se todos os atendimentos do dia foram registrados no sistema</div>\n<div class='todo'>○ Responder mensagens pendentes do Envya antes de sair</div>\n<div class='todo'>○ Reportar pendências, intercorrências ou insatisfações à Líder de Recepção</div>\n<div class='todo'>○ Organizar bancada da recepção e desligar equipamentos não essenciais</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Sistema de gestão clínica</strong> (Tasy ou equivalente) — uso completo: agenda, cadastro, prontuário, financeiro</li>\n<li><strong>Plataforma Envya</strong> (WhatsApp Business) — recebimento, tabulação, transferências</li>\n<li><strong>Pacote Office básico</strong> — Excel para planilhas simples, Word, Outlook</li>\n<li><strong>Português correto</strong> — escrita formal e fala clara</li>\n<li><strong>Inglês básico</strong> (desejável) — para atendimento de pacientes estrangeiros eventuais</li>\n<li><strong>Domínio de procedimentos da clínica</strong> — saber explicar em alto nível o que é cada tipo de consulta/exame ofertado</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Cordialidade e empatia</strong> — saber receber bem, ouvir antes de falar</li>\n<li><strong>Comunicação clara</strong> — escrita e oral, alinhada ao tom premium da marca (sem gírias, sem informalidade excessiva)</li>\n<li><strong>Organização</strong> — multitarefa sem perder a qualidade</li>\n<li><strong>Postura profissional</strong> — vestimenta, postura corporal, dicção</li>\n<li><strong>Resiliência sob pressão</strong> — manter padrão de atendimento mesmo em dias cheios ou com pacientes difíceis</li>\n<li><strong>Atenção ao detalhe</strong> — não confundir nome, horário, dados de paciente</li>\n<li><strong>Discrição</strong> — confidencialidade absoluta sobre informações de pacientes</li>\n<li><strong>Senso de pertencimento</strong> — entender que é a primeira e última impressão da clínica</li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li><strong>Escolaridade:</strong> Ensino médio completo (mínimo). Cursando ou formada em Administração, Gestão Hospitalar, Secretariado ou áreas correlatas é diferencial.</li>\n<li><strong>Experiência:</strong> Mínimo 6 meses em atendimento ao público — preferencialmente em saúde, hotelaria de alto padrão ou serviços premium.</li>\n<li><strong>Apresentação pessoal:</strong> Compatível com o padrão da clínica (uniforme adequado, postura profissional).</li>\n<li><strong>Disponibilidade:</strong> Conforme escala definida pela Líder de Recepção.</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo (Indicadores de Desempenho)</h2>\n<p><em>Fonte: Plano de Reestruturação Comercial &amp; Operacional — Endovascular SP, abril/2026</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th><th>Como medir</th></tr><tr><td>NPS de Recepção</td><td>≥ 90</td><td>Pesquisa pós-atendimento</td></tr><tr><td>Assiduidade</td><td>100%</td><td>Registro de ponto / escala</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após a criação do database de POPs:</em></p>\n<ul>\n<li>POP — Atendimento na Recepção (presencial)</li>\n<li>POP — Resposta no Envya (WhatsApp)</li>\n<li>POP — Confirmação de Consultas</li>\n<li>POP — Check-in / Check-out de Paciente</li>\n<li>POP — Conduta com Reclamação ou Insatisfação</li>\n<li>POP — Padrão de Vestimenta e Apresentação</li>\n</ul>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Líder de Recepção</strong> (Camily Nunes do Nascimento)</p>\n<h2>Cargo Acima na Hierarquia</h2>\n<p>Líder de Recepção → Coordenadora Comercial → Head de Operações → Diretor Médico (Dr. Igor Sincos)</p>\n<p><em>Estrutura conforme Plano de Reestruturação 2026.</em></p>"},{"id":"356fcd0c-38e2-8185-80f5-ccbd41738aa0","url":"https://www.notion.so/Assistente-Financeiro-J-nior-356fcd0c38e2818580f5ccbd41738aa0","properties":{"Nível":"Júnior","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-8108-a381-cb1a654a664d","356fcd0c-38e2-816a-92ce-f4c7016c7543","356fcd0c-38e2-819b-b6b3-d287f3137b0b"],"Resumo do Cargo":"Opera contas a pagar e receber, conciliação bancária, lançamentos no Conta Azul, NFs e malote contábil. Apoia o fechamento financeiro mensal.","Área":"Operacional - Faturamento","Status do Cargo":"Ativo","Bloco":"Operacional","Cargo":"Assistente Financeiro Júnior"},"html":"<h2>Missão do Cargo</h2>\n<p>Sustentar a operação financeira diária da clínica: lançamentos corretos, conciliações em dia, NFs controladas e fechamento financeiro mensal organizado.</p>\n<hr/>\n<h2>Ocupantes Atuais</h2>\n<ul>\n<li><strong>Micaele da Silva Albuquerque</strong> <em>(Assistente Financeiro Jr conforme Excel atual)</em></li>\n<li><strong>Aluma Alves dos Santos</strong> <em>(reposicionada de Adm para Financeiro conforme Plano de Reestruturação)</em></li>\n<li><strong>Daniele Cristina Bortolini da Silva</strong> <em>(reposicionada de Adm para Financeiro conforme Plano de Reestruturação)</em></li>\n</ul>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Contas a Pagar</strong></td><td>Registrar e controlar contas a pagar no sistema Conta Azul · Garantir lançamentos corretos e dentro do prazo · Organizar vencimentos e prioridades</td></tr><tr><td><strong>Contas a Receber</strong></td><td>Registrar e controlar contas a receber no Conta Azul · Acompanhar recebimentos e pendências · Sinalizar atrasos e divergências</td></tr><tr><td><strong>Conciliação Bancária</strong></td><td>Realizar conciliação bancária periódica · Conferir extratos x sistema · Ajustar diferenças identificadas</td></tr><tr><td><strong>Faturamento de Cirurgias</strong></td><td>Apoiar faturamento financeiro de cirurgias · Conferir valores e registros · Alinhar com faturamento administrativo</td></tr><tr><td><strong>Malote Contábil</strong></td><td>Organizar e enviar malote contábil mensal · Garantir envio no prazo correto · Manter documentação completa</td></tr><tr><td><strong>Notas Fiscais de Fornecedores</strong></td><td>Controlar recebimento de NFs de fornecedores · Conferir valores e documentos · Registrar corretamente no sistema</td></tr><tr><td><strong>Compras e Pipefy</strong></td><td>Acompanhar fluxo de compras no Pipefy · Registrar compras aprovadas no Conta Azul · Garantir rastreabilidade dos lançamentos</td></tr><tr><td><strong>Processos e Conformidade</strong></td><td>Seguir POPs financeiros · Garantir organização e padronização dos registros · Sinalizar inconsistências</td></tr><tr><td><strong>Interface com Financeiro</strong></td><td>Apoiar fechamento financeiro mensal · Reportar status, pendências e riscos</td></tr></table>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Conta Azul</strong> ou ERP equivalente — domínio operacional</li>\n<li><strong>Pipefy</strong> — acompanhamento de fluxos</li>\n<li><strong>Pacote Office</strong> — Excel intermediário</li>\n<li><strong>Conciliação bancária</strong></li>\n<li><strong>Rotinas de contas a pagar/receber</strong></li>\n<li><strong>Noções fiscais básicas</strong> (NF, ISS, retenpões)</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Atenção ao detalhe extrema</strong></li>\n<li><strong>Organização</strong></li>\n<li><strong>Discrição</strong> — dados financeiros sensíveis</li>\n<li><strong>Pontualidade</strong> — prazos legais</li>\n<li><strong>Postura ensinável</strong></li>\n<li><strong>Comunicação clara com fornecedores e contabilidade</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Cursando ou formado em Contábeis, Adm, Economia ou correlatas</li>\n<li>Experiência inicial (até 2 anos) em área financeira</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Lançamentos sem inconsistência (auditoria mensal)</td><td>≥ 99%</td></tr><tr><td>Conciliação bancária em dia</td><td>100%</td></tr><tr><td>Malote contábil enviado no prazo</td><td>100%</td></tr><tr><td>Atraso em pagamentos por falha operacional</td><td>0 ocorrências</td></tr><tr><td>Assiduidade</td><td>100%</td></tr></table>\n<p><em>KPIs detalhados a serem refinados junto à Coordenadora de Operações.</em></p>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora de Operações</strong> (a contratar)</p>"},{"id":"356fcd0c-38e2-8199-9d98-d6067f09140d","url":"https://www.notion.so/Coordenadora-Comercial-356fcd0c38e281999d98d6067f09140d","properties":{"Nível":"Gerente","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-81bc-b7c9-df3602d7263f"],"Resumo do Cargo":"Liderança do Bloco Comercial. Coordena os 3 tiers (Agendamento, Recepção, Concierge + Farmer + Futuro), define a estratégia comercial e garante consistência da experiência do paciente.","Área":"Comercial - Gerência","Status do Cargo":"Ativo","Bloco":"Comercial","Cargo":"Coordenadora Comercial"},"html":"<h2>Missão do Cargo</h2>\n<p>Coordenar os três tiers do Bloco Comercial (T1 — Operação Diária, T2 — Farmer, T3 — Futuro), garantir a consistência da experiência premium em todos os pontos de contato e estruturar processos comerciais que sustentem o crescimento da clínica.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Heloisa dos Reis Rodrigues Incontri</strong> <em>(em transição de Concierge para Coordenadora Comercial conforme Plano de Reestruturação 2026.)</em></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Estratégia Comercial</strong></td><td>Definir scripts, gatilhos e abordagens comerciais · Estruturar funil completo (1º contato → conversao → retenção) · Atuar para reduzir CAC e aumentar LTV</td></tr><tr><td><strong>Experiência do Paciente</strong></td><td>Garantir padrão premium em todos os pontos de contato comercial · Atuar em reclamações e insatisfações · Defender promessa da marca</td></tr><tr><td><strong>Processos e Tecnologia</strong></td><td>Garantir uso correto de Envya, sistema de gestão e CRM · Validar e manter POPs comerciais · Propor melhorias tecnológicas</td></tr></table>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Rotina diária</h3>\n<div class='todo'>○ Acompanhar dashboard de conversões do dia</div>\n<div class='todo'>○ Ronda nos 3 tiers (Agendamento, Recepção, Concierge) — conversa rápida com a equipe</div>\n<div class='todo'>○ Atender escalonamentos de pacientes ou intercorrências</div>\n<h3>Rotina semanal</h3>\n<div class='todo'>○ 1:1 com Líder de Recepção</div>\n<div class='todo'>○ 1:1 com Concierges</div>\n<div class='todo'>○ 1:1 com Farmer</div>\n<div class='todo'>○ Reunião do bloco comercial</div>\n<div class='todo'>○ Update do dashboard ao Head de Operações</div>\n<h3>Rotina mensal</h3>\n<div class='todo'>○ Book de Resultados do bloco comercial</div>\n<div class='todo'>○ Revisão de scripts e abordagens</div>\n<div class='todo'>○ Avaliação de performance individual</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Gestão comercial em serviços de saúde ou alto padrão</strong></li>\n<li><strong>Plataforma Envya (WhatsApp Business)</strong> — domínio operacional + estratégico</li>\n<li><strong>Sistema de gestão clínica e CRM</strong> — leitura e ação sobre dados</li>\n<li><strong>Pacote Office avançado</strong> — Excel para modelagem comercial e dashboards</li>\n<li><strong>Funil comercial / pipeline</strong> — entender de captura, conversão, retenção</li>\n<li><strong>Criação de scripts e POPs comerciais</strong></li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Liderança</strong> — inspirar, não apenas gerenciar</li>\n<li><strong>Comunicação executível</strong> — traduzir números em decisões para a equipe</li>\n<li><strong>Visão de jornada do paciente</strong> — enxergar a experiência ponta a ponta</li>\n<li><strong>Empatia comercial</strong> — entender a dor do paciente e o tempo da equipe</li>\n<li><strong>Postura premium</strong> — representar a marca em todos os contatos</li>\n<li><strong>Resiliência em escalonamentos</strong></li>\n<li><strong>Mentalidade ensinável</strong> — aprende e atualiza abordagens</li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Formação superior em Administração, Marketing, Gestão de Saúde, Hotelaria de alto padrão ou correlatas</li>\n<li>Experiência mínima de 2 anos em gestão comercial em serviços premium (saúde, hospitalar, hotelaria, estética)</li>\n<li>Apresentação pessoal compatível com o padrão premium</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<p><em>Fonte: Plano de Reestruturação 2026.</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>NPS geral do bloco comercial</td><td>≥ 90</td></tr><tr><td>1:1s semanais com a equipe realizados</td><td>100%</td></tr><tr><td>Dashboard atualizado semanalmente</td><td>100%</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Head de Operações</strong> (Thiago Luiz)</p>\n<h2>Reportam a este cargo</h2>\n<ul>\n<li>Líder de Recepção (e por extensão: Recepcionistas, Recepcionistas Atendentes/Agendamento)</li>\n<li>Concierges</li>\n<li>Farmer</li>\n</ul>"},{"id":"356fcd0c-38e2-8199-a078-cc974ded34d7","url":"https://www.notion.so/T-cnica-de-Enfermagem-356fcd0c38e28199a078cc974ded34d7","properties":{"Nível":"Pleno","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-8139-93cc-dfb695ebcaec"],"Resumo do Cargo":"Apoia atendimentos e procedimentos com técnica de enfermagem. Garante a jornada do paciente assistida do início ao fim, com segurança e padrão premium.","Área":"Operacional - Assistencial","Status do Cargo":"Ativo","Bloco":"Operacional","Cargo":"Técnica de Enfermagem"},"html":"<h2>Missão do Cargo</h2>\n<p>Prestar assistência técnica direta ao paciente, garantindo seu conforto, segurança e o padrão premium da clínica em todos os pontos da jornada assistencial.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Josilene da Conceição Gonçalves Lino</strong></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Apoio a Procedimentos</strong></td><td>Auxiliar médicos e enfermeiros durante procedimentos · Organizar sala, materiais e equipamentos · Garantir disponibilidade de insumos</td></tr><tr><td><strong>Controle de Materiais</strong></td><td>Controlar uso de materiais e insumos · Comunicar necessidades de reposição · Evitar desperdícios</td></tr><tr><td><strong>Organização do Ambiente</strong></td><td>Manter salas e áreas assistenciais organizadas · Garantir limpeza e preparo entre atendimentos</td></tr><tr><td><strong>Conduta Profissional</strong></td><td>Manter postura ética e profissional · Cumprir horários e escalas · Manter-se atualizada sobre todos os exames e procedimentos da clínica · Seguir orientações da Enfermeira RT</td></tr></table>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Curso Técnico em Enfermagem com COREN ativo</strong></li>\n<li><strong>POPs assistenciais e biossegurança</strong></li>\n<li><strong>Sistema de gestão clínica</strong> — registros</li>\n<li><strong>Plataforma Envya</strong> — comunicação com paciente</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Empatia com paciente em vulnerabilidade</strong></li>\n<li><strong>Postura premium</strong></li>\n<li><strong>Atenção ao detalhe</strong></li>\n<li><strong>Comunicação clínica clara</strong></li>\n<li><strong>Discrição</strong></li>\n<li><strong>Disciplina</strong> — cumprimento de POPs sem desvios</li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Curso Técnico em Enfermagem com COREN ativo</li>\n<li>Experiência em clínica/hospital</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Conformidade com POPs</td><td>100%</td></tr><tr><td>NPS assistencial</td><td>≥ 90</td></tr></table>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Enfermeira / Liderança Assistencial</strong> (Camilla de Lima Gomes)</p>"},{"id":"356fcd0c-38e2-81a7-8974-d3ab5985fcec","url":"https://www.notion.so/Concierge-356fcd0c38e281a78974d3ab5985fcec","properties":{"Nível":"Pleno","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-8118-9641-f3c70a58e5ce","356fcd0c-38e2-810a-89d9-e0ae31da6ad4"],"Resumo do Cargo":"Acompanha o paciente ao longo de toda a jornada de tratamento. Diferencial competitivo da Endovascular SP. Apresenta procedimentos, negocia, fideliza.","Área":"Tier 1 - Concierge","Status do Cargo":"Ativo","Bloco":"Comercial","Cargo":"Concierge"},"html":"<h2>Missão do Cargo</h2>\n<p>Ser o ponto focal do paciente durante toda a sua jornada na clínica — da consulta inicial ao pós-procedimento, passando pela apresentação de tratamentos, negociação e fidelização. Diferencial competitivo exclusivo da Endovascular SP.</p>\n<hr/>\n<h2>Ocupantes Atuais</h2>\n<ul>\n<li><strong>Carina Evangelista</strong></li>\n<li><strong>Danielle Detlinger Magela dos Santos</strong></li>\n</ul>\n<p><em>1 vaga em aberto (Concierge 3 — a contratar).</em></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Apresentação de Procedimentos</strong></td><td>Apresentar procedimentos indicados pelos médicos · Explicar objetivos, benefícios e diferenciais · Esclarecer dúvidas técnicas básicas (não médicas)</td></tr><tr><td><strong>Planos e Recorrência</strong></td><td>Apresentar planos de acompanhamento e pacotes · Estimular adesão a tratamentos recorrentes · Acompanhar renovações e continuidade</td></tr><tr><td><strong>Interface com Atendimento e Marketing</strong></td><td>Alinhar ofertas, campanhas e materiais · Apoiar atendimento na conversão</td></tr><tr><td><strong>Indicadores e Performance</strong></td><td>Acompanhar metas individuais de vendas · Reportar resultados e objeções recorrentes · Propor melhorias de abordagem comercial</td></tr></table>\n<h3>Transição pós-30 dias para Farmer</h3>\n<p>Se após 30 dias não houver conversão, o Concierge encerra o acompanhamento ativo e o paciente passa para os cuidados do <strong>Farmer (Tier 2)</strong>, conforme jornada definida no Plano de Reestruturação.</p>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Rotina diária</h3>\n<div class='todo'>○ Revisar agenda do dia e identificar pacientes em primeira consulta</div>\n<div class='todo'>○ Receber pacientes pós-consulta para apresentação de tratamento</div>\n<div class='todo'>○ Realizar follow-ups ativos de orçamentos abertos (≤ 30 dias)</div>\n<div class='todo'>○ Registrar negociações e fechamentos no sistema</div>\n<h3>Rotina semanal</h3>\n<div class='todo'>○ Revisão de pipeline de orçamentos</div>\n<div class='todo'>○ 1:1 com Coordenadora Comercial</div>\n<div class='todo'>○ Encaminhamento de casos &gt; 30 dias para Farmer</div>\n<h3>Rotina mensal</h3>\n<div class='todo'>○ Fechamento de metas</div>\n<div class='todo'>○ Análise de objeções recorrentes</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Vendas consultivas em serviços de alto ticket</strong> (saúde, estética premium, hotelaria)</li>\n<li><strong>Conhecimento dos procedimentos da clínica</strong> — saber apresentar em linguagem premium</li>\n<li><strong>Sistema de gestão clínica e CRM</strong></li>\n<li><strong>Plataforma Envya</strong></li>\n<li><strong>Pacote Office</strong></li>\n<li><strong>Técnicas de negociação</strong></li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Empatia comercial</strong> — entender medos e expectativas do paciente</li>\n<li><strong>Postura premium</strong> — representar a marca em ambiente sensível</li>\n<li><strong>Persuasão consultiva</strong> — sem pressão, com base em valor</li>\n<li><strong>Comunicação clara</strong></li>\n<li><strong>Resiliência em fechamentos longos</strong></li>\n<li><strong>Discrição</strong> — confidencialidade de saúde</li>\n<li><strong>Foco em resultado e em pessoa</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Ensino médio completo (mínimo). Superior em Adm, Marketing, Gestão de Saúde ou correlatas é diferencial</li>\n<li>Experiência mínima de 1 ano em vendas consultivas premium ou atendimento de alta hotelaria</li>\n<li>Apresentação pessoal premium</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<p><em>Fonte: Plano de Reestruturação 2026 (Tier 1 — Concierge).</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Taxa de up-selling de serviços</td><td>≥ 15%</td></tr><tr><td>Meta de faturamento mínimo</td><td>A definir mensalmente com a Coordenadora Comercial</td></tr><tr><td>% de retorno da pesquisa de satisfação</td><td>≥ 70%</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora Comercial</strong> (Heloisa Reis)</p>\n<h2>Cargo Acima na Hierarquia</h2>\n<p>Coordenadora Comercial → Head de Operações → Diretor Médico</p>"},{"id":"356fcd0c-38e2-81c8-b210-de021267bb70","url":"https://www.notion.so/Head-de-Opera-es-356fcd0c38e281c8b210de021267bb70","properties":{"Nível":"Head","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-8135-b759-c1b60a425b95"],"Resumo do Cargo":"Responsável pelo funcionamento integrado e pela execução estratégica da clínica. Lidera os blocos Comercial e Operacional via suas Coordenadoras.","Área":"Liderança Geral","Status do Cargo":"Ativo","Bloco":"Liderança","Cargo":"Head de Operações"},"html":"<h2>Missão do Cargo</h2>\n<p>Garantir o funcionamento integrado de todas as áreas da clínica, traduzir a estratégia da Diretoria em execução operacional e desenvolver as lideranças dos blocos Comercial e Operacional.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Thiago Luiz Fernandes Daniel de Andrade</strong></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Gestão de Lideranças</strong></td><td>Liderar Coordenadora Comercial e Coordenadora de Operações · Definir prioridades, metas e planos de ação · Desenvolver líderes e corrigir desvios de performance</td></tr><tr><td><strong>Processos e Padronização</strong></td><td>Definir, validar e manter POPs operacionais · Garantir cumprimento dos processos pelas áreas · Promover melhoria contínua</td></tr><tr><td><strong>Interface Estratégica</strong></td><td>Atuar como ponte entre Diretoria, Financeiro, Marketing e Operação · Traduzir dados operacionais em decisões estratégicas · Apoiar expansão e novos projetos</td></tr><tr><td><strong>Planejamento e Crescimento</strong></td><td>Preparar a operação para escala · Apoiar estruturação de novos serviços · Antecipar riscos operacionais e de capacidade</td></tr></table>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Rotina semanal</h3>\n<div class='todo'>○ 1:1 com Coordenadora Comercial</div>\n<div class='todo'>○ 1:1 com Coordenadora de Operações</div>\n<div class='todo'>○ Revisão do dashboard operacional e comercial</div>\n<div class='todo'>○ Reunião de alinhamento estratégico com Dr. Igor</div>\n<h3>Rotina mensal</h3>\n<div class='todo'>○ Book de Resultados à Diretoria</div>\n<div class='todo'>○ Revisão de KPIs e ajuste de metas</div>\n<div class='todo'>○ Avaliação de pessoas e desenvolvimento de lideranças</div>\n<div class='todo'>○ Atualização de POPs e processos</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Gestão de KPIs e BI</strong> — leitura de dashboards, análise de métricas operacionais e comerciais</li>\n<li><strong>Pacote Office avançado</strong> — Excel/Sheets para modelagem, apresentações executivas</li>\n<li><strong>Sistema de gestão clínica e CRM</strong> — domínio funcional dos sistemas da clínica</li>\n<li><strong>Processos e POPs</strong> — desenho, validação e auditoria de processos</li>\n<li><strong>Visão financeira básica</strong> — leitura de DRE, fluxo de caixa, custos</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Liderança</strong> — desenvolver pessoas, não apenas executar</li>\n<li><strong>Visão sistêmica</strong> — enxergar a operação de ponta a ponta</li>\n<li><strong>Comunicação executível</strong> — traduzir dados em decisões e ações claras</li>\n<li><strong>Resiliência</strong> — atuar em crises sem perder o padrão</li>\n<li><strong>Pensamento analítico</strong></li>\n<li><strong>Discrição e tica</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Formação superior em Administração, Gestão de Saúde, Engenharia ou correlatas</li>\n<li>Experiência em gestão operacional de clínicas, hospitais ou serviços de alta complexidade</li>\n<li>Experiência em liderança de equipes multidisciplinares</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<p><em>Fonte: Plano de Reestruturação 2026.</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Cumprimento de KPIs por bloco</td><td>100% das áreas com dashboard ativo</td></tr><tr><td>Retenção de talentos-chave</td><td>Turnover anual &lt; 15%</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Diretor Médico / Fundador</strong> (Dr. Igor Sincos)</p>\n<h2>Reportam a este cargo</h2>\n<ul>\n<li>Coordenadora Comercial</li>\n<li>Coordenadora de Operações</li>\n</ul>"},{"id":"356fcd0c-38e2-81cb-83ee-e26e018f854a","url":"https://www.notion.so/Coordenadora-de-Opera-es-356fcd0c38e281cb83eee26e018f854a","properties":{"Nível":"Gerente","POPs Vinculados":[],"Funcionários ocupando este cargo":[],"Resumo do Cargo":"Liderança do Bloco Operacional. Coordena Assistencial, ADM/Backoffice e Marketing. Garante execução clínica e suporte sem falhas.","Área":"Liderança Operacional","Status do Cargo":"Em Aberto","Bloco":"Operacional","Cargo":"Coordenadora de Operações"},"html":"<h2>Missão do Cargo</h2>\n<p>Liderar o Bloco Operacional, coordenando as áreas Assistencial (Enfermagem), ADM/Backoffice (Faturamento, Financeiro, Adm) e Marketing. Garantir execução clínica e suporte sem falhas, em conformidade com POPs e exigências regulatórias.</p>\n<hr/>\n<h2>Status</h2>\n<p><strong>Em Aberto</strong> — vaga estratégica e urgente do Plano de Reestruturação 2026 (início previsto Mes 2/Junho 2026).</p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Excelência Operacional</strong></td><td>Garantir cumprimento dos POPs assistenciais e administrativos · Monitorar conformidade com Vigilância Sanitária · Prevenir incidentes e auditar registros</td></tr><tr><td><strong>Pessoas e Desenvolvimento</strong></td><td>1:1s semanais com lideranças do bloco · Treinar e desenvolver equipe operacional · Apoiar processos seletivos das vagas operacionais</td></tr><tr><td><strong>Processos e Tecnologia</strong></td><td>Validar e manter POPs operacionais · Propor melhorias de fluxo e tecnologia · Apoiar automações</td></tr></table>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Gestão operacional em saúde</strong> (clínica, hospital ou complexo médico)</li>\n<li><strong>Conhecimento de POPs assistenciais e exigências regulatórias</strong> (Vigilância Sanitária)</li>\n<li><strong>Pacote Office avançado</strong></li>\n<li><strong>Sistema de gestão clínica e ERP</strong></li>\n<li><strong>Indicadores operacionais e BI</strong></li>\n<li><strong>Gestão de equipes multidisciplinares</strong></li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Liderança humanizada</strong> — saber liderar enfermagem (perfil clínico) e administrativo (perfil corporativo)</li>\n<li><strong>Visão sistêmica</strong></li>\n<li><strong>Capacidade analítica</strong></li>\n<li><strong>Resiliência em crise</strong></li>\n<li><strong>Comunicação executível</strong></li>\n<li><strong>Postura premium</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Superior em Administração Hospitalar, Enfermagem, Gestão de Saúde ou correlatas</li>\n<li>Experiência mínima de 3 anos em gestão operacional de clínicas/hospitais de média/alta complexidade</li>\n<li>Experiência em liderança de equipes assistenciais e administrativas</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<p><em>Fonte: Plano de Reestruturação 2026.</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Confomidade com POPs (auditoria interna)</td><td>100%</td></tr><tr><td>Cumprimento de KPIs por área operacional</td><td>100% das áreas com dashboard ativo</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Head de Operações</strong> (Thiago Luiz)</p>\n<h2>Reportam a este cargo</h2>\n<ul>\n<li>Enfermeira / Liderança Assistencial</li>\n<li>Assistente Administrativo Pleno (e demais cargos ADM/Backoffice)</li>\n<li>Marketing</li>\n</ul>"},{"id":"356fcd0c-38e2-81da-8dae-ee26a7ba2ac2","url":"https://www.notion.so/Estagi-ria-de-Enfermagem-356fcd0c38e281da8daeee26a7ba2ac2","properties":{"Nível":"Estagiário","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-818f-9215-cb7f3ed70144"],"Resumo do Cargo":"Apoia atividades assistenciais sob supervisão da Enfermeira RT e Técnica de Enfermagem. Em formação prática.","Área":"Operacional - Assistencial","Status do Cargo":"Ativo","Bloco":"Operacional","Cargo":"Estagiária de Enfermagem"},"html":"<h2>Missão do Cargo</h2>\n<p>Desenvolver na prática as competências da formação em enfermagem, apoiando a equipe assistencial sob supervisão direta da Enfermeira RT, em conformidade com POPs e normas de biossegurança.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Mariana Felipe Rodrigues</strong></p>\n<hr/>\n<h2>Áreas de Responsabilidade</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>POPs e Biossegurança</strong></td><td>Cumprir rigorosamente os POPs assistenciais · Seguir normas de biossegurança</td></tr><tr><td><strong>Conduta Profissional</strong></td><td>Postura ética e profissional · Cumprir horários e escalas de estágio · Seguir orientações da Enfermeira RT</td></tr></table>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Cursando Enfermagem ou Curso Técnico em Enfermagem</strong></li>\n<li><strong>Conhecimento básico de POPs e biossegurança</strong></li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Mentalidade ensinável</strong></li>\n<li><strong>Empatia com paciente</strong></li>\n<li><strong>Postura profissional</strong></li>\n<li><strong>Atenção e disciplina</strong></li>\n<li><strong>Discrição</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Cursando Enfermagem ou Curso Técnico em Enfermagem (com convênio de estágio válido)</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Conformidade com POPs</td><td>100%</td></tr><tr><td>Assiduidade</td><td>100%</td></tr><tr><td>Avaliação de aprendizado pela Enfermeira RT</td><td>Trimestral</td></tr></table>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Enfermeira / Liderança Assistencial</strong> (Camilla de Lima Gomes)</p>"},{"id":"356fcd0c-38e2-81de-8516-c01b3a500d52","url":"https://www.notion.so/Farmer-356fcd0c38e281de8516c01b3a500d52","properties":{"Nível":"Pleno","POPs Vinculados":[],"Funcionários ocupando este cargo":[],"Resumo do Cargo":"Cuida do relacionamento contínuo pós-procedimento. Reativação de base, follow-up de longo prazo, campanhas de retorno. Receita recorrente da base ativa.","Área":"Tier 2 - Farmer","Status do Cargo":"Em Aberto","Bloco":"Comercial","Cargo":"Farmer"},"html":"<h2>Missão do Cargo</h2>\n<p>Gerar receita recorrente a partir da base ativa de pacientes da Endovascular SP. Reduzir o churn, ampliar o LTV e converter indicações e retornos sem depender de tráfego pago ou indicação médica.</p>\n<hr/>\n<h2>Status</h2>\n<p><strong>Em Aberto</strong> — vaga estratégica do Plano de Reestruturação 2026.</p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Reativação de Base</strong></td><td>Identificar pacientes inativos com potencial de retorno · Estruturar campanhas de reativação segmentadas · Atuar em pacientes que saíram do funil sem conversão (≥ 30 dias sem fechamento)</td></tr><tr><td><strong>Follow-up Estruturado</strong></td><td>Realizar contatos programados aos 10, 30, 60 e 90 dias pós-tratamento conforme jornada do Farmer · Coletar feedback e identificar novas necessidades · Atuar imediatamente em feedback negativo</td></tr><tr><td><strong>Cross-sell e Up-sell</strong></td><td>Apresentar novas especialidades e serviços relevantes · Estimular adesão a tratamentos preventivos e de acompanhamento · Trazer pacientes de volta para nova consulta</td></tr><tr><td><strong>Indicação e Networking</strong></td><td>Estimular indicação de novos pacientes pela base ativa · Manter relacionamento ativo com médicos referenciadores · Apoiar campanhas de \"member-get-member\"</td></tr><tr><td><strong>Gestão de Base</strong></td><td>Manter cadastro atualizado · Segmentar a base por perfil clínico, ticket médio e última interação · Reportar status da base à Coordenadora Comercial</td></tr><tr><td><strong>Interface com Marketing</strong></td><td>Alinhar campanhas, conteúdos e ofertas com Marketing · Apoiar mensuracao de campanhas · Sugerir melhorias com base em feedback da base</td></tr><tr><td><strong>Processos e Registros</strong></td><td>Registrar todas as interações no sistema/CRM · Garantir rastreabilidade do histórico de cada paciente · Seguir POPs do Farmer</td></tr></table>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Rotina diária</h3>\n<div class='todo'>○ Realizar contatos programados (10/30/60/90 dias)</div>\n<div class='todo'>○ Atuar em pacientes em janela de reativação</div>\n<div class='todo'>○ Registrar interações no sistema</div>\n<h3>Rotina semanal</h3>\n<div class='todo'>○ Segmentação da base e priorizacao de contatos</div>\n<div class='todo'>○ Reunião com Coordenadora Comercial</div>\n<div class='todo'>○ Alinhamento com Marketing</div>\n<h3>Rotina mensal</h3>\n<div class='todo'>○ Fechamento de KPIs do tier</div>\n<div class='todo'>○ Análise de churn e ações preventivas</div>\n<div class='todo'>○ Proposta de campanhas de reativação</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Vendas consultivas e relacionamento de longo prazo</strong></li>\n<li><strong>CRM</strong> — domínio funcional, segmentação, histórico</li>\n<li><strong>Análise de base</strong> (Excel/BI) — segmentos, churn, LTV</li>\n<li><strong>Plataforma Envya</strong></li>\n<li><strong>Conhecimento dos serviços e procedimentos da clínica</strong></li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Empatia ativa</strong> — contato com paciente em momentos sensíveis (pós-procedimento)</li>\n<li><strong>Persistência consultiva</strong> — follow-up sem invadir</li>\n<li><strong>Comunicação premium</strong></li>\n<li><strong>Postura clínica</strong> — saber ouvir feedback negativo sem defensividade</li>\n<li><strong>Foco em LTV, não em ticket único</strong></li>\n<li><strong>Discrição</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Superior em Adm, Marketing, Gestão de Saúde ou correlatas</li>\n<li>Experiência em CS (Customer Success), pós-venda ou retain em serviços premium</li>\n<li>Apresentação pessoal premium</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<p><em>Fonte: Plano de Reestruturação 2026 (Tier 2 — Farmer).</em></p>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>LTV médio por paciente</td><td>A medir e ampliar trimestralmente</td></tr><tr><td>Churn (pacientes sem consumo há mais de 1 ano)</td><td>≤ 10%</td></tr></table>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora Comercial</strong> (Heloisa Reis)</p>"},{"id":"356fcd0c-38e2-81fe-aea8-eb2fb85f0ebc","url":"https://www.notion.so/Agendamento-Cir-rgico-356fcd0c38e281feaea8eb2fb85f0ebc","properties":{"Nível":"Pleno","POPs Vinculados":[],"Funcionários ocupando este cargo":["356fcd0c-38e2-81f9-bdc5-d7915a558c59"],"Resumo do Cargo":"Coordena toda a jornada do paciente cirúrgico: agendamento, autorizações, documentação, interface com hospitais e operadoras. Reduz cancelamentos.","Área":"Operacional - Administrativo","Status do Cargo":"Ativo","Bloco":"Operacional","Cargo":"Agendamento Cirúrgico"},"html":"<h2>Missão do Cargo</h2>\n<p>Coordenar toda a operação cirúrgica do paciente — do agendamento à confirmação final — garantindo documentação completa, autorizações e cumprimento de prazos sem cancelamentos.</p>\n<hr/>\n<h2>Ocupante Atual</h2>\n<p><strong>Solange Santos Lucindo</strong> <em>(em transição de Concierge para Agendamento Cirúrgico conforme Plano de Reestruturação 2026.)</em></p>\n<hr/>\n<h2>Áreas de Responsabilidade × Funções Principais</h2>\n<table class='nt'><tr><th>Área</th><th>Funções</th></tr><tr><td><strong>Agendamento Cirúrgico</strong></td><td>Organizar e confirmar datas de cirurgias · Alinhar agendas com médicos, hospitais e pacientes · Garantir cumprimento dos prazos cirúrgicos</td></tr><tr><td><strong>Autorizações e Documentos</strong></td><td>Solicitar e acompanhar autorizações · Conferir documentação e exames obrigatórios · Garantir documentação completa e correta</td></tr><tr><td><strong>Interface com Operadoras e Hospitais</strong></td><td>Atuar junto a convênios, hospitais e centros cirúrgicos · Acompanhar liberações e confirmações · Resolver pendências administrativas</td></tr><tr><td><strong>Redução de Cancelamentos</strong></td><td>Atuar preventivamente para evitar cancelamentos · Antecipar riscos e pendências · Comunicar intercorrências à liderança</td></tr><tr><td><strong>Experiência do Paciente Cirúrgico</strong></td><td>Manter comunicação ativa com o paciente · Garantir clareza nas orientações pré-cirúrgicas · Tratar dúvidas e inseguranças</td></tr><tr><td><strong>Processos e Padrões</strong></td><td>Cumprir POPs do agendamento cirúrgico · Registrar todas as etapas no sistema · Garantir rastreabilidade do processo</td></tr><tr><td><strong>Interface Interna</strong></td><td>Alinhar informações com recepção, enfermagem e médicos · Reportar status dos casos à liderança · Apoiar a fluidez da operação cirúrgica</td></tr></table>\n<hr/>\n<h2>Tarefas do Dia-a-Dia</h2>\n<h3>Rotina diária</h3>\n<div class='todo'>○ Conferir agenda cirúrgica dos próximos 7-15 dias</div>\n<div class='todo'>○ Acompanhar autorizações em análise junto aos convênios</div>\n<div class='todo'>○ Atualizar pacientes sobre status e pendências</div>\n<div class='todo'>○ Registrar progressos no sistema</div>\n<h3>Rotina semanal</h3>\n<div class='todo'>○ Conferência de documentação cirúrgica completa</div>\n<div class='todo'>○ Reunião com equipe assistencial e médicos</div>\n<div class='todo'>○ Reporting de status à Coordenadora de Operações</div>\n<hr/>\n<h2>Hard Skills Requeridas</h2>\n<ul>\n<li><strong>Conhecimento de processos cirúrgicos hospitalares</strong></li>\n<li><strong>Experiência com convênios médicos</strong> (SulAmérica, OMINT)</li>\n<li><strong>Sistema de gestão clínica e hospitalar</strong></li>\n<li><strong>Pacote Office</strong> — controles e planilhas</li>\n<li><strong>Conhecimento de documentação médica obrigatória</strong> (TCLE, exames, autorizações)</li>\n</ul>\n<hr/>\n<h2>Soft Skills Requeridas</h2>\n<ul>\n<li><strong>Atenção ao detalhe extrema</strong> — documentação errada cancela cirurgia</li>\n<li><strong>Comunicação clínica clara</strong></li>\n<li><strong>Empatia com paciente em momento sensível</strong></li>\n<li><strong>Resiliência em negociação com operadoras</strong></li>\n<li><strong>Organização</strong></li>\n<li><strong>Discrição</strong></li>\n</ul>\n<hr/>\n<h2>Pré-requisitos Formais</h2>\n<ul>\n<li>Ensino superior em Adm, Gestão de Saúde ou correlatas (cursando é aceitável)</li>\n<li>Experiência em operações cirúrgicas, convênios médicos ou faturamento hospitalar</li>\n</ul>\n<hr/>\n<h2>KPIs do Cargo</h2>\n<table class='nt'><tr><th>Indicador</th><th>Meta</th></tr><tr><td>Taxa de aprovação de autorizações no 1º envio</td><td>≥ 80%</td></tr><tr><td>NPS do paciente cirúrgico</td><td>≥ 90</td></tr></table>\n<p><em>KPIs detalhados a serem refinados junto à Coordenadora de Operações.</em></p>\n<hr/>\n<h2>POPs Vinculados</h2>\n<p><em>A vincular após criação do database de POPs.</em></p>\n<hr/>\n<h2>Reporta a</h2>\n<p><strong>Coordenadora de Operações</strong> (a contratar)</p>"}],"funcionarios":[{"id":"356fcd0c-38e2-8108-a381-cb1a654a664d","url":"https://www.notion.so/Aluma-Alves-dos-Santos-356fcd0c38e28108a381cb1a654a664d","properties":{"Data de Admissão":{"start":"2026-02-02","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"alumaalves@yahoo.com.br","Telefone":"(11) 99243-1815","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"53.987.212-X","Convênio Saúde":"Não Aderiu","CPF":"458.931.938-14","Cargo Atual":["356fcd0c-38e2-8185-80f5-ccbd41738aa0"],"Nome":"Aluma Alves dos Santos","_cargo_nome":"Assistente Financeiro Júnior"}},{"id":"356fcd0c-38e2-810a-89d9-e0ae31da6ad4","url":"https://www.notion.so/Danielle-Detlinger-Magela-dos-Santos-356fcd0c38e2810a89d9e0ae31da6ad4","properties":{"Data de Admissão":{"start":"2024-07-01","end":null},"Data de Desligamento":null,"Tipo de Contrato":"PJ","Observações":"","Movimentações":[],"Email Google":"danielle.santos@endovascularsp.com.br","Telefone":"(11)976969088","Status":"Ativo","Convênio Odonto":"Incluso","Folha":[],"RG":"52.326.520-7","Convênio Saúde":"Incluso","CPF":"449.601.728-86","Cargo Atual":["356fcd0c-38e2-81a7-8974-d3ab5985fcec"],"Nome":"Danielle Detlinger Magela dos Santos","_cargo_nome":"Concierge"}},{"id":"356fcd0c-38e2-8111-aae4-f00597f78e6f","url":"https://www.notion.so/Camilla-de-Lima-Gomes-356fcd0c38e28111aae4f00597f78e6f","properties":{"Data de Admissão":{"start":"2023-07-05","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"camillajiyong@gmail.com","Telefone":"(11) 98482-4954","Status":"Ativo","Convênio Odonto":"Incluso","Folha":[],"RG":"52.191.394-9","Convênio Saúde":"Incluso","CPF":"464.056.978-51","Cargo Atual":["356fcd0c-38e2-8162-a046-e79ad9b34620"],"Nome":"Camilla de Lima Gomes","_cargo_nome":"Enfermeira / Liderança Assistencial"}},{"id":"356fcd0c-38e2-8118-9641-f3c70a58e5ce","url":"https://www.notion.so/Carina-Evangelista-356fcd0c38e281189641f3c70a58e5ce","properties":{"Data de Admissão":{"start":"2025-03-05","end":null},"Data de Desligamento":null,"Tipo de Contrato":"PJ","Observações":"","Movimentações":[],"Email Google":"carinaevangelista@outlook.com","Telefone":"(11)984741750","Status":"Ativo","Convênio Odonto":"Solicitado","Folha":[],"RG":"67.129.267-5","Convênio Saúde":"Solicitado","CPF":"081.443.985-30","Cargo Atual":["356fcd0c-38e2-81a7-8974-d3ab5985fcec"],"Nome":"Carina Evangelista","_cargo_nome":"Concierge"}},{"id":"356fcd0c-38e2-8135-b759-c1b60a425b95","url":"https://www.notion.so/Thiago-Luiz-Fernandes-Daniel-de-Andrade-356fcd0c38e28135b759c1b60a425b95","properties":{"Data de Admissão":{"start":"2025-10-07","end":null},"Data de Desligamento":null,"Tipo de Contrato":"PJ","Observações":"","Movimentações":[],"Email Google":"thiago.luiz@endovascular.com.br","Telefone":"(11) 976969576","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"34.657.378-6","Convênio Saúde":"Não Aderiu","CPF":"393.825.888-84","Cargo Atual":["356fcd0c-38e2-81c8-b210-de021267bb70"],"Nome":"Thiago Luiz Fernandes Daniel de Andrade","_cargo_nome":"Head de Operações"}},{"id":"356fcd0c-38e2-8136-885e-ca547ff61b6f","url":"https://www.notion.so/Thiago-Ferreira-Neves-356fcd0c38e28136885eca547ff61b6f","properties":{"Data de Admissão":null,"Data de Desligamento":null,"Tipo de Contrato":"PJ","Observações":"","Movimentações":[],"Email Google":"thifn154@gmail.com","Telefone":"(11)993961497","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"62.810.646-4","Convênio Saúde":"Não Aderiu","CPF":"516.670.568-83","Cargo Atual":["356fcd0c-38e2-816b-9c33-d8b43be7d651"],"Nome":"Thiago Ferreira Neves","_cargo_nome":"Marketing - Captação & Stories"}},{"id":"356fcd0c-38e2-8139-93cc-dfb695ebcaec","url":"https://www.notion.so/Josilene-da-Concei-o-Gon-alves-Lino-356fcd0c38e2813993ccdfb695ebcaec","properties":{"Data de Admissão":{"start":"2022-03-03","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"josilenegoncalves86@gmail.com","Telefone":"(11) 98027-6921","Status":"Ativo","Convênio Odonto":"Incluso","Folha":[],"RG":"43.857.527-1","Convênio Saúde":"Incluso","CPF":"338.082.058-06","Cargo Atual":["356fcd0c-38e2-8199-a078-cc974ded34d7"],"Nome":"Josilene da Conceição Gonçalves Lino","_cargo_nome":"Técnica de Enfermagem"}},{"id":"356fcd0c-38e2-816a-92ce-f4c7016c7543","url":"https://www.notion.so/Daniele-Cristina-Bortolini-da-Silva-356fcd0c38e2816a92cef4c7016c7543","properties":{"Data de Admissão":{"start":"2023-08-01","end":null},"Data de Desligamento":null,"Tipo de Contrato":"PJ","Observações":"","Movimentações":[],"Email Google":"danielebortolini.bs@hotmail.com","Telefone":"(11) 99357-3954","Status":"Ativo","Convênio Odonto":"Incluso","Folha":[],"RG":"38.836.734-9","Convênio Saúde":"Incluso","CPF":"478.354.028-40","Cargo Atual":["356fcd0c-38e2-8185-80f5-ccbd41738aa0"],"Nome":"Daniele Cristina Bortolini da Silva","_cargo_nome":"Assistente Financeiro Júnior"}},{"id":"356fcd0c-38e2-8183-b63d-de135d760bd9","url":"https://www.notion.so/Angelina-Remberg-Lima-356fcd0c38e28183b63dde135d760bd9","properties":{"Data de Admissão":{"start":"2023-08-15","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"angelinarembergl98@gmail.com","Telefone":"(11) 95628-3593","Status":"Ativo","Convênio Odonto":"Incluso","Folha":[],"RG":"54.085.193-0","Convênio Saúde":"Incluso","CPF":"460.706.798-90","Cargo Atual":["356fcd0c-38e2-8163-88d5-c149d277a6ec"],"Nome":"Angelina Remberg Lima","_cargo_nome":"Assistente Administrativo Pleno"}},{"id":"356fcd0c-38e2-818f-9215-cb7f3ed70144","url":"https://www.notion.so/Mariana-Felipe-Rodrigues-356fcd0c38e2818f9215cb7f3ed70144","properties":{"Data de Admissão":{"start":"2025-07-07","end":null},"Data de Desligamento":null,"Tipo de Contrato":"Estágio","Observações":"","Movimentações":[],"Email Google":"mariju.rodrigues22@gmail.com","Telefone":"(11) 988549383","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"55.715.230-6","Convênio Saúde":"Não Aderiu","CPF":"507.715.738-39","Cargo Atual":["356fcd0c-38e2-81da-8dae-ee26a7ba2ac2"],"Nome":"Mariana Felipe Rodrigues","_cargo_nome":"Estagiária de Enfermagem"}},{"id":"356fcd0c-38e2-819b-b6b3-d287f3137b0b","url":"https://www.notion.so/Micaele-da-Silva-Albuquerque-356fcd0c38e2819bb6b3d287f3137b0b","properties":{"Data de Admissão":{"start":"2022-09-01","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"micaelealbuq.adm@gmail.com","Telefone":"(11) 95962-0957","Status":"Ativo","Convênio Odonto":"Incluso","Folha":[],"RG":"53.285.070-1","Convênio Saúde":"Incluso","CPF":"519.850.318-50","Cargo Atual":["356fcd0c-38e2-8185-80f5-ccbd41738aa0"],"Nome":"Micaele da Silva Albuquerque","_cargo_nome":"Assistente Financeiro Júnior"}},{"id":"356fcd0c-38e2-819d-8d0b-d5762a7eb6b2","url":"https://www.notion.so/Dr-Igor-Sincos-356fcd0c38e2819d8d0bd5762a7eb6b2","properties":{"Data de Admissão":null,"Data de Desligamento":null,"Tipo de Contrato":null,"Observações":"Fundador e Diretor Médico da Endovascular SP. Cirurgião vascular e endovascular.","Movimentações":[],"Email Google":null,"Telefone":null,"Status":"Ativo","Convênio Odonto":null,"Folha":[],"RG":"","Convênio Saúde":null,"CPF":"","Cargo Atual":["356fcd0c-38e2-8134-9b01-d3d27d4f1571"],"Nome":"Dr. Igor Sincos","_cargo_nome":"Diretor Médico / Fundador"}},{"id":"356fcd0c-38e2-81a1-bfc4-d087eb3051c0","url":"https://www.notion.so/Samanta-Neves-356fcd0c38e281a1bfc4d087eb3051c0","properties":{"Data de Admissão":{"start":"2025-04-01","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"samantaalvesnevess@gmail.com","Telefone":"(11)954583283","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"37.461.904-9","Convênio Saúde":"Não Aderiu","CPF":"444.142.068-47","Cargo Atual":["356fcd0c-38e2-8178-859c-ded92ce27f8c"],"Nome":"Samanta Neves","_cargo_nome":"Recepcionista"}},{"id":"356fcd0c-38e2-81a8-83bd-d9734cf484af","url":"https://www.notion.so/Camily-Nunes-do-Nascimento-356fcd0c38e281a883bdd9734cf484af","properties":{"Data de Admissão":{"start":"2023-03-06","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"camily.nunes097@gmail.com","Telefone":"(11) 93953-6703","Status":"Ativo","Convênio Odonto":"Incluso","Folha":[],"RG":"50.773.444-0","Convênio Saúde":"Incluso","CPF":"552.082.928-40","Cargo Atual":["356fcd0c-38e2-810f-9f0d-c5248b315cbd"],"Nome":"Camily Nunes do Nascimento","_cargo_nome":"Líder de Recepção"}},{"id":"356fcd0c-38e2-81ad-b587-caac1b494d58","url":"https://www.notion.so/Mayara-Soares-Baltazar-dos-Anjos-356fcd0c38e281adb587caac1b494d58","properties":{"Data de Admissão":{"start":"2024-07-01","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"mayara.soares@endovascularsp.com.br","Telefone":"(11)964269855","Status":"Ativo","Convênio Odonto":"Incluso","Folha":[],"RG":"49.456.997-9","Convênio Saúde":"Incluso","CPF":"393.149.128-50","Cargo Atual":["356fcd0c-38e2-8164-8ac1-cf7d38bf763b"],"Nome":"Mayara Soares Baltazar dos Anjos","_cargo_nome":"Recepcionista Atendente / Agendamento"}},{"id":"356fcd0c-38e2-81ba-9b12-ded5b015deba","url":"https://www.notion.so/Julia-dos-Santos-Beserra-356fcd0c38e281ba9b12ded5b015deba","properties":{"Data de Admissão":{"start":"2026-04-14","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"julia.beserra@endovascularsp.com.br","Telefone":"(11) 94244-9530","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"37.312.615-3","Convênio Saúde":"Não Aderiu","CPF":"353.503.248-29","Cargo Atual":["356fcd0c-38e2-8178-859c-ded92ce27f8c"],"Nome":"Julia dos Santos Beserra","_cargo_nome":"Recepcionista"}},{"id":"356fcd0c-38e2-81bc-b7c9-df3602d7263f","url":"https://www.notion.so/Heloisa-dos-Reis-Rodrigues-Incontri-356fcd0c38e281bcb7c9df3602d7263f","properties":{"Data de Admissão":{"start":"2025-11-06","end":null},"Data de Desligamento":null,"Tipo de Contrato":"PJ","Observações":"","Movimentações":[],"Email Google":"heloisareisr@hotmail.com","Telefone":"(13) 991468412","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"32.431.064-X","Convênio Saúde":"Não Aderiu","CPF":"311.628.838-04","Cargo Atual":["356fcd0c-38e2-8199-9d98-d6067f09140d"],"Nome":"Heloisa dos Reis Rodrigues Incontri","_cargo_nome":"Coordenadora Comercial"}},{"id":"356fcd0c-38e2-81e6-b09e-d284f20c6539","url":"https://www.notion.so/Luana-Specchio-da-Silva-356fcd0c38e281e6b09ed284f20c6539","properties":{"Data de Admissão":{"start":"2024-02-15","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"luana.specchio@gmail.com","Telefone":"(11) 95491-6492","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"39.487.676-3","Convênio Saúde":"Não Aderiu","CPF":"394.294.198-89","Cargo Atual":["356fcd0c-38e2-815d-895d-f7f612220dd6"],"Nome":"Luana Specchio da Silva","_cargo_nome":"Enfermeira Júnior"}},{"id":"356fcd0c-38e2-81f9-bdc5-d7915a558c59","url":"https://www.notion.so/Solange-Santos-Lucindo-356fcd0c38e281f9bdc5d7915a558c59","properties":{"Data de Admissão":{"start":"2025-11-03","end":null},"Data de Desligamento":null,"Tipo de Contrato":"PJ","Observações":"","Movimentações":[],"Email Google":"solucindo@hotmail.com","Telefone":"(11) 963119748","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"27.829.503-4","Convênio Saúde":"Não Aderiu","CPF":"190.662.128-45","Cargo Atual":["356fcd0c-38e2-81fe-aea8-eb2fb85f0ebc"],"Nome":"Solange Santos Lucindo","_cargo_nome":"Agendamento Cirúrgico"}},{"id":"356fcd0c-38e2-81fb-900c-ed55c3cdcce1","url":"https://www.notion.so/Ana-Luiza-Souza-Soares-Fernandes-356fcd0c38e281fb900ced55c3cdcce1","properties":{"Data de Admissão":{"start":"2026-02-02","end":null},"Data de Desligamento":null,"Tipo de Contrato":"CLT","Observações":"","Movimentações":[],"Email Google":"analuizassf@outlook.com","Telefone":"(11) 941193822","Status":"Ativo","Convênio Odonto":"Não Aderiu","Folha":[],"RG":"50.301.016-9","Convênio Saúde":"Não Aderiu","CPF":"466.789.548-90","Cargo Atual":["356fcd0c-38e2-8164-8ac1-cf7d38bf763b"],"Nome":"Ana Luiza Souza Soares Fernandes","_cargo_nome":"Recepcionista Atendente / Agendamento"}}],"folha":[],"movimentacoes":[],"pops":[]};
+
+const $ = (id) => document.getElementById(id);
+
+/* === AUTH === */
+async function checarSessao() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+
+  $('btn-google').disabled = true;
+  $('btn-label').textContent = 'Validando...';
+  $('login-loading').textContent = 'Verificando seu acesso...';
+
+  const email = (session.user.email || '').toLowerCase();
+  const { data: userInfo, error } = await sb.from('users')
+    .select('email, name, role').eq('email', email).maybeSingle();
+
+  if (error || !userInfo) {
+    $('login-erro').innerHTML = 'Seu e-mail Google não está cadastrado.<br/>Contate o administrador.';
+    $('login-loading').textContent = '';
+    await sb.auth.signOut();
+    return;
+  }
+  if (userInfo.role !== 'admin') {
+    $('login-erro').innerHTML = 'Este painel é restrito a administradores.';
+    $('login-loading').textContent = '';
+    await sb.auth.signOut();
+    return;
+  }
+  entrarApp(userInfo);
+}
+
+$('btn-google').addEventListener('click', async () => {
+  $('btn-google').disabled = true;
+  $('btn-label').textContent = 'Aguarde...';
+  $('login-loading').textContent = 'Redirecionando ao Google...';
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) {
+    $('login-erro').textContent = 'Erro ao iniciar login: ' + error.message;
+    $('btn-google').disabled = false;
+    $('btn-label').textContent = 'Entrar com Google';
+  }
+});
+
+function entrarApp(userInfo) {
+  const ov = $('login-overlay');
+  ov.classList.add('saindo');
+  setTimeout(() => { ov.style.display = 'none'; }, 400);
+  $('main').style.display = 'block';
+  $('greeting-nome').textContent = userInfo.name ? userInfo.name.split(' ')[0] : 'Gestor';
+  inicializar();
+}
+
+/* === HELPERS === */
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function fmtBRL(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  const n = Number(v);
+  if (isNaN(n)) return '—';
+  return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const s = (typeof d === 'object') ? d.start : d;
+  if (!s) return '—';
+  const [yyyy, mm, dd] = s.split('T')[0].split('-');
+  return `${dd}/${mm}/${yyyy}`;
+}
+function pillStatus(s) {
+  if (!s) return '—';
+  const slug = s.toLowerCase().replace(/[^a-z]+/g,'-').replace(/-+$/,'');
+  return `<span class="pill pill-${slug}">${escapeHtml(s)}</span>`;
+}
+function pillContrato(c) {
+  if (!c) return '—';
+  return `<span class="pill pill-${c.toLowerCase()}">${escapeHtml(c)}</span>`;
+}
+function pillBloco(b) {
+  if (!b) return '—';
+  const slug = b.toLowerCase().replace(/[^a-z]+/g, '-');
+  return `<span class="pill pill-bloco-${slug}">${escapeHtml(b)}</span>`;
+}
+
+/* === TABS === */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    $(`tab-${btn.dataset.tab}`).classList.add('active');
+  });
+});
+
+/* === RENDER FUNCIONÁRIOS === */
+let filtroFuncStatus = 'Todos';
+
+function renderFuncionarios() {
+  const data = PORTAL_DATA.funcionarios || [];
+
+  // Stats
+  const total = data.length;
+  const ativos = data.filter(f => f.properties.Status === 'Ativo').length;
+  const clt = data.filter(f => f.properties['Tipo de Contrato'] === 'CLT').length;
+  const pj = data.filter(f => f.properties['Tipo de Contrato'] === 'PJ').length;
+  $('stats-func').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Ativos</div><div class="stat-value">${ativos}</div></div>
+    <div class="stat-card"><div class="stat-label">CLT</div><div class="stat-value">${clt}</div></div>
+    <div class="stat-card"><div class="stat-label">PJ</div><div class="stat-value">${pj}</div></div>
+  `;
+
+  // Filtros
+  const statusUnicos = ['Todos', ...new Set(data.map(f => f.properties.Status).filter(Boolean))];
+  $('filtros-func').innerHTML = statusUnicos.map(s =>
+    `<button class="filtro-tab${s === filtroFuncStatus ? ' active' : ''}" data-status="${escapeHtml(s)}">${escapeHtml(s)}</button>`
+  ).join('');
+  $('filtros-func').querySelectorAll('.filtro-tab').forEach(b => {
+    b.addEventListener('click', () => {
+      filtroFuncStatus = b.dataset.status;
+      renderFuncionarios();
+    });
+  });
+
+  // Tabela
+  const visiveis = filtroFuncStatus === 'Todos' ? data : data.filter(f => f.properties.Status === filtroFuncStatus);
+  const ordenado = [...visiveis].sort((a, b) => (a.properties.Nome || '').localeCompare(b.properties.Nome || ''));
+
+  let html = `
+    <thead><tr>
+      <th>Nome</th><th>Cargo Atual</th><th>Status</th><th>Contrato</th>
+      <th>Admissão</th><th>Email</th><th>Telefone</th>
+      <th>CPF</th><th>RG</th>
+      <th>Saúde</th><th>Odonto</th>
+    </tr></thead><tbody>`;
+  for (const f of ordenado) {
+    const p = f.properties;
+    html += `<tr>
+      <td class="cell-strong">${escapeHtml(p.Nome || '—')}</td>
+      <td>${escapeHtml(p._cargo_nome || '—')}</td>
+      <td>${pillStatus(p.Status)}</td>
+      <td>${pillContrato(p['Tipo de Contrato'])}</td>
+      <td>${fmtDate(p['Data de Admissão'])}</td>
+      <td class="cell-mono">${escapeHtml(p['Email Google'] || '—')}</td>
+      <td class="cell-mono">${escapeHtml(p.Telefone || '—')}</td>
+      <td class="cell-mono">${escapeHtml(p.CPF || '—')}</td>
+      <td class="cell-mono">${escapeHtml(p.RG || '—')}</td>
+      <td>${pillStatus(p['Convênio Saúde'] || 'Não Aderiu')}</td>
+      <td>${pillStatus(p['Convênio Odonto'] || 'Não Aderiu')}</td>
+    </tr>`;
+  }
+  html += '</tbody>';
+  $('tbl-func').innerHTML = html;
+}
+
+/* === RENDER CARGOS === */
+let filtroCargosBloco = 'Todos';
+
+function renderCargos() {
+  const data = PORTAL_DATA.cargos || [];
+
+  const total = data.length;
+  const ativos = data.filter(c => c.properties['Status do Cargo'] === 'Ativo').length;
+  const aberto = data.filter(c => c.properties['Status do Cargo'] === 'Em Aberto').length;
+  $('stats-cargos').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Ativos</div><div class="stat-value">${ativos}</div></div>
+    <div class="stat-card"><div class="stat-label">Em Aberto</div><div class="stat-value">${aberto}</div></div>
+  `;
+
+  const blocosUnicos = ['Todos', ...new Set(data.map(c => c.properties.Bloco).filter(Boolean))];
+  $('filtros-cargos').innerHTML = blocosUnicos.map(b =>
+    `<button class="filtro-tab${b === filtroCargosBloco ? ' active' : ''}" data-bloco="${escapeHtml(b)}">${escapeHtml(b)}</button>`
+  ).join('');
+  $('filtros-cargos').querySelectorAll('.filtro-tab').forEach(b => {
+    b.addEventListener('click', () => {
+      filtroCargosBloco = b.dataset.bloco;
+      renderCargos();
+    });
+  });
+
+  const visiveis = filtroCargosBloco === 'Todos' ? data : data.filter(c => c.properties.Bloco === filtroCargosBloco);
+  const ordenado = [...visiveis].sort((a, b) => {
+    const ba = (a.properties.Bloco || '').localeCompare(b.properties.Bloco || '');
+    if (ba !== 0) return ba;
+    return (a.properties.Cargo || '').localeCompare(b.properties.Cargo || '');
+  });
+
+  $('grid-cargos').innerHTML = ordenado.map(c => {
+    const p = c.properties;
+    return `<div class="cargo-card" data-id="${c.id}">
+      <div class="cargo-card-title">${escapeHtml(p.Cargo || '—')}</div>
+      <div class="cargo-card-meta">
+        ${pillBloco(p.Bloco)}
+        ${pillStatus(p['Status do Cargo'] || '')}
+      </div>
+      <div class="cargo-card-resumo">${escapeHtml(p['Resumo do Cargo'] || '')}</div>
+    </div>`;
+  }).join('');
+  $('grid-cargos').querySelectorAll('.cargo-card').forEach(card => {
+    card.addEventListener('click', () => abrirCargo(card.dataset.id));
+  });
+}
+
+function abrirCargo(id) {
+  const c = (PORTAL_DATA.cargos || []).find(x => x.id === id);
+  if (!c) return;
+  const p = c.properties;
+  $('modal-title').textContent = p.Cargo || '—';
+  $('modal-meta').innerHTML = `
+    ${pillBloco(p.Bloco)}
+    <span class="pill" style="background:rgba(255,255,255,0.06);color:var(--text-2);">${escapeHtml(p['Área'] || '')}</span>
+    <span class="pill" style="background:rgba(255,255,255,0.06);color:var(--text-2);">${escapeHtml(p['Nível'] || '')}</span>
+    ${pillStatus(p['Status do Cargo'] || '')}
+  `;
+  $('modal-body').innerHTML = c.html || '<p>Sem detalhes registrados.</p>';
+  $('modal-overlay').classList.add('show');
+}
+$('modal-close').addEventListener('click', () => $('modal-overlay').classList.remove('show'));
+$('modal-overlay').addEventListener('click', (e) => { if (e.target.id === 'modal-overlay') $('modal-overlay').classList.remove('show'); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('modal-overlay').classList.remove('show'); });
+
+/* === RENDER FOLHA === */
+function renderFolha() {
+  const data = PORTAL_DATA.folha || [];
+  if (data.length === 0) {
+    $('folha-content').innerHTML = `<div class="empty">
+      <div class="ico">💰</div>
+      <div>Ainda não há lançamentos de folha registrados.</div>
+      <div style="font-size:12px;margin-top:6px;">Quando você criar o primeiro lançamento no Notion, ele aparece aqui.</div>
+    </div>`;
+    $('stats-folha').innerHTML = '';
+    return;
+  }
+  const totalSalario = data.reduce((s, f) => s + (Number(f.properties['Salário Base']) || 0), 0);
+  $('stats-folha').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Lançamentos</div><div class="stat-value">${data.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Salário</div><div class="stat-value">${fmtBRL(totalSalario)}</div></div>
+  `;
+  let html = `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+    <th>Funcionário</th><th>Mês</th><th>Salário</th><th>Aj. Custo</th><th>Comissão</th>
+    <th>VR</th><th>VA</th><th>VT</th><th>Coparticip.</th><th>Status</th>
+  </tr></thead><tbody>`;
+  for (const f of data) {
+    const p = f.properties;
+    html += `<tr>
+      <td class="cell-strong">${escapeHtml(p._funcionario_nome || '—')}</td>
+      <td>${fmtDate(p['Mês de Referência'])}</td>
+      <td>${fmtBRL(p['Salário Base'])}</td>
+      <td>${fmtBRL(p['Ajuda de Custo'])}</td>
+      <td>${fmtBRL(p['Comissão'])}</td>
+      <td>${fmtBRL(p['VR — Vale Refeição'])}</td>
+      <td>${fmtBRL(p['VA — Vale Alimentação'])}</td>
+      <td>${fmtBRL(p['VT — Vale Transporte'])}</td>
+      <td>${fmtBRL(p['Coparticipação Plano de Saúde'])}</td>
+      <td>${pillStatus(p.Status)}</td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  $('folha-content').innerHTML = html;
+}
+
+/* === RENDER MOVIMENTAÇÕES === */
+function renderMov() {
+  const data = PORTAL_DATA.movimentacoes || [];
+  if (data.length === 0) {
+    $('mov-content').innerHTML = `<div class="empty">
+      <div class="ico">🔄</div>
+      <div>Ainda não há movimentações registradas.</div>
+      <div style="font-size:12px;margin-top:6px;">Admissões, desligamentos e promoções aparecem aqui quando lançadas no Notion.</div>
+    </div>`;
+    return;
+  }
+  const ord = [...data].sort((a, b) => {
+    const da = (a.properties.Data && a.properties.Data.start) || '';
+    const db = (b.properties.Data && b.properties.Data.start) || '';
+    return db.localeCompare(da);
+  });
+  let html = '<div class="timeline">';
+  for (const m of ord) {
+    const p = m.properties;
+    html += `<div class="timeline-item">
+      <div class="timeline-date">${fmtDate(p.Data)} · ${escapeHtml(p.Tipo || '')}</div>
+      <div class="timeline-title">${escapeHtml(p.Evento || '—')}</div>
+      <div class="timeline-meta">
+        ${escapeHtml(p._funcionario_nome || '')}
+        ${p._cargo_anterior_nome ? ' · de ' + escapeHtml(p._cargo_anterior_nome) : ''}
+        ${p._cargo_novo_nome ? ' → ' + escapeHtml(p._cargo_novo_nome) : ''}
+        ${p.Motivo ? '<br/><em>' + escapeHtml(p.Motivo) + '</em>' : ''}
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  $('mov-content').innerHTML = html;
+}
+
+/* === RENDER POPS === */
+function renderPops() {
+  const data = PORTAL_DATA.pops || [];
+  if (data.length === 0) {
+    $('pops-content').innerHTML = `<div class="empty">
+      <div class="ico">📋</div>
+      <div>Nenhum POP registrado ainda.</div>
+      <div style="font-size:12px;margin-top:6px;">Os Procedimentos Operacionais Padrão aparecem aqui quando criados no Notion.</div>
+    </div>`;
+    return;
+  }
+  let html = `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+    <th>Nome</th><th>Área</th><th>Status</th><th>Versão</th><th>Última Revisão</th><th>Cargos Aplicáveis</th>
+  </tr></thead><tbody>`;
+  for (const pop of data) {
+    const p = pop.properties;
+    html += `<tr>
+      <td class="cell-strong">${escapeHtml(p['Nome do POP'] || '—')}</td>
+      <td>${escapeHtml(p['Área'] || '—')}</td>
+      <td>${pillStatus(p.Status)}</td>
+      <td>${escapeHtml(p['Versão'] || '—')}</td>
+      <td>${fmtDate(p['Última Revisão'])}</td>
+      <td>${escapeHtml(p._cargos_nome || '—')}</td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  $('pops-content').innerHTML = html;
+}
+
+/* === INIT === */
+function inicializar() {
+  if (PORTAL_DATA.generated_at) {
+    const dt = new Date(PORTAL_DATA.generated_at);
+    $('last-updated').textContent = 'Atualizado ' + dt.toLocaleString('pt-BR');
+  }
+  renderFuncionarios();
+  renderCargos();
+  renderFolha();
+  renderMov();
+  renderPops();
+}
+
+checarSessao();
+</script>
+</body>
+</html>
