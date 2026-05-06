@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Beauty Legs — Gestão Financeira • Endovascular SP</title>
+<title>Beauty Legs — Projeto Fotona • Endovascular SP</title>
 <link rel="icon" href="../assets/logo.png" type="image/png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,14 +21,15 @@
   html,body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
   body{min-height:100vh;padding-bottom:60px}
 
-  /* HEADER */
+  /* HEADER (faixa compacta, alinhada com outros portais) */
   header.bl-header{
     background:#000;border-bottom:1px solid var(--border);
-    padding:32px 40px;display:flex;align-items:center;gap:28px;
+    padding:12px 32px;display:flex;align-items:center;gap:24px;
   }
-  .bl-logo{height:88px;width:auto;display:block;flex-shrink:0}
-  .bl-header-info{display:flex;flex-direction:column;gap:3px;border-left:1px solid var(--border);padding-left:28px;margin-left:8px}
-  .bl-header-info h1{font-size:14px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:#fff}
+  .bl-header-marca{display:flex;align-items:center;gap:22px;min-width:0}
+  .bl-logo{height:96px;width:auto;display:block;flex-shrink:0}
+  .bl-header-info{display:flex;flex-direction:column;gap:3px;border-left:1px solid var(--border);padding-left:22px}
+  .bl-header-info h1{font-size:16px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#fff}
   .bl-header-info p{font-size:11px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase}
   .bl-header-actions{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
   .bl-back{
@@ -41,15 +42,29 @@
   }
 
   /* CONTAINER */
-  main{max-width:1320px;margin:0 auto;padding:36px 28px 0}
+  main{max-width:1320px;margin:0 auto;padding:28px 28px 0}
 
-  /* HERO TITLE */
-  .hero{margin-bottom:36px}
-  .hero h2{
-    font-size:38px;font-weight:200;letter-spacing:-1px;line-height:1.1;color:#fff;
+  /* PERIOD FILTER BAR */
+  .period-bar{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    margin-bottom:24px;padding:14px 18px;
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;
   }
-  .hero h2 b{font-weight:900}
-  .hero p{font-size:14px;color:var(--muted);margin-top:10px;max-width:720px;line-height:1.6}
+  .period-bar-label{
+    font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+    color:var(--muted);padding-right:6px;border-right:1px solid var(--border);margin-right:2px;
+  }
+  .period-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .period-chip{
+    font-family:inherit;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:600;
+    padding:7px 13px;border-radius:18px;cursor:pointer;transition:all .15s;
+    background:transparent;color:var(--muted);border:1px solid var(--border);
+  }
+  .period-chip:hover{border-color:var(--border-strong);color:#fff}
+  .period-chip.active{
+    background:var(--red);border-color:var(--red);color:#fff;
+    box-shadow:0 0 0 3px rgba(227,6,19,.12);
+  }
 
   /* KPI ROW */
   .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
@@ -102,11 +117,15 @@
     text-align:left;font-weight:500;color:var(--muted);padding:10px 12px;
     border-bottom:1px solid var(--border);font-size:11px;letter-spacing:1px;text-transform:uppercase;
   }
-  table.bl-table td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+  table.bl-table td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
   table.bl-table tbody tr:hover{background:var(--surface-2)}
   table.bl-table .num{text-align:right;font-variant-numeric:tabular-nums}
   table.bl-table .red{color:var(--red);font-weight:600}
   table.bl-table .muted{color:var(--muted)}
+  .clickable-row{cursor:pointer;transition:background .15s}
+  .clickable-row:hover{background:rgba(227,6,19,.06) !important}
+  .clickable-name{cursor:pointer;border-bottom:1px dashed transparent;transition:border-color .15s,color .15s}
+  .clickable-name:hover{color:var(--red);border-bottom-color:var(--red)}
   .pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10px;letter-spacing:.5px;font-weight:600;text-transform:uppercase}
   .pill.vasc{background:rgba(227,6,19,.18);color:#ff7f8a;border:1px solid rgba(227,6,19,.4)}
   .pill.derm{background:rgba(212,165,116,.18);color:#e0c08a;border:1px solid rgba(212,165,116,.4)}
@@ -134,7 +153,8 @@
   .pass-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
   .pass-card{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:18px}
   .pass-card.vasc{border-color:rgba(227,6,19,.3)}
-  .pass-card .name{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px}
+  .pass-card .name{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;cursor:pointer;border-bottom:1px dashed transparent;transition:border-color .15s,color .15s}
+  .pass-card .name:hover{color:var(--red);border-bottom-color:var(--red)}
   .pass-card .role{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
   .pass-card .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:12px}
   .pass-card .row .label{color:var(--muted)}
@@ -142,6 +162,37 @@
   .pass-card .row .value.red{color:var(--red)}
   .pass-card .sep{height:1px;background:var(--border);margin:12px 0}
   .pass-card .sim-note{font-size:11px;color:var(--muted-2);line-height:1.5;margin-top:10px;font-style:italic}
+
+  /* DRILL-DOWN MODAL */
+  .bl-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .bl-modal.open{display:flex}
+  .bl-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px)}
+  .bl-modal-card{
+    position:relative;background:var(--surface);border:1px solid var(--border-strong);border-radius:14px;
+    width:100%;max-width:980px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.7);
+  }
+  .bl-modal-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:20px;
+    padding:22px 28px;border-bottom:1px solid var(--border);background:#000;
+  }
+  .bl-modal-head h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px;letter-spacing:.5px}
+  .bl-modal-head p{font-size:12px;color:var(--muted)}
+  .bl-modal-head .stats{display:flex;gap:18px;margin-top:10px;flex-wrap:wrap}
+  .bl-modal-head .stat{font-size:11px;color:var(--muted);letter-spacing:.5px}
+  .bl-modal-head .stat b{color:#fff;font-weight:700;font-size:14px;margin-right:5px;letter-spacing:0}
+  .bl-modal-close{
+    background:transparent;border:1px solid var(--border);color:var(--muted);
+    width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1;
+    transition:all .15s;flex-shrink:0;
+  }
+  .bl-modal-close:hover{border-color:var(--red);color:var(--red);background:var(--red-soft)}
+  .bl-modal-body{padding:8px 0;overflow-y:auto;flex:1}
+  .bl-modal-body table.bl-table{width:100%}
+  .bl-modal-body table.bl-table th:first-child,
+  .bl-modal-body table.bl-table td:first-child{padding-left:28px}
+  .bl-modal-body table.bl-table th:last-child,
+  .bl-modal-body table.bl-table td:last-child{padding-right:28px}
 
   /* FOOTER */
   .bl-footer{text-align:center;font-size:10px;color:var(--muted-2);letter-spacing:1.5px;text-transform:uppercase;padding:40px 0 0}
@@ -151,21 +202,22 @@
     .kpi-row{grid-template-columns:repeat(2,1fr)}
     .grid-2,.grid-3{grid-template-columns:1fr}
     .pass-grid{grid-template-columns:1fr}
-    .bl-logo{height:72px}
-    header.bl-header{padding:24px 28px}
+    .bl-logo{height:84px}
+    header.bl-header{padding:10px 24px}
   }
   @media(max-width:768px){
-    header.bl-header{padding:22px 22px;flex-wrap:wrap;gap:16px;justify-content:center;text-align:center}
-    .bl-logo{height:62px}
-    .bl-header-info{padding-left:0;border-left:none;margin-left:0;border-top:1px solid var(--border);padding-top:14px;margin-top:4px;width:100%;align-items:center}
+    header.bl-header{padding:14px 18px;flex-wrap:wrap;gap:14px;justify-content:center;text-align:center}
+    .bl-header-marca{flex-direction:column;gap:10px;width:100%}
+    .bl-logo{height:74px}
+    .bl-header-info{padding-left:0;border-left:none;border-top:1px solid var(--border);padding-top:10px;align-items:center;width:100%}
     .bl-header-actions{margin-left:0;width:100%;justify-content:center;gap:10px}
-    main{padding:28px 18px 0}
-    .hero{margin-bottom:24px}
-    .hero h2{font-size:30px}
-    .hero p{font-size:13px}
-    .kpi-row{grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+    main{padding:22px 16px 0}
+    .period-bar{padding:12px 14px;gap:10px;margin-bottom:18px}
+    .period-bar-label{font-size:9px;letter-spacing:1.5px;padding-right:4px}
+    .period-chip{font-size:10px;padding:6px 11px}
+    .kpi-row{grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}
     .kpi{padding:18px 16px 16px}
-    .kpi-value{font-size:24px}
+    .kpi-value{font-size:22px}
     .kpi-label{font-size:10px;margin-bottom:10px}
     .kpi-foot{font-size:10px;margin-top:10px}
     .section{padding:20px 18px;margin-bottom:14px}
@@ -183,11 +235,18 @@
     .pass-card{padding:16px}
     .pass-card .name{font-size:13px}
     .pass-card .row{font-size:11px}
+    .bl-modal{padding:10px}
+    .bl-modal-card{max-height:92vh}
+    .bl-modal-head{padding:16px 18px}
+    .bl-modal-head h3{font-size:15px}
+    .bl-modal-body table.bl-table th:first-child,
+    .bl-modal-body table.bl-table td:first-child{padding-left:18px}
+    .bl-modal-body table.bl-table th:last-child,
+    .bl-modal-body table.bl-table td:last-child{padding-right:18px}
   }
   @media(max-width:480px){
-    .bl-logo{height:54px}
-    .bl-header-info h1{font-size:12px;letter-spacing:2px}
-    .hero h2{font-size:26px}
+    .bl-logo{height:62px}
+    .bl-header-info h1{font-size:13px;letter-spacing:1.2px}
     .kpi-row{grid-template-columns:1fr}
     .chart-wrap-tall{height:280px}
     .bl-period{font-size:10px}
@@ -198,34 +257,38 @@
 <body>
 
 <header class="bl-header">
-  <img src="assets/logo_cor_fundo_escuro.png" alt="Beauty Legs" class="bl-logo">
-  <div class="bl-header-info">
-    <h1>Gestão Financeira</h1>
-    <p>Endovascular SP</p>
+  <div class="bl-header-marca">
+    <img src="assets/logo_cor_fundo_escuro.png" alt="Beauty Legs" class="bl-logo">
+    <div class="bl-header-info">
+      <h1>Projeto Fotona</h1>
+      <p>Endovascular SP</p>
+    </div>
   </div>
   <div class="bl-header-actions">
-    <span class="bl-period" id="periodo-label">Set/2025 — Abr/2026</span>
+    <span class="bl-period" id="periodo-label"></span>
     <a href="../hub/Gestor_Hub.html" class="bl-back">← Hub Gestor</a>
   </div>
 </header>
 
 <main>
-  <div class="hero">
-    <h2>Projeto <b>Fotona</b></h2>
-    <p>Acompanhamento da parceria Endovascular SP × Fotona desde outubro/2025. Faturamento, mix de procedimentos, performance dos executores e oportunidades de receita passiva pelo modelo de indicação.</p>
+
+  <!-- Period filter bar -->
+  <div class="period-bar">
+    <span class="period-bar-label">Período</span>
+    <div class="period-chips" id="period-chips"></div>
   </div>
 
   <!-- KPIs -->
   <div class="kpi-row">
     <div class="kpi kpi-accent">
-      <div class="kpi-label">Faturamento <span id="kpi-mes-label"></span></div>
+      <div class="kpi-label" id="kpi-fat-label">Faturamento</div>
       <div class="kpi-value"><span class="currency">R$</span> <b id="kpi-fat-mes"></b></div>
       <div class="kpi-foot" id="kpi-mom"></div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">Acumulado <span id="kpi-acum-label"></span></div>
+      <div class="kpi-label" id="kpi-acum-label">Acumulado</div>
       <div class="kpi-value"><span class="currency">R$</span> <b id="kpi-acum"></b></div>
-      <div class="kpi-foot"><span id="kpi-acum-meses"></span> meses de projeto</div>
+      <div class="kpi-foot" id="kpi-acum-meses"></div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Ticket Médio</div>
@@ -242,7 +305,7 @@
   <!-- FATURAMENTO MENSAL -->
   <div class="section">
     <h3>Faturamento mensal por categoria</h3>
-    <div class="desc">Evolução do faturamento bruto mês a mês, segmentado pelas quatro categorias principais. O crescimento de Set/25 (R$ 23k) para Abr/26 (R$ 196k) representa multiplicação de 8,5×.</div>
+    <div class="desc" id="desc-mensal">Evolução do faturamento bruto mês a mês, segmentado pelas quatro categorias principais.</div>
     <div class="chart-wrap-tall"><canvas id="chart-mensal"></canvas></div>
   </div>
 
@@ -254,6 +317,7 @@
     </div>
     <div class="section">
       <h3>Faturamento por executor</h3>
+      <div class="desc">Clique no nome para abrir os procedimentos do executor.</div>
       <div class="chart-wrap-tall"><canvas id="chart-exec"></canvas></div>
     </div>
   </div>
@@ -262,12 +326,12 @@
   <div class="grid-2">
     <div class="section">
       <h3>Ranking de indicadores</h3>
-      <div class="desc">42% do faturamento veio de pacientes indicados por médicos. Igor Sincos sozinho é responsável por 51% das indicações.</div>
+      <div class="desc" id="desc-indic"></div>
       <div class="chart-wrap"><canvas id="chart-indic"></canvas></div>
     </div>
     <div class="section">
       <h3>Top procedimentos</h3>
-      <div class="desc">Os 3 procedimentos Beauty Legs / Telangiectasias representam 71% do projeto.</div>
+      <div class="desc" id="desc-proc"></div>
       <table class="bl-table">
         <thead><tr><th>Procedimento</th><th class="num">Qtd</th><th class="num">Faturamento</th></tr></thead>
         <tbody id="tbl-proc"></tbody>
@@ -327,8 +391,29 @@
     </div>
   </div>
 
-  <div class="bl-footer">Beauty Legs by Fotona • Endovascular SP • Piloto v0.1</div>
+  <div class="bl-footer">Beauty Legs by Fotona • Endovascular SP</div>
 </main>
+
+<!-- Drill-down modal -->
+<div class="bl-modal" id="drill-modal" aria-hidden="true">
+  <div class="bl-modal-backdrop" data-close="1"></div>
+  <div class="bl-modal-card">
+    <div class="bl-modal-head">
+      <div>
+        <h3 id="drill-name"></h3>
+        <p id="drill-meta"></p>
+        <div class="stats" id="drill-stats"></div>
+      </div>
+      <button class="bl-modal-close" data-close="1" aria-label="Fechar">×</button>
+    </div>
+    <div class="bl-modal-body">
+      <table class="bl-table">
+        <thead><tr><th>Data</th><th>Paciente</th><th>Procedimento</th><th>Indicador</th><th class="num">Faturamento</th></tr></thead>
+        <tbody id="drill-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script>
 // Auth guard: exige sessão válida do Hub Gestor (mesma regra de admins)
@@ -336,228 +421,519 @@ if (sessionStorage.getItem('gestor_hub_auth') !== '1') {
   window.location.replace('../hub/Gestor_Hub.html');
 }
 
-const DATA = /*PDATA*/{"resumo":{"total_fat":942617.0,"total_liq":836572.5875,"total_qtd":251,"ticket":3755.4462151394423,"fat_curr":196465.0,"fat_prev":200012.00000000006,"mom":-1.7733935963842455,"label_curr":"Abr/26","label_prev":"Mar/26","repasse_fotona":125485.888125,"repasse_clinica":384328.280625,"repasse_exec":297486.45,"repasse_indic":29271.96875,"fat_com_indicador":396475.0,"pct_com_indic":42.061091620456665,"n_meses":8},"by_month":[{"key":"2025-09","label":"Set/25","fat":23000.0,"qtd":2,"vasc":20000.0,"corp":0,"fac":3000.0,"outros":0},{"key":"2025-10","label":"Out/25","fat":97000.0,"qtd":23,"vasc":50000.0,"corp":38500.0,"fac":5000.0,"outros":3500.0},{"key":"2025-11","label":"Nov/25","fat":53540.0,"qtd":12,"vasc":35500.0,"corp":9900.0,"fac":8140.0,"outros":0},{"key":"2025-12","label":"Dez/25","fat":185050.0,"qtd":39,"vasc":61800.0,"corp":90100.0,"fac":21850.0,"outros":11300.0},{"key":"2026-01","label":"Jan/26","fat":102250.0,"qtd":26,"vasc":19500.0,"corp":50500.0,"fac":23700.0,"outros":8550.0},{"key":"2026-02","label":"Fev/26","fat":85300.0,"qtd":33,"vasc":49300.0,"corp":20500.0,"fac":4000.0,"outros":11500.0},{"key":"2026-03","label":"Mar/26","fat":200012.00000000006,"qtd":67,"vasc":63600.0,"corp":98132.00000000004,"fac":25680.0,"outros":12600.0},{"key":"2026-04","label":"Abr/26","fat":196465.0,"qtd":49,"vasc":88000.0,"corp":48500.0,"fac":44940.0,"outros":15025.0}],"by_cat":[{"cat":"Vasculares","fat":387700.0,"qtd":87},{"cat":"Corporal","fat":356132.00000000006,"qtd":91},{"cat":"Faciais","fat":136310.0,"qtd":41},{"cat":"Dores e Inflamações","fat":21725.0,"qtd":11},{"cat":"Embelezamento do Olhar","fat":12500.0,"qtd":5},{"cat":"Tricologia e Remoção de Pelos","fat":10000.0,"qtd":6},{"cat":"Cicatrizes","fat":6750.0,"qtd":6},{"cat":"Lesões Benignas","fat":4700.0,"qtd":1},{"cat":"Íntimo","fat":3500.0,"qtd":1},{"cat":"Saúde do Sono","fat":2500.0,"qtd":1},{"cat":"Unhas e Verrugas","fat":800.0,"qtd":1}],"by_exec":[{"exec":"Igor Rafael Sincos","fat":392149.9999999999,"qtd":89,"role":"vascular"},{"exec":"Juliana Olimpio de Paula","fat":383957.00000000006,"qtd":105,"role":"fisio"},{"exec":"Christiane Sayuri Lopes Inoue","fat":108260.0,"qtd":43,"role":"dermato"},{"exec":"NÃO REALIZOU O PROCEDIMENTO AINDA","fat":33000.0,"qtd":4,"role":"pendente"},{"exec":"João Fukuda","fat":13500.0,"qtd":5,"role":"vascular"},{"exec":"Manoel Augusto Lobato","fat":11750.0,"qtd":5,"role":"vascular"}],"by_indicador":[{"ind":"(Sem indicador)","fat":546141.9999999999,"qtd":157,"repasse":0.0},{"ind":"Igor Rafael Sincos","fat":202300.0,"qtd":43,"repasse":17954.125},{"ind":"Juliana Olimpio de Paula","fat":72650.0,"qtd":21,"repasse":532.5},{"ind":"Christiane Sayuri Lopes Inoue","fat":41050.0,"qtd":14,"repasse":3643.1875},{"ind":"Simone Matsuda Torricelli","fat":22000.0,"qtd":4,"repasse":1952.5},{"ind":"Daniela Viese Roth","fat":17700.0,"qtd":3,"repasse":1570.875},{"ind":"Clara Silva Freitas","fat":16000.0,"qtd":3,"repasse":1420.0},{"ind":"João Fukuda","fat":11925.0,"qtd":3,"repasse":1058.34375},{"ind":"SEM INDICAÇÃO","fat":10350.0,"qtd":2,"repasse":918.5625},{"ind":"Carolina Mardegan","fat":2500.0,"qtd":1,"repasse":221.875}],"by_proc":[{"proc":"Corporal - Beauty Legs","fat":280013.28,"qtd":64},{"proc":"Vasculares - Telangiectasias","fat":206750.0,"qtd":51},{"proc":"Vasculares - Beauty Legs","fat":180950.0,"qtd":36},{"proc":"Faciais - Fotona 6D","fat":42250.0,"qtd":8},{"proc":"Faciais - Fotona 4D","fat":41290.0,"qtd":9},{"proc":"Corporal - TensorTight (Áreas grandes)","fat":37500.0,"qtd":10},{"proc":"Faciais - Fotona 5D","fat":24500.0,"qtd":5},{"proc":"Corporal - ThermoLipólise","fat":21418.72,"qtd":9},{"proc":"Dores e Inflamações - Fotobiomodulação","fat":20425.0,"qtd":10},{"proc":"Faciais - Véu de Noiva","fat":18770.0,"qtd":17},{"proc":"Corporal - TightSculpting","fat":13600.0,"qtd":6},{"proc":"Embelezamento do Olhar - SmoothEyes","fat":12500.0,"qtd":5},{"proc":"Tricologia e Remoção de Pelos - HairEstart","fat":10000.0,"qtd":6},{"proc":"Cicatrizes - Cicatrizes Atróficas","fat":6750.0,"qtd":6},{"proc":"Faciais - Fotona 6D - Men","fat":6500.0,"qtd":1}],"exec_cat":{"Vasculares":{"Igor Rafael Sincos":336450.0,"Juliana Olimpio de Paula":26000.0,"João Fukuda":13500.0,"Manoel Augusto Lobato":11750.0},"Íntimo":{"Juliana Olimpio de Paula":3500.0},"Corporal":{"Juliana Olimpio de Paula":236632.00000000003,"NÃO REALIZOU O PROCEDIMENTO AINDA":33000.0,"Christiane Sayuri Lopes Inoue":34800.0,"Igor Rafael Sincos":51700.0},"Faciais":{"Christiane Sayuri Lopes Inoue":59210.0,"Juliana Olimpio de Paula":73100.0,"Igor Rafael Sincos":4000.0},"Dores e Inflamações":{"Juliana Olimpio de Paula":21725.0},"Unhas e Verrugas":{"Juliana Olimpio de Paula":800.0},"Embelezamento do Olhar":{"Juliana Olimpio de Paula":5000.0,"Christiane Sayuri Lopes Inoue":7500.0},"Cicatrizes":{"Christiane Sayuri Lopes Inoue":6750.0},"Tricologia e Remoção de Pelos":{"Juliana Olimpio de Paula":10000.0},"Lesões Benignas":{"Juliana Olimpio de Paula":4700.0},"Saúde do Sono":{"Juliana Olimpio de Paula":2500.0}},"passive_vasc":{"Igor Rafael Sincos":{"indicado_fat":202300.0,"indicado_qtd":43,"ganho_indic":17954.125},"João Fukuda":{"indicado_fat":11925.0,"indicado_qtd":3,"ganho_indic":1058.34375}},"exec_role":{"Igor Rafael Sincos":"vascular","João Fukuda":"vascular","Manoel Augusto Lobato":"vascular","Christiane Sayuri Lopes Inoue":"dermato","Juliana Olimpio de Paula":"fisio","NÃO REALIZOU O PROCEDIMENTO AINDA":"pendente"}};
+const DATA = /*PDATA*/{"raw":[{"data":"2025-10-20","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Cristina Fiorezzi de Luizi","executor":"Igor Rafael Sincos","indicador":"","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":1597.5,"rep_indic":0.0,"rep_clinica":665.62},{"data":"2025-10-20","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Cristina Fiorezzi de Luizi","executor":"Igor Rafael Sincos","indicador":"","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":1597.5,"rep_indic":0.0,"rep_clinica":665.62},{"data":"2025-09-12","pkey":"2025-09","mes":"Setembro","ano":2025,"paciente":"Yolanda Mariê Firmiano dos Santos","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":20000.0,"fat_bruto":20000.0,"imposto":2250.0,"valor_liq":17750.0,"rep_fotona":2662.5,"rep_exec":10650.0,"rep_indic":0.0,"rep_clinica":4437.5},{"data":"2025-10-06","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Flávia Aparecida Chammas","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2025-10-06","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Flávia Aparecida Chammas","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2025-10-06","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Flávia Aparecida Chammas","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2025-10-13","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Ananda Caroline Lopes Soares Leite","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Íntimo - ProlapLase","categoria":"Íntimo","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":0.0,"rep_indic":310.62,"rep_clinica":2329.69},{"data":"2025-10-13","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Beatriz Weber","executor":"Juliana Olimpio de Paula","indicador":"Clara Silva Freitas","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":0.0,"rep_indic":443.75,"rep_clinica":3328.12},{"data":"2025-10-13","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Beatriz Weber","executor":"Juliana Olimpio de Paula","indicador":"Clara Silva Freitas","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":0.0,"rep_indic":443.75,"rep_clinica":3328.12},{"data":"2025-10-20","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Cristina Fiorezzi de Luizi","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4500.0,"fat_bruto":4500.0,"imposto":506.25,"valor_liq":3993.75,"rep_fotona":599.06,"rep_exec":0.0,"rep_indic":399.38,"rep_clinica":2995.31},{"data":"2025-10-20","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Cristina Fiorezzi de Luizi","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4500.0,"fat_bruto":4500.0,"imposto":506.25,"valor_liq":3993.75,"rep_fotona":599.06,"rep_exec":0.0,"rep_indic":399.38,"rep_clinica":2995.31},{"data":"2025-10-20","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Cristina Fiorezzi de Luizi","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4500.0,"fat_bruto":4500.0,"imposto":506.25,"valor_liq":3993.75,"rep_fotona":599.06,"rep_exec":0.0,"rep_indic":399.38,"rep_clinica":2995.31},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Fernanda Raquel Constantino","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"FOTONA","procedimento":"Corporal - TightSculpting","categoria":"Corporal","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1508.75},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Fernanda Raquel Constantino","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"FOTONA","procedimento":"Corporal - TightSculpting","categoria":"Corporal","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1508.75},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Fernanda Raquel Constantino","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"FOTONA","procedimento":"Corporal - TightSculpting","categoria":"Corporal","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1508.75},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Fernanda Raquel Constantino","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"FOTONA","procedimento":"Corporal - TightSculpting","categoria":"Corporal","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1508.75},{"data":"2025-10-29","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Cindy Mayumi Kisine","executor":"Juliana Olimpio de Paula","indicador":"Clara Silva Freitas","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":0.0,"rep_indic":532.5,"rep_clinica":3993.75},{"data":"2025-09-16","pkey":"2025-09","mes":"Setembro","ano":2025,"paciente":"Carolina Monteiro Barbosa","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":1597.5,"rep_indic":0.0,"rep_clinica":665.62},{"data":"2025-10-31","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Patrícia Travassos Pereira da Silva Slomp","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2025-11-05","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Elisabeth Lopes Sonagere","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4950.0,"fat_bruto":4950.0,"imposto":556.88,"valor_liq":4393.12,"rep_fotona":658.97,"rep_exec":0.0,"rep_indic":439.31,"rep_clinica":3294.84},{"data":"2025-11-05","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Elisabeth Lopes Sonagere","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4950.0,"fat_bruto":4950.0,"imposto":556.88,"valor_liq":4393.12,"rep_fotona":658.97,"rep_exec":0.0,"rep_indic":439.31,"rep_clinica":3294.84},{"data":"2025-10-02","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Marina Rocha Milazzotto da Costa","executor":"Juliana Olimpio de Paula","indicador":"Simone Matsuda Torricelli","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":4500.0,"fat_bruto":4500.0,"imposto":506.25,"valor_liq":3993.75,"rep_fotona":599.06,"rep_exec":0.0,"rep_indic":399.38,"rep_clinica":2995.31},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Yolanda Mariê Firmiano dos Santos","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":0.0,"rep_indic":443.75,"rep_clinica":3328.12},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Yolanda Mariê Firmiano dos Santos","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":0.0,"rep_indic":443.75,"rep_clinica":3328.12},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Yolanda Mariê Firmiano dos Santos","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":0.0,"rep_indic":443.75,"rep_clinica":3328.12},{"data":"2025-11-14","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Thais de Carvalho Lessa","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":5140.0,"fat_bruto":5140.0,"imposto":578.25,"valor_liq":4561.75,"rep_fotona":684.26,"rep_exec":2737.05,"rep_indic":0.0,"rep_clinica":1140.44},{"data":"2025-11-15","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Flavio Roberto Silva Rodrigues","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"FOTONA","procedimento":"Faciais - Fotona 4D - Men","categoria":"Faciais","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":1597.5,"rep_indic":0.0,"rep_clinica":665.62},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Yolanda Mariê Firmiano dos Santos","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":0.0,"rep_indic":443.75,"rep_clinica":3328.12},{"data":"2025-11-10","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Renato Dell Aquila Mussa","executor":"Igor Rafael Sincos","indicador":"","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2025-11-18","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Mariana Ferreira Souza Orberg","executor":"João Fukuda","indicador":"","tabela":"FOTONA","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":1597.5,"rep_indic":0.0,"rep_clinica":665.62},{"data":"2025-11-17","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Camila Perez Bisigati Cantizani","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":4500.0,"fat_bruto":4500.0,"imposto":506.25,"valor_liq":3993.75,"rep_fotona":599.06,"rep_exec":2396.25,"rep_indic":0.0,"rep_clinica":998.44},{"data":"2025-11-17","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Camila Perez Bisigati Cantizani","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":4500.0,"fat_bruto":4500.0,"imposto":506.25,"valor_liq":3993.75,"rep_fotona":599.06,"rep_exec":2396.25,"rep_indic":0.0,"rep_clinica":998.44},{"data":"2025-11-26","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Manuela Mendes Soares","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2025-11-26","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Manuela Mendes Soares","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2025-11-26","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Manuela Mendes Soares","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2025-11-01","pkey":"2025-11","mes":"Novembro","ano":2025,"paciente":"Juliana Duran de Souza","executor":"Igor Rafael Sincos","indicador":"","tabela":"Cirurgia na clínica","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":0.0,"rep_clinica":776.56},{"data":"2025-10-09","pkey":"2025-10","mes":"Outubro","ano":2025,"paciente":"Ariane Santos de Oliveira","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":221.88,"rep_clinica":1664.06},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Aline Lopes","executor":"João Fukuda","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Aline Lopes","executor":"João Fukuda","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Ana Paula Fortes Teodoro","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":1000.0,"fat_bruto":1000.0,"imposto":112.5,"valor_liq":887.5,"rep_fotona":133.12,"rep_exec":0.0,"rep_indic":88.75,"rep_clinica":665.62},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Ana Paula Fortes Teodoro","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":1000.0,"fat_bruto":1000.0,"imposto":112.5,"valor_liq":887.5,"rep_fotona":133.12,"rep_exec":0.0,"rep_indic":88.75,"rep_clinica":665.62},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Daniela Cariello","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":20000.0,"fat_bruto":20000.0,"imposto":2250.0,"valor_liq":17750.0,"rep_fotona":2662.5,"rep_exec":10650.0,"rep_indic":0.0,"rep_clinica":4437.5},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Daniela Cariello","executor":"NÃO REALIZOU O PROCEDIMENTO AINDA","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":8250.0,"fat_bruto":8250.0,"imposto":928.12,"valor_liq":7321.88,"rep_fotona":1098.28,"rep_exec":4393.12,"rep_indic":732.19,"rep_clinica":1098.28},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Daniela Cariello","executor":"NÃO REALIZOU O PROCEDIMENTO AINDA","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":8250.0,"fat_bruto":8250.0,"imposto":928.12,"valor_liq":7321.88,"rep_fotona":1098.28,"rep_exec":4393.12,"rep_indic":732.19,"rep_clinica":1098.28},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Daniela Cariello","executor":"NÃO REALIZOU O PROCEDIMENTO AINDA","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":8250.0,"fat_bruto":8250.0,"imposto":928.12,"valor_liq":7321.88,"rep_fotona":1098.28,"rep_exec":4393.12,"rep_indic":732.19,"rep_clinica":1098.28},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Daniela Cariello","executor":"NÃO REALIZOU O PROCEDIMENTO AINDA","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":8250.0,"fat_bruto":8250.0,"imposto":928.12,"valor_liq":7321.88,"rep_fotona":1098.28,"rep_exec":4393.12,"rep_indic":732.19,"rep_clinica":1098.28},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Daniela Viese Roth","executor":"Juliana Olimpio de Paula","indicador":"SEM INDICAÇÃO","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":3850.0,"fat_bruto":3850.0,"imposto":433.12,"valor_liq":3416.88,"rep_fotona":512.53,"rep_exec":0.0,"rep_indic":341.69,"rep_clinica":2562.66},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Débora Seixas Priolli da Cunha","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Débora Seixas Priolli da Cunha","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":0.0,"rep_indic":443.75,"rep_clinica":3328.12},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Evelyne Yahchouchi","executor":"Manoel Augusto Lobato","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2250.0,"fat_bruto":2250.0,"imposto":253.12,"valor_liq":1996.88,"rep_fotona":299.53,"rep_exec":1198.12,"rep_indic":0.0,"rep_clinica":499.22},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Fernanda Borges Silva Barbosa","executor":"Juliana Olimpio de Paula","indicador":"Daniela Viese Roth","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 5D","categoria":"Faciais","valor":4200.0,"fat_bruto":4200.0,"imposto":472.5,"valor_liq":3727.5,"rep_fotona":559.12,"rep_exec":0.0,"rep_indic":372.75,"rep_clinica":2795.62},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Flávia Aparecida Chammas","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Flávia Aparecida Chammas","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Unhas e Verrugas - ClearSteps","categoria":"Unhas e Verrugas","valor":800.0,"fat_bruto":800.0,"imposto":90.0,"valor_liq":710.0,"rep_fotona":106.5,"rep_exec":0.0,"rep_indic":71.0,"rep_clinica":532.5},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Flávia Valero Nobre","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":0.0,"rep_clinica":554.69},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Flávia Valero Nobre","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - TightSculpting","categoria":"Corporal","valor":2800.0,"fat_bruto":2800.0,"imposto":315.0,"valor_liq":2485.0,"rep_fotona":372.75,"rep_exec":0.0,"rep_indic":248.5,"rep_clinica":1863.75},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Flávia Valero Nobre","executor":"Christiane Sayuri Lopes Inoue","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - TightSculpting","categoria":"Corporal","valor":2800.0,"fat_bruto":2800.0,"imposto":315.0,"valor_liq":2485.0,"rep_fotona":372.75,"rep_exec":1491.0,"rep_indic":248.5,"rep_clinica":372.75},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Flávia Valero Nobre","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Embelezamento do Olhar - SmoothEyes","categoria":"Embelezamento do Olhar","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":221.88,"rep_clinica":1664.06},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Isalda Regina Biral","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3600.0,"fat_bruto":3600.0,"imposto":405.0,"valor_liq":3195.0,"rep_fotona":479.25,"rep_exec":1917.0,"rep_indic":0.0,"rep_clinica":798.75},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Isalda Regina Biral","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3600.0,"fat_bruto":3600.0,"imposto":405.0,"valor_liq":3195.0,"rep_fotona":479.25,"rep_exec":1917.0,"rep_indic":0.0,"rep_clinica":798.75},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Isalda Regina Biral","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3600.0,"fat_bruto":3600.0,"imposto":405.0,"valor_liq":3195.0,"rep_fotona":479.25,"rep_exec":1917.0,"rep_indic":0.0,"rep_clinica":798.75},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Isalda Regina Biral","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3600.0,"fat_bruto":3600.0,"imposto":405.0,"valor_liq":3195.0,"rep_fotona":479.25,"rep_exec":1917.0,"rep_indic":0.0,"rep_clinica":798.75},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Juliana Duran de Souza","executor":"Igor Rafael Sincos","indicador":"","tabela":"Cirurgia na clínica","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":0.0,"rep_clinica":776.56},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Juliana Duran de Souza","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":0.0,"rep_indic":310.62,"rep_clinica":2329.69},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Juliana Duran de Souza","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D - Men","categoria":"Faciais","valor":6500.0,"fat_bruto":6500.0,"imposto":731.25,"valor_liq":5768.75,"rep_fotona":865.31,"rep_exec":0.0,"rep_indic":576.88,"rep_clinica":4326.56},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Larissa Lopes Siva Scholte","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":900.0,"fat_bruto":900.0,"imposto":101.25,"valor_liq":798.75,"rep_fotona":119.81,"rep_exec":479.25,"rep_indic":79.88,"rep_clinica":119.81},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Maria Caroline Marques Gonzaga","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":2150.0,"fat_bruto":2150.0,"imposto":241.88,"valor_liq":1908.12,"rep_fotona":286.22,"rep_exec":1144.88,"rep_indic":0.0,"rep_clinica":477.03},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Maria Caroline Marques Gonzaga","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":10000.0,"fat_bruto":10000.0,"imposto":1125.0,"valor_liq":8875.0,"rep_fotona":1331.25,"rep_exec":0.0,"rep_indic":887.5,"rep_clinica":6656.25},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Mariana Ferreira Souza Orberg","executor":"João Fukuda","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":1597.5,"rep_indic":0.0,"rep_clinica":665.62},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Mariana Ferreira Souza Orberg","executor":"Juliana Olimpio de Paula","indicador":"João Fukuda","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":9000.0,"fat_bruto":9000.0,"imposto":1012.5,"valor_liq":7987.5,"rep_fotona":1198.12,"rep_exec":0.0,"rep_indic":798.75,"rep_clinica":5990.62},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Marina Ferreira Souza de Faria","executor":"Juliana Olimpio de Paula","indicador":"SEM INDICAÇÃO","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":6500.0,"fat_bruto":6500.0,"imposto":731.25,"valor_liq":5768.75,"rep_fotona":865.31,"rep_exec":0.0,"rep_indic":576.88,"rep_clinica":4326.56},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Martha Beatriz de Batista Ramos","executor":"Juliana Olimpio de Paula","indicador":"Daniela Viese Roth","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D","categoria":"Faciais","valor":5500.0,"fat_bruto":5500.0,"imposto":618.75,"valor_liq":4881.25,"rep_fotona":732.19,"rep_exec":0.0,"rep_indic":488.12,"rep_clinica":3660.94},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Martha Beatriz de Batista Ramos","executor":"Juliana Olimpio de Paula","indicador":"Daniela Viese Roth","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":8000.0,"fat_bruto":8000.0,"imposto":900.0,"valor_liq":7100.0,"rep_fotona":1065.0,"rep_exec":0.0,"rep_indic":710.0,"rep_clinica":5325.0},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Nathalia Bosembecker Thiel","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":900.0,"fat_bruto":900.0,"imposto":101.25,"valor_liq":798.75,"rep_fotona":119.81,"rep_exec":479.25,"rep_indic":79.88,"rep_clinica":119.81},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Solange Menck","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":1597.5,"rep_indic":266.25,"rep_clinica":399.38},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Solange Menck","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":6500.0,"fat_bruto":6500.0,"imposto":731.25,"valor_liq":5768.75,"rep_fotona":865.31,"rep_exec":3461.25,"rep_indic":576.88,"rep_clinica":865.31},{"data":"2025-12-01","pkey":"2025-12","mes":"Dezembro","ano":2025,"paciente":"Vera Lucia Stancanelli","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":0.0,"rep_indic":532.5,"rep_clinica":3993.75},{"data":"2026-01-06","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Luiza Helena Acerbi Caram","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":900.0,"fat_bruto":900.0,"imposto":101.25,"valor_liq":798.75,"rep_fotona":119.81,"rep_exec":479.25,"rep_indic":79.88,"rep_clinica":119.81},{"data":"2026-01-06","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Isabel Fatima Bordini","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":900.0,"fat_bruto":900.0,"imposto":101.25,"valor_liq":798.75,"rep_fotona":119.81,"rep_exec":479.25,"rep_indic":79.88,"rep_clinica":119.81},{"data":"2026-01-15","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Débora Dutra de Oliveira Bonfá","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":7500.0,"fat_bruto":7500.0,"imposto":843.75,"valor_liq":6656.25,"rep_fotona":998.44,"rep_exec":0.0,"rep_indic":665.62,"rep_clinica":4992.19},{"data":"2026-01-16","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Isabella Maria Araujo de Queiroz","executor":"Christiane Sayuri Lopes Inoue","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4200.0,"fat_bruto":4200.0,"imposto":472.5,"valor_liq":3727.5,"rep_fotona":559.12,"rep_exec":2236.5,"rep_indic":372.75,"rep_clinica":559.12},{"data":"2026-01-16","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Isabella Maria Araujo de Queiroz","executor":"Christiane Sayuri Lopes Inoue","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4200.0,"fat_bruto":4200.0,"imposto":472.5,"valor_liq":3727.5,"rep_fotona":559.12,"rep_exec":2236.5,"rep_indic":372.75,"rep_clinica":559.12},{"data":"2026-01-16","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Isabella Maria Araujo de Queiroz","executor":"Christiane Sayuri Lopes Inoue","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4200.0,"fat_bruto":4200.0,"imposto":472.5,"valor_liq":3727.5,"rep_fotona":559.12,"rep_exec":2236.5,"rep_indic":372.75,"rep_clinica":559.12},{"data":"2026-01-16","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Isabella Maria Araujo de Queiroz","executor":"Christiane Sayuri Lopes Inoue","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4200.0,"fat_bruto":4200.0,"imposto":472.5,"valor_liq":3727.5,"rep_fotona":559.12,"rep_exec":2236.5,"rep_indic":372.75,"rep_clinica":559.12},{"data":"2026-01-16","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Isabella Maria Araujo de Queiroz","executor":"Christiane Sayuri Lopes Inoue","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":4200.0,"fat_bruto":4200.0,"imposto":472.5,"valor_liq":3727.5,"rep_fotona":559.12,"rep_exec":2236.5,"rep_indic":372.75,"rep_clinica":559.12},{"data":"2026-01-21","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Debora Silvia Marshall","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":5500.0,"fat_bruto":5500.0,"imposto":618.75,"valor_liq":4881.25,"rep_fotona":732.19,"rep_exec":2928.75,"rep_indic":488.12,"rep_clinica":732.19},{"data":"2026-01-21","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Giovanni Battista Magistrini Spinelli Junior","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":443.75,"rep_clinica":665.62},{"data":"2026-01-21","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Giovanni Battista Magistrini Spinelli Junior","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":443.75,"rep_clinica":665.62},{"data":"2026-01-01","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Adriana Bueno de Souza Guerrero","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":5500.0,"fat_bruto":5500.0,"imposto":618.75,"valor_liq":4881.25,"rep_fotona":732.19,"rep_exec":2928.75,"rep_indic":488.12,"rep_clinica":732.19},{"data":"2026-01-23","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Evandro de Carvalho Cruz Junior","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":900.0,"fat_bruto":900.0,"imposto":101.25,"valor_liq":798.75,"rep_fotona":119.81,"rep_exec":479.25,"rep_indic":79.88,"rep_clinica":119.81},{"data":"2026-01-26","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Joyce Rodrigues dos Santos","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Embelezamento do Olhar - SmoothEyes","categoria":"Embelezamento do Olhar","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":221.88,"rep_clinica":332.81},{"data":"2026-01-26","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Joyce Rodrigues dos Santos","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Embelezamento do Olhar - SmoothEyes","categoria":"Embelezamento do Olhar","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":221.88,"rep_clinica":332.81},{"data":"2026-01-26","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Marina Ferreira Souza de Faria","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":0.0,"rep_indic":310.62,"rep_clinica":2329.69},{"data":"2026-01-28","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Angelica Vieira de Arruda","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":0.0,"rep_indic":310.62,"rep_clinica":2329.69},{"data":"2026-01-28","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Angelica Vieira de Arruda","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Embelezamento do Olhar - SmoothEyes","categoria":"Embelezamento do Olhar","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":221.88,"rep_clinica":1664.06},{"data":"2026-01-28","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Angelica Vieira de Arruda","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":5500.0,"fat_bruto":5500.0,"imposto":618.75,"valor_liq":4881.25,"rep_fotona":732.19,"rep_exec":0.0,"rep_indic":488.12,"rep_clinica":3660.94},{"data":"2026-01-28","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Angelica Vieira de Arruda","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":0.0,"rep_indic":310.62,"rep_clinica":2329.69},{"data":"2026-01-28","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Gustavo Carneiro Resstel","executor":"Christiane Sayuri Lopes Inoue","indicador":"Christiane Sayuri Lopes Inoue","tabela":"PARTICULAR","procedimento":"Cicatrizes - Cicatrizes Atróficas","categoria":"Cicatrizes","valor":1050.0,"fat_bruto":1050.0,"imposto":118.12,"valor_liq":931.88,"rep_fotona":139.78,"rep_exec":559.12,"rep_indic":93.19,"rep_clinica":139.78},{"data":"2026-01-30","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Tatiana Ramos de Almeida","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":0.0,"rep_indic":310.62,"rep_clinica":2329.69},{"data":"2026-01-30","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Luciana Steiner Rejtman Weiser","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":221.88,"rep_clinica":1664.06},{"data":"2026-01-16","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Isabella Maria Araujo de Queiroz","executor":"Igor Rafael Sincos","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":8000.0,"fat_bruto":8000.0,"imposto":900.0,"valor_liq":7100.0,"rep_fotona":1065.0,"rep_exec":4260.0,"rep_indic":710.0,"rep_clinica":1065.0},{"data":"2026-01-16","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Isabella Maria Araujo de Queiroz","executor":"Igor Rafael Sincos","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":8000.0,"fat_bruto":8000.0,"imposto":900.0,"valor_liq":7100.0,"rep_fotona":1065.0,"rep_exec":4260.0,"rep_indic":710.0,"rep_clinica":1065.0},{"data":"2026-01-30","pkey":"2026-01","mes":"Janeiro","ano":2026,"paciente":"Tatiana Ramos de Almeida","executor":"Igor Rafael Sincos","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":310.62,"rep_clinica":465.94},{"data":"2026-02-01","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Juliana Gimenes da Silva","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":2200.0,"fat_bruto":2200.0,"imposto":247.5,"valor_liq":1952.5,"rep_fotona":292.88,"rep_exec":1171.5,"rep_indic":0.0,"rep_clinica":488.12},{"data":"2026-02-03","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Carolina Monteiro Barbosa","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":900.0,"fat_bruto":900.0,"imposto":101.25,"valor_liq":798.75,"rep_fotona":119.81,"rep_exec":479.25,"rep_indic":0.0,"rep_clinica":199.69},{"data":"2026-02-04","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Sara Barbosa Franco","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Embelezamento do Olhar - SmoothEyes","categoria":"Embelezamento do Olhar","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":0.0,"rep_clinica":554.69},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Renata Scavone Kerr Aslan de Gennaro","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Cicatrizes - Cicatrizes Atróficas","categoria":"Cicatrizes","valor":1125.0,"fat_bruto":1125.0,"imposto":126.56,"valor_liq":998.44,"rep_fotona":149.77,"rep_exec":599.06,"rep_indic":0.0,"rep_clinica":249.61},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Renata Scavone Kerr Aslan de Gennaro","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Cicatrizes - Cicatrizes Atróficas","categoria":"Cicatrizes","valor":1125.0,"fat_bruto":1125.0,"imposto":126.56,"valor_liq":998.44,"rep_fotona":149.77,"rep_exec":599.06,"rep_indic":0.0,"rep_clinica":249.61},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Renata Scavone Kerr Aslan de Gennaro","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Cicatrizes - Cicatrizes Atróficas","categoria":"Cicatrizes","valor":1125.0,"fat_bruto":1125.0,"imposto":126.56,"valor_liq":998.44,"rep_fotona":149.77,"rep_exec":599.06,"rep_indic":0.0,"rep_clinica":249.61},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Renata Scavone Kerr Aslan de Gennaro","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Cicatrizes - Cicatrizes Atróficas","categoria":"Cicatrizes","valor":1125.0,"fat_bruto":1125.0,"imposto":126.56,"valor_liq":998.44,"rep_fotona":149.77,"rep_exec":599.06,"rep_indic":0.0,"rep_clinica":249.61},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Agostina Rosa Pavesi","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1131.56},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Agostina Rosa Pavesi","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1131.56},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Agostina Rosa Pavesi","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1131.56},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Claudia Elaine Gonçalves Moraes","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":2263.12},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Claudia Elaine Gonçalves Moraes","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":0.0,"rep_indic":266.25,"rep_clinica":1996.88},{"data":"2026-02-09","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Tatiana Ramos de Almeida","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1885.94},{"data":"2026-02-09","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Gabriela Munchoz Pachenki","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":900.0,"fat_bruto":900.0,"imposto":101.25,"valor_liq":798.75,"rep_fotona":119.81,"rep_exec":479.25,"rep_indic":0.0,"rep_clinica":199.69},{"data":"2026-02-20","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Raquel Sartini","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":2263.12},{"data":"2026-02-20","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Raquel Sartini","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":2263.12},{"data":"2026-02-20","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Raquel Sartini","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":2263.12},{"data":"2026-02-20","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Raquel Sartini","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":2263.12},{"data":"2026-02-05","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Ana Paula Leal","executor":"Manoel Augusto Lobato","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":0.0,"rep_clinica":776.56},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Agostina Rosa Pavesi","executor":"Manoel Augusto Lobato","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Agostina Rosa Pavesi","executor":"Manoel Augusto Lobato","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Agostina Rosa Pavesi","executor":"Manoel Augusto Lobato","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Claudia Elaine Gonçalves Moraes","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":0.0,"rep_clinica":776.56},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Claudia Elaine Gonçalves Moraes","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":0.0,"rep_clinica":776.56},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Claudia Elaine Gonçalves Moraes","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":0.0,"rep_clinica":776.56},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Claudia Elaine Gonçalves Moraes","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":0.0,"rep_clinica":776.56},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Maria Izabel Whately Neves","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Maria Izabel Whately Neves","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2026-02-06","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Maria Izabel Whately Neves","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2026-02-10","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Angelica Vieira de Arruda","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3000.0,"fat_bruto":3000.0,"imposto":337.5,"valor_liq":2662.5,"rep_fotona":399.38,"rep_exec":1597.5,"rep_indic":0.0,"rep_clinica":665.62},{"data":"2026-02-25","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Margarete Santos Silva","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3600.0,"fat_bruto":3600.0,"imposto":405.0,"valor_liq":3195.0,"rep_fotona":479.25,"rep_exec":1917.0,"rep_indic":0.0,"rep_clinica":798.75},{"data":"2026-02-25","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Margarete Santos Silva","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3600.0,"fat_bruto":3600.0,"imposto":405.0,"valor_liq":3195.0,"rep_fotona":479.25,"rep_exec":1917.0,"rep_indic":0.0,"rep_clinica":798.75},{"data":"2026-02-25","pkey":"2026-02","mes":"Fevereiro","ano":2026,"paciente":"Margarete Santos Silva","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3600.0,"fat_bruto":3600.0,"imposto":405.0,"valor_liq":3195.0,"rep_fotona":479.25,"rep_exec":1917.0,"rep_indic":0.0,"rep_clinica":798.75},{"data":"2026-03-11","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Giordana Ligia Zamboni","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":0.0,"rep_clinica":554.69},{"data":"2026-03-11","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Giordana Ligia Zamboni","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":0.0,"rep_clinica":554.69},{"data":"2026-03-11","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Giordana Ligia Zamboni","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":0.0,"rep_clinica":554.69},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2026-03-02","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Leandra de Oliveira Caires","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2026-03-02","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Leandra de Oliveira Caires","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2026-03-02","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Leandra de Oliveira Caires","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":5000.0,"fat_bruto":5000.0,"imposto":562.5,"valor_liq":4437.5,"rep_fotona":665.62,"rep_exec":2662.5,"rep_indic":0.0,"rep_clinica":1109.38},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":0.0,"rep_clinica":554.69},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":0.0,"rep_clinica":554.69},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":1331.25,"rep_indic":0.0,"rep_clinica":554.69},{"data":"2026-03-05","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Rhayad Maria de Vitto Mizuno","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3375.0,"fat_bruto":3375.0,"imposto":379.69,"valor_liq":2995.31,"rep_fotona":449.3,"rep_exec":1797.19,"rep_indic":0.0,"rep_clinica":748.83},{"data":"2026-03-05","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Rhayad Maria de Vitto Mizuno","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3375.0,"fat_bruto":3375.0,"imposto":379.69,"valor_liq":2995.31,"rep_fotona":449.3,"rep_exec":1797.19,"rep_indic":0.0,"rep_clinica":748.83},{"data":"2026-03-05","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Rhayad Maria de Vitto Mizuno","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3375.0,"fat_bruto":3375.0,"imposto":379.69,"valor_liq":2995.31,"rep_fotona":449.3,"rep_exec":1797.19,"rep_indic":0.0,"rep_clinica":748.83},{"data":"2026-03-05","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Rhayad Maria de Vitto Mizuno","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3375.0,"fat_bruto":3375.0,"imposto":379.69,"valor_liq":2995.31,"rep_fotona":449.3,"rep_exec":1797.19,"rep_indic":0.0,"rep_clinica":748.83},{"data":"2026-02-23","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Lilyan Helediane Sentechem Belli","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":1700.0,"fat_bruto":1700.0,"imposto":191.25,"valor_liq":1508.75,"rep_fotona":226.31,"rep_exec":905.25,"rep_indic":0.0,"rep_clinica":377.19},{"data":"2026-02-23","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Lilyan Helediane Sentechem Belli","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":1700.0,"fat_bruto":1700.0,"imposto":191.25,"valor_liq":1508.75,"rep_fotona":226.31,"rep_exec":905.25,"rep_indic":0.0,"rep_clinica":377.19},{"data":"2026-02-23","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Lilyan Helediane Sentechem Belli","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":1700.0,"fat_bruto":1700.0,"imposto":191.25,"valor_liq":1508.75,"rep_fotona":226.31,"rep_exec":905.25,"rep_indic":0.0,"rep_clinica":377.19},{"data":"2026-02-23","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Lilyan Helediane Sentechem Belli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4900.0,"fat_bruto":4900.0,"imposto":551.25,"valor_liq":4348.75,"rep_fotona":652.31,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":3696.44},{"data":"2026-02-23","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Lilyan Helediane Sentechem Belli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4900.0,"fat_bruto":4900.0,"imposto":551.25,"valor_liq":4348.75,"rep_fotona":652.31,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":3696.44},{"data":"2026-02-23","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Lilyan Helediane Sentechem Belli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4900.0,"fat_bruto":4900.0,"imposto":551.25,"valor_liq":4348.75,"rep_fotona":652.31,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":3696.44},{"data":"2026-03-12","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Vera Lucia Stancanelli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D","categoria":"Faciais","valor":6500.0,"fat_bruto":6500.0,"imposto":731.25,"valor_liq":5768.75,"rep_fotona":865.31,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":4903.44},{"data":"2026-03-12","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Vera Lucia Stancanelli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Tricologia e Remoção de Pelos - HairEstart","categoria":"Tricologia e Remoção de Pelos","valor":1800.0,"fat_bruto":1800.0,"imposto":202.5,"valor_liq":1597.5,"rep_fotona":239.62,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1357.88},{"data":"2026-03-12","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Vera Lucia Stancanelli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Tricologia e Remoção de Pelos - HairEstart","categoria":"Tricologia e Remoção de Pelos","valor":1800.0,"fat_bruto":1800.0,"imposto":202.5,"valor_liq":1597.5,"rep_fotona":239.62,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1357.88},{"data":"2026-03-12","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Vera Lucia Stancanelli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 5D","categoria":"Faciais","valor":5500.0,"fat_bruto":5500.0,"imposto":618.75,"valor_liq":4881.25,"rep_fotona":732.19,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":4149.06},{"data":"2026-03-12","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Vera Lucia Stancanelli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D","categoria":"Faciais","valor":6500.0,"fat_bruto":6500.0,"imposto":731.25,"valor_liq":5768.75,"rep_fotona":865.31,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":4903.44},{"data":"2026-03-12","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Vera Lucia Stancanelli","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Tricologia e Remoção de Pelos - HairEstart","categoria":"Tricologia e Remoção de Pelos","valor":1800.0,"fat_bruto":1800.0,"imposto":202.5,"valor_liq":1597.5,"rep_fotona":239.62,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1357.88},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2867.0,"fat_bruto":2867.0,"imposto":322.54,"valor_liq":2544.46,"rep_fotona":381.67,"rep_exec":1526.68,"rep_indic":0.0,"rep_clinica":636.12},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2866.66,"fat_bruto":2866.66,"imposto":322.5,"valor_liq":2544.16,"rep_fotona":381.62,"rep_exec":1526.5,"rep_indic":0.0,"rep_clinica":636.04},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2866.66,"fat_bruto":2866.66,"imposto":322.5,"valor_liq":2544.16,"rep_fotona":381.62,"rep_exec":1526.5,"rep_indic":0.0,"rep_clinica":636.04},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2866.66,"fat_bruto":2866.66,"imposto":322.5,"valor_liq":2544.16,"rep_fotona":381.62,"rep_exec":1526.5,"rep_indic":0.0,"rep_clinica":636.04},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2866.36,"fat_bruto":2866.36,"imposto":322.47,"valor_liq":2543.89,"rep_fotona":381.58,"rep_exec":1526.34,"rep_indic":0.0,"rep_clinica":635.97},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Daniella Ferreira de Lima","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2866.66,"fat_bruto":2866.66,"imposto":322.5,"valor_liq":2544.16,"rep_fotona":381.62,"rep_exec":1526.5,"rep_indic":0.0,"rep_clinica":636.04},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4166.66,"fat_bruto":4166.66,"imposto":468.75,"valor_liq":3697.91,"rep_fotona":554.69,"rep_exec":2218.75,"rep_indic":0.0,"rep_clinica":924.48},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4166.66,"fat_bruto":4166.66,"imposto":468.75,"valor_liq":3697.91,"rep_fotona":554.69,"rep_exec":2218.75,"rep_indic":0.0,"rep_clinica":924.48},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":4166.68,"fat_bruto":4166.68,"imposto":468.75,"valor_liq":3697.93,"rep_fotona":554.69,"rep_exec":2218.76,"rep_indic":0.0,"rep_clinica":924.48},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2026-03-03","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Thays Souza da Cunha Amorim","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2026-03-04","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Anna Lucia Gonçalves","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1885.94},{"data":"2026-03-06","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Lea Silvia Miranda Torricelli","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 4D","categoria":"Faciais","valor":3300.0,"fat_bruto":3300.0,"imposto":371.25,"valor_liq":2928.75,"rep_fotona":439.31,"rep_exec":1757.25,"rep_indic":0.0,"rep_clinica":732.19},{"data":"2026-03-09","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Luziene Rodrigues Costa","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Lesões Benignas - Lesões Benignas","categoria":"Lesões Benignas","valor":4700.0,"fat_bruto":4700.0,"imposto":528.75,"valor_liq":4171.25,"rep_fotona":625.69,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":3545.56},{"data":"2026-03-09","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Wyane Soares Pereira","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":900.0,"fat_bruto":900.0,"imposto":101.25,"valor_liq":798.75,"rep_fotona":119.81,"rep_exec":479.25,"rep_indic":0.0,"rep_clinica":199.69},{"data":"2026-03-11","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Giordana Ligia Zamboni","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2026-03-11","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Giordana Ligia Zamboni","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2026-03-11","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Giordana Ligia Zamboni","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2026-03-11","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Giordana Ligia Zamboni","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2026-03-12","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Rafaela Dal Pai Melo","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":1000.0,"fat_bruto":1000.0,"imposto":112.5,"valor_liq":887.5,"rep_fotona":133.12,"rep_exec":532.5,"rep_indic":0.0,"rep_clinica":221.88},{"data":"2026-03-13","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Luciana Steiner Rejtman Weiser","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1885.94},{"data":"2026-03-13","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Luciana Steiner Rejtman Weiser","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1131.56},{"data":"2026-03-13","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Tatiana Ramos de Almeida","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1885.94},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":2068.88,"fat_bruto":2068.88,"imposto":232.75,"valor_liq":1836.13,"rep_fotona":275.42,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.71},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":2068.96,"fat_bruto":2068.96,"imposto":232.76,"valor_liq":1836.2,"rep_fotona":275.43,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.77},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":2068.88,"fat_bruto":2068.88,"imposto":232.75,"valor_liq":1836.13,"rep_fotona":275.42,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.71},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2068.88,"fat_bruto":2068.88,"imposto":232.75,"valor_liq":1836.13,"rep_fotona":275.42,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.71},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2068.88,"fat_bruto":2068.88,"imposto":232.75,"valor_liq":1836.13,"rep_fotona":275.42,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.71},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2068.88,"fat_bruto":2068.88,"imposto":232.75,"valor_liq":1836.13,"rep_fotona":275.42,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.71},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2068.88,"fat_bruto":2068.88,"imposto":232.75,"valor_liq":1836.13,"rep_fotona":275.42,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.71},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2068.88,"fat_bruto":2068.88,"imposto":232.75,"valor_liq":1836.13,"rep_fotona":275.42,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.71},{"data":"2026-03-16","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Maria Lucia Perez Ferres Zakia","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2068.88,"fat_bruto":2068.88,"imposto":232.75,"valor_liq":1836.13,"rep_fotona":275.42,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1560.71},{"data":"2026-03-19","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Francisco José Rodrigues Araújo de Sousa","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - ConfortLase","categoria":"Dores e Inflamações","valor":1300.0,"fat_bruto":1300.0,"imposto":146.25,"valor_liq":1153.75,"rep_fotona":173.06,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":980.69},{"data":"2026-03-20","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Ana Paula Leal","executor":"Juliana Olimpio de Paula","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":2612.0,"fat_bruto":2612.0,"imposto":293.85,"valor_liq":2318.15,"rep_fotona":347.72,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1970.43},{"data":"2026-03-05","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Milla Lettieri Junqueira","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":990.0,"fat_bruto":990.0,"imposto":111.38,"valor_liq":878.62,"rep_fotona":131.79,"rep_exec":527.17,"rep_indic":0.0,"rep_clinica":219.66},{"data":"2026-03-24","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Emilia Caram Bordini","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":990.0,"fat_bruto":990.0,"imposto":111.38,"valor_liq":878.62,"rep_fotona":131.79,"rep_exec":527.17,"rep_indic":0.0,"rep_clinica":219.66},{"data":"2026-03-19","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Gregory Bernadino","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Corporal - MicroCoring","categoria":"Corporal","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":798.75,"rep_indic":0.0,"rep_clinica":332.81},{"data":"2026-03-24","pkey":"2026-03","mes":"Março","ano":2026,"paciente":"Gregory Bernadino","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Cicatrizes - Cicatrizes Atróficas","categoria":"Cicatrizes","valor":1200.0,"fat_bruto":1200.0,"imposto":135.0,"valor_liq":1065.0,"rep_fotona":159.75,"rep_exec":639.0,"rep_indic":0.0,"rep_clinica":266.25},{"data":"2026-04-01","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mariela de Faria Rodrigues Moreira Begnami","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":1800.0,"fat_bruto":1800.0,"imposto":202.5,"valor_liq":1597.5,"rep_fotona":239.62,"rep_exec":958.5,"rep_indic":0.0,"rep_clinica":399.38},{"data":"2026-04-01","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Anna Lucia Gonçalves","executor":"Juliana Olimpio de Paula","indicador":"Carolina Mardegan","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":221.88,"rep_clinica":1664.06},{"data":"2026-04-01","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Lauana Ferreira da Silva","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":1800.0,"fat_bruto":1800.0,"imposto":202.5,"valor_liq":1597.5,"rep_fotona":239.62,"rep_exec":958.5,"rep_indic":0.0,"rep_clinica":399.38},{"data":"2026-04-02","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Cristina Farah","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Saúde do Sono - NightLase","categoria":"Saúde do Sono","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1885.94},{"data":"2026-04-02","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Cristina Farah","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 5D","categoria":"Faciais","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":4526.25},{"data":"2026-04-13","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ariane de Assis Reis","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D","categoria":"Faciais","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":2130.0,"rep_indic":0.0,"rep_clinica":887.5},{"data":"2026-04-14","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Tatiana Ramos de Almeida","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":0.0,"rep_indic":133.12,"rep_clinica":998.44},{"data":"2026-04-06","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Cristina Farah","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Tricologia e Remoção de Pelos - HairEstart","categoria":"Tricologia e Remoção de Pelos","valor":1800.0,"fat_bruto":1800.0,"imposto":202.5,"valor_liq":1597.5,"rep_fotona":239.62,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1357.88},{"data":"2026-04-15","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Luciana Steiner Rejtman Weiser","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1131.56},{"data":"2026-04-15","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Luciana Steiner Rejtman Weiser","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":0.0,"fat_bruto":0.0,"imposto":0.0,"valor_liq":0.0,"rep_fotona":0.0,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":0.0},{"data":"2026-04-06","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mônica Farah","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas pequenas)","categoria":"Corporal","valor":2100.0,"fat_bruto":2100.0,"imposto":236.25,"valor_liq":1863.75,"rep_fotona":279.56,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1584.19},{"data":"2026-04-16","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Luciana Aparecida Bonfim Soares Amora","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":1800.0,"fat_bruto":1800.0,"imposto":202.5,"valor_liq":1597.5,"rep_fotona":239.62,"rep_exec":958.5,"rep_indic":0.0,"rep_clinica":399.38},{"data":"2026-04-14","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ione Arrais de Castro Oliveira","executor":"Juliana Olimpio de Paula","indicador":"Igor Rafael Sincos","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":7000.0,"fat_bruto":7000.0,"imposto":787.5,"valor_liq":6212.5,"rep_fotona":931.88,"rep_exec":0.0,"rep_indic":621.25,"rep_clinica":4659.38},{"data":"2026-04-20","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mariana Ferreira Souza Orberg","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1885.94},{"data":"2026-04-20","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mariana Ferreira Souza Orberg","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":10500.0,"fat_bruto":10500.0,"imposto":1181.25,"valor_liq":9318.75,"rep_fotona":1397.81,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":7920.94},{"data":"2026-04-20","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mariana Ferreira Souza Orberg","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":2640.31},{"data":"2026-04-20","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mariana Ferreira Souza Orberg","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":2500.0,"fat_bruto":2500.0,"imposto":281.25,"valor_liq":2218.75,"rep_fotona":332.81,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1885.94},{"data":"2026-04-22","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Andréa Paula Pompermayer","executor":"Juliana Olimpio de Paula","indicador":"Simone Matsuda Torricelli","tabela":"PARTICULAR","procedimento":"Corporal - TensorTight (Áreas grandes)","categoria":"Corporal","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":0.0,"rep_indic":310.62,"rep_clinica":2329.69},{"data":"2026-04-22","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ione Arrais de Castro Oliveira","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D","categoria":"Faciais","valor":5750.0,"fat_bruto":5750.0,"imposto":646.88,"valor_liq":5103.12,"rep_fotona":765.47,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":4337.66},{"data":"2026-04-08","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Carolina Hernandez Tascon","executor":"Juliana Olimpio de Paula","indicador":"Simone Matsuda Torricelli","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":7000.0,"fat_bruto":7000.0,"imposto":787.5,"valor_liq":6212.5,"rep_fotona":931.88,"rep_exec":0.0,"rep_indic":621.25,"rep_clinica":4659.38},{"data":"2026-04-08","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Carolina Hernandez Tascon","executor":"Juliana Olimpio de Paula","indicador":"Simone Matsuda Torricelli","tabela":"PARTICULAR","procedimento":"Corporal - Beauty Legs","categoria":"Corporal","valor":7000.0,"fat_bruto":7000.0,"imposto":787.5,"valor_liq":6212.5,"rep_fotona":931.88,"rep_exec":0.0,"rep_indic":621.25,"rep_clinica":4659.38},{"data":"2026-04-28","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Janine de Souza Lima Araujo","executor":"Juliana Olimpio de Paula","indicador":"João Fukuda","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":0.0,"rep_indic":133.12,"rep_clinica":998.44},{"data":"2026-04-28","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Rafaela Grizzo Ragazzi","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Tricologia e Remoção de Pelos - HairEstart","categoria":"Tricologia e Remoção de Pelos","valor":1400.0,"fat_bruto":1400.0,"imposto":157.5,"valor_liq":1242.5,"rep_fotona":186.38,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1056.12},{"data":"2026-04-28","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Rafaela Grizzo Ragazzi","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Tricologia e Remoção de Pelos - HairEstart","categoria":"Tricologia e Remoção de Pelos","valor":1400.0,"fat_bruto":1400.0,"imposto":157.5,"valor_liq":1242.5,"rep_fotona":186.38,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1056.12},{"data":"2026-04-28","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Rafaela Grizzo Ragazzi","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D","categoria":"Faciais","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":4526.25},{"data":"2026-04-28","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ivana Aparecida Grizzo Ragazzi","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D","categoria":"Faciais","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":3017.5},{"data":"2026-04-28","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ivana Aparecida Grizzo Ragazzi","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 5D","categoria":"Faciais","valor":2800.0,"fat_bruto":2800.0,"imposto":315.0,"valor_liq":2485.0,"rep_fotona":372.75,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":2112.25},{"data":"2026-04-28","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ivana Aparecida Grizzo Ragazzi","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 6D","categoria":"Faciais","valor":4000.0,"fat_bruto":4000.0,"imposto":450.0,"valor_liq":3550.0,"rep_fotona":532.5,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":3017.5},{"data":"2026-04-29","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Denise Vilas Andreis","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Corporal - ThermoLipólise","categoria":"Corporal","valor":2400.0,"fat_bruto":2400.0,"imposto":270.0,"valor_liq":2130.0,"rep_fotona":319.5,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":1810.5},{"data":"2026-04-30","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Janine de Souza Lima Araujo","executor":"Juliana Olimpio de Paula","indicador":"João Fukuda","tabela":"PARTICULAR","procedimento":"Dores e Inflamações - Fotobiomodulação","categoria":"Dores e Inflamações","valor":1425.0,"fat_bruto":1425.0,"imposto":160.31,"valor_liq":1264.69,"rep_fotona":189.7,"rep_exec":0.0,"rep_indic":126.47,"rep_clinica":948.52},{"data":"2026-03-17","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Bianca Ribeiro Rodrigues","executor":"Christiane Sayuri Lopes Inoue","indicador":"","tabela":"PARTICULAR","procedimento":"Faciais - Véu de Noiva","categoria":"Faciais","valor":990.0,"fat_bruto":990.0,"imposto":111.38,"valor_liq":878.62,"rep_fotona":131.79,"rep_exec":527.17,"rep_indic":0.0,"rep_clinica":219.66},{"data":"2026-04-13","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ariane de Assis Reis","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3750.0,"fat_bruto":3750.0,"imposto":421.88,"valor_liq":3328.12,"rep_fotona":499.22,"rep_exec":1996.88,"rep_indic":0.0,"rep_clinica":832.03},{"data":"2026-04-13","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ariane de Assis Reis","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3750.0,"fat_bruto":3750.0,"imposto":421.88,"valor_liq":3328.12,"rep_fotona":499.22,"rep_exec":1996.88,"rep_indic":0.0,"rep_clinica":832.03},{"data":"2026-04-13","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ariane de Assis Reis","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3750.0,"fat_bruto":3750.0,"imposto":421.88,"valor_liq":3328.12,"rep_fotona":499.22,"rep_exec":1996.88,"rep_indic":0.0,"rep_clinica":832.03},{"data":"2026-04-13","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ariane de Assis Reis","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":3750.0,"fat_bruto":3750.0,"imposto":421.88,"valor_liq":3328.12,"rep_fotona":499.22,"rep_exec":1996.88,"rep_indic":0.0,"rep_clinica":832.03},{"data":"2026-04-20","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Fernanda Pereira Celas Pinto","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-20","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Fernanda Pereira Celas Pinto","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-20","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Fernanda Pereira Celas Pinto","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-08","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Linda Francielle Stein Monteiro","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-08","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Linda Francielle Stein Monteiro","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-08","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Linda Francielle Stein Monteiro","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-08","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Linda Francielle Stein Monteiro","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-20","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mariana Ferreira Souza Orberg","executor":"João Fukuda","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":3500.0,"fat_bruto":3500.0,"imposto":393.75,"valor_liq":3106.25,"rep_fotona":465.94,"rep_exec":1863.75,"rep_indic":0.0,"rep_clinica":776.56},{"data":"2026-04-09","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Paula Bruzzi Spekla","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":2000.0,"fat_bruto":2000.0,"imposto":225.0,"valor_liq":1775.0,"rep_fotona":266.25,"rep_exec":1065.0,"rep_indic":0.0,"rep_clinica":443.75},{"data":"2026-04-15","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mônica Farah","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":12000.0,"fat_bruto":12000.0,"imposto":1350.0,"valor_liq":10650.0,"rep_fotona":1597.5,"rep_exec":6390.0,"rep_indic":0.0,"rep_clinica":2662.5},{"data":"2026-04-15","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mônica Farah","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-15","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Mônica Farah","executor":"Juliana Olimpio de Paula","indicador":"Juliana Olimpio de Paula","tabela":"PARTICULAR","procedimento":"Faciais - Fotona 5D","categoria":"Faciais","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":0.0,"rep_indic":0.0,"rep_clinica":4526.25},{"data":"2026-04-14","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Ione Arrais de Castro Oliveira","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Beauty Legs","categoria":"Vasculares","valor":6000.0,"fat_bruto":6000.0,"imposto":675.0,"valor_liq":5325.0,"rep_fotona":798.75,"rep_exec":3195.0,"rep_indic":0.0,"rep_clinica":1331.25},{"data":"2026-04-14","pkey":"2026-04","mes":"Abril","ano":2026,"paciente":"Tatiana Ramos de Almeida","executor":"Igor Rafael Sincos","indicador":"","tabela":"PARTICULAR","procedimento":"Vasculares - Telangiectasias","categoria":"Vasculares","valor":1500.0,"fat_bruto":1500.0,"imposto":168.75,"valor_liq":1331.25,"rep_fotona":199.69,"rep_exec":798.75,"rep_indic":0.0,"rep_clinica":332.81}],"periodos":[{"key":"2025-09","label":"Set/25"},{"key":"2025-10","label":"Out/25"},{"key":"2025-11","label":"Nov/25"},{"key":"2025-12","label":"Dez/25"},{"key":"2026-01","label":"Jan/26"},{"key":"2026-02","label":"Fev/26"},{"key":"2026-03","label":"Mar/26"},{"key":"2026-04","label":"Abr/26"}],"exec_role":{"Igor Rafael Sincos":"vascular","João Fukuda":"vascular","Manoel Augusto Lobato":"vascular","Christiane Sayuri Lopes Inoue":"dermato","Juliana Olimpio de Paula":"fisio","NÃO REALIZOU O PROCEDIMENTO AINDA":"pendente"},"generated_at":"2026-05-06T15:39"};
 
-// Helpers
-const fmtBR = v => v.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
-const fmtBRcent = v => v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+// ============ HELPERS ============
+const fmtBR = v => Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtBRcent = v => Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtData = iso => {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y.slice(2)}`;
+};
 const COLORS = {
   vasc:'#E30613', corp:'#D4A574', fac:'#E8E8E8', outros:'#4A4A4A',
   igor:'#E30613', juliana:'#D4A574', chris:'#E8E8E8', fukuda:'#ff7f8a', lobato:'#a32028', pend:'#444',
 };
 const ROLE_LABEL = {vascular:'Vascular', dermato:'Dermato', fisio:'Fisioterapeuta', pendente:'Pendente'};
+function colorForExec(name, role){
+  if (role === 'fisio') return COLORS.juliana;
+  if (role === 'dermato') return COLORS.chris;
+  if (role === 'pendente') return COLORS.pend;
+  if (name && name.startsWith('Igor')) return COLORS.igor;
+  if (name && name.startsWith('João')) return COLORS.fukuda;
+  if (name && name.startsWith('Manoel')) return COLORS.lobato;
+  return '#666';
+}
 
-// Chart.js global defaults
 Chart.defaults.color = 'rgba(255,255,255,.55)';
 Chart.defaults.borderColor = '#262626';
 Chart.defaults.font.family = "'Inter', sans-serif";
 
-// === KPIs ===
-const r = DATA.resumo;
-document.getElementById('kpi-mes-label').textContent = r.label_curr;
-document.getElementById('kpi-fat-mes').textContent = fmtBR(r.fat_curr);
-const momEl = document.getElementById('kpi-mom');
-const momArrow = r.mom >= 0 ? '▲' : '▼';
-const momClass = r.mom >= 0 ? 'delta-pos' : 'delta-neg';
-momEl.innerHTML = `<span class="${momClass}">${momArrow} ${Math.abs(r.mom).toFixed(1)}%</span> vs ${r.label_prev}`;
-document.getElementById('kpi-acum-label').textContent = `${DATA.by_month[0].label} — ${r.label_curr}`;
-document.getElementById('kpi-acum').textContent = fmtBR(r.total_fat);
-document.getElementById('kpi-acum-meses').textContent = r.n_meses;
-document.getElementById('kpi-ticket').textContent = fmtBR(r.ticket);
-document.getElementById('kpi-qtd').textContent = r.total_qtd;
-document.getElementById('kpi-proc-com-indic').textContent = `${r.pct_com_indic.toFixed(0)}%`;
+// ============ STATE ============
+const STATE = {
+  filter: 'all',  // 'all' | '2025-09' | '2025-10' | ...
+  charts: {},
+};
 
-// === Chart 1: Faturamento mensal por categoria (stacked bar + line total) ===
-const ctxMensal = document.getElementById('chart-mensal');
-new Chart(ctxMensal, {
-  type:'bar',
-  data:{
-    labels: DATA.by_month.map(m=>m.label),
-    datasets:[
-      {label:'Vasculares', data: DATA.by_month.map(m=>m.vasc), backgroundColor:COLORS.vasc, stack:'s'},
-      {label:'Corporal', data: DATA.by_month.map(m=>m.corp), backgroundColor:COLORS.corp, stack:'s'},
-      {label:'Faciais', data: DATA.by_month.map(m=>m.fac), backgroundColor:COLORS.fac, stack:'s'},
-      {label:'Outros', data: DATA.by_month.map(m=>m.outros), backgroundColor:COLORS.outros, stack:'s'},
-      {label:'Total', data: DATA.by_month.map(m=>m.fat), type:'line',
-       borderColor:'#fff', borderWidth:2, pointRadius:4, pointBackgroundColor:'#fff',
-       pointBorderColor:'#000', pointBorderWidth:2, fill:false, tension:.3, yAxisID:'y'},
-    ]
-  },
-  options:{
-    responsive:true, maintainAspectRatio:false,
-    interaction:{mode:'index', intersect:false},
-    plugins:{
-      legend:{position:'bottom', labels:{usePointStyle:true, pointStyle:'rect', padding:18, font:{size:11}}},
-      tooltip:{
-        backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
-        callbacks:{ label:(c)=>`${c.dataset.label}: R$ ${fmtBR(c.parsed.y)}` }
-      }
-    },
-    scales:{
-      x:{grid:{display:false}, ticks:{font:{size:11}}},
-      y:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v=>'R$ '+fmtBR(v), font:{size:11}}}
+// ============ AGGREGATIONS ============
+function getRows() {
+  return STATE.filter === 'all'
+    ? DATA.raw
+    : DATA.raw.filter(r => r.pkey === STATE.filter);
+}
+
+function aggregate(rows) {
+  const monthMap = {};
+  const catMap = {};
+  const execMap = {};
+  const indicMap = {};
+  const procMap = {};
+  let total_fat = 0, total_liq = 0, total_indic = 0, fat_com_indic = 0;
+
+  for (const r of rows) {
+    total_fat += r.fat_bruto;
+    total_liq += r.valor_liq;
+    total_indic += r.rep_indic;
+    if (r.indicador) fat_com_indic += r.fat_bruto;
+
+    // por mês
+    if (!monthMap[r.pkey]) monthMap[r.pkey] = {key:r.pkey, fat:0, qtd:0, vasc:0, corp:0, fac:0, outros:0};
+    monthMap[r.pkey].fat += r.fat_bruto; monthMap[r.pkey].qtd += 1;
+    if (r.categoria === 'Vasculares') monthMap[r.pkey].vasc += r.fat_bruto;
+    else if (r.categoria === 'Corporal') monthMap[r.pkey].corp += r.fat_bruto;
+    else if (r.categoria === 'Faciais') monthMap[r.pkey].fac += r.fat_bruto;
+    else monthMap[r.pkey].outros += r.fat_bruto;
+
+    // por categoria
+    if (!catMap[r.categoria]) catMap[r.categoria] = {cat:r.categoria, fat:0, qtd:0};
+    catMap[r.categoria].fat += r.fat_bruto; catMap[r.categoria].qtd += 1;
+
+    // por executor
+    if (r.executor) {
+      if (!execMap[r.executor]) execMap[r.executor] = {exec:r.executor, fat:0, qtd:0, role:DATA.exec_role[r.executor] || 'outros'};
+      execMap[r.executor].fat += r.fat_bruto; execMap[r.executor].qtd += 1;
+    }
+
+    // por indicador
+    const ind = r.indicador || '(Sem indicador)';
+    if (!indicMap[ind]) indicMap[ind] = {ind, fat:0, qtd:0, repasse:0};
+    indicMap[ind].fat += r.fat_bruto; indicMap[ind].qtd += 1; indicMap[ind].repasse += r.rep_indic;
+
+    // por procedimento
+    if (!procMap[r.procedimento]) procMap[r.procedimento] = {proc:r.procedimento, fat:0, qtd:0};
+    procMap[r.procedimento].fat += r.fat_bruto; procMap[r.procedimento].qtd += 1;
+  }
+
+  const months = Object.values(monthMap).sort((a,b) => a.key.localeCompare(b.key));
+  const monthLabel = k => DATA.periodos.find(p => p.key === k)?.label || k;
+  months.forEach(m => m.label = monthLabel(m.key));
+
+  // Renda passiva por vascular
+  const passiveVasc = {};
+  for (const r of rows) {
+    const ind = r.indicador;
+    if (ind && DATA.exec_role[ind] === 'vascular') {
+      if (!passiveVasc[ind]) passiveVasc[ind] = {indicado_fat:0, indicado_qtd:0, ganho_indic:0};
+      passiveVasc[ind].indicado_fat += r.fat_bruto;
+      passiveVasc[ind].indicado_qtd += 1;
+      passiveVasc[ind].ganho_indic += r.rep_indic;
     }
   }
-});
 
-// === Chart 2: Mix por categoria (doughnut) ===
-const ctxCat = document.getElementById('chart-cat');
-const cats = DATA.by_cat;
-const catColors = cats.map((c,i)=>{
-  if(c.cat==='Vasculares') return COLORS.vasc;
-  if(c.cat==='Corporal') return COLORS.corp;
-  if(c.cat==='Faciais') return COLORS.fac;
+  return {
+    total_fat, total_liq, total_indic, fat_com_indic,
+    qtd: rows.length,
+    ticket: rows.length ? total_fat / rows.length : 0,
+    pct_com_indic: total_fat ? fat_com_indic / total_fat * 100 : 0,
+    months,
+    by_cat: Object.values(catMap).sort((a,b) => b.fat - a.fat),
+    by_exec: Object.values(execMap).sort((a,b) => b.fat - a.fat),
+    by_indicador: Object.values(indicMap).sort((a,b) => b.fat - a.fat),
+    by_proc: Object.values(procMap).sort((a,b) => b.fat - a.fat),
+    passiveVasc,
+  };
+}
+
+// ============ RENDER ============
+function render() {
+  const rows = getRows();
+  const agg = aggregate(rows);
+  renderPeriodoLabel();
+  renderKpis(agg);
+  renderChartMensal(agg);
+  renderChartCat(agg);
+  renderChartExec(agg);
+  renderChartIndic(agg);
+  renderTblProc(agg);
+  renderPassive(agg);
+  renderDescriptions(agg);
+}
+
+function renderPeriodoLabel() {
+  const el = document.getElementById('periodo-label');
+  if (!el) return;
+  if (STATE.filter === 'all') {
+    const first = DATA.periodos[0]?.label || '';
+    const last = DATA.periodos[DATA.periodos.length-1]?.label || '';
+    el.textContent = `${first} — ${last}`;
+  } else {
+    el.textContent = DATA.periodos.find(p => p.key === STATE.filter)?.label || '';
+  }
+}
+
+function renderKpis(agg) {
+  const isAll = STATE.filter === 'all';
+  // KPI 1: faturamento — quando filtrado, mostra do mês; quando all, mostra do último mês com MoM
+  const fatLabel = document.getElementById('kpi-fat-label');
+  const fatVal = document.getElementById('kpi-fat-mes');
+  const momEl = document.getElementById('kpi-mom');
+
+  if (isAll && agg.months.length >= 2) {
+    const curr = agg.months[agg.months.length-1];
+    const prev = agg.months[agg.months.length-2];
+    const mom = prev.fat ? (curr.fat - prev.fat) / prev.fat * 100 : 0;
+    fatLabel.textContent = `Faturamento ${curr.label}`;
+    fatVal.textContent = fmtBR(curr.fat);
+    const arrow = mom >= 0 ? '▲' : '▼';
+    const cls = mom >= 0 ? 'delta-pos' : 'delta-neg';
+    momEl.innerHTML = `<span class="${cls}">${arrow} ${Math.abs(mom).toFixed(1)}%</span> vs ${prev.label}`;
+  } else if (!isAll) {
+    const curr = agg.months[0];
+    fatLabel.textContent = `Faturamento ${curr ? curr.label : ''}`;
+    fatVal.textContent = fmtBR(curr ? curr.fat : 0);
+    // MoM vs mês anterior real (na base completa)
+    const idx = DATA.periodos.findIndex(p => p.key === STATE.filter);
+    if (idx > 0) {
+      const prevKey = DATA.periodos[idx-1].key;
+      const prevFat = DATA.raw.filter(r => r.pkey === prevKey).reduce((s,r) => s + r.fat_bruto, 0);
+      const mom = prevFat ? ((curr?.fat || 0) - prevFat) / prevFat * 100 : 0;
+      const arrow = mom >= 0 ? '▲' : '▼';
+      const cls = mom >= 0 ? 'delta-pos' : 'delta-neg';
+      momEl.innerHTML = `<span class="${cls}">${arrow} ${Math.abs(mom).toFixed(1)}%</span> vs ${DATA.periodos[idx-1].label}`;
+    } else {
+      momEl.innerHTML = '<span style="color:var(--muted-2)">primeiro mês do projeto</span>';
+    }
+  } else {
+    fatLabel.textContent = 'Faturamento';
+    fatVal.textContent = fmtBR(0);
+    momEl.innerHTML = '';
+  }
+
+  // KPI 2: acumulado do filtro
+  const acumLabel = document.getElementById('kpi-acum-label');
+  const acumVal = document.getElementById('kpi-acum');
+  const acumFoot = document.getElementById('kpi-acum-meses');
+  if (isAll) {
+    const first = DATA.periodos[0]?.label || '';
+    const last = DATA.periodos[DATA.periodos.length-1]?.label || '';
+    acumLabel.textContent = `Acumulado ${first} — ${last}`;
+    acumVal.textContent = fmtBR(agg.total_fat);
+    acumFoot.textContent = `${DATA.periodos.length} meses de projeto`;
+  } else {
+    acumLabel.textContent = `Total ${agg.months[0]?.label || ''}`;
+    acumVal.textContent = fmtBR(agg.total_fat);
+    acumFoot.textContent = `mês selecionado`;
+  }
+
+  document.getElementById('kpi-ticket').textContent = fmtBR(agg.ticket);
+  document.getElementById('kpi-qtd').textContent = agg.qtd;
+  document.getElementById('kpi-proc-com-indic').textContent = `${agg.pct_com_indic.toFixed(0)}%`;
+}
+
+function destroyChart(name){ if (STATE.charts[name]) { STATE.charts[name].destroy(); STATE.charts[name] = null; } }
+
+function renderChartMensal(agg) {
+  destroyChart('mensal');
+  const ctx = document.getElementById('chart-mensal');
+  STATE.charts.mensal = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: agg.months.map(m => m.label),
+      datasets:[
+        {label:'Vasculares', data: agg.months.map(m => m.vasc), backgroundColor:COLORS.vasc, stack:'s'},
+        {label:'Corporal', data: agg.months.map(m => m.corp), backgroundColor:COLORS.corp, stack:'s'},
+        {label:'Faciais', data: agg.months.map(m => m.fac), backgroundColor:COLORS.fac, stack:'s'},
+        {label:'Outros', data: agg.months.map(m => m.outros), backgroundColor:COLORS.outros, stack:'s'},
+        {label:'Total', data: agg.months.map(m => m.fat), type:'line',
+         borderColor:'#fff', borderWidth:2, pointRadius:4, pointBackgroundColor:'#fff',
+         pointBorderColor:'#000', pointBorderWidth:2, fill:false, tension:.3},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{
+        legend:{position:'bottom', labels:{usePointStyle:true, pointStyle:'rect', padding:18, font:{size:11}}},
+        tooltip:{
+          backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+          callbacks:{ label:(c) => `${c.dataset.label}: R$ ${fmtBR(c.parsed.y)}` }
+        }
+      },
+      scales:{
+        x:{grid:{display:false}, ticks:{font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v => 'R$ '+fmtBR(v), font:{size:11}}}
+      }
+    }
+  });
+}
+
+function renderChartCat(agg) {
+  destroyChart('cat');
+  const ctx = document.getElementById('chart-cat');
+  const cats = agg.by_cat;
   const others = ['#7a5e3f','#5a4530','#a8865d','#8b6f4b','#3d2e20','#665544','#4a3a28'];
-  return others[(i-3)%others.length] || '#333';
-});
-new Chart(ctxCat, {
-  type:'doughnut',
-  data:{
-    labels: cats.map(c=>c.cat),
-    datasets:[{data: cats.map(c=>c.fat), backgroundColor:catColors, borderColor:'#0A0A0A', borderWidth:2}]
-  },
-  options:{
-    responsive:true, maintainAspectRatio:false, cutout:'62%',
-    plugins:{
-      legend:{position:'right', labels:{usePointStyle:true, pointStyle:'circle', padding:10, font:{size:11},
-        generateLabels:(chart)=>{
-          const data = chart.data;
-          const total = data.datasets[0].data.reduce((a,b)=>a+b,0);
-          return data.labels.map((l,i)=>{
-            const v = data.datasets[0].data[i];
-            const pct = (v/total*100).toFixed(1);
-            return {text:`${l} — ${pct}%`, fillStyle:catColors[i], strokeStyle:catColors[i],
-                    lineWidth:0, hidden:false, index:i, fontColor:'rgba(255,255,255,.7)'};
-          });
+  const catColors = cats.map((c,i) => {
+    if (c.cat==='Vasculares') return COLORS.vasc;
+    if (c.cat==='Corporal') return COLORS.corp;
+    if (c.cat==='Faciais') return COLORS.fac;
+    return others[(i-3+others.length) % others.length] || '#333';
+  });
+  STATE.charts.cat = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels: cats.map(c => c.cat),
+      datasets:[{data: cats.map(c => c.fat), backgroundColor:catColors, borderColor:'#0A0A0A', borderWidth:2}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{
+        legend:{position:'right', labels:{usePointStyle:true, pointStyle:'circle', padding:10, font:{size:11},
+          generateLabels:(chart) => {
+            const data = chart.data;
+            const total = data.datasets[0].data.reduce((a,b) => a+b, 0);
+            return data.labels.map((l,i) => {
+              const v = data.datasets[0].data[i];
+              const pct = total ? (v/total*100).toFixed(1) : '0.0';
+              return {text:`${l} — ${pct}%`, fillStyle:catColors[i], strokeStyle:catColors[i],
+                      lineWidth:0, hidden:false, index:i};
+            });
+          }
+        }},
+        tooltip:{
+          backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+          callbacks:{ label:(c) => `R$ ${fmtBR(c.parsed)}` }
         }
-      }},
-      tooltip:{
-        backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
-        callbacks:{ label:(c)=>`R$ ${fmtBR(c.parsed)}` }
       }
     }
-  }
-});
+  });
+}
 
-// === Chart 3: Faturamento por executor (horizontal bar) ===
-const ctxExec = document.getElementById('chart-exec');
-const execSorted = [...DATA.by_exec].sort((a,b)=>b.fat-a.fat);
-const execColors = execSorted.map(e=>{
-  if(e.role==='vascular') return e.exec.startsWith('Igor')?COLORS.igor:e.exec.startsWith('João')?COLORS.fukuda:COLORS.lobato;
-  if(e.role==='dermato') return COLORS.chris;
-  if(e.role==='fisio') return COLORS.juliana;
-  return COLORS.pend;
-});
-new Chart(ctxExec, {
-  type:'bar',
-  data:{
-    labels: execSorted.map(e=>e.exec.replace('NÃO REALIZOU O PROCEDIMENTO AINDA','Pendente de execução')),
-    datasets:[{
-      data: execSorted.map(e=>e.fat),
-      backgroundColor:execColors,
-      borderRadius:4,
-    }]
-  },
-  options:{
-    indexAxis:'y', responsive:true, maintainAspectRatio:false,
-    plugins:{
-      legend:{display:false},
-      tooltip:{
-        backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
-        callbacks:{
-          label:(c)=>{
-            const e = execSorted[c.dataIndex];
-            return [`R$ ${fmtBR(c.parsed.x)}`, `${e.qtd} procedimentos`, `Papel: ${ROLE_LABEL[e.role]||'—'}`];
+function renderChartExec(agg) {
+  destroyChart('exec');
+  const ctx = document.getElementById('chart-exec');
+  const execs = agg.by_exec;
+  const colors = execs.map(e => colorForExec(e.exec, e.role));
+  STATE.charts.exec = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: execs.map(e => e.exec.replace('NÃO REALIZOU O PROCEDIMENTO AINDA','Pendente de execução')),
+      datasets:[{ data: execs.map(e => e.fat), backgroundColor:colors, borderRadius:4 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      onClick:(evt, els) => {
+        if (!els.length) return;
+        const i = els[0].index;
+        const exec = execs[i];
+        if (exec.role === 'pendente') return;
+        openDrill('exec', exec.exec);
+      },
+      onHover:(e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+          callbacks:{
+            label:(c) => {
+              const e = execs[c.dataIndex];
+              return [`R$ ${fmtBR(c.parsed.x)}`, `${e.qtd} procedimentos`,
+                      `Papel: ${ROLE_LABEL[e.role]||'—'}`, `(clique para detalhar)`];
+            }
           }
         }
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v => 'R$ '+fmtBR(v), font:{size:11}}},
+        y:{grid:{display:false}, ticks:{font:{size:11}}}
       }
-    },
-    scales:{
-      x:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v=>'R$ '+fmtBR(v), font:{size:11}}},
-      y:{grid:{display:false}, ticks:{font:{size:11}}}
     }
-  }
-});
+  });
+}
 
-// === Chart 4: Indicadores ===
-const ctxIndic = document.getElementById('chart-indic');
-const indicSorted = DATA.by_indicador.filter(i=>i.ind!=='(Sem indicador)' && i.ind!=='SEM INDICAÇÃO').slice(0,8);
-new Chart(ctxIndic, {
-  type:'bar',
-  data:{
-    labels: indicSorted.map(i=>i.ind.replace(' Sayuri Lopes Inoue','').replace(' Olimpio de Paula','')),
-    datasets:[{
-      data: indicSorted.map(i=>i.fat),
-      backgroundColor:indicSorted.map(i=>{
-        if(i.ind.startsWith('Igor')) return COLORS.vasc;
-        if(i.ind.startsWith('João')) return COLORS.fukuda;
-        if(i.ind.startsWith('Christiane')) return COLORS.chris;
-        if(i.ind.startsWith('Juliana')) return COLORS.juliana;
-        return '#666';
-      }),
-      borderRadius:4,
-    }]
-  },
-  options:{
-    indexAxis:'y', responsive:true, maintainAspectRatio:false,
-    plugins:{
-      legend:{display:false},
-      tooltip:{
-        backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
-        callbacks:{
-          label:(c)=>{
-            const i = indicSorted[c.dataIndex];
-            return [`Faturamento indicado: R$ ${fmtBR(i.fat)}`, `${i.qtd} pacientes`, `Repasse de indicador: R$ ${fmtBRcent(i.repasse)}`];
+function renderChartIndic(agg) {
+  destroyChart('indic');
+  const ctx = document.getElementById('chart-indic');
+  const indic = agg.by_indicador.filter(i => i.ind !== '(Sem indicador)' && i.ind !== 'SEM INDICAÇÃO').slice(0,8);
+  STATE.charts.indic = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: indic.map(i => i.ind.replace(' Sayuri Lopes Inoue','').replace(' Olimpio de Paula','')),
+      datasets:[{
+        data: indic.map(i => i.fat),
+        backgroundColor: indic.map(i => {
+          if (i.ind.startsWith('Igor')) return COLORS.vasc;
+          if (i.ind.startsWith('João')) return COLORS.fukuda;
+          if (i.ind.startsWith('Christiane')) return COLORS.chris;
+          if (i.ind.startsWith('Juliana')) return COLORS.juliana;
+          return '#666';
+        }),
+        borderRadius:4,
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      onClick:(evt, els) => {
+        if (!els.length) return;
+        const i = els[0].index;
+        openDrill('indic', indic[i].ind);
+      },
+      onHover:(e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+          callbacks:{
+            label:(c) => {
+              const i = indic[c.dataIndex];
+              return [`Faturamento indicado: R$ ${fmtBR(i.fat)}`, `${i.qtd} pacientes`,
+                      `Repasse de indicador: R$ ${fmtBRcent(i.repasse)}`, `(clique para detalhar)`];
+            }
           }
         }
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v => 'R$ '+fmtBR(v), font:{size:11}}},
+        y:{grid:{display:false}, ticks:{font:{size:11}}}
       }
-    },
-    scales:{
-      x:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v=>'R$ '+fmtBR(v), font:{size:11}}},
-      y:{grid:{display:false}, ticks:{font:{size:11}}}
     }
-  }
-});
+  });
+}
 
-// === Top procedimentos ===
-const tblProc = document.getElementById('tbl-proc');
-DATA.by_proc.slice(0,10).forEach(p=>{
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td>${p.proc}</td><td class="num muted">${p.qtd}</td><td class="num">R$ ${fmtBR(p.fat)}</td>`;
-  tblProc.appendChild(tr);
-});
+function renderTblProc(agg) {
+  const tbody = document.getElementById('tbl-proc');
+  tbody.innerHTML = '';
+  agg.by_proc.slice(0,10).forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.proc}</td><td class="num muted">${p.qtd}</td><td class="num">R$ ${fmtBR(p.fat)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
 
-// === Renda passiva — todos os vasculares ===
-const VASCULARES = ['Igor Rafael Sincos', 'João Fukuda', 'Manoel Augusto Lobato'];
-const passGrid = document.getElementById('pass-grid');
-// Simulação base: 5 indicações Beauty Legs Corporal/mês × 12 meses
-const SIM_VAL_BRUTO = 3500;
-const SIM_LIQ = SIM_VAL_BRUTO * (1-0.1125);
-const SIM_GANHO_SESSAO = SIM_LIQ * 0.10;  // 10% indicador
-const SIM_QTD_MES = 5;
-const SIM_GANHO_MES = SIM_GANHO_SESSAO * SIM_QTD_MES;
-const SIM_GANHO_ANO = SIM_GANHO_MES * 12;
+function renderPassive(agg) {
+  const VASCULARES = ['Igor Rafael Sincos', 'João Fukuda', 'Manoel Augusto Lobato'];
+  const grid = document.getElementById('pass-grid');
+  grid.innerHTML = '';
+  const SIM_VAL_BRUTO = 3500;
+  const SIM_LIQ = SIM_VAL_BRUTO * (1 - 0.1125);
+  const SIM_GANHO_SESSAO = SIM_LIQ * 0.10;
+  const SIM_QTD_MES = 5;
+  const SIM_GANHO_MES = SIM_GANHO_SESSAO * SIM_QTD_MES;
+  const SIM_GANHO_ANO = SIM_GANHO_MES * 12;
 
-VASCULARES.forEach(v=>{
-  const real = DATA.passive_vasc[v] || {indicado_fat:0, indicado_qtd:0, ganho_indic:0};
-  const card = document.createElement('div');
-  card.className = 'pass-card vasc';
-  const isReal = real.indicado_qtd > 0;
-  card.innerHTML = `
-    <div class="name">${v}</div>
-    <div class="role">Vascular</div>
-    <div class="row"><span class="label">Indicações realizadas</span><span class="value">${real.indicado_qtd}</span></div>
-    <div class="row"><span class="label">Faturamento indicado</span><span class="value">R$ ${fmtBR(real.indicado_fat)}</span></div>
-    <div class="row"><span class="label">Repasse de indicador</span><span class="value red">R$ ${fmtBRcent(real.ganho_indic)}</span></div>
-    <div class="sep"></div>
-    <div class="row"><span class="label">Simulação 5 BL/mês</span><span class="value">R$ ${fmtBR(SIM_GANHO_MES)}/mês</span></div>
-    <div class="row"><span class="label">Anualizado</span><span class="value red">R$ ${fmtBR(SIM_GANHO_ANO)}</span></div>
-    <div class="sim-note">${isReal
-      ? 'Já participa do modelo. Cresceria mais com cadência semanal de indicação.'
-      : 'Não participa do modelo. Toda indicação é receita 100% incremental, sem custo de tempo.'}</div>
+  VASCULARES.forEach(v => {
+    const real = agg.passiveVasc[v] || {indicado_fat:0, indicado_qtd:0, ganho_indic:0};
+    const card = document.createElement('div');
+    card.className = 'pass-card vasc';
+    const isReal = real.indicado_qtd > 0;
+    card.innerHTML = `
+      <div class="name" data-exec="${v}">${v}</div>
+      <div class="role">Vascular</div>
+      <div class="row"><span class="label">Indicações realizadas</span><span class="value">${real.indicado_qtd}</span></div>
+      <div class="row"><span class="label">Faturamento indicado</span><span class="value">R$ ${fmtBR(real.indicado_fat)}</span></div>
+      <div class="row"><span class="label">Repasse de indicador</span><span class="value red">R$ ${fmtBRcent(real.ganho_indic)}</span></div>
+      <div class="sep"></div>
+      <div class="row"><span class="label">Simulação 5 BL/mês</span><span class="value">R$ ${fmtBR(SIM_GANHO_MES)}/mês</span></div>
+      <div class="row"><span class="label">Anualizado</span><span class="value red">R$ ${fmtBR(SIM_GANHO_ANO)}</span></div>
+      <div class="sim-note">${isReal
+        ? 'Já participa do modelo. Cresceria mais com cadência semanal de indicação.'
+        : 'Não participa do modelo. Toda indicação é receita 100% incremental, sem custo de tempo.'}</div>
+    `;
+    card.querySelector('.name').addEventListener('click', () => openDrill('exec-or-indic', v));
+    grid.appendChild(card);
+  });
+}
+
+function renderDescriptions(agg) {
+  const isAll = STATE.filter === 'all';
+  const periodoTxt = isAll ? 'desde o início do projeto' : `em ${agg.months[0]?.label || ''}`;
+  const proc1 = agg.by_proc[0];
+  const proc2 = agg.by_proc[1];
+  const proc3 = agg.by_proc[2];
+  const top3pct = agg.total_fat ? ((proc1?.fat||0) + (proc2?.fat||0) + (proc3?.fat||0)) / agg.total_fat * 100 : 0;
+  document.getElementById('desc-proc').textContent =
+    proc1 ? `Top 3 procedimentos representam ${top3pct.toFixed(0)}% do faturamento ${periodoTxt}.` : '';
+  document.getElementById('desc-indic').textContent =
+    `${agg.pct_com_indic.toFixed(0)}% do faturamento ${periodoTxt} veio de pacientes indicados por médicos.`;
+  document.getElementById('desc-mensal').textContent = isAll
+    ? `Evolução do faturamento bruto mês a mês, segmentado pelas quatro categorias principais.`
+    : `Visão única de ${agg.months[0]?.label || ''}: distribuição por categoria.`;
+}
+
+// ============ DRILL-DOWN MODAL ============
+function openDrill(mode, value) {
+  // mode: 'exec' (filtra por executor), 'indic' (por indicador), 'exec-or-indic' (qualquer um)
+  const rows = getRows().filter(r => {
+    if (mode === 'exec') return r.executor === value;
+    if (mode === 'indic') return r.indicador === value;
+    return r.executor === value || r.indicador === value;
+  });
+  if (!rows.length) return;
+
+  // Sort por data descendente
+  rows.sort((a,b) => (b.data || '').localeCompare(a.data || ''));
+
+  const total = rows.reduce((s,r) => s + r.fat_bruto, 0);
+  const totalRep = rows.reduce((s,r) => s + (r.executor === value ? r.rep_exec : r.rep_indic), 0);
+  const role = DATA.exec_role[value] || '—';
+  const roleLabel = ROLE_LABEL[role] || role;
+
+  document.getElementById('drill-name').textContent = value.replace('NÃO REALIZOU O PROCEDIMENTO AINDA', 'Pendente de execução');
+  const periodoTxt = STATE.filter === 'all'
+    ? 'projeto inteiro'
+    : DATA.periodos.find(p => p.key === STATE.filter)?.label;
+  document.getElementById('drill-meta').textContent =
+    `${roleLabel} • ${periodoTxt} • todos os procedimentos como executor ou indicador`;
+
+  const stats = document.getElementById('drill-stats');
+  stats.innerHTML = `
+    <div class="stat"><b>${rows.length}</b>procedimentos</div>
+    <div class="stat"><b>R$ ${fmtBR(total)}</b>faturamento</div>
+    <div class="stat"><b>R$ ${fmtBRcent(totalRep)}</b>repasse</div>
   `;
-  passGrid.appendChild(card);
+
+  const tbody = document.getElementById('drill-tbody');
+  tbody.innerHTML = '';
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    const role = r.executor === value ? '<span class="pill ' + (DATA.exec_role[r.executor]==='vascular'?'vasc':DATA.exec_role[r.executor]==='dermato'?'derm':DATA.exec_role[r.executor]==='fisio'?'fisio':'pend') + '">Executor</span>' : '<span class="pill vasc">Indicador</span>';
+    tr.innerHTML = `
+      <td>${fmtData(r.data)}</td>
+      <td>${r.paciente}</td>
+      <td>${r.procedimento}<br><span class="muted" style="font-size:11px">${role}</span></td>
+      <td class="muted">${r.indicador || '—'}</td>
+      <td class="num">R$ ${fmtBR(r.fat_bruto)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('drill-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrill() {
+  document.getElementById('drill-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('drill-modal').addEventListener('click', (e) => {
+  if (e.target.dataset.close) closeDrill();
 });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrill(); });
+
+// ============ FILTER CHIPS ============
+function buildPeriodChips() {
+  const wrap = document.getElementById('period-chips');
+  const chips = [{key:'all', label:'Tudo'}, ...DATA.periodos];
+  wrap.innerHTML = '';
+  chips.forEach(c => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'period-chip' + (c.key === STATE.filter ? ' active' : '');
+    btn.textContent = c.label;
+    btn.dataset.key = c.key;
+    btn.addEventListener('click', () => {
+      STATE.filter = c.key;
+      [...wrap.children].forEach(b => b.classList.toggle('active', b.dataset.key === c.key));
+      render();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+// ============ INIT ============
+buildPeriodChips();
+render();
 </script>
 
 </body>
