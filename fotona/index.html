@@ -747,7 +747,7 @@ function renderChartCat(agg) {
               const v = data.datasets[0].data[i];
               const pct = total ? (v/total*100).toFixed(1) : '0.0';
               return {text:`${l} — ${pct}%`, fillStyle:catColors[i], strokeStyle:catColors[i],
-                      lineWidth:0, hidden:false, index:i};
+                      lineWidth:0, hidden:false, index:i, fontColor:'rgba(255,255,255,.7)'};
             });
           }
         }},
