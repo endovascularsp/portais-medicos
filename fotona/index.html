@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Beauty Legs — Gestão Financeira • Endovascular SP</title>
+<link rel="icon" href="../assets/logo.png" type="image/png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0A0A0A; --surface:#141414; --surface-2:#1c1c1c; --border:#262626; --border-strong:#333;
+    --text:#FFFFFF; --muted:rgba(255,255,255,.55); --muted-2:rgba(255,255,255,.35);
+    --red:#E30613; --red-soft:rgba(227,6,19,.15); --red-hover:#ff1a2c;
+    --gold:#D4A574; --silver:#E8E8E8; --dim:#4A4A4A;
+    --green:#3FB950;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;padding-bottom:60px}
+
+  /* HEADER */
+  header.bl-header{
+    background:#000;border-bottom:1px solid var(--border);
+    padding:32px 40px;display:flex;align-items:center;gap:28px;
+  }
+  .bl-logo{height:88px;width:auto;display:block;flex-shrink:0}
+  .bl-header-info{display:flex;flex-direction:column;gap:3px;border-left:1px solid var(--border);padding-left:28px;margin-left:8px}
+  .bl-header-info h1{font-size:14px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:#fff}
+  .bl-header-info p{font-size:11px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase}
+  .bl-header-actions{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .bl-back{
+    color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.5px;
+    padding:8px 14px;border:1px solid var(--border);border-radius:6px;transition:all .18s;
+  }
+  .bl-back:hover{color:#fff;border-color:var(--red);background:var(--red-soft)}
+  .bl-period{
+    font-size:11px;color:var(--muted-2);letter-spacing:1.5px;text-transform:uppercase;
+  }
+
+  /* CONTAINER */
+  main{max-width:1320px;margin:0 auto;padding:36px 28px 0}
+
+  /* HERO TITLE */
+  .hero{margin-bottom:36px}
+  .hero h2{
+    font-size:38px;font-weight:200;letter-spacing:-1px;line-height:1.1;color:#fff;
+  }
+  .hero h2 b{font-weight:900}
+  .hero p{font-size:14px;color:var(--muted);margin-top:10px;max-width:720px;line-height:1.6}
+
+  /* KPI ROW */
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+  .kpi{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:22px 22px 20px;position:relative;overflow:hidden;
+  }
+  .kpi::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--red),transparent);opacity:0;transition:opacity .25s;
+  }
+  .kpi:hover::before{opacity:.85}
+  .kpi:hover{border-color:var(--border-strong)}
+  .kpi-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:500;margin-bottom:14px}
+  .kpi-value{font-size:30px;font-weight:200;letter-spacing:-.5px;line-height:1}
+  .kpi-value b{font-weight:900}
+  .kpi-value .currency{font-size:14px;color:var(--muted);font-weight:400;margin-right:2px;letter-spacing:0}
+  .kpi-foot{font-size:11px;color:var(--muted);margin-top:12px;display:flex;align-items:center;gap:6px}
+  .delta-pos{color:var(--green)}
+  .delta-neg{color:var(--red)}
+  .kpi-accent .kpi-value{color:#fff}
+  .kpi-accent{border-color:var(--red);background:linear-gradient(180deg,var(--surface) 0%,rgba(227,6,19,.04) 100%)}
+
+  /* SECTION */
+  .section{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:26px 28px;margin-bottom:20px;
+  }
+  .section h3{
+    font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+    margin-bottom:18px;display:flex;align-items:center;gap:10px;
+  }
+  .section h3::before{content:"";width:4px;height:14px;background:var(--red);display:inline-block;border-radius:2px}
+  .section .desc{font-size:12px;color:var(--muted-2);margin-top:-12px;margin-bottom:18px;line-height:1.6}
+
+  /* GRIDS */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+  .grid-2 .section{margin-bottom:0}
+  .grid-3{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;margin-bottom:20px}
+  .grid-3 .section{margin-bottom:0}
+
+  /* CHARTS */
+  .chart-wrap{position:relative;height:300px}
+  .chart-wrap-tall{position:relative;height:380px}
+  .chart-wrap-short{position:relative;height:240px}
+
+  /* TABLES */
+  table.bl-table{width:100%;border-collapse:collapse;font-size:13px}
+  table.bl-table th{
+    text-align:left;font-weight:500;color:var(--muted);padding:10px 12px;
+    border-bottom:1px solid var(--border);font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  }
+  table.bl-table td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+  table.bl-table tbody tr:hover{background:var(--surface-2)}
+  table.bl-table .num{text-align:right;font-variant-numeric:tabular-nums}
+  table.bl-table .red{color:var(--red);font-weight:600}
+  table.bl-table .muted{color:var(--muted)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10px;letter-spacing:.5px;font-weight:600;text-transform:uppercase}
+  .pill.vasc{background:rgba(227,6,19,.18);color:#ff7f8a;border:1px solid rgba(227,6,19,.4)}
+  .pill.derm{background:rgba(212,165,116,.18);color:#e0c08a;border:1px solid rgba(212,165,116,.4)}
+  .pill.fisio{background:rgba(232,232,232,.10);color:#ddd;border:1px solid rgba(232,232,232,.25)}
+  .pill.pend{background:rgba(255,255,255,.06);color:var(--muted-2);border:1px solid var(--border)}
+
+  /* INSIGHTS BOX */
+  .insights{
+    background:linear-gradient(180deg,var(--surface) 0%,rgba(227,6,19,.04) 100%);
+    border:1px solid var(--border);border-left:3px solid var(--red);
+    border-radius:14px;padding:28px 32px;margin-bottom:20px;
+  }
+  .insights h3{
+    font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--red);
+    margin-bottom:18px;
+  }
+  .insights .insight-item{margin-bottom:18px;padding-left:18px;border-left:1px solid var(--border)}
+  .insights .insight-item:last-child{margin-bottom:0}
+  .insights .insight-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:6px}
+  .insights .insight-body{font-size:13px;color:var(--muted);line-height:1.7}
+  .insights .insight-body b{color:#fff;font-weight:600}
+  .insights .insight-body em{color:var(--red);font-style:normal;font-weight:600}
+
+  /* PASSIVE INCOME SIMULATION */
+  .pass-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+  .pass-card{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:18px}
+  .pass-card.vasc{border-color:rgba(227,6,19,.3)}
+  .pass-card .name{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px}
+  .pass-card .role{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .pass-card .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:12px}
+  .pass-card .row .label{color:var(--muted)}
+  .pass-card .row .value{font-weight:600;font-variant-numeric:tabular-nums}
+  .pass-card .row .value.red{color:var(--red)}
+  .pass-card .sep{height:1px;background:var(--border);margin:12px 0}
+  .pass-card .sim-note{font-size:11px;color:var(--muted-2);line-height:1.5;margin-top:10px;font-style:italic}
+
+  /* FOOTER */
+  .bl-footer{text-align:center;font-size:10px;color:var(--muted-2);letter-spacing:1.5px;text-transform:uppercase;padding:40px 0 0}
+
+  /* RESPONSIVE */
+  @media(max-width:1100px){
+    .kpi-row{grid-template-columns:repeat(2,1fr)}
+    .grid-2,.grid-3{grid-template-columns:1fr}
+    .pass-grid{grid-template-columns:1fr}
+    .bl-logo{height:72px}
+    header.bl-header{padding:24px 28px}
+  }
+  @media(max-width:768px){
+    header.bl-header{padding:22px 22px;flex-wrap:wrap;gap:16px;justify-content:center;text-align:center}
+    .bl-logo{height:62px}
+    .bl-header-info{padding-left:0;border-left:none;margin-left:0;border-top:1px solid var(--border);padding-top:14px;margin-top:4px;width:100%;align-items:center}
+    .bl-header-actions{margin-left:0;width:100%;justify-content:center;gap:10px}
+    main{padding:28px 18px 0}
+    .hero{margin-bottom:24px}
+    .hero h2{font-size:30px}
+    .hero p{font-size:13px}
+    .kpi-row{grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+    .kpi{padding:18px 16px 16px}
+    .kpi-value{font-size:24px}
+    .kpi-label{font-size:10px;margin-bottom:10px}
+    .kpi-foot{font-size:10px;margin-top:10px}
+    .section{padding:20px 18px;margin-bottom:14px}
+    .section h3{font-size:10px;letter-spacing:1.5px;margin-bottom:14px}
+    .section .desc{font-size:11px;margin-bottom:14px}
+    .grid-2,.grid-3{gap:14px;margin-bottom:14px}
+    .chart-wrap{height:260px}
+    .chart-wrap-tall{height:300px}
+    .insights{padding:22px 20px;margin-bottom:14px}
+    .insights .insight-item{padding-left:14px;margin-bottom:14px}
+    .insights .insight-title{font-size:13px}
+    .insights .insight-body{font-size:12px;line-height:1.6}
+    table.bl-table{font-size:12px}
+    table.bl-table th,table.bl-table td{padding:8px 8px}
+    .pass-card{padding:16px}
+    .pass-card .name{font-size:13px}
+    .pass-card .row{font-size:11px}
+  }
+  @media(max-width:480px){
+    .bl-logo{height:54px}
+    .bl-header-info h1{font-size:12px;letter-spacing:2px}
+    .hero h2{font-size:26px}
+    .kpi-row{grid-template-columns:1fr}
+    .chart-wrap-tall{height:280px}
+    .bl-period{font-size:10px}
+    .bl-back{font-size:11px;padding:7px 11px}
+  }
+</style>
+</head>
+<body>
+
+<header class="bl-header">
+  <img src="assets/logo_cor_fundo_escuro.png" alt="Beauty Legs" class="bl-logo">
+  <div class="bl-header-info">
+    <h1>Gestão Financeira</h1>
+    <p>Endovascular SP</p>
+  </div>
+  <div class="bl-header-actions">
+    <span class="bl-period" id="periodo-label">Set/2025 — Abr/2026</span>
+    <a href="../hub/Gestor_Hub.html" class="bl-back">← Hub Gestor</a>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <h2>Projeto <b>Fotona</b></h2>
+    <p>Acompanhamento da parceria Endovascular SP × Fotona desde outubro/2025. Faturamento, mix de procedimentos, performance dos executores e oportunidades de receita passiva pelo modelo de indicação.</p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi kpi-accent">
+      <div class="kpi-label">Faturamento <span id="kpi-mes-label"></span></div>
+      <div class="kpi-value"><span class="currency">R$</span> <b id="kpi-fat-mes"></b></div>
+      <div class="kpi-foot" id="kpi-mom"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Acumulado <span id="kpi-acum-label"></span></div>
+      <div class="kpi-value"><span class="currency">R$</span> <b id="kpi-acum"></b></div>
+      <div class="kpi-foot"><span id="kpi-acum-meses"></span> meses de projeto</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Ticket Médio</div>
+      <div class="kpi-value"><span class="currency">R$</span> <b id="kpi-ticket"></b></div>
+      <div class="kpi-foot">por procedimento</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Procedimentos</div>
+      <div class="kpi-value"><b id="kpi-qtd"></b></div>
+      <div class="kpi-foot"><span id="kpi-proc-com-indic"></span> com indicação médica</div>
+    </div>
+  </div>
+
+  <!-- FATURAMENTO MENSAL -->
+  <div class="section">
+    <h3>Faturamento mensal por categoria</h3>
+    <div class="desc">Evolução do faturamento bruto mês a mês, segmentado pelas quatro categorias principais. O crescimento de Set/25 (R$ 23k) para Abr/26 (R$ 196k) representa multiplicação de 8,5×.</div>
+    <div class="chart-wrap-tall"><canvas id="chart-mensal"></canvas></div>
+  </div>
+
+  <!-- MIX -->
+  <div class="grid-3">
+    <div class="section">
+      <h3>Mix por categoria</h3>
+      <div class="chart-wrap-tall"><canvas id="chart-cat"></canvas></div>
+    </div>
+    <div class="section">
+      <h3>Faturamento por executor</h3>
+      <div class="chart-wrap-tall"><canvas id="chart-exec"></canvas></div>
+    </div>
+  </div>
+
+  <!-- INDICADORES -->
+  <div class="grid-2">
+    <div class="section">
+      <h3>Ranking de indicadores</h3>
+      <div class="desc">42% do faturamento veio de pacientes indicados por médicos. Igor Sincos sozinho é responsável por 51% das indicações.</div>
+      <div class="chart-wrap"><canvas id="chart-indic"></canvas></div>
+    </div>
+    <div class="section">
+      <h3>Top procedimentos</h3>
+      <div class="desc">Os 3 procedimentos Beauty Legs / Telangiectasias representam 71% do projeto.</div>
+      <table class="bl-table">
+        <thead><tr><th>Procedimento</th><th class="num">Qtd</th><th class="num">Faturamento</th></tr></thead>
+        <tbody id="tbl-proc"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RENDA PASSIVA -->
+  <div class="section">
+    <h3>Renda passiva — vasculares como indicadores</h3>
+    <div class="desc">
+      Quando o vascular indica e a Juliana (Fisio CLT) executa, ele recebe <b style="color:#fff">10% do líquido</b> sem dedicar tempo. A simulação compara o que cada vascular realizou no projeto até agora vs o potencial de 5 indicações Beauty Legs/mês.
+    </div>
+    <div class="pass-grid" id="pass-grid"></div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="insights">
+    <h3>● Insights estratégicos</h3>
+
+    <div class="insight-item">
+      <div class="insight-title">A tese de "renda passiva" é confirmada pelos dados</div>
+      <div class="insight-body">
+        58% do faturamento já é executado por <b>Juliana (Fisio CLT)</b> e <b>Christiane (Dermato)</b> — os vasculares não precisam aplicar para a parceria gerar receita. Beauty Legs Corporal sozinho gerou <em>R$ 280.013</em>, executado pela Juliana em 64 sessões.
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-title">O argumento "outros lasers fazem similar" é meia-verdade</div>
+      <div class="insight-body">
+        Para telangiectasias finas, sim — há lasers mais simples. Para o restante (sono, capilar, cicatrizes, íntimo, embelezamento de olhar, dores, faciais, corporais), não há comparação. Os <b>23 protocolos ativos</b> cobrem categorias que vasculares não atendem.
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-title">O gargalo é indicação, não execução</div>
+      <div class="insight-body">
+        Apenas o <b>Igor Sincos</b> opera o modelo de indicação no padrão esperado (R$ 17.954 em repasse de indicador em 8 meses). João Fukuda fez 3 indicações; Manoel Lobato e os demais vasculares, <em>nenhuma</em>. Cada vascular que indicar 5 Beauty Legs/mês passa a receber <em>~R$ 1.555/mês passivos</em>.
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-title">O pitch para os céticos não é técnico — é financeiro</div>
+      <div class="insight-body">
+        Vascular sênior não vai aceitar discussão de "qual laser é melhor". Vai aceitar olhar a tabela de quanto está ganhando o colega que indica vs quanto ele mesmo está deixando na mesa. <b>Apresentação individual com o número personalizado</b> tende a ser mais eficaz que reunião coletiva.
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-title">Próximos passos sugeridos</div>
+      <div class="insight-body">
+        1. Imersão técnica com a Fotona para os vasculares (responsabilidade da parceira). &nbsp;<br>
+        2. Programa "Fotona Partner" — kit de indicação WhatsApp + relatório mensal individual. &nbsp;<br>
+        3. Cross-sell estruturado: checklist na recepção identificando candidatos a Beauty Legs / NightLase / Fotona Facial entre pacientes vasculares. &nbsp;<br>
+        4. Pacote combinado: vascular tradicional + Beauty Legs como acabamento (transforma Fotona em complemento, não concorrente).
+      </div>
+    </div>
+  </div>
+
+  <div class="bl-footer">Beauty Legs by Fotona • Endovascular SP • Piloto v0.1</div>
+</main>
+
+<script>
+// Auth guard: exige sessão válida do Hub Gestor (mesma regra de admins)
+if (sessionStorage.getItem('gestor_hub_auth') !== '1') {
+  window.location.replace('../hub/Gestor_Hub.html');
+}
+
+const DATA = /*PDATA*/{"resumo":{"total_fat":942617.0,"total_liq":836572.5875,"total_qtd":251,"ticket":3755.4462151394423,"fat_curr":196465.0,"fat_prev":200012.00000000006,"mom":-1.7733935963842455,"label_curr":"Abr/26","label_prev":"Mar/26","repasse_fotona":125485.888125,"repasse_clinica":384328.280625,"repasse_exec":297486.45,"repasse_indic":29271.96875,"fat_com_indicador":396475.0,"pct_com_indic":42.061091620456665,"n_meses":8},"by_month":[{"key":"2025-09","label":"Set/25","fat":23000.0,"qtd":2,"vasc":20000.0,"corp":0,"fac":3000.0,"outros":0},{"key":"2025-10","label":"Out/25","fat":97000.0,"qtd":23,"vasc":50000.0,"corp":38500.0,"fac":5000.0,"outros":3500.0},{"key":"2025-11","label":"Nov/25","fat":53540.0,"qtd":12,"vasc":35500.0,"corp":9900.0,"fac":8140.0,"outros":0},{"key":"2025-12","label":"Dez/25","fat":185050.0,"qtd":39,"vasc":61800.0,"corp":90100.0,"fac":21850.0,"outros":11300.0},{"key":"2026-01","label":"Jan/26","fat":102250.0,"qtd":26,"vasc":19500.0,"corp":50500.0,"fac":23700.0,"outros":8550.0},{"key":"2026-02","label":"Fev/26","fat":85300.0,"qtd":33,"vasc":49300.0,"corp":20500.0,"fac":4000.0,"outros":11500.0},{"key":"2026-03","label":"Mar/26","fat":200012.00000000006,"qtd":67,"vasc":63600.0,"corp":98132.00000000004,"fac":25680.0,"outros":12600.0},{"key":"2026-04","label":"Abr/26","fat":196465.0,"qtd":49,"vasc":88000.0,"corp":48500.0,"fac":44940.0,"outros":15025.0}],"by_cat":[{"cat":"Vasculares","fat":387700.0,"qtd":87},{"cat":"Corporal","fat":356132.00000000006,"qtd":91},{"cat":"Faciais","fat":136310.0,"qtd":41},{"cat":"Dores e Inflamações","fat":21725.0,"qtd":11},{"cat":"Embelezamento do Olhar","fat":12500.0,"qtd":5},{"cat":"Tricologia e Remoção de Pelos","fat":10000.0,"qtd":6},{"cat":"Cicatrizes","fat":6750.0,"qtd":6},{"cat":"Lesões Benignas","fat":4700.0,"qtd":1},{"cat":"Íntimo","fat":3500.0,"qtd":1},{"cat":"Saúde do Sono","fat":2500.0,"qtd":1},{"cat":"Unhas e Verrugas","fat":800.0,"qtd":1}],"by_exec":[{"exec":"Igor Rafael Sincos","fat":392149.9999999999,"qtd":89,"role":"vascular"},{"exec":"Juliana Olimpio de Paula","fat":383957.00000000006,"qtd":105,"role":"fisio"},{"exec":"Christiane Sayuri Lopes Inoue","fat":108260.0,"qtd":43,"role":"dermato"},{"exec":"NÃO REALIZOU O PROCEDIMENTO AINDA","fat":33000.0,"qtd":4,"role":"pendente"},{"exec":"João Fukuda","fat":13500.0,"qtd":5,"role":"vascular"},{"exec":"Manoel Augusto Lobato","fat":11750.0,"qtd":5,"role":"vascular"}],"by_indicador":[{"ind":"(Sem indicador)","fat":546141.9999999999,"qtd":157,"repasse":0.0},{"ind":"Igor Rafael Sincos","fat":202300.0,"qtd":43,"repasse":17954.125},{"ind":"Juliana Olimpio de Paula","fat":72650.0,"qtd":21,"repasse":532.5},{"ind":"Christiane Sayuri Lopes Inoue","fat":41050.0,"qtd":14,"repasse":3643.1875},{"ind":"Simone Matsuda Torricelli","fat":22000.0,"qtd":4,"repasse":1952.5},{"ind":"Daniela Viese Roth","fat":17700.0,"qtd":3,"repasse":1570.875},{"ind":"Clara Silva Freitas","fat":16000.0,"qtd":3,"repasse":1420.0},{"ind":"João Fukuda","fat":11925.0,"qtd":3,"repasse":1058.34375},{"ind":"SEM INDICAÇÃO","fat":10350.0,"qtd":2,"repasse":918.5625},{"ind":"Carolina Mardegan","fat":2500.0,"qtd":1,"repasse":221.875}],"by_proc":[{"proc":"Corporal - Beauty Legs","fat":280013.28,"qtd":64},{"proc":"Vasculares - Telangiectasias","fat":206750.0,"qtd":51},{"proc":"Vasculares - Beauty Legs","fat":180950.0,"qtd":36},{"proc":"Faciais - Fotona 6D","fat":42250.0,"qtd":8},{"proc":"Faciais - Fotona 4D","fat":41290.0,"qtd":9},{"proc":"Corporal - TensorTight (Áreas grandes)","fat":37500.0,"qtd":10},{"proc":"Faciais - Fotona 5D","fat":24500.0,"qtd":5},{"proc":"Corporal - ThermoLipólise","fat":21418.72,"qtd":9},{"proc":"Dores e Inflamações - Fotobiomodulação","fat":20425.0,"qtd":10},{"proc":"Faciais - Véu de Noiva","fat":18770.0,"qtd":17},{"proc":"Corporal - TightSculpting","fat":13600.0,"qtd":6},{"proc":"Embelezamento do Olhar - SmoothEyes","fat":12500.0,"qtd":5},{"proc":"Tricologia e Remoção de Pelos - HairEstart","fat":10000.0,"qtd":6},{"proc":"Cicatrizes - Cicatrizes Atróficas","fat":6750.0,"qtd":6},{"proc":"Faciais - Fotona 6D - Men","fat":6500.0,"qtd":1}],"exec_cat":{"Vasculares":{"Igor Rafael Sincos":336450.0,"Juliana Olimpio de Paula":26000.0,"João Fukuda":13500.0,"Manoel Augusto Lobato":11750.0},"Íntimo":{"Juliana Olimpio de Paula":3500.0},"Corporal":{"Juliana Olimpio de Paula":236632.00000000003,"NÃO REALIZOU O PROCEDIMENTO AINDA":33000.0,"Christiane Sayuri Lopes Inoue":34800.0,"Igor Rafael Sincos":51700.0},"Faciais":{"Christiane Sayuri Lopes Inoue":59210.0,"Juliana Olimpio de Paula":73100.0,"Igor Rafael Sincos":4000.0},"Dores e Inflamações":{"Juliana Olimpio de Paula":21725.0},"Unhas e Verrugas":{"Juliana Olimpio de Paula":800.0},"Embelezamento do Olhar":{"Juliana Olimpio de Paula":5000.0,"Christiane Sayuri Lopes Inoue":7500.0},"Cicatrizes":{"Christiane Sayuri Lopes Inoue":6750.0},"Tricologia e Remoção de Pelos":{"Juliana Olimpio de Paula":10000.0},"Lesões Benignas":{"Juliana Olimpio de Paula":4700.0},"Saúde do Sono":{"Juliana Olimpio de Paula":2500.0}},"passive_vasc":{"Igor Rafael Sincos":{"indicado_fat":202300.0,"indicado_qtd":43,"ganho_indic":17954.125},"João Fukuda":{"indicado_fat":11925.0,"indicado_qtd":3,"ganho_indic":1058.34375}},"exec_role":{"Igor Rafael Sincos":"vascular","João Fukuda":"vascular","Manoel Augusto Lobato":"vascular","Christiane Sayuri Lopes Inoue":"dermato","Juliana Olimpio de Paula":"fisio","NÃO REALIZOU O PROCEDIMENTO AINDA":"pendente"}};
+
+// Helpers
+const fmtBR = v => v.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtBRcent = v => v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+const COLORS = {
+  vasc:'#E30613', corp:'#D4A574', fac:'#E8E8E8', outros:'#4A4A4A',
+  igor:'#E30613', juliana:'#D4A574', chris:'#E8E8E8', fukuda:'#ff7f8a', lobato:'#a32028', pend:'#444',
+};
+const ROLE_LABEL = {vascular:'Vascular', dermato:'Dermato', fisio:'Fisioterapeuta', pendente:'Pendente'};
+
+// Chart.js global defaults
+Chart.defaults.color = 'rgba(255,255,255,.55)';
+Chart.defaults.borderColor = '#262626';
+Chart.defaults.font.family = "'Inter', sans-serif";
+
+// === KPIs ===
+const r = DATA.resumo;
+document.getElementById('kpi-mes-label').textContent = r.label_curr;
+document.getElementById('kpi-fat-mes').textContent = fmtBR(r.fat_curr);
+const momEl = document.getElementById('kpi-mom');
+const momArrow = r.mom >= 0 ? '▲' : '▼';
+const momClass = r.mom >= 0 ? 'delta-pos' : 'delta-neg';
+momEl.innerHTML = `<span class="${momClass}">${momArrow} ${Math.abs(r.mom).toFixed(1)}%</span> vs ${r.label_prev}`;
+document.getElementById('kpi-acum-label').textContent = `${DATA.by_month[0].label} — ${r.label_curr}`;
+document.getElementById('kpi-acum').textContent = fmtBR(r.total_fat);
+document.getElementById('kpi-acum-meses').textContent = r.n_meses;
+document.getElementById('kpi-ticket').textContent = fmtBR(r.ticket);
+document.getElementById('kpi-qtd').textContent = r.total_qtd;
+document.getElementById('kpi-proc-com-indic').textContent = `${r.pct_com_indic.toFixed(0)}%`;
+
+// === Chart 1: Faturamento mensal por categoria (stacked bar + line total) ===
+const ctxMensal = document.getElementById('chart-mensal');
+new Chart(ctxMensal, {
+  type:'bar',
+  data:{
+    labels: DATA.by_month.map(m=>m.label),
+    datasets:[
+      {label:'Vasculares', data: DATA.by_month.map(m=>m.vasc), backgroundColor:COLORS.vasc, stack:'s'},
+      {label:'Corporal', data: DATA.by_month.map(m=>m.corp), backgroundColor:COLORS.corp, stack:'s'},
+      {label:'Faciais', data: DATA.by_month.map(m=>m.fac), backgroundColor:COLORS.fac, stack:'s'},
+      {label:'Outros', data: DATA.by_month.map(m=>m.outros), backgroundColor:COLORS.outros, stack:'s'},
+      {label:'Total', data: DATA.by_month.map(m=>m.fat), type:'line',
+       borderColor:'#fff', borderWidth:2, pointRadius:4, pointBackgroundColor:'#fff',
+       pointBorderColor:'#000', pointBorderWidth:2, fill:false, tension:.3, yAxisID:'y'},
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index', intersect:false},
+    plugins:{
+      legend:{position:'bottom', labels:{usePointStyle:true, pointStyle:'rect', padding:18, font:{size:11}}},
+      tooltip:{
+        backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+        callbacks:{ label:(c)=>`${c.dataset.label}: R$ ${fmtBR(c.parsed.y)}` }
+      }
+    },
+    scales:{
+      x:{grid:{display:false}, ticks:{font:{size:11}}},
+      y:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v=>'R$ '+fmtBR(v), font:{size:11}}}
+    }
+  }
+});
+
+// === Chart 2: Mix por categoria (doughnut) ===
+const ctxCat = document.getElementById('chart-cat');
+const cats = DATA.by_cat;
+const catColors = cats.map((c,i)=>{
+  if(c.cat==='Vasculares') return COLORS.vasc;
+  if(c.cat==='Corporal') return COLORS.corp;
+  if(c.cat==='Faciais') return COLORS.fac;
+  const others = ['#7a5e3f','#5a4530','#a8865d','#8b6f4b','#3d2e20','#665544','#4a3a28'];
+  return others[(i-3)%others.length] || '#333';
+});
+new Chart(ctxCat, {
+  type:'doughnut',
+  data:{
+    labels: cats.map(c=>c.cat),
+    datasets:[{data: cats.map(c=>c.fat), backgroundColor:catColors, borderColor:'#0A0A0A', borderWidth:2}]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'62%',
+    plugins:{
+      legend:{position:'right', labels:{usePointStyle:true, pointStyle:'circle', padding:10, font:{size:11},
+        generateLabels:(chart)=>{
+          const data = chart.data;
+          const total = data.datasets[0].data.reduce((a,b)=>a+b,0);
+          return data.labels.map((l,i)=>{
+            const v = data.datasets[0].data[i];
+            const pct = (v/total*100).toFixed(1);
+            return {text:`${l} — ${pct}%`, fillStyle:catColors[i], strokeStyle:catColors[i],
+                    lineWidth:0, hidden:false, index:i, fontColor:'rgba(255,255,255,.7)'};
+          });
+        }
+      }},
+      tooltip:{
+        backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+        callbacks:{ label:(c)=>`R$ ${fmtBR(c.parsed)}` }
+      }
+    }
+  }
+});
+
+// === Chart 3: Faturamento por executor (horizontal bar) ===
+const ctxExec = document.getElementById('chart-exec');
+const execSorted = [...DATA.by_exec].sort((a,b)=>b.fat-a.fat);
+const execColors = execSorted.map(e=>{
+  if(e.role==='vascular') return e.exec.startsWith('Igor')?COLORS.igor:e.exec.startsWith('João')?COLORS.fukuda:COLORS.lobato;
+  if(e.role==='dermato') return COLORS.chris;
+  if(e.role==='fisio') return COLORS.juliana;
+  return COLORS.pend;
+});
+new Chart(ctxExec, {
+  type:'bar',
+  data:{
+    labels: execSorted.map(e=>e.exec.replace('NÃO REALIZOU O PROCEDIMENTO AINDA','Pendente de execução')),
+    datasets:[{
+      data: execSorted.map(e=>e.fat),
+      backgroundColor:execColors,
+      borderRadius:4,
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+        callbacks:{
+          label:(c)=>{
+            const e = execSorted[c.dataIndex];
+            return [`R$ ${fmtBR(c.parsed.x)}`, `${e.qtd} procedimentos`, `Papel: ${ROLE_LABEL[e.role]||'—'}`];
+          }
+        }
+      }
+    },
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v=>'R$ '+fmtBR(v), font:{size:11}}},
+      y:{grid:{display:false}, ticks:{font:{size:11}}}
+    }
+  }
+});
+
+// === Chart 4: Indicadores ===
+const ctxIndic = document.getElementById('chart-indic');
+const indicSorted = DATA.by_indicador.filter(i=>i.ind!=='(Sem indicador)' && i.ind!=='SEM INDICAÇÃO').slice(0,8);
+new Chart(ctxIndic, {
+  type:'bar',
+  data:{
+    labels: indicSorted.map(i=>i.ind.replace(' Sayuri Lopes Inoue','').replace(' Olimpio de Paula','')),
+    datasets:[{
+      data: indicSorted.map(i=>i.fat),
+      backgroundColor:indicSorted.map(i=>{
+        if(i.ind.startsWith('Igor')) return COLORS.vasc;
+        if(i.ind.startsWith('João')) return COLORS.fukuda;
+        if(i.ind.startsWith('Christiane')) return COLORS.chris;
+        if(i.ind.startsWith('Juliana')) return COLORS.juliana;
+        return '#666';
+      }),
+      borderRadius:4,
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+        callbacks:{
+          label:(c)=>{
+            const i = indicSorted[c.dataIndex];
+            return [`Faturamento indicado: R$ ${fmtBR(i.fat)}`, `${i.qtd} pacientes`, `Repasse de indicador: R$ ${fmtBRcent(i.repasse)}`];
+          }
+        }
+      }
+    },
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v=>'R$ '+fmtBR(v), font:{size:11}}},
+      y:{grid:{display:false}, ticks:{font:{size:11}}}
+    }
+  }
+});
+
+// === Top procedimentos ===
+const tblProc = document.getElementById('tbl-proc');
+DATA.by_proc.slice(0,10).forEach(p=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${p.proc}</td><td class="num muted">${p.qtd}</td><td class="num">R$ ${fmtBR(p.fat)}</td>`;
+  tblProc.appendChild(tr);
+});
+
+// === Renda passiva — todos os vasculares ===
+const VASCULARES = ['Igor Rafael Sincos', 'João Fukuda', 'Manoel Augusto Lobato'];
+const passGrid = document.getElementById('pass-grid');
+// Simulação base: 5 indicações Beauty Legs Corporal/mês × 12 meses
+const SIM_VAL_BRUTO = 3500;
+const SIM_LIQ = SIM_VAL_BRUTO * (1-0.1125);
+const SIM_GANHO_SESSAO = SIM_LIQ * 0.10;  // 10% indicador
+const SIM_QTD_MES = 5;
+const SIM_GANHO_MES = SIM_GANHO_SESSAO * SIM_QTD_MES;
+const SIM_GANHO_ANO = SIM_GANHO_MES * 12;
+
+VASCULARES.forEach(v=>{
+  const real = DATA.passive_vasc[v] || {indicado_fat:0, indicado_qtd:0, ganho_indic:0};
+  const card = document.createElement('div');
+  card.className = 'pass-card vasc';
+  const isReal = real.indicado_qtd > 0;
+  card.innerHTML = `
+    <div class="name">${v}</div>
+    <div class="role">Vascular</div>
+    <div class="row"><span class="label">Indicações realizadas</span><span class="value">${real.indicado_qtd}</span></div>
+    <div class="row"><span class="label">Faturamento indicado</span><span class="value">R$ ${fmtBR(real.indicado_fat)}</span></div>
+    <div class="row"><span class="label">Repasse de indicador</span><span class="value red">R$ ${fmtBRcent(real.ganho_indic)}</span></div>
+    <div class="sep"></div>
+    <div class="row"><span class="label">Simulação 5 BL/mês</span><span class="value">R$ ${fmtBR(SIM_GANHO_MES)}/mês</span></div>
+    <div class="row"><span class="label">Anualizado</span><span class="value red">R$ ${fmtBR(SIM_GANHO_ANO)}</span></div>
+    <div class="sim-note">${isReal
+      ? 'Já participa do modelo. Cresceria mais com cadência semanal de indicação.'
+      : 'Não participa do modelo. Toda indicação é receita 100% incremental, sem custo de tempo.'}</div>
+  `;
+  passGrid.appendChild(card);
+});
+</script>
+
+</body>
+</html>

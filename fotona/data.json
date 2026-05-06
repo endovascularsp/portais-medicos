@@ -1,0 +1,400 @@
+{
+  "resumo": {
+    "total_fat": 942617.0,
+    "total_liq": 836572.5875,
+    "total_qtd": 251,
+    "ticket": 3755.4462151394423,
+    "fat_curr": 196465.0,
+    "fat_prev": 200012.00000000006,
+    "mom": -1.7733935963842455,
+    "label_curr": "Abr/26",
+    "label_prev": "Mar/26",
+    "repasse_fotona": 125485.888125,
+    "repasse_clinica": 384328.280625,
+    "repasse_exec": 297486.45,
+    "repasse_indic": 29271.96875,
+    "fat_com_indicador": 396475.0,
+    "pct_com_indic": 42.061091620456665,
+    "n_meses": 8
+  },
+  "by_month": [
+    {
+      "key": "2025-09",
+      "label": "Set/25",
+      "fat": 23000.0,
+      "qtd": 2,
+      "vasc": 20000.0,
+      "corp": 0,
+      "fac": 3000.0,
+      "outros": 0
+    },
+    {
+      "key": "2025-10",
+      "label": "Out/25",
+      "fat": 97000.0,
+      "qtd": 23,
+      "vasc": 50000.0,
+      "corp": 38500.0,
+      "fac": 5000.0,
+      "outros": 3500.0
+    },
+    {
+      "key": "2025-11",
+      "label": "Nov/25",
+      "fat": 53540.0,
+      "qtd": 12,
+      "vasc": 35500.0,
+      "corp": 9900.0,
+      "fac": 8140.0,
+      "outros": 0
+    },
+    {
+      "key": "2025-12",
+      "label": "Dez/25",
+      "fat": 185050.0,
+      "qtd": 39,
+      "vasc": 61800.0,
+      "corp": 90100.0,
+      "fac": 21850.0,
+      "outros": 11300.0
+    },
+    {
+      "key": "2026-01",
+      "label": "Jan/26",
+      "fat": 102250.0,
+      "qtd": 26,
+      "vasc": 19500.0,
+      "corp": 50500.0,
+      "fac": 23700.0,
+      "outros": 8550.0
+    },
+    {
+      "key": "2026-02",
+      "label": "Fev/26",
+      "fat": 85300.0,
+      "qtd": 33,
+      "vasc": 49300.0,
+      "corp": 20500.0,
+      "fac": 4000.0,
+      "outros": 11500.0
+    },
+    {
+      "key": "2026-03",
+      "label": "Mar/26",
+      "fat": 200012.00000000006,
+      "qtd": 67,
+      "vasc": 63600.0,
+      "corp": 98132.00000000004,
+      "fac": 25680.0,
+      "outros": 12600.0
+    },
+    {
+      "key": "2026-04",
+      "label": "Abr/26",
+      "fat": 196465.0,
+      "qtd": 49,
+      "vasc": 88000.0,
+      "corp": 48500.0,
+      "fac": 44940.0,
+      "outros": 15025.0
+    }
+  ],
+  "by_cat": [
+    {
+      "cat": "Vasculares",
+      "fat": 387700.0,
+      "qtd": 87
+    },
+    {
+      "cat": "Corporal",
+      "fat": 356132.00000000006,
+      "qtd": 91
+    },
+    {
+      "cat": "Faciais",
+      "fat": 136310.0,
+      "qtd": 41
+    },
+    {
+      "cat": "Dores e Inflamações",
+      "fat": 21725.0,
+      "qtd": 11
+    },
+    {
+      "cat": "Embelezamento do Olhar",
+      "fat": 12500.0,
+      "qtd": 5
+    },
+    {
+      "cat": "Tricologia e Remoção de Pelos",
+      "fat": 10000.0,
+      "qtd": 6
+    },
+    {
+      "cat": "Cicatrizes",
+      "fat": 6750.0,
+      "qtd": 6
+    },
+    {
+      "cat": "Lesões Benignas",
+      "fat": 4700.0,
+      "qtd": 1
+    },
+    {
+      "cat": "Íntimo",
+      "fat": 3500.0,
+      "qtd": 1
+    },
+    {
+      "cat": "Saúde do Sono",
+      "fat": 2500.0,
+      "qtd": 1
+    },
+    {
+      "cat": "Unhas e Verrugas",
+      "fat": 800.0,
+      "qtd": 1
+    }
+  ],
+  "by_exec": [
+    {
+      "exec": "Igor Rafael Sincos",
+      "fat": 392149.9999999999,
+      "qtd": 89,
+      "role": "vascular"
+    },
+    {
+      "exec": "Juliana Olimpio de Paula",
+      "fat": 383957.00000000006,
+      "qtd": 105,
+      "role": "fisio"
+    },
+    {
+      "exec": "Christiane Sayuri Lopes Inoue",
+      "fat": 108260.0,
+      "qtd": 43,
+      "role": "dermato"
+    },
+    {
+      "exec": "NÃO REALIZOU O PROCEDIMENTO AINDA",
+      "fat": 33000.0,
+      "qtd": 4,
+      "role": "pendente"
+    },
+    {
+      "exec": "João Fukuda",
+      "fat": 13500.0,
+      "qtd": 5,
+      "role": "vascular"
+    },
+    {
+      "exec": "Manoel Augusto Lobato",
+      "fat": 11750.0,
+      "qtd": 5,
+      "role": "vascular"
+    }
+  ],
+  "by_indicador": [
+    {
+      "ind": "(Sem indicador)",
+      "fat": 546141.9999999999,
+      "qtd": 157,
+      "repasse": 0.0
+    },
+    {
+      "ind": "Igor Rafael Sincos",
+      "fat": 202300.0,
+      "qtd": 43,
+      "repasse": 17954.125
+    },
+    {
+      "ind": "Juliana Olimpio de Paula",
+      "fat": 72650.0,
+      "qtd": 21,
+      "repasse": 532.5
+    },
+    {
+      "ind": "Christiane Sayuri Lopes Inoue",
+      "fat": 41050.0,
+      "qtd": 14,
+      "repasse": 3643.1875
+    },
+    {
+      "ind": "Simone Matsuda Torricelli",
+      "fat": 22000.0,
+      "qtd": 4,
+      "repasse": 1952.5
+    },
+    {
+      "ind": "Daniela Viese Roth",
+      "fat": 17700.0,
+      "qtd": 3,
+      "repasse": 1570.875
+    },
+    {
+      "ind": "Clara Silva Freitas",
+      "fat": 16000.0,
+      "qtd": 3,
+      "repasse": 1420.0
+    },
+    {
+      "ind": "João Fukuda",
+      "fat": 11925.0,
+      "qtd": 3,
+      "repasse": 1058.34375
+    },
+    {
+      "ind": "SEM INDICAÇÃO",
+      "fat": 10350.0,
+      "qtd": 2,
+      "repasse": 918.5625
+    },
+    {
+      "ind": "Carolina Mardegan",
+      "fat": 2500.0,
+      "qtd": 1,
+      "repasse": 221.875
+    }
+  ],
+  "by_proc": [
+    {
+      "proc": "Corporal - Beauty Legs",
+      "fat": 280013.28,
+      "qtd": 64
+    },
+    {
+      "proc": "Vasculares - Telangiectasias",
+      "fat": 206750.0,
+      "qtd": 51
+    },
+    {
+      "proc": "Vasculares - Beauty Legs",
+      "fat": 180950.0,
+      "qtd": 36
+    },
+    {
+      "proc": "Faciais - Fotona 6D",
+      "fat": 42250.0,
+      "qtd": 8
+    },
+    {
+      "proc": "Faciais - Fotona 4D",
+      "fat": 41290.0,
+      "qtd": 9
+    },
+    {
+      "proc": "Corporal - TensorTight (Áreas grandes)",
+      "fat": 37500.0,
+      "qtd": 10
+    },
+    {
+      "proc": "Faciais - Fotona 5D",
+      "fat": 24500.0,
+      "qtd": 5
+    },
+    {
+      "proc": "Corporal - ThermoLipólise",
+      "fat": 21418.72,
+      "qtd": 9
+    },
+    {
+      "proc": "Dores e Inflamações - Fotobiomodulação",
+      "fat": 20425.0,
+      "qtd": 10
+    },
+    {
+      "proc": "Faciais - Véu de Noiva",
+      "fat": 18770.0,
+      "qtd": 17
+    },
+    {
+      "proc": "Corporal - TightSculpting",
+      "fat": 13600.0,
+      "qtd": 6
+    },
+    {
+      "proc": "Embelezamento do Olhar - SmoothEyes",
+      "fat": 12500.0,
+      "qtd": 5
+    },
+    {
+      "proc": "Tricologia e Remoção de Pelos - HairEstart",
+      "fat": 10000.0,
+      "qtd": 6
+    },
+    {
+      "proc": "Cicatrizes - Cicatrizes Atróficas",
+      "fat": 6750.0,
+      "qtd": 6
+    },
+    {
+      "proc": "Faciais - Fotona 6D - Men",
+      "fat": 6500.0,
+      "qtd": 1
+    }
+  ],
+  "exec_cat": {
+    "Vasculares": {
+      "Igor Rafael Sincos": 336450.0,
+      "Juliana Olimpio de Paula": 26000.0,
+      "João Fukuda": 13500.0,
+      "Manoel Augusto Lobato": 11750.0
+    },
+    "Íntimo": {
+      "Juliana Olimpio de Paula": 3500.0
+    },
+    "Corporal": {
+      "Juliana Olimpio de Paula": 236632.00000000003,
+      "NÃO REALIZOU O PROCEDIMENTO AINDA": 33000.0,
+      "Christiane Sayuri Lopes Inoue": 34800.0,
+      "Igor Rafael Sincos": 51700.0
+    },
+    "Faciais": {
+      "Christiane Sayuri Lopes Inoue": 59210.0,
+      "Juliana Olimpio de Paula": 73100.0,
+      "Igor Rafael Sincos": 4000.0
+    },
+    "Dores e Inflamações": {
+      "Juliana Olimpio de Paula": 21725.0
+    },
+    "Unhas e Verrugas": {
+      "Juliana Olimpio de Paula": 800.0
+    },
+    "Embelezamento do Olhar": {
+      "Juliana Olimpio de Paula": 5000.0,
+      "Christiane Sayuri Lopes Inoue": 7500.0
+    },
+    "Cicatrizes": {
+      "Christiane Sayuri Lopes Inoue": 6750.0
+    },
+    "Tricologia e Remoção de Pelos": {
+      "Juliana Olimpio de Paula": 10000.0
+    },
+    "Lesões Benignas": {
+      "Juliana Olimpio de Paula": 4700.0
+    },
+    "Saúde do Sono": {
+      "Juliana Olimpio de Paula": 2500.0
+    }
+  },
+  "passive_vasc": {
+    "Igor Rafael Sincos": {
+      "indicado_fat": 202300.0,
+      "indicado_qtd": 43,
+      "ganho_indic": 17954.125
+    },
+    "João Fukuda": {
+      "indicado_fat": 11925.0,
+      "indicado_qtd": 3,
+      "ganho_indic": 1058.34375
+    }
+  },
+  "exec_role": {
+    "Igor Rafael Sincos": "vascular",
+    "João Fukuda": "vascular",
+    "Manoel Augusto Lobato": "vascular",
+    "Christiane Sayuri Lopes Inoue": "dermato",
+    "Juliana Olimpio de Paula": "fisio",
+    "NÃO REALIZOU O PROCEDIMENTO AINDA": "pendente"
+  }
+}
