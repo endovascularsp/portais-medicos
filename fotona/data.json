@@ -5024,35 +5024,43 @@
   "periodos": [
     {
       "key": "2025-09",
-      "label": "Set/25"
+      "label": "Setembro/2025",
+      "label_short": "Set/25"
     },
     {
       "key": "2025-10",
-      "label": "Out/25"
+      "label": "Outubro/2025",
+      "label_short": "Out/25"
     },
     {
       "key": "2025-11",
-      "label": "Nov/25"
+      "label": "Novembro/2025",
+      "label_short": "Nov/25"
     },
     {
       "key": "2025-12",
-      "label": "Dez/25"
+      "label": "Dezembro/2025",
+      "label_short": "Dez/25"
     },
     {
       "key": "2026-01",
-      "label": "Jan/26"
+      "label": "Janeiro/2026",
+      "label_short": "Jan/26"
     },
     {
       "key": "2026-02",
-      "label": "Fev/26"
+      "label": "Fevereiro/2026",
+      "label_short": "Fev/26"
     },
     {
       "key": "2026-03",
-      "label": "Mar/26"
+      "label": "Março/2026",
+      "label_short": "Mar/26"
     },
     {
       "key": "2026-04",
-      "label": "Abr/26"
+      "label": "Abril/2026",
+      "label_short": "Abr/26"
     }
   ],
   "exec_role": {
@@ -5063,5 +5071,5 @@
     "Juliana Olimpio de Paula": "fisio",
     "NÃO REALIZOU O PROCEDIMENTO AINDA": "pendente"
   },
-  "generated_at": "2026-05-06T15:39"
+  "generated_at": "2026-05-06T16:06"
 }
