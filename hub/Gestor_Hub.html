@@ -228,7 +228,14 @@
 </div>
 
 <script>
-const HASH = '123cd8b4a5b4b2076e11633ff7e6813548f356d4b77780fad532b28e42f1f735';
+// Lista de hashes SHA-256 de senhas válidas. Cada hash corresponde a um acesso individual.
+// Para revogar, remover o hash. Para adicionar, calcular SHA-256 da senha e incluir aqui.
+const HASHES = [
+  '123cd8b4a5b4b2076e11633ff7e6813548f356d4b77780fad532b28e42f1f735', // Thiago + Dr. Igor (senha compartilhada legacy)
+  '4132f982e4defc57b565a23d0ef1217d5a6294c1f257244425e6004bbad52b24', // financeiro@cfodeconsultorio.com
+  '174419d17ff10aff0c1d14e3c74dc767ce11893ac2707e47286e92859ff4b23d', // cmortati@cfodeconsultorio.com
+  '14f3dfb49cbacd89fbf761c25a41017c2987d146fea78c45e7917ddac09ad9c3', // guilherme@vcgestao.com
+];
 const SK   = 'gestor_hub_auth';
 
 async function tentarLogin() {
@@ -236,7 +243,7 @@ async function tentarLogin() {
   if (!senha) return;
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(senha));
   const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  if (hex === HASH) {
+  if (HASHES.includes(hex)) {
     sessionStorage.setItem(SK, '1');
     sessionStorage.setItem('_xpa', senha);
     document.getElementById('login-overlay').style.display = 'none';
