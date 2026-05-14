@@ -35,6 +35,10 @@
       color:#f5c842;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
     .header-user{font-size:12px;color:rgba(255,255,255,0.6);padding-left:14px;border-left:1px solid rgba(255,255,255,0.1);margin-left:14px;}
     .header-user a{color:#7eb8f7;text-decoration:none;margin-left:8px;}
+    .header-back{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;margin-left:auto;border-radius:8px;
+      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);
+      font-size:12px;font-weight:600;text-decoration:none;transition:background .15s,border-color .15s;}
+    .header-back:hover{background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.25);color:#fff}
 
     .container{max-width:1400px;margin:0 auto;padding:24px}
 
@@ -164,6 +168,7 @@
       <h1>Atendimentos Hospitalares</h1>
       <p>Endovascular SP · Procedimentos em hospitais externos</p>
     </div>
+    <a href="../hub/Gestor_Hub.html" class="header-back" title="Voltar ao Hub do Gestor">← Hub</a>
     <div class="header-badge">Admin</div>
     <span class="header-user" id="header-info">—</span>
   </header>
