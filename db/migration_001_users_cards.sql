@@ -3,6 +3,13 @@
 -- Compatível com a tabela public.users existente (email, name, role, slug, created_at).
 
 -- ============================================================
+-- 0. Atualiza constraint de role: aceita 'admin', 'medico' e 'recepcao'
+-- ============================================================
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE public.users ADD CONSTRAINT users_role_check
+  CHECK (role IN ('admin', 'medico', 'recepcao'));
+
+-- ============================================================
 -- 1. Adiciona coluna cards (lista de cards/portais permitidos)
 -- ============================================================
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS cards text[] NOT NULL DEFAULT '{}';
