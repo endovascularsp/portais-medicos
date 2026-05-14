@@ -158,7 +158,7 @@
 
     <div class="hub-cards">
 
-      <div class="hub-card rec" data-card="gestor">
+      <div class="hub-card rec" data-card="gestor_recebimento">
         <div class="hub-card-icon">💰</div>
         <div class="hub-card-title">Recebimento</div>
         <div class="hub-card-desc">Honorários, repasses e compensações por profissional</div>
@@ -175,7 +175,7 @@
         </div>
       </div>
 
-      <div class="hub-card prod" data-card="gestor">
+      <div class="hub-card prod" data-card="gestor_produtividade">
         <div class="hub-card-icon">📊</div>
         <div class="hub-card-title">Produtividade</div>
         <div class="hub-card-desc">Atendimentos realizados por profissional e período</div>
@@ -189,7 +189,7 @@
         </div>
       </div>
 
-      <div class="hub-card insights" data-card="gestor">
+      <div class="hub-card insights" data-card="gestor_insights">
         <div class="hub-card-icon">💡</div>
         <div class="hub-card-title">Dashboard de Insights</div>
         <div class="hub-card-desc">Top pacientes, top procedimentos e indicadores de performance</div>
@@ -200,7 +200,7 @@
         </div>
       </div>
 
-      <div class="hub-card operacional" data-card="gestor">
+      <div class="hub-card operacional" data-card="gestor_dashboard_op">
         <div class="hub-card-icon">💬</div>
         <div class="hub-card-title">Dashboard Operacional</div>
         <div class="hub-card-desc">KPIs do atendimento WhatsApp/Instagram (Tier 1): conversão, tempo de resposta, ranking</div>
@@ -211,7 +211,7 @@
         </div>
       </div>
 
-      <div class="hub-card fotona" data-card="gestor">
+      <div class="hub-card fotona" data-card="gestor_fotona">
         <div class="hub-card-icon">💎</div>
         <div class="hub-card-title">Beauty Legs</div>
         <div class="hub-card-desc">Parceria Fotona: faturamento, indicadores, mix de procedimentos e renda passiva</div>
@@ -222,7 +222,7 @@
         </div>
       </div>
 
-      <div class="hub-card adm" data-card="gestor">
+      <div class="hub-card adm" data-card="gestor_adm">
         <div class="hub-card-icon">🗂️</div>
         <div class="hub-card-title">Gestão Administrativa</div>
         <div class="hub-card-desc">Funcionários, cargos & escopos, folha & remuneração, movimentações e POPs</div>
@@ -255,7 +255,7 @@
         </div>
       </div>
 
-      <div class="hub-card acessos" data-card="gestor" data-role="admin">
+      <div class="hub-card acessos" data-card="gestor_acessos" data-role="admin">
         <div class="hub-card-icon">🔑</div>
         <div class="hub-card-title">Gestão de Acessos</div>
         <div class="hub-card-desc">Cadastro de usuários e permissões dos portais Endovascular SP</div>
@@ -328,12 +328,15 @@ async function checkAuth() {
     if (span) span.textContent = me.name.split(' ')[0];
   }
 
-  // Filtra cards: esconde o que o usuário não tem permissão
+  // Filtra cards: esconde o que o usuário não tem permissão.
+  // Regra do guarda-chuva: quem tem 'gestor' vê automaticamente todos os 'gestor_*'.
+  const temGestorGuardaChuva = cards.includes('gestor');
   let visiveis = 0;
   document.querySelectorAll('.hub-card[data-card]').forEach(el => {
     const reqCard = el.getAttribute('data-card');
     const reqRole = el.getAttribute('data-role');
-    const ok = cards.includes(reqCard) && (!reqRole || me.role === reqRole);
+    const guardaChuvaCobre = temGestorGuardaChuva && reqCard.startsWith('gestor_');
+    const ok = (cards.includes(reqCard) || guardaChuvaCobre) && (!reqRole || me.role === reqRole);
     el.style.display = ok ? '' : 'none';
     if (ok) visiveis++;
   });

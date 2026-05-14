@@ -81,13 +81,17 @@
       color:#fff;font-size:13px;outline:none}
     .form-grid select option{background:#162d50;color:#fff}
     .form-grid input:focus,.form-grid select:focus{border-color:#2e6fc0}
-    .cards-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+    .cards-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;margin-bottom:6px}
     .card-check{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:8px;
       background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);cursor:pointer;
       transition:background .15s}
     .card-check:hover{background:rgba(255,255,255,0.08)}
     .card-check input{width:auto}
     .card-check span{font-size:12px}
+    .card-check.destaque{background:rgba(245,166,35,0.08);border-color:rgba(245,166,35,0.30)}
+    .card-check.destaque:hover{background:rgba(245,166,35,0.15)}
+    .cards-grupo-label{font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;
+      letter-spacing:0.8px;margin-top:14px;margin-bottom:4px}
     .modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
     .form-erro{color:#ff7b7b;font-size:12px;margin-top:8px;min-height:16px}
     .form-info{color:rgba(255,255,255,0.5);font-size:11px;margin-top:6px}
@@ -166,11 +170,31 @@
       <div class="form-info">Só preencher se for médico que tem portal próprio. Define qual `*_Hub.html` carregar.</div>
 
       <label>Cards permitidos *</label>
+      <div class="cards-grupo-label">⚙️ Gestor (guarda-chuva — marca todos os sub-cards)</div>
       <div class="cards-checks">
-        <label class="card-check"><input type="checkbox" value="gestor"/><span>🗂️ Gestor Hub</span></label>
-        <label class="card-check"><input type="checkbox" value="atendimentos"/><span>🏥 Atendimentos</span></label>
-        <label class="card-check"><input type="checkbox" value="previas"/><span>📋 Prévias</span></label>
-        <label class="card-check"><input type="checkbox" value="medico_proprio"/><span>👨‍⚕️ Portal médico</span></label>
+        <label class="card-check destaque"><input type="checkbox" value="gestor"/><span>🗂️ Gestor (todos sub-cards)</span></label>
+      </div>
+
+      <div class="cards-grupo-label">📊 Sub-cards do Gestor (granular)</div>
+      <div class="cards-checks">
+        <label class="card-check"><input type="checkbox" value="gestor_recebimento"/><span>💰 Recebimento</span></label>
+        <label class="card-check"><input type="checkbox" value="gestor_produtividade"/><span>📈 Produtividade</span></label>
+        <label class="card-check"><input type="checkbox" value="gestor_insights"/><span>📊 Insights</span></label>
+        <label class="card-check"><input type="checkbox" value="gestor_dashboard_op"/><span>📡 Dashboard Operacional</span></label>
+        <label class="card-check"><input type="checkbox" value="gestor_fotona"/><span>💎 Beauty Legs</span></label>
+        <label class="card-check"><input type="checkbox" value="gestor_adm"/><span>🗃️ Gestão Administrativa</span></label>
+        <label class="card-check"><input type="checkbox" value="gestor_acessos"/><span>🔑 Gestão de Acessos</span></label>
+      </div>
+
+      <div class="cards-grupo-label">🏥 Operações</div>
+      <div class="cards-checks">
+        <label class="card-check"><input type="checkbox" value="atendimentos"/><span>🏥 Atendimentos Hospitalares</span></label>
+        <label class="card-check"><input type="checkbox" value="previas"/><span>📋 Prévias da Recepção</span></label>
+      </div>
+
+      <div class="cards-grupo-label">👨‍⚕️ Médico</div>
+      <div class="cards-checks">
+        <label class="card-check"><input type="checkbox" value="medico_proprio"/><span>👨‍⚕️ Portal individual do médico</span></label>
       </div>
 
       <div class="form-erro" id="form-erro"></div>
