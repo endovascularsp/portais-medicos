@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="assets/logo.png" type="image/png" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Atendimentos Hospitalares — Endovascular SP</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff;font-size:14px}
+
+    /* Login */
+    #login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .login-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;backdrop-filter:blur(10px);}
+    .login-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:22px}
+    .login-input{width:100%;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.08);color:#fff;font-size:15px;outline:none;margin-bottom:14px;letter-spacing:2px;}
+    .login-input:focus{border-color:rgba(245,166,35,0.6)}
+    .login-btn{width:100%;padding:13px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#1e4d8c,#2e6fc0);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+    .login-erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
+
+    #main{display:none;min-height:100vh}
+    header{background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:20px 32px;display:flex;align-items:center;gap:16px;}
+    .header-logo{display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .header-logo img{width:44px;height:44px;flex-shrink:0;}
+    .header-info h1{font-size:16px;font-weight:700;color:#fff}
+    .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+    .header-badge{margin-left:auto;padding:4px 14px;border-radius:20px;
+      background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.45);
+      color:#f5c842;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+    .header-user{font-size:12px;color:rgba(255,255,255,0.6);padding-left:14px;border-left:1px solid rgba(255,255,255,0.1);margin-left:14px;}
+    .header-user a{color:#7eb8f7;text-decoration:none;margin-left:8px;}
+
+    .container{max-width:1400px;margin:0 auto;padding:24px}
+
+    /* Cards de resumo (mockup C — acento lateral colorido + sublabel) */
+    .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+    @media(max-width:1000px){.summary{grid-template-columns:repeat(2,1fr)}}
+    .card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);
+      border-radius:10px;padding:14px 18px;position:relative;overflow:hidden;transition:background .2s}
+    .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+    .card.c1::before{background:#3a8dd4}
+    .card.c2::before{background:#c084fc}
+    .card.c3::before{background:#f472b6}
+    .card.c4::before{background:#7eb8f7}
+    .card.c5::before{background:#6dd5a0}
+    .card:hover{background:rgba(255,255,255,0.06)}
+    .card-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(255,255,255,0.5);font-weight:600;margin-bottom:3px}
+    .card-value{font-size:22px;font-weight:700;color:#fff;line-height:1.1}
+    .card-value.money{color:#6dd5a0}
+    .card-sub{font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px}
+
+    /* Botão Novo */
+    .btn-acao{padding:8px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1e4d8c,#2e6fc0);
+      color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+    .btn-acao:hover{opacity:.85}
+    .btn-acao.success{background:linear-gradient(135deg,#1f7a4d,#2ea16a)}
+    .btn-acao.danger{background:linear-gradient(135deg,#9c2828,#c44040)}
+    .btn-acao.outline{background:transparent;border:1px solid rgba(255,255,255,0.25)}
+    .btn-acao:disabled{opacity:.5;cursor:not-allowed}
+
+    /* Toolbar (mockup C — filtros chips + busca grande + ações) */
+    .toolbar{display:flex;flex-direction:column;gap:10px;background:rgba(255,255,255,0.025);
+      padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);margin-bottom:14px}
+    .toolbar-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .filtros-chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1}
+    .acoes{display:flex;gap:8px;flex-wrap:wrap}
+    .chip-filtro{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
+      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:18px;font-size:11px;color:rgba(255,255,255,0.85)}
+    .chip-filtro label{font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+    .chip-filtro select{background:transparent;color:#fff;border:none;font-size:11px;outline:none;cursor:pointer;font-family:inherit;font-weight:600;max-width:200px}
+    .chip-filtro select option{background:#162d50;color:#fff}
+    .toolbar-bottom{display:flex;gap:12px;align-items:center}
+    .busca-grande{flex:1;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:0 12px;min-width:240px}
+    .busca-grande::before{content:'🔍';font-size:14px;opacity:0.5}
+    .busca-grande input{flex:1;background:transparent;border:none;color:#fff;font-size:13px;padding:9px 0;outline:none}
+    .count-info{font-size:11px;color:rgba(255,255,255,0.45);white-space:nowrap}
+
+    /* Tabela */
+    .tabela-wrap{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+      border-radius:12px;overflow:auto;max-height:65vh}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    thead{position:sticky;top:0;background:#162d50;z-index:10}
+    th{text-align:left;padding:12px 10px;font-weight:600;font-size:11px;text-transform:uppercase;
+      letter-spacing:0.5px;color:rgba(255,255,255,0.6);border-bottom:1px solid rgba(255,255,255,0.08)}
+    td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top}
+    tbody tr:hover{background:rgba(255,255,255,0.04);cursor:pointer}
+    .col-valor{text-align:right;color:#6dd5a0;font-weight:600;font-family:'SF Mono','Consolas',monospace}
+    .col-tuss{font-family:'SF Mono','Consolas',monospace;color:rgba(255,255,255,0.5);font-size:11px}
+    .col-data{font-family:'SF Mono','Consolas',monospace;font-size:11px;color:rgba(255,255,255,0.7)}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+    .badge.aguardando{background:rgba(160,160,160,0.15);color:#bbb;border:1px solid rgba(160,160,160,0.35)}
+    .badge.pago{background:rgba(109,213,160,0.15);color:#6dd5a0;border:1px solid rgba(109,213,160,0.35)}
+    .badge.parcial{background:rgba(126,184,247,0.15);color:#7eb8f7;border:1px solid rgba(126,184,247,0.35)}
+    .badge.nao_pago{background:rgba(255,123,123,0.15);color:#ff7b7b;border:1px solid rgba(255,123,123,0.35)}
+    .badge.extrato_sem_captura{background:rgba(245,166,35,0.15);color:#f5c842;border:1px solid rgba(245,166,35,0.35)}
+
+    .empty{padding:60px;text-align:center;color:rgba(255,255,255,0.4)}
+    .loading{text-align:center;padding:40px;color:rgba(255,255,255,0.5)}
+
+    /* Modal de detalhes */
+    #modal, #modal-novo, #modal-extrato{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;
+      align-items:center;justify-content:center;z-index:500;padding:20px}
+    #modal.show, #modal-novo.show, #modal-extrato.show{display:flex}
+    .modal-box{background:#162d50;border:1px solid rgba(255,255,255,0.12);border-radius:12px;
+      padding:24px;max-width:600px;width:100%;max-height:90vh;overflow:auto}
+    .modal-box.wide{max-width:780px}
+    .modal-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+    .form-grid label{display:block;font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+    .form-grid input, .form-grid select{width:100%;padding:9px 12px;border-radius:8px;
+      border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:13px;outline:none}
+    .form-grid select option{background:#162d50;color:#fff}
+    .form-grid input:focus, .form-grid select:focus{border-color:#2e6fc0}
+    .form-section{margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)}
+    .form-section h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#f5c842;margin-bottom:10px}
+    .form-erro{color:#ff7b7b;font-size:12px;margin-top:8px;min-height:16px}
+    .spinner-loading{display:inline-block;width:40px;height:40px;border:3px solid rgba(255,255,255,0.15);border-top-color:#2e6fc0;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #modal-extrato .preview-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+    #modal-extrato .preview-table th, #modal-extrato .preview-table td{text-align:left;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    #modal-extrato .preview-table th{color:rgba(255,255,255,0.5);font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
+    #modal-extrato input[type=file]{padding:8px;color:rgba(255,255,255,0.8)}
+    .modal-title{font-size:16px;font-weight:700;margin-bottom:14px;color:#fff}
+    .modal-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px}
+    .modal-row .k{color:rgba(255,255,255,0.5)}
+    .modal-row .v{color:#fff;text-align:right;max-width:60%;word-wrap:break-word}
+    .modal-close{margin-top:18px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);
+      border-radius:8px;padding:10px 20px;cursor:pointer;font-weight:600}
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-title">Atendimentos Hospitalares</div>
+    <div class="login-sub">Endovascular SP · acesso admin</div>
+    <button class="login-btn" onclick="entrarComGoogle()" style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16.51 8.18c0-.57-.05-1.1-.14-1.62H9v3.07h4.21a3.6 3.6 0 01-1.56 2.36v1.97h2.52a7.62 7.62 0 002.34-5.78z" fill="#fff"/>
+        <path d="M9 16.5c2.12 0 3.9-.7 5.2-1.9l-2.52-1.96c-.7.47-1.6.75-2.68.75-2.06 0-3.8-1.39-4.43-3.26H1.97v2.04A8.5 8.5 0 009 16.5z" fill="#34A853"/>
+        <path d="M4.57 10.13a5.1 5.1 0 010-3.26V4.83H1.97a8.5 8.5 0 000 7.34l2.6-2.04z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.15 0 2.18.4 3 1.17l2.24-2.24A8.5 8.5 0 001.97 4.83l2.6 2.04C5.2 4.97 6.94 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Entrar com Google
+    </button>
+    <div id="login-erro" class="login-erro"></div>
+  </div>
+</div>
+
+<div id="main">
+  <header>
+    <div class="header-logo">
+      <img src="assets/logo.png" alt="Endovascular SP" />
+    </div>
+    <div class="header-info">
+      <h1>Atendimentos Hospitalares</h1>
+      <p>Endovascular SP · Procedimentos em hospitais externos</p>
+    </div>
+    <div class="header-badge">Admin</div>
+    <span class="header-user" id="header-info">—</span>
+  </header>
+
+  <div class="container">
+    <!-- Cards de resumo (mockup C — acento lateral + sublabels) -->
+    <div class="summary" id="summary">
+      <div class="card c1"><div class="card-label">Hospitais</div><div class="card-value" id="s-hosp">-</div><div class="card-sub" id="s-hosp-sub">—</div></div>
+      <div class="card c2"><div class="card-label">Médicos</div><div class="card-value" id="s-med">-</div><div class="card-sub">ativos no período</div></div>
+      <div class="card c3"><div class="card-label">Atendimentos</div><div class="card-value" id="s-atend">-</div><div class="card-sub">únicos</div></div>
+      <div class="card c4"><div class="card-label">Linhas de repasse</div><div class="card-value" id="s-linhas">-</div><div class="card-sub" id="s-linhas-sub">—</div></div>
+      <div class="card c5"><div class="card-label">Valor total</div><div class="card-value money" id="s-valor">-</div><div class="card-sub">acumulado</div></div>
+    </div>
+
+    <!-- Toolbar unificada -->
+    <div class="toolbar">
+      <div class="toolbar-top">
+        <div class="filtros-chips">
+          <div class="chip-filtro"><label>Hospital:</label>
+            <select id="f-hospital"><option value="">Todos</option></select>
+          </div>
+          <div class="chip-filtro"><label>Médico:</label>
+            <select id="f-medico"><option value="">Todos</option></select>
+          </div>
+          <div class="chip-filtro"><label>Status:</label>
+            <select id="f-status">
+              <option value="">Todos</option>
+              <option value="aguardando">Aguardando</option>
+              <option value="pago">Pago</option>
+              <option value="parcial">Parcial</option>
+              <option value="extrato_sem_captura">Extrato sem captura</option>
+              <option value="nao_pago">Não pago</option>
+            </select>
+          </div>
+          <div class="chip-filtro"><label>Função:</label>
+            <select id="f-funcao"><option value="">Todas</option></select>
+          </div>
+        </div>
+        <div class="acoes">
+          <button class="btn-acao" onclick="abrirModalExtrato()">📄 Importar extrato</button>
+          <button class="btn-acao success" onclick="abrirModalNovo()">+ Novo atendimento</button>
+        </div>
+      </div>
+      <div class="toolbar-bottom">
+        <div class="busca-grande"><input id="f-busca" type="text" placeholder="Busca livre: paciente, TUSS ou procedimento..."/></div>
+        <span class="count-info" id="count-info">0 linhas</span>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="tabela-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Atend</th>
+            <th>Paciente</th>
+            <th>Médico</th>
+            <th>Função</th>
+            <th>TUSS</th>
+            <th>Procedimento</th>
+            <th>Conv./Plano</th>
+            <th style="text-align:right">Valor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-body">
+          <tr><td colspan="10" class="loading">Carregando dados…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalhes -->
+<div id="modal" onclick="if(event.target.id==='modal')fecharModal()">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Detalhes</div>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-acao outline" onclick="fecharModal()">Fechar</button>
+      <button class="btn-acao danger" id="btn-excluir-linha" onclick="excluirLinha()">Excluir esta linha</button>
+      <button class="btn-acao danger" id="btn-excluir-atend" onclick="excluirAtendimento()">Excluir atendimento inteiro</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Importar Extrato -->
+<div id="modal-extrato" onclick="if(event.target.id==='modal-extrato')fecharModalExtrato()">
+  <div class="modal-box wide">
+    <div class="modal-title">📄 Importar extrato hospitalar</div>
+
+    <div id="ex-step-upload">
+      <p style="color:rgba(255,255,255,0.55);font-size:12px;margin-bottom:8px">
+        Quando o hospital mandar o PDF, suba aqui. O sistema lê o conteúdo, mostra preview e você confirma.
+      </p>
+      <p style="color:rgba(245,166,35,0.85);font-size:11px;margin-bottom:14px;background:rgba(245,166,35,0.08);border-left:2px solid rgba(245,166,35,0.5);padding:8px 12px">
+        💡 Padrão de nomenclatura do arquivo: <strong>Nome do Hospital - Mês Ano.pdf</strong> (ex: <em>São Camilo Pompéia - Fevereiro 2026.pdf</em>). Assim o sistema detecta o hospital automaticamente.
+      </p>
+      <div class="form-grid">
+        <div>
+          <label>Hospital</label>
+          <select id="ex-hospital"></select>
+          <div id="ex-novo-hospital-wrap" style="display:none;margin-top:8px;display:none">
+            <input id="ex-novo-hospital-input" class="input" placeholder="Nome do hospital novo" style="margin-bottom:8px"/>
+            <div style="display:flex;gap:6px">
+              <button class="btn-acao success" onclick="cadastrarHospitalInline()" style="flex:1">Criar e usar</button>
+              <button class="btn-acao outline" onclick="cancelarNovoHospital()" style="flex:1">Cancelar</button>
+            </div>
+          </div>
+          <div id="ex-hospital-detectado" style="display:none;font-size:11px;color:#6dd5a0;margin-top:4px"></div>
+        </div>
+        <div><label>Arquivo PDF</label><input type="file" id="ex-file" accept="application/pdf"/></div>
+      </div>
+      <div class="form-erro" id="ex-erro"></div>
+      <div class="modal-actions">
+        <button class="btn-acao outline" onclick="fecharModalExtrato()">Cancelar</button>
+        <button class="btn-acao success" id="btn-extrato-processar" onclick="processarExtrato()">Processar PDF →</button>
+      </div>
+    </div>
+
+    <div id="ex-step-loading" style="display:none;text-align:center;padding:40px">
+      <div class="spinner-loading"></div>
+      <p style="margin-top:14px;color:rgba(255,255,255,0.7)">Processando o PDF…</p>
+      <p style="margin-top:6px;font-size:12px;color:rgba(255,255,255,0.45)">Extratos grandes podem levar 60-120 segundos.</p>
+    </div>
+
+    <div id="ex-step-preview" style="display:none">
+      <div id="ex-preview-info" style="margin-bottom:12px"></div>
+      <h4 style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#f5c842;margin-bottom:6px">Amostra das linhas extraídas</h4>
+      <div style="max-height:280px;overflow:auto;border:1px solid rgba(255,255,255,0.08);border-radius:8px">
+        <table class="preview-table" id="ex-preview-table"></table>
+      </div>
+      <div class="form-erro" id="ex-erro-confirmar"></div>
+      <div class="modal-actions">
+        <button class="btn-acao outline" onclick="showExStep('upload')">← Voltar</button>
+        <button class="btn-acao success" id="btn-extrato-confirmar" onclick="confirmarExtrato()">✓ Confirmar e importar</button>
+      </div>
+    </div>
+
+    <div id="ex-step-sucesso" style="display:none">
+      <div style="background:rgba(109,213,160,0.10);border:1px solid rgba(109,213,160,0.35);color:#6dd5a0;border-radius:10px;padding:14px;margin-bottom:14px">✓ Extrato importado com sucesso</div>
+      <p id="ex-sucesso-info" style="color:rgba(255,255,255,0.8)"></p>
+      <div class="modal-actions">
+        <button class="btn-acao" onclick="fecharModalExtrato()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Novo Atendimento -->
+<div id="modal-novo" onclick="if(event.target.id==='modal-novo')fecharModalNovo()">
+  <div class="modal-box wide">
+    <div class="modal-title">+ Adicionar atendimento manualmente</div>
+    <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:12px">
+      Use quando o médico esqueceu de subir a foto e você precisa registrar o atendimento de qualquer forma.
+    </p>
+    <div class="form-grid">
+      <div><label>Hospital</label><select id="n-hospital"></select></div>
+      <div><label>Médico</label><select id="n-medico"></select></div>
+      <div><label>Nº atendimento</label><input id="n-num" placeholder="ex: 5865563"/></div>
+      <div><label>Paciente</label><input id="n-paciente" placeholder="Nome completo"/></div>
+      <div><label>Data</label><input id="n-data" type="date"/></div>
+      <div><label>Tipo</label>
+        <select id="n-tipo">
+          <option value="INT">Internação</option>
+          <option value="AMB">Ambulatorial</option>
+        </select>
+      </div>
+      <div><label>Convênio</label><input id="n-convenio" placeholder="ex: AMIL"/></div>
+      <div><label>Plano</label><input id="n-plano" placeholder="ex: BLUE 300"/></div>
+    </div>
+    <div class="form-section">
+      <h4>Procedimento</h4>
+      <div class="form-grid">
+        <div><label>TUSS</label><input id="n-tuss" placeholder="ex: 30913101"/></div>
+        <div><label>Descrição</label><input id="n-descricao" placeholder="Nome do procedimento"/></div>
+        <div><label>Função do médico</label>
+          <select id="n-funcao">
+            <option value="Cirurgião Principal">Cirurgião Principal</option>
+            <option value="Primeiro Auxiliar">Primeiro Auxiliar</option>
+            <option value="Segundo Auxiliar">Segundo Auxiliar</option>
+            <option value="Instrumentador">Instrumentador</option>
+            <option value="Auxiliar de SADT">Auxiliar de SADT</option>
+            <option value="Clínico">Clínico</option>
+          </select>
+        </div>
+        <div><label>Valor esperado (R$)</label><input id="n-valor" type="number" step="0.01" placeholder="0,00"/></div>
+      </div>
+    </div>
+    <div class="form-erro" id="n-erro"></div>
+    <div class="modal-actions">
+      <button class="btn-acao outline" onclick="fecharModalNovo()">Cancelar</button>
+      <button class="btn-acao success" id="btn-salvar-novo" onclick="salvarNovo()">Salvar atendimento</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Autorização agora vem da tabela central public.users (campo cards[]).
+// Esse portal exige que o usuário tenha o card 'atendimentos' no array.
+// Veja: portais-medicos/admin/ pra cadastrar/editar usuários e permissões.
+const CARD_REQUERIDO = 'atendimentos';
+
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+
+// (SSO via cookie compartilhado reservado pra próxima iteração — usa localStorage default)
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let DADOS = [];
+let RESUMO = {};
+let CURRENT_USER = null;
+
+async function entrarComGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href.split('#')[0].split('?')[0] },
+  });
+  if (error) {
+    document.getElementById('login-erro').textContent = 'Erro: ' + error.message;
+  }
+}
+
+async function checkAuth() {
+  const { data: { user }, error } = await sb.auth.getUser();
+  if (error || !user) {
+    mostrarLogin();
+    return;
+  }
+  const email = (user.email || '').toLowerCase();
+
+  // Consulta tabela central public.users pra ver se o email tem o card 'atendimentos'
+  const { data: meu, error: errUser } = await sb.from('users')
+    .select('email,name,role,cards')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (errUser) {
+    document.getElementById('login-erro').textContent = `Erro ao verificar acesso: ${errUser.message}`;
+    await sb.auth.signOut();
+    mostrarLogin();
+    return;
+  }
+  if (!meu) {
+    document.getElementById('login-erro').textContent = `Email ${email} não está cadastrado. Contate um administrador.`;
+    await sb.auth.signOut();
+    mostrarLogin();
+    return;
+  }
+  if (!(meu.cards || []).includes(CARD_REQUERIDO)) {
+    document.getElementById('login-erro').textContent =
+      `Acesso negado: seu usuário não tem permissão pra acessar Atendimentos.`;
+    await sb.auth.signOut();
+    mostrarLogin();
+    return;
+  }
+  CURRENT_USER = { ...user, ...meu };
+  await entrar();
+}
+
+function mostrarLogin() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('main').style.display = 'none';
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+    checkAuth();
+  } else if (event === 'SIGNED_OUT') {
+    CURRENT_USER = null;
+    mostrarLogin();
+  }
+});
+
+async function logout() {
+  await sb.auth.signOut();
+}
+
+async function entrar() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  // Mostra qual usuário está logado no header
+  const headerInfo = document.getElementById('header-info');
+  if (CURRENT_USER && headerInfo) {
+    headerInfo.innerHTML = `${CURRENT_USER.email} · <a href="#" onclick="logout();return false;" style="color:#7eb8f7">Sair</a>`;
+  }
+  await carregar();
+}
+
+async function carregar() {
+  try {
+    // 1) Linhas de repasse (do extrato) - como antes
+    const { data: linhas, error: e1 } = await sb
+      .from('linhas_repasse')
+      .select(`
+        id, funcao, quantidade, percentual, valor_repassado, data_procedimento, status_pagamento, status_glosa,
+        medico:medicos(nome, crm),
+        procedimento:procedimentos(id, tuss, descricao, via,
+          atendimento:atendimentos(id, numero_atend, paciente_nome, plano_texto, tipo_atendimento, data_atendimento,
+            hospital:hospitais(nome), convenio:convenios(nome)
+          )
+        ),
+        extrato:extratos(periodo_referencia, numero_repasse)
+      `)
+      .order('data_procedimento', { ascending: false })
+      .limit(2000);
+    if (e1) throw e1;
+
+    // 2) Capturas do médico (com procedimentos vinculados) - pra mostrar atendimentos "Aguardando"
+    const { data: capturas, error: e2 } = await sb
+      .from('capturas_formulario')
+      .select(`
+        id, created_at, atendimento_id,
+        medico:medicos(nome, crm),
+        atendimento:atendimentos(id, numero_atend, paciente_nome, plano_texto, tipo_atendimento, data_atendimento,
+          hospital:hospitais(nome), convenio:convenios(nome),
+          procedimentos(id, tuss, descricao, via)
+        )
+      `)
+      .not('atendimento_id', 'is', null)
+      .limit(2000);
+    if (e2) console.warn('Não carregou capturas:', e2);
+
+    // Marca procedimentos que já tem linha_repasse
+    const procsComLinha = new Set((linhas || []).map(l => l.procedimento?.id).filter(Boolean));
+
+    // Cria linhas sintéticas pra capturas sem linha_repasse correspondente
+    const linhasAguardando = [];
+    for (const cap of (capturas || [])) {
+      const a = cap.atendimento;
+      if (!a) continue;
+      const procs = a.procedimentos || [];
+      for (const p of procs) {
+        if (procsComLinha.has(p.id)) continue;
+        linhasAguardando.push({
+          id: `cap-${cap.id}-proc-${p.id}`,
+          _sintetico: true,
+          funcao: null,
+          quantidade: 1,
+          percentual: null,
+          valor_repassado: null,
+          data_procedimento: a.data_atendimento,
+          status_pagamento: 'aguardando',
+          status_glosa: null,
+          medico: cap.medico,
+          procedimento: {
+            id: p.id,
+            tuss: p.tuss,
+            descricao: p.descricao,
+            via: p.via,
+            atendimento: {
+              id: a.id,
+              numero_atend: a.numero_atend,
+              paciente_nome: a.paciente_nome,
+              plano_texto: a.plano_texto,
+              tipo_atendimento: a.tipo_atendimento,
+              data_atendimento: a.data_atendimento,
+              hospital: a.hospital,
+              convenio: a.convenio,
+            },
+          },
+          extrato: null,
+          _captura_id: cap.id,
+        });
+      }
+    }
+
+    DADOS = [...(linhas || []), ...linhasAguardando];
+    // Ordena por data desc (mistura linhas reais e sintéticas)
+    DADOS.sort((a, b) => {
+      const da = a.data_procedimento || '';
+      const db = b.data_procedimento || '';
+      return db.localeCompare(da);
+    });
+
+    calcularResumo();
+    popularFiltros();
+    renderizar();
+  } catch (e) {
+    document.getElementById('tabela-body').innerHTML =
+      `<tr><td colspan="10" class="empty">Erro ao carregar: ${e.message}</td></tr>`;
+    console.error(e);
+  }
+}
+
+function calcularResumo(linhas) {
+  linhas = linhas || DADOS;
+  const hospitais = new Set();
+  const medicos = new Set();
+  const atendimentos = new Set();
+  let valor_total = 0;
+  let aguardando = 0;
+
+  linhas.forEach(l => {
+    const h = l.procedimento?.atendimento?.hospital?.nome;
+    if (h) hospitais.add(h);
+    if (l.medico?.nome) medicos.add(l.medico.nome);
+    if (l.procedimento?.atendimento?.numero_atend) atendimentos.add(l.procedimento.atendimento.numero_atend);
+    valor_total += parseFloat(l.valor_repassado || 0);
+    if (l.status_pagamento === 'aguardando') aguardando++;
+  });
+
+  RESUMO = { hospitais: hospitais.size, medicos: medicos.size, atendimentos: atendimentos.size,
+             linhas: linhas.length, valor_total };
+
+  document.getElementById('s-hosp').textContent = RESUMO.hospitais;
+  document.getElementById('s-med').textContent = RESUMO.medicos;
+  document.getElementById('s-atend').textContent = RESUMO.atendimentos;
+  document.getElementById('s-linhas').textContent = RESUMO.linhas;
+  document.getElementById('s-valor').textContent = formatBRL(valor_total);
+
+  // Sublabels
+  const hospitaisList = Array.from(hospitais).sort();
+  const hospEl = document.getElementById('s-hosp-sub');
+  if (hospEl) hospEl.textContent = hospitaisList.length > 0 ? hospitaisList.slice(0, 3).join(' · ') : '—';
+  const linhasSubEl = document.getElementById('s-linhas-sub');
+  if (linhasSubEl) linhasSubEl.textContent = aguardando > 0 ? `${aguardando} aguardando` : 'todas processadas';
+}
+
+function popularFiltros() {
+  const hospitais = [...new Set(DADOS.map(l => l.procedimento?.atendimento?.hospital?.nome).filter(Boolean))].sort();
+  const fh = document.getElementById('f-hospital');
+  fh.innerHTML = '<option value="">Todos</option>';
+  hospitais.forEach(h => {
+    const opt = document.createElement('option');
+    opt.value = h; opt.textContent = h;
+    fh.appendChild(opt);
+  });
+
+  const medicos = [...new Set(DADOS.map(l => l.medico?.nome).filter(Boolean))].sort();
+  const fm = document.getElementById('f-medico');
+  fm.innerHTML = '<option value="">Todos</option>';
+  medicos.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    fm.appendChild(opt);
+  });
+
+  const funcoes = [...new Set(DADOS.map(l => l.funcao).filter(Boolean))].sort();
+  const ff = document.getElementById('f-funcao');
+  ff.innerHTML = '<option value="">Todas</option>';
+  funcoes.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f; opt.textContent = f;
+    ff.appendChild(opt);
+  });
+}
+
+function filtrar() {
+  const fh = document.getElementById('f-hospital').value;
+  const fm = document.getElementById('f-medico').value;
+  const fs = document.getElementById('f-status').value;
+  const ff = document.getElementById('f-funcao').value;
+  const fb = document.getElementById('f-busca').value.toLowerCase().trim();
+
+  return DADOS.filter(l => {
+    if (fh && l.procedimento?.atendimento?.hospital?.nome !== fh) return false;
+    if (fm && l.medico?.nome !== fm) return false;
+    if (fs && l.status_pagamento !== fs) return false;
+    if (ff && l.funcao !== ff) return false;
+    if (fb) {
+      const haystack = (
+        (l.procedimento?.atendimento?.paciente_nome || '') + ' ' +
+        (l.procedimento?.tuss || '') + ' ' +
+        (l.procedimento?.descricao || '')
+      ).toLowerCase();
+      if (!haystack.includes(fb)) return false;
+    }
+    return true;
+  });
+}
+
+function renderizar() {
+  const linhas = filtrar();
+  const tbody = document.getElementById('tabela-body');
+
+  // Atualiza cards do topo com base no filtro
+  calcularResumo(linhas);
+
+  document.getElementById('count-info').textContent =
+    `${linhas.length} ${linhas.length === 1 ? 'linha' : 'linhas'}` +
+    (linhas.length !== DADOS.length ? ` (de ${DADOS.length})` : '');
+
+  if (linhas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty">Nenhuma linha encontrada com os filtros atuais.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = linhas.map((l, i) => {
+    const a = l.procedimento?.atendimento || {};
+    const p = l.procedimento || {};
+    const status = l.status_pagamento || 'aguardando';
+    const valorTxt = l.valor_repassado != null ? formatBRL(l.valor_repassado) : '—';
+    return `
+      <tr onclick="abrirDetalhes(${i})" data-idx="${i}">
+        <td class="col-data">${formatDate(l.data_procedimento)}</td>
+        <td>${a.numero_atend || '-'}</td>
+        <td>${a.paciente_nome || '-'}</td>
+        <td>${l.medico?.nome || '-'}</td>
+        <td>${l.funcao || '—'}</td>
+        <td class="col-tuss">${p.tuss || '-'}</td>
+        <td>${truncar(p.descricao, 50)}</td>
+        <td>${truncar(a.plano_texto, 24)}</td>
+        <td class="col-valor">${valorTxt}</td>
+        <td><span class="badge ${status}">${status.replace('_', ' ')}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  // guarda referência filtrada pra modal
+  window.__linhasFiltradas = linhas;
+}
+
+function abrirDetalhes(i) {
+  const l = window.__linhasFiltradas[i];
+  if (!l) return;
+  const a = l.procedimento?.atendimento || {};
+  const p = l.procedimento || {};
+  const e = l.extrato || {};
+  const h = a.hospital || {};
+  // guarda os IDs pra os botões de Excluir
+  CURRENT_LINHA_ID = l._sintetico ? null : l.id;
+  CURRENT_ATEND_ID = a.id || null;
+  document.getElementById('btn-excluir-atend').style.display = CURRENT_ATEND_ID ? 'inline-block' : 'none';
+  document.getElementById('btn-excluir-linha').style.display = CURRENT_LINHA_ID ? 'inline-block' : 'none';
+
+  const rows = [
+    ['Hospital', h.nome],
+    ['Atendimento', a.numero_atend],
+    ['Tipo', a.tipo_atendimento],
+    ['Paciente', a.paciente_nome],
+    ['Data do procedimento', formatDate(l.data_procedimento)],
+    ['Plano', a.plano_texto],
+    ['Médico', l.medico?.nome],
+    ['CRM', l.medico?.crm || '—'],
+    ['Função', l.funcao],
+    ['TUSS', p.tuss],
+    ['Procedimento', p.descricao],
+    ['Via', p.via || '—'],
+    ['Quantidade', l.quantidade],
+    ['Percentual', l.percentual ? l.percentual + '%' : '—'],
+    ['Valor repassado', formatBRL(l.valor_repassado)],
+    ['Status pagamento', l.status_pagamento || 'aguardando'],
+    ['Status glosa', l.status_glosa || '—'],
+    ['Extrato', `${e.periodo_referencia || ''} (repasse ${e.numero_repasse || ''})`],
+  ];
+
+  document.getElementById('modal-title').textContent = 'Linha de repasse — detalhes';
+  document.getElementById('modal-body').innerHTML = rows.map(
+    ([k, v]) => `<div class="modal-row"><span class="k">${k}</span><span class="v">${v || '—'}</span></div>`
+  ).join('');
+  document.getElementById('modal').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('modal').classList.remove('show');
+  CURRENT_LINHA_ID = null;
+  CURRENT_ATEND_ID = null;
+}
+
+// ===== CRUD MANUAL (admin) =====
+let CURRENT_LINHA_ID = null;
+let CURRENT_ATEND_ID = null;
+let HOSPITAIS_CACHE = [];
+let MEDICOS_CACHE = [];
+
+async function carregarSelectsDoForm() {
+  if (HOSPITAIS_CACHE.length === 0) {
+    const { data: h } = await sb.from('hospitais').select('id,nome').eq('ativo', true).order('nome');
+    HOSPITAIS_CACHE = h || [];
+  }
+  if (MEDICOS_CACHE.length === 0) {
+    const { data: m } = await sb.from('medicos').select('id,nome,crm').eq('ativo', true).order('nome');
+    MEDICOS_CACHE = m || [];
+  }
+  const sh = document.getElementById('n-hospital');
+  sh.innerHTML = '';
+  HOSPITAIS_CACHE.forEach(h => {
+    const o = document.createElement('option');
+    o.value = h.id; o.textContent = h.nome;
+    sh.appendChild(o);
+  });
+  const sm = document.getElementById('n-medico');
+  sm.innerHTML = '';
+  MEDICOS_CACHE.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.id; o.textContent = m.nome + (m.crm ? ` (CRM ${m.crm})` : '');
+    sm.appendChild(o);
+  });
+}
+
+function abrirModalNovo() {
+  carregarSelectsDoForm();
+  ['n-num', 'n-paciente', 'n-data', 'n-convenio', 'n-plano', 'n-tuss', 'n-descricao', 'n-valor'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('n-erro').textContent = '';
+  document.getElementById('modal-novo').classList.add('show');
+}
+
+function fecharModalNovo() {
+  document.getElementById('modal-novo').classList.remove('show');
+}
+
+async function salvarNovo() {
+  const btn = document.getElementById('btn-salvar-novo');
+  const erroEl = document.getElementById('n-erro');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  erroEl.textContent = '';
+
+  try {
+    const hospital_id = document.getElementById('n-hospital').value;
+    const medico_id = document.getElementById('n-medico').value;
+    const numero_atend = document.getElementById('n-num').value.trim();
+    const paciente = document.getElementById('n-paciente').value.trim();
+    const data = document.getElementById('n-data').value || null;
+    const tipo = document.getElementById('n-tipo').value;
+    const convenio = document.getElementById('n-convenio').value.trim() || null;
+    const plano = document.getElementById('n-plano').value.trim() || null;
+    const tuss = document.getElementById('n-tuss').value.trim() || null;
+    const descricao = document.getElementById('n-descricao').value.trim();
+    const funcao = document.getElementById('n-funcao').value;
+    const valor = parseFloat(document.getElementById('n-valor').value) || 0;
+
+    if (!hospital_id || !medico_id || !numero_atend || !paciente || !descricao) {
+      throw new Error('Preencha hospital, médico, nº atendimento, paciente e descrição.');
+    }
+
+    // 1. Insert ou pega atendimento existente (unique hospital_id + numero_atend)
+    let atend;
+    const { data: a, error: errA } = await sb.from('atendimentos').insert({
+      hospital_id, numero_atend, paciente_nome: paciente,
+      data_atendimento: data, plano_texto: plano, tipo_atendimento: tipo,
+    }).select().single();
+
+    if (errA) {
+      const { data: ex } = await sb.from('atendimentos').select('*')
+        .eq('hospital_id', hospital_id).eq('numero_atend', numero_atend).maybeSingle();
+      if (!ex) throw errA;
+      atend = ex;
+    } else atend = a;
+
+    // 2. Insert procedimento
+    const { data: proc, error: errP } = await sb.from('procedimentos').insert({
+      atendimento_id: atend.id, tuss, descricao, via: null,
+    }).select().single();
+    if (errP) throw errP;
+
+    // 3. Insert linha_repasse
+    const { error: errL } = await sb.from('linhas_repasse').insert({
+      procedimento_id: proc.id, medico_id, funcao,
+      quantidade: 1, percentual: 100,
+      valor_repassado: valor, valor_medico_final: valor,
+      data_procedimento: data,
+      status_pagamento: 'extrato_sem_captura',
+    });
+    if (errL) throw errL;
+
+    fecharModalNovo();
+    await carregar();
+  } catch (e) {
+    console.error(e);
+    erroEl.textContent = 'Erro: ' + (e.message || JSON.stringify(e));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar atendimento';
+  }
+}
+
+async function excluirLinha() {
+  if (!CURRENT_LINHA_ID) return;
+  if (!confirm('Excluir esta linha de repasse?\n\nEssa ação não pode ser desfeita.')) return;
+  try {
+    const { error } = await sb.from('linhas_repasse').delete().eq('id', CURRENT_LINHA_ID);
+    if (error) throw error;
+    fecharModal();
+    await carregar();
+  } catch (e) {
+    alert('Erro ao excluir: ' + (e.message || JSON.stringify(e)));
+  }
+}
+
+async function excluirAtendimento() {
+  if (!CURRENT_ATEND_ID) return;
+  if (!confirm('Excluir o ATENDIMENTO INTEIRO?\n\nIsso vai apagar todos os procedimentos e linhas de repasse vinculados.\n\nEssa ação não pode ser desfeita.')) return;
+  try {
+    const { error } = await sb.from('atendimentos').delete().eq('id', CURRENT_ATEND_ID);
+    if (error) throw error;
+    fecharModal();
+    await carregar();
+  } catch (e) {
+    alert('Erro ao excluir: ' + (e.message || JSON.stringify(e)));
+  }
+}
+
+// ===== IMPORTAR EXTRATO =====
+const EDGE_EXTRATO_URL = `${SUPABASE_URL}/functions/v1/parse-extrato`;
+let EXTRATO_PARSED = null;
+
+function showExStep(step) {
+  ['upload', 'loading', 'preview', 'sucesso'].forEach(s => {
+    document.getElementById(`ex-step-${s}`).style.display = s === step ? 'block' : 'none';
+  });
+}
+
+async function abrirModalExtrato() {
+  // Sempre recarrega hospitais (não usa cache stale)
+  const { data: h } = await sb.from('hospitais').select('id,nome,formato_extrato').eq('ativo', true).order('nome');
+  HOSPITAIS_CACHE = h || [];
+  popularSelectHospitalExtrato();
+  document.getElementById('ex-file').value = '';
+  document.getElementById('ex-erro').textContent = '';
+  document.getElementById('ex-erro-confirmar').textContent = '';
+  document.getElementById('ex-novo-hospital-wrap').style.display = 'none';
+  document.getElementById('ex-hospital-detectado').style.display = 'none';
+  EXTRATO_PARSED = null;
+  showExStep('upload');
+  document.getElementById('modal-extrato').classList.add('show');
+}
+
+function popularSelectHospitalExtrato(selectedId) {
+  const sh = document.getElementById('ex-hospital');
+  sh.innerHTML = '';
+  HOSPITAIS_CACHE.forEach(h => {
+    const o = document.createElement('option');
+    o.value = h.id; o.textContent = h.nome;
+    if (selectedId && selectedId === h.id) o.selected = true;
+    sh.appendChild(o);
+  });
+  // Opção pra cadastrar novo
+  const o = document.createElement('option');
+  o.value = '__novo__'; o.textContent = '+ Cadastrar novo hospital...';
+  sh.appendChild(o);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const sh = document.getElementById('ex-hospital');
+  if (sh) {
+    sh.addEventListener('change', () => {
+      if (sh.value === '__novo__') {
+        document.getElementById('ex-novo-hospital-wrap').style.display = 'block';
+        document.getElementById('ex-novo-hospital-input').focus();
+      } else {
+        document.getElementById('ex-novo-hospital-wrap').style.display = 'none';
+      }
+    });
+  }
+});
+
+async function cadastrarHospitalInline() {
+  const nome = document.getElementById('ex-novo-hospital-input').value.trim();
+  if (!nome) return;
+  try {
+    const { data, error } = await sb.from('hospitais').insert({ nome, ativo: true }).select().single();
+    if (error) throw error;
+    HOSPITAIS_CACHE.push(data);
+    HOSPITAIS_CACHE.sort((a, b) => a.nome.localeCompare(b.nome));
+    popularSelectHospitalExtrato(data.id);
+    document.getElementById('ex-novo-hospital-wrap').style.display = 'none';
+    document.getElementById('ex-novo-hospital-input').value = '';
+  } catch (e) {
+    alert('Erro ao cadastrar hospital: ' + e.message);
+  }
+}
+
+function cancelarNovoHospital() {
+  document.getElementById('ex-novo-hospital-wrap').style.display = 'none';
+  document.getElementById('ex-novo-hospital-input').value = '';
+  // Volta seleção pro primeiro hospital
+  const sh = document.getElementById('ex-hospital');
+  if (HOSPITAIS_CACHE.length > 0) sh.value = HOSPITAIS_CACHE[0].id;
+}
+
+// Auto-detecção do hospital pelo nome do arquivo
+function normalizarStr(s) {
+  return (s || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // remove acentos
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function detectarHospitalNoFilename(filename) {
+  const fn = normalizarStr(filename);
+  // Procura por hospital cuja nome (sem espaços/acentos) esteja contido no filename
+  let melhor = null;
+  let melhorLen = 0;
+  for (const h of HOSPITAIS_CACHE) {
+    const nomeNorm = normalizarStr(h.nome);
+    if (nomeNorm.length >= 4 && fn.includes(nomeNorm) && nomeNorm.length > melhorLen) {
+      melhor = h;
+      melhorLen = nomeNorm.length;
+    }
+  }
+  return melhor;
+}
+
+// Listener no input file - detectar hospital
+document.addEventListener('DOMContentLoaded', () => {
+  const fileInput = document.getElementById('ex-file');
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      const detEl = document.getElementById('ex-hospital-detectado');
+      if (!file) { detEl.style.display = 'none'; return; }
+      const detectado = detectarHospitalNoFilename(file.name);
+      if (detectado) {
+        document.getElementById('ex-hospital').value = detectado.id;
+        document.getElementById('ex-novo-hospital-wrap').style.display = 'none';
+        detEl.textContent = `✓ Hospital detectado pelo nome do arquivo: ${detectado.nome}`;
+        detEl.style.display = 'block';
+      } else {
+        detEl.textContent = `⚠ Hospital não identificado pelo nome do arquivo — selecione manualmente ou cadastre novo`;
+        detEl.style.color = '#f5c842';
+        detEl.style.display = 'block';
+      }
+    });
+  }
+});
+
+function fecharModalExtrato() {
+  document.getElementById('modal-extrato').classList.remove('show');
+  EXTRATO_PARSED = null;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function processarExtrato() {
+  const file = document.getElementById('ex-file').files[0];
+  const hospital_id = document.getElementById('ex-hospital').value;
+  const erroEl = document.getElementById('ex-erro');
+  erroEl.textContent = '';
+
+  if (!hospital_id || !file) {
+    erroEl.textContent = 'Selecione hospital e arquivo PDF.';
+    return;
+  }
+  if (!file.type.includes('pdf')) {
+    erroEl.textContent = 'O arquivo precisa ser PDF.';
+    return;
+  }
+
+  const hospital = HOSPITAIS_CACHE.find(h => h.id === hospital_id);
+  const formato_extrato = hospital?.formato_extrato || null;
+
+  showExStep('loading');
+  try {
+    const pdfBase64 = await fileToBase64(file);
+    const session = (await sb.auth.getSession()).data.session;
+    const resp = await fetch(EDGE_EXTRATO_URL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${session?.access_token || SUPABASE_KEY}`,
+      },
+      body: JSON.stringify({ pdf_base64: pdfBase64, formato_extrato }),
+    });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`Edge Function ${resp.status}: ${errText.slice(0, 400)}`);
+    }
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error + (data.detail ? `\n${data.detail}` : ''));
+
+    EXTRATO_PARSED = { hospital_id, extracao: data.extracao };
+    renderPreviewExtrato(data.extracao);
+    showExStep('preview');
+  } catch (e) {
+    console.error(e);
+    showExStep('upload');
+    erroEl.textContent = 'Erro: ' + e.message;
+  }
+}
+
+function renderPreviewExtrato(ex) {
+  const cab = ex.cabecalho || {};
+  const linhas = ex.linhas || [];
+
+  const totalCalculado = linhas.reduce((s, l) => s + (parseFloat(l.valor_total) || 0), 0);
+
+  document.getElementById('ex-preview-info').innerHTML = `
+    <div class="modal-row"><span class="k">Estabelecimento</span><span class="v">${cab.estabelecimento_nome || '—'}</span></div>
+    <div class="modal-row"><span class="k">Competência</span><span class="v">${cab.competencia || '—'}</span></div>
+    <div class="modal-row"><span class="k">Nº repasse</span><span class="v">${cab.repasse_numero || '—'}</span></div>
+    <div class="modal-row"><span class="k">Status</span><span class="v">${cab.status || '—'}</span></div>
+    <div class="modal-row"><span class="k">Linhas extraídas</span><span class="v">${linhas.length}</span></div>
+    <div class="modal-row"><span class="k">Valor total (cabeçalho)</span><span class="v">${formatBRL(cab.valor_total)}</span></div>
+    <div class="modal-row"><span class="k">Soma das linhas</span><span class="v">${formatBRL(totalCalculado)}</span></div>
+  `;
+
+  const sample = linhas.slice(0, 12);
+  const tbl = document.getElementById('ex-preview-table');
+  tbl.innerHTML = `
+    <thead><tr><th>Atend</th><th>Paciente</th><th>Médico</th><th>Função</th><th>TUSS</th><th style="text-align:right">R$</th></tr></thead>
+    <tbody>
+      ${sample.map(l => `
+        <tr>
+          <td>${l.num_atend || '—'}</td>
+          <td>${(l.paciente || '—').substring(0, 30)}</td>
+          <td>${(l.medico || '—').substring(0, 25)}</td>
+          <td>${l.funcao || '—'}</td>
+          <td style="font-family:monospace">${l.tuss || '—'}</td>
+          <td style="text-align:right">${formatBRL(l.valor_total)}</td>
+        </tr>
+      `).join('')}
+      ${linhas.length > 12 ? `<tr><td colspan="6" style="text-align:center;font-style:italic;color:rgba(255,255,255,0.4);padding:10px">… mais ${linhas.length - 12} linhas</td></tr>` : ''}
+    </tbody>
+  `;
+}
+
+function parseDateBR(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+async function confirmarExtrato() {
+  if (!EXTRATO_PARSED) return;
+  const btn = document.getElementById('btn-extrato-confirmar');
+  const erroEl = document.getElementById('ex-erro-confirmar');
+  btn.disabled = true; btn.textContent = 'Importando…';
+  erroEl.textContent = '';
+
+  try {
+    const { hospital_id, extracao } = EXTRATO_PARSED;
+    const cab = extracao.cabecalho || {};
+    const linhas = extracao.linhas || [];
+
+    // Cria extrato
+    const { data: extrato, error: errE } = await sb.from('extratos').insert({
+      hospital_id,
+      periodo_referencia: cab.competencia,
+      numero_repasse: cab.repasse_numero,
+      status: cab.status,
+      valor_total: cab.valor_total,
+      arquivo_path: 'upload-admin',
+      recebido_em: new Date().toISOString(),
+      processado_em: new Date().toISOString(),
+      json_extracao_raw: extracao,
+    }).select().single();
+    if (errE) throw errE;
+
+    const medCache = {}, atendCache = {}, procCache = {};
+    let inseridas = 0;
+
+    for (const l of linhas) {
+      const medNome = (l.medico || '').trim();
+      if (!medNome) continue;
+
+      // Médico
+      if (!medCache[medNome]) {
+        const { data: ex } = await sb.from('medicos').select('id').eq('nome', medNome).maybeSingle();
+        if (ex) medCache[medNome] = ex.id;
+        else {
+          const { data: novo, error } = await sb.from('medicos').insert({ nome: medNome, ativo: true }).select().single();
+          if (error) throw error;
+          medCache[medNome] = novo.id;
+        }
+      }
+      const medico_id = medCache[medNome];
+
+      // Atendimento
+      const numAtend = (l.num_atend || '').trim();
+      if (!numAtend) continue;
+      if (!atendCache[numAtend]) {
+        const { data: ex } = await sb.from('atendimentos').select('id')
+          .eq('hospital_id', hospital_id).eq('numero_atend', numAtend).maybeSingle();
+        if (ex) atendCache[numAtend] = ex.id;
+        else {
+          const { data: novo, error } = await sb.from('atendimentos').insert({
+            hospital_id, numero_atend: numAtend,
+            paciente_nome: l.paciente,
+            data_atendimento: parseDateBR(l.data),
+            plano_texto: l.plano,
+            tipo_atendimento: l.tipo_atendimento,
+          }).select().single();
+          if (error) throw error;
+          atendCache[numAtend] = novo.id;
+        }
+      }
+      const atendimento_id = atendCache[numAtend];
+
+      // Procedimento
+      const procKey = `${atendimento_id}|${l.tuss || 'null'}|${l.procedimento}`;
+      if (!procCache[procKey]) {
+        let q = sb.from('procedimentos').select('id,descricao').eq('atendimento_id', atendimento_id);
+        if (l.tuss) q = q.eq('tuss', l.tuss);
+        else q = q.is('tuss', null);
+        const { data: existing } = await q.limit(20);
+        const match = (existing || []).find(p => p.descricao === l.procedimento);
+        if (match) procCache[procKey] = match.id;
+        else {
+          const { data: novo, error } = await sb.from('procedimentos').insert({
+            atendimento_id, tuss: l.tuss, descricao: l.procedimento, via: l.via,
+          }).select().single();
+          if (error) throw error;
+          procCache[procKey] = novo.id;
+        }
+      }
+      const procedimento_id = procCache[procKey];
+
+      // Linha de repasse
+      const { error: errL } = await sb.from('linhas_repasse').insert({
+        extrato_id: extrato.id,
+        procedimento_id, medico_id,
+        funcao: l.funcao,
+        quantidade: l.quantidade || 1,
+        percentual: l.percentual,
+        valor_repassado: l.valor_total,
+        valor_medico_final: l.valor_total,
+        data_procedimento: parseDateBR(l.data),
+        status_pagamento: 'aguardando',
+        raw_linha: l,
+      });
+      if (errL) throw errL;
+      inseridas++;
+    }
+
+    document.getElementById('ex-sucesso-info').innerHTML =
+      `Extrato <strong>${cab.repasse_numero || 'sem nº'}</strong> (${cab.competencia || 'sem período'}) importado.<br>` +
+      `<strong>${inseridas}</strong> linhas inseridas, <strong>${Object.keys(atendCache).length}</strong> atendimentos, <strong>${Object.keys(medCache).length}</strong> médicos.`;
+    showExStep('sucesso');
+    await carregar();
+  } catch (e) {
+    console.error(e);
+    erroEl.textContent = 'Erro: ' + (e.message || JSON.stringify(e));
+  } finally {
+    btn.disabled = false; btn.textContent = '✓ Confirmar e importar';
+  }
+}
+
+function formatBRL(v) {
+  const n = parseFloat(v || 0);
+  return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatDate(iso) {
+  if (!iso) return '-';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y.slice(2)}`;
+}
+
+function truncar(s, n) {
+  if (!s) return '-';
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}
+
+// Eventos de filtro
+document.getElementById('f-hospital').addEventListener('change', renderizar);
+document.getElementById('f-medico').addEventListener('change', renderizar);
+document.getElementById('f-status').addEventListener('change', renderizar);
+document.getElementById('f-funcao').addEventListener('change', renderizar);
+document.getElementById('f-busca').addEventListener('input', renderizar);
+
+// Atalho ESC fecha modal
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
+
+// Verifica sessão Google OAuth ao carregar
+window.addEventListener('load', () => {
+  checkAuth();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="assets/logo.png" type="image/png" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Prévias — Endovascular SP</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff;font-size:14px}
+
+    /* Login */
+    #login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .login-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;backdrop-filter:blur(10px);}
+    .login-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:22px}
+    .login-btn{width:100%;padding:13px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#1e4d8c,#2e6fc0);color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px}
+    .login-erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
+
+    #main{display:none;min-height:100vh}
+    header{background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:20px 32px;display:flex;align-items:center;gap:16px;}
+    .header-logo img{width:44px;height:44px;flex-shrink:0;}
+    .header-info h1{font-size:16px;font-weight:700;color:#fff}
+    .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+    .header-badge{margin-left:auto;padding:4px 14px;border-radius:20px;
+      background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.45);
+      color:#f5c842;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+    .header-user{font-size:12px;color:rgba(255,255,255,0.6);padding-left:14px;border-left:1px solid rgba(255,255,255,0.1);margin-left:14px;}
+    .header-user a{color:#7eb8f7;text-decoration:none;margin-left:8px;}
+
+    .container{max-width:1400px;margin:0 auto;padding:24px}
+
+    /* Cards de resumo */
+    .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+    @media(max-width:1000px){.summary{grid-template-columns:repeat(2,1fr)}}
+    .card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);
+      border-radius:10px;padding:14px 18px;position:relative;overflow:hidden;transition:background .2s}
+    .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+    .card.c1::before{background:#3a8dd4}
+    .card.c2::before{background:#c084fc}
+    .card.c3::before{background:#f472b6}
+    .card.c4::before{background:#7eb8f7}
+    .card.c5::before{background:#6dd5a0}
+    .card-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(255,255,255,0.5);font-weight:600;margin-bottom:3px}
+    .card-value{font-size:22px;font-weight:700;color:#fff;line-height:1.1}
+    .card-sub{font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px}
+
+    /* Botões */
+    .btn-acao{padding:8px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1e4d8c,#2e6fc0);
+      color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+    .btn-acao:hover{opacity:.85}
+    .btn-acao.success{background:linear-gradient(135deg,#1f7a4d,#2ea16a)}
+    .btn-acao.outline{background:transparent;border:1px solid rgba(255,255,255,0.25)}
+    .btn-acao:disabled{opacity:.5;cursor:not-allowed}
+
+    /* Toolbar */
+    .toolbar{display:flex;flex-direction:column;gap:10px;background:rgba(255,255,255,0.025);
+      padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);margin-bottom:14px}
+    .toolbar-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .filtros-chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1}
+    .acoes{display:flex;gap:8px;flex-wrap:wrap}
+    .chip-filtro{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
+      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:18px;font-size:11px;color:rgba(255,255,255,0.85)}
+    .chip-filtro label{font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+    .chip-filtro select,.chip-filtro input{background:transparent;color:#fff;border:none;font-size:11px;outline:none;cursor:pointer;font-family:inherit;font-weight:600;max-width:200px}
+    .chip-filtro select option{background:#162d50;color:#fff}
+    .chip-filtro input[type=date]{color-scheme:dark;cursor:pointer}
+
+    /* Tabela */
+    .tabela-wrap{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+      border-radius:12px;overflow:auto;max-height:65vh}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    thead{position:sticky;top:0;background:#162d50;z-index:10}
+    th{text-align:left;padding:12px 10px;font-weight:600;font-size:11px;text-transform:uppercase;
+      letter-spacing:0.5px;color:rgba(255,255,255,0.6);border-bottom:1px solid rgba(255,255,255,0.08)}
+    td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+    tbody tr:hover{background:rgba(255,255,255,0.04)}
+    .col-hora{font-family:'SF Mono','Consolas',monospace;color:#7eb8f7;font-weight:600;white-space:nowrap}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
+    .badge.particular{background:rgba(160,160,160,0.15);color:#bbb;border:1px solid rgba(160,160,160,0.35)}
+    .badge.executivo{background:rgba(126,184,247,0.15);color:#7eb8f7;border:1px solid rgba(126,184,247,0.35)}
+    .badge.prestige{background:rgba(192,132,252,0.15);color:#c084fc;border:1px solid rgba(192,132,252,0.35)}
+    .badge.outras{background:rgba(245,166,35,0.15);color:#f5c842;border:1px solid rgba(245,166,35,0.35)}
+    .badge.naomapeada{background:rgba(255,123,123,0.15);color:#ff7b7b;border:1px solid rgba(255,123,123,0.35)}
+    .badge.confirmado{background:rgba(109,213,160,0.15);color:#6dd5a0;border:1px solid rgba(109,213,160,0.35)}
+    .badge.cancelado{background:rgba(255,123,123,0.15);color:#ff7b7b;border:1px solid rgba(255,123,123,0.35)}
+    .badge.outro{background:rgba(160,160,160,0.15);color:#bbb;border:1px solid rgba(160,160,160,0.35)}
+
+    .empty{padding:60px;text-align:center;color:rgba(255,255,255,0.4)}
+    .loading{text-align:center;padding:40px;color:rgba(255,255,255,0.5)}
+    .spinner-loading{display:inline-block;width:32px;height:32px;border:3px solid rgba(255,255,255,0.15);border-top-color:#2e6fc0;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .row-naomapeada td{background:rgba(255,123,123,0.04)}
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-title">Prévias da Recepção</div>
+    <div class="login-sub">Endovascular SP · acesso autorizado</div>
+    <button class="login-btn" onclick="entrarComGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16.51 8.18c0-.57-.05-1.1-.14-1.62H9v3.07h4.21a3.6 3.6 0 01-1.56 2.36v1.97h2.52a7.62 7.62 0 002.34-5.78z" fill="#fff"/>
+        <path d="M9 16.5c2.12 0 3.9-.7 5.2-1.9l-2.52-1.96c-.7.47-1.6.75-2.68.75-2.06 0-3.8-1.39-4.43-3.26H1.97v2.04A8.5 8.5 0 009 16.5z" fill="#34A853"/>
+        <path d="M4.57 10.13a5.1 5.1 0 010-3.26V4.83H1.97a8.5 8.5 0 000 7.34l2.6-2.04z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.15 0 2.18.4 3 1.17l2.24-2.24A8.5 8.5 0 001.97 4.83l2.6 2.04C5.2 4.97 6.94 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Entrar com Google
+    </button>
+    <div id="login-erro" class="login-erro"></div>
+  </div>
+</div>
+
+<div id="main">
+  <header>
+    <div class="header-logo">
+      <img src="assets/logo.png" alt="Endovascular SP" />
+    </div>
+    <div class="header-info">
+      <h1>Prévias da Recepção</h1>
+      <p>Endovascular SP · geração automática das fichas do dia seguinte</p>
+    </div>
+    <div class="header-badge">Recepção</div>
+    <span class="header-user" id="header-info">—</span>
+  </header>
+
+  <div class="container">
+    <!-- Cards -->
+    <div class="summary">
+      <div class="card c1"><div class="card-label">Total agendamentos</div><div class="card-value" id="s-total">-</div><div class="card-sub" id="s-data">—</div></div>
+      <div class="card c2"><div class="card-label">Particular</div><div class="card-value" id="s-part">-</div><div class="card-sub">prontos pra impressão</div></div>
+      <div class="card c3"><div class="card-label">SulAmerica</div><div class="card-value" id="s-sulam">-</div><div class="card-sub" id="s-sulam-sub">—</div></div>
+      <div class="card c4"><div class="card-label">Outras operadoras</div><div class="card-value" id="s-out">-</div><div class="card-sub" id="s-out-sub">—</div></div>
+      <div class="card c5"><div class="card-label">Sem template</div><div class="card-value" id="s-sem">-</div><div class="card-sub">precisam revisão</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-top">
+        <div class="filtros-chips">
+          <div class="chip-filtro"><label>Data:</label>
+            <input type="date" id="f-data" />
+          </div>
+          <div class="chip-filtro"><label>Médico:</label>
+            <select id="f-medico"><option value="">Todos</option></select>
+          </div>
+          <div class="chip-filtro"><label>Tabela:</label>
+            <select id="f-tabela"><option value="">Todas</option></select>
+          </div>
+          <div class="chip-filtro"><label>Situação:</label>
+            <select id="f-situacao"><option value="">Todas</option></select>
+          </div>
+        </div>
+        <div class="acoes">
+          <button class="btn-acao outline" onclick="carregarAgenda()">↻ Atualizar</button>
+          <button class="btn-acao success" id="btn-gerar-todas" onclick="gerarTodasDoDia()">📄 Gerar todas as prévias</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="tabela-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Paciente</th>
+            <th>Médico</th>
+            <th>Procedimento</th>
+            <th>Tabela de preço</th>
+            <th>Situação</th>
+            <th>Etiqueta</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="8" class="loading"><div class="spinner-loading"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Autorização agora vem da tabela central public.users (campo cards[]).
+// Esse portal exige que o usuário tenha o card 'previas' no array.
+// Veja: portais-medicos/admin/ pra cadastrar/editar usuários e permissões.
+const CARD_REQUERIDO = 'previas';
+
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+const EDGE_AGENDA = `${SUPABASE_URL}/functions/v1/agenda-svn`;
+const EDGE_PREVIA = `${SUPABASE_URL}/functions/v1/gerar-previa`;
+
+// (SSO via cookie compartilhado reservado pra próxima iteração — usa localStorage default)
+// Mapeia nome canônico da tabela (no banco) -> key do template embutida na Edge Function
+const TABELA_TO_TEMPLATE = {
+  'SULAMÉRICA EXECUTIVO': 'EXECUTIVO',
+  'SULAMÉRICA PRESTIGE':  'PRESTIGE',
+  'PARTICULAR':           'PARTICULAR',
+  'OMINT - CORPORATE':    'OMINT_CORPORATE',
+  'OMINT - PREMIUM':      'OMINT_PREMIUM',
+  'MEDSÊNIOR':            'MEDSENIOR',
+};
+// Perfis do SVN que aparecem em nome_profissional mas não são médicos reais.
+// Match case-insensitive contra o nome completo. Manter sincronizado com
+// sync/sync_precos_medico.py (PERFIS_NAO_MEDICOS).
+const PERFIS_NAO_MEDICOS = new Set([
+  'agendamento cirúrgico e visita hospitalar',
+  'agendamento cirurgico e visita hospitalar',
+  'enfermagem',
+]);
+function ehPerfilNaoMedico(nome) {
+  return PERFIS_NAO_MEDICOS.has((nome || '').trim().toLowerCase());
+}
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let AGENDA = [];            // array bruto vindo do SVN
+let TABELAS_CACHE = [];     // prev_tabelas_preco
+let CURRENT_USER = null;
+
+// ===== AUTH =====
+async function entrarComGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href.split('#')[0].split('?')[0] },
+  });
+  if (error) document.getElementById('login-erro').textContent = 'Erro: ' + error.message;
+}
+
+async function checkAuth() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return mostrarLogin();
+  const email = (user.email || '').toLowerCase();
+
+  // Consulta tabela central public.users pra ver se o email tem o card 'previas'
+  const { data: meu, error } = await sb.from('users')
+    .select('email,name,role,cards')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (error) {
+    document.getElementById('login-erro').textContent = `Erro ao verificar acesso: ${error.message}`;
+    await sb.auth.signOut();
+    return mostrarLogin();
+  }
+  if (!meu) {
+    document.getElementById('login-erro').textContent = `Email ${email} não está cadastrado. Contate um administrador.`;
+    await sb.auth.signOut();
+    return mostrarLogin();
+  }
+  if (!(meu.cards || []).includes(CARD_REQUERIDO)) {
+    document.getElementById('login-erro').textContent = `Acesso negado: seu usuário não tem permissão pra acessar Prévias.`;
+    await sb.auth.signOut();
+    return mostrarLogin();
+  }
+  CURRENT_USER = { ...user, ...meu };
+  mostrarApp();
+}
+
+function mostrarLogin() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('main').style.display = 'none';
+}
+
+function mostrarApp() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  document.getElementById('header-info').innerHTML =
+    `${CURRENT_USER.email} <a href="#" onclick="sair();return false;">[sair]</a>`;
+  inicializarData();
+  carregarDadosFixos();
+  carregarAgenda();
+}
+
+async function sair() { await sb.auth.signOut(); location.reload(); }
+
+// ===== INIT =====
+function inicializarData() {
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  const iso = amanha.toISOString().slice(0, 10);
+  document.getElementById('f-data').value = iso;
+  document.getElementById('f-data').onchange = carregarAgenda;
+  ['f-medico','f-tabela','f-situacao'].forEach(id => {
+    document.getElementById(id).onchange = render;
+  });
+}
+
+async function carregarDadosFixos() {
+  // Tabelas de preço pro filtro
+  const { data, error } = await sb.from('prev_tabelas_preco')
+    .select('id,nome,svn_id_tabela,ultima_sync')
+    .eq('ativo', true)
+    .order('nome');
+  if (!error) {
+    TABELAS_CACHE = data || [];
+    const sel = document.getElementById('f-tabela');
+    sel.innerHTML = '<option value="">Todas</option>';
+    TABELAS_CACHE.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.nome; o.textContent = t.nome;
+      sel.appendChild(o);
+    });
+  }
+}
+
+// ===== AGENDA =====
+async function carregarAgenda() {
+  const data = document.getElementById('f-data').value;
+  document.getElementById('tbody').innerHTML =
+    '<tr><td colspan="8" class="loading"><div class="spinner-loading"></div><div style="margin-top:8px">Buscando agenda no Saudevianet…</div></td></tr>';
+
+  try {
+    const session = (await sb.auth.getSession()).data.session;
+    const resp = await fetch(`${EDGE_AGENDA}?data=${data}`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${session?.access_token || SUPABASE_KEY}`,
+      },
+    });
+    if (!resp.ok) throw new Error(`Edge ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+    const json = await resp.json();
+    const todos = json.agendamentos || [];
+    AGENDA = todos.filter(a => !ehPerfilNaoMedico(a.nome_profissional));
+    const filtrados = todos.length - AGENDA.length;
+    if (filtrados > 0) {
+      console.log(`[previas] ${filtrados} agendamento(s) ocultos (perfis não-médicos)`);
+    }
+    populaFiltros();
+    render();
+  } catch (e) {
+    document.getElementById('tbody').innerHTML =
+      `<tr><td colspan="8" class="empty">Erro: ${e.message}</td></tr>`;
+  }
+}
+
+function populaFiltros() {
+  const medicos = [...new Set(AGENDA.map(a => a.nome_profissional).filter(Boolean))].sort();
+  const sel = document.getElementById('f-medico');
+  sel.innerHTML = '<option value="">Todos</option>';
+  medicos.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m;
+    sel.appendChild(o);
+  });
+
+  const situacoes = [...new Set(AGENDA.map(a => a.siag_tx_situacao_agend).filter(Boolean))].sort();
+  const selS = document.getElementById('f-situacao');
+  selS.innerHTML = '<option value="">Todas</option>';
+  situacoes.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    selS.appendChild(o);
+  });
+}
+
+// Mapeia nome_operadora/tabela_preco do SVN -> tabela cadastrada no banco
+function resolverTabela(ag) {
+  const tp = (ag.tabela_preco || '').toUpperCase().trim();
+  if (tp) {
+    const m = TABELAS_CACHE.find(t => t.nome.toUpperCase() === tp);
+    if (m) return { tabela: m, fonte: 'tabela_preco' };
+  }
+  const op = (ag.nome_operadora || '').toUpperCase().trim();
+  if (op === 'EXECUTIVO') {
+    const m = TABELAS_CACHE.find(t => t.nome === 'SULAMÉRICA EXECUTIVO');
+    if (m) return { tabela: m, fonte: 'fallback nome_operadora' };
+  }
+  if (op === 'PRESTIGE') {
+    const m = TABELAS_CACHE.find(t => t.nome === 'SULAMÉRICA PRESTIGE');
+    if (m) return { tabela: m, fonte: 'fallback nome_operadora' };
+  }
+  if (op === 'PARTICULAR') {
+    const m = TABELAS_CACHE.find(t => t.nome === 'PARTICULAR');
+    if (m) return { tabela: m, fonte: 'fallback nome_operadora' };
+  }
+  if (op) {
+    const m = TABELAS_CACHE.find(t => t.nome.toUpperCase() === op);
+    if (m) return { tabela: m, fonte: 'fallback nome_operadora' };
+  }
+  return { tabela: null, fonte: 'NÃO MAPEADA' };
+}
+
+function badgeTabela(nome) {
+  if (!nome) return '<span class="badge naomapeada">⚠ sem tabela</span>';
+  const u = nome.toUpperCase();
+  if (u === 'PARTICULAR') return '<span class="badge particular">PARTICULAR</span>';
+  if (u.includes('EXECUTIVO')) return '<span class="badge executivo">EXECUTIVO</span>';
+  if (u.includes('PRESTIGE')) return '<span class="badge prestige">PRESTIGE</span>';
+  return `<span class="badge outras">${nome}</span>`;
+}
+
+function badgeSituacao(s) {
+  const k = (s || '').toLowerCase();
+  if (['confirmado','marcado','atendido','em atendimento','encaixe'].includes(k)) return `<span class="badge confirmado">${s}</span>`;
+  if (['cancelado','desmarcado','faltou','remarcado'].includes(k)) return `<span class="badge cancelado">${s}</span>`;
+  return `<span class="badge outro">${s||'—'}</span>`;
+}
+
+function render() {
+  const filtrada = aplicarFiltrosAgenda();
+
+  // Atualiza cards
+  const data = document.getElementById('f-data').value;
+  document.getElementById('s-total').textContent = filtrada.length;
+  document.getElementById('s-data').textContent = formatDataPT(data);
+
+  let part=0, sulam=0, out=0, sem=0;
+  const outras = new Set();
+  filtrada.forEach(a => {
+    const r = resolverTabela(a);
+    if (!r.tabela) sem++;
+    else {
+      const n = r.tabela.nome.toUpperCase();
+      if (n === 'PARTICULAR') part++;
+      else if (n.includes('SULAMÉRICA') || n.includes('SULAMERICA')) sulam++;
+      else { out++; outras.add(r.tabela.nome); }
+    }
+  });
+  document.getElementById('s-part').textContent = part;
+  document.getElementById('s-sulam').textContent = sulam;
+  document.getElementById('s-sulam-sub').textContent = sulam ? 'Executivo + Prestige' : '—';
+  document.getElementById('s-out').textContent = out;
+  document.getElementById('s-out-sub').textContent = outras.size ? [...outras].join(', ') : '—';
+  document.getElementById('s-sem').textContent = sem;
+
+  // Renderiza tabela
+  const tbody = document.getElementById('tbody');
+  if (!filtrada.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Sem agendamentos pra esse filtro.</td></tr>';
+    return;
+  }
+
+  // ordena por hora
+  const ord = [...filtrada].sort((a,b) => (a.agen_dt_inicio||'').localeCompare(b.agen_dt_inicio||''));
+  tbody.innerHTML = ord.map(a => {
+    const r = resolverTabela(a);
+    const hora = (a.agen_dt_inicio || '').slice(11,16);
+    const naoMapeada = !r.tabela;
+    return `<tr class="${naoMapeada ? 'row-naomapeada' : ''}">
+      <td class="col-hora">${hora}</td>
+      <td>${escapeHtml(a.pess_tx_nome || '—')}</td>
+      <td>${escapeHtml(a.nome_profissional || '—')}</td>
+      <td>${escapeHtml(a.procedimento || '—')}</td>
+      <td>${badgeTabela(r.tabela ? r.tabela.nome : null)}</td>
+      <td>${badgeSituacao(a.siag_tx_situacao_agend)}</td>
+      <td>${escapeHtml(a.etiqueta_paciente || a.etiqueta_agendamento || '')}</td>
+      <td>${naoMapeada ? '<span style="font-size:11px;color:#ff7b7b">sem template</span>' : `<button class="btn-acao" onclick="gerarPrevia('${a.agen_id}','${r.tabela.id}')">Gerar</button>`}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function gerarPrevia(agenId, tabelaId) {
+  // acha o agendamento e a tabela
+  const ag = AGENDA.find(a => a.agen_id === agenId);
+  if (!ag) { alert('Agendamento não encontrado.'); return; }
+  const tabela = TABELAS_CACHE.find(t => t.id === tabelaId);
+  if (!tabela) { alert('Tabela não encontrada.'); return; }
+
+  const templateKey = TABELA_TO_TEMPLATE[tabela.nome];
+  if (!templateKey) {
+    alert(`Sem template para a tabela "${tabela.nome}". Templates disponíveis hoje: Particular, SulAmerica Executivo, SulAmerica Prestige.`);
+    return;
+  }
+
+  const dataIso = document.getElementById('f-data').value;
+  const [y, m, d] = dataIso.split('-');
+  const dataBR = `${d}/${m}/${y}`;
+
+  try {
+    const session = (await sb.auth.getSession()).data.session;
+    const resp = await fetch(EDGE_PREVIA, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${session?.access_token || SUPABASE_KEY}`,
+      },
+      body: JSON.stringify({
+        tabela_key: templateKey,
+        paciente:   ag.pess_tx_nome || '',
+        medico:     ag.nome_profissional || '',
+        data:       dataBR,
+      }),
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${txt.slice(0, 200)}`);
+    }
+    const blob = await resp.blob();
+    // Salva no histórico (best-effort)
+    sb.from('prev_previas_geradas').insert({
+      data_atendimento: dataIso,
+      svn_agen_id: ag.agen_id,
+      svn_pess_id: ag.pess_id,
+      paciente_nome: ag.pess_tx_nome,
+      medico_nome: ag.nome_profissional,
+      tabela_id: tabelaId,
+      procedimento_agendado: ag.procedimento,
+      etiqueta_paciente: ag.etiqueta_paciente || ag.etiqueta_agendamento || null,
+      gerada_por: CURRENT_USER?.email,
+    }).then(() => {}).catch(() => {});
+
+    // Dispara download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `previa_${(ag.pess_tx_nome || 'paciente').replace(/[^a-z0-9]/gi,'_')}_${templateKey.toLowerCase()}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Erro ao gerar prévia: ' + e.message);
+    console.error(e);
+  }
+}
+
+function aplicarFiltrosAgenda() {
+  const fMedico = document.getElementById('f-medico').value;
+  const fTabela = document.getElementById('f-tabela').value;
+  const fSituacao = document.getElementById('f-situacao').value;
+  return AGENDA.filter(a => {
+    if (fMedico && a.nome_profissional !== fMedico) return false;
+    if (fSituacao && a.siag_tx_situacao_agend !== fSituacao) return false;
+    if (fTabela) {
+      const r = resolverTabela(a);
+      if (!r.tabela || r.tabela.nome !== fTabela) return false;
+    }
+    return true;
+  });
+}
+
+async function gerarTodasDoDia() {
+  // Respeita TODOS os filtros aplicados (médico, tabela, situação) — mesma lógica da tabela exibida
+  const filtrados = aplicarFiltrosAgenda();
+  const elegiveis = filtrados.filter(a => {
+    const r = resolverTabela(a);
+    return r.tabela && !!TABELA_TO_TEMPLATE[r.tabela.nome];
+  });
+  const semTemplate = filtrados.length - elegiveis.length;
+  if (!elegiveis.length) {
+    alert('Nenhum agendamento elegível pra geração em lote com os filtros atuais.');
+    return;
+  }
+  const aviso = semTemplate > 0
+    ? `\n\nObs: ${semTemplate} agendamento(s) sem template (OMINT/MEDSÊNIOR) serão pulados.`
+    : '';
+  if (!confirm(`Gerar ${elegiveis.length} prévia(s)? Cada uma vai baixar separadamente.${aviso}`)) return;
+
+  for (const ag of elegiveis) {
+    const r = resolverTabela(ag);
+    await gerarPrevia(ag.agen_id, r.tabela.id);
+    await new Promise(r => setTimeout(r, 200));
+  }
+}
+
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatDataPT(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const dt = new Date(`${iso}T12:00:00`);
+  return `${dias[dt.getDay()]} ${d}/${m}/${y}`;
+}
+
+// Bootstrap
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') checkAuth();
+  else if (event === 'SIGNED_OUT') mostrarLogin();
+});
+checkAuth();
+</script>
+</body>
+</html>

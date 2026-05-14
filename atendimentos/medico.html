@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="assets/logo.png" type="image/png" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Médico — Atendimentos Hospitalares</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff;font-size:14px}
+
+    #login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e,#162d50);
+      display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+    .login-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:420px;text-align:center}
+    .login-title{font-size:20px;font-weight:700;margin-bottom:6px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.5}
+    .input{width:100%;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.08);color:#fff;font-size:15px;outline:none;margin-bottom:14px}
+    .input:focus{border-color:#2e6fc0}
+    select.input option{background:#162d50;color:#fff}
+    .btn{padding:13px 22px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#1e4d8c,#2e6fc0);color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+      transition:opacity .15s}
+    .btn:hover{opacity:.85}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
+    .btn.full{width:100%}
+    .btn.success{background:linear-gradient(135deg,#1f7a4d,#2ea16a)}
+    .btn.outline{background:transparent;border:1px solid rgba(255,255,255,0.25)}
+    .erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
+    .info{color:#7eb8f7;font-size:13px;margin-top:10px;min-height:18px}
+
+    #main{display:none;min-height:100vh}
+    header{background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:20px 32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .header-logo{display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .header-logo img{width:44px;height:44px;flex-shrink:0;}
+    .header-info h1{font-size:16px;font-weight:700;color:#fff}
+    .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+    .header-badge{margin-left:auto;padding:4px 14px;border-radius:20px;
+      background:rgba(46,111,192,0.15);border:1px solid rgba(46,111,192,0.45);
+      color:#7eb8f7;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+    .pill{padding:5px 14px;border-radius:20px;background:rgba(46,111,192,0.15);
+      border:1px solid rgba(46,111,192,0.4);font-size:12px;font-weight:600}
+    .pill a{color:#7eb8f7;text-decoration:none;margin-left:10px}
+
+    .container{max-width:880px;margin:0 auto;padding:24px}
+    .step{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+      border-radius:14px;padding:28px;margin-bottom:18px}
+    .step.hidden{display:none}
+    .step h2{font-size:18px;font-weight:700;margin-bottom:18px}
+    .step h3{font-size:14px;font-weight:700;color:rgba(255,255,255,0.7);margin:14px 0 8px;text-transform:uppercase;letter-spacing:0.5px}
+
+    .field{display:flex;flex-direction:column;margin-bottom:12px}
+    .field label{font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+    .foto-input-wrap{border:2px dashed rgba(255,255,255,0.2);border-radius:14px;padding:40px;text-align:center;cursor:pointer}
+    .foto-input-wrap:hover{border-color:rgba(46,111,192,0.5);background:rgba(46,111,192,0.05)}
+    .foto-input-wrap input{display:none}
+    #foto-preview{max-width:100%;max-height:320px;border-radius:10px;margin-top:14px;display:none}
+
+    .spinner{display:inline-block;width:34px;height:34px;border:3px solid rgba(255,255,255,0.15);
+      border-top-color:#2e6fc0;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .proc-row{background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:10px;position:relative}
+    .proc-row .grid3{display:grid;grid-template-columns:120px 1fr 1fr;gap:10px}
+    .proc-row .remove{position:absolute;top:8px;right:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:18px}
+    .proc-row .remove:hover{color:#ff7b7b}
+
+    .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+
+    .alert{background:rgba(245,166,35,0.10);border:1px solid rgba(245,166,35,0.35);color:#f5c842;
+      border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:14px}
+    .alert.success{background:rgba(109,213,160,0.10);border-color:rgba(109,213,160,0.35);color:#6dd5a0}
+    .alert.error{background:rgba(255,123,123,0.10);border-color:rgba(255,123,123,0.35);color:#ff7b7b}
+
+    #historico table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+    #historico th,#historico td{text-align:left;padding:8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    #historico th{color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+    .h-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap}
+    .h-badge.aguardando{background:rgba(160,160,160,0.15);color:#bbb;border:1px solid rgba(160,160,160,0.35)}
+    .h-badge.pago{background:rgba(109,213,160,0.15);color:#6dd5a0;border:1px solid rgba(109,213,160,0.35)}
+    .h-badge.parcial{background:rgba(126,184,247,0.15);color:#7eb8f7;border:1px solid rgba(126,184,247,0.35)}
+    .h-badge.nao_pago{background:rgba(255,123,123,0.15);color:#ff7b7b;border:1px solid rgba(255,123,123,0.35)}
+    .h-valor{text-align:right;font-family:monospace;color:#6dd5a0;font-weight:600}
+
+    @media(max-width:600px){
+      .grid2{grid-template-columns:1fr}
+      .proc-row .grid3{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY (magic link) -->
+<div id="login-overlay">
+  <div class="login-box" id="login-step-email">
+    <div class="login-title">Atendimento Hospitalar</div>
+    <div class="login-sub">Endovascular SP<br>Informe seu e-mail para receber o link de acesso.</div>
+    <input id="login-email" class="input" type="email" placeholder="seu@email.com" autofocus/>
+    <button class="btn full" id="btn-enviar-link" onclick="enviarMagicLink()">Enviar link de acesso</button>
+    <div id="login-erro" class="erro"></div>
+  </div>
+  <div class="login-box hidden" id="login-step-sent" style="display:none">
+    <div class="login-title">Link enviado ✓</div>
+    <div class="login-sub" id="login-sent-msg">Verifique sua caixa de entrada (e SPAM). O link expira em 1 hora.</div>
+    <button class="btn outline full" onclick="location.reload()">Enviar para outro e-mail</button>
+  </div>
+</div>
+
+<!-- CADASTRO INICIAL (primeira vez do médico) -->
+<div id="cadastro-overlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e,#162d50);display:none;align-items:center;justify-content:center;z-index:900;padding:20px">
+  <div class="login-box" style="max-width:480px">
+    <div class="login-title">Complete seu cadastro</div>
+    <div class="login-sub">É a primeira vez que você acessa. Precisamos dessas informações para identificar seus atendimentos.</div>
+    <div class="field"><label>Nome completo</label><input id="cad-nome" class="input" autofocus/></div>
+    <div class="field"><label>CRM</label><input id="cad-crm" class="input" placeholder="ex: 117876"/></div>
+    <div class="field"><label>Telefone (opcional)</label><input id="cad-telefone" class="input" placeholder="(11) 9 9999-9999"/></div>
+    <button class="btn full success" onclick="completarCadastro()">Concluir cadastro</button>
+    <div id="cad-erro" class="erro"></div>
+  </div>
+</div>
+
+<!-- MAIN PORTAL -->
+<div id="main">
+  <header>
+    <div class="header-logo">
+      <img src="assets/logo.png" alt="Endovascular SP" />
+    </div>
+    <div class="header-info">
+      <h1>Atendimento Hospitalar</h1>
+      <p>Endovascular SP · Envio de procedimentos</p>
+    </div>
+    <div class="header-badge">Médico</div>
+    <span class="pill" id="header-pill">—</span>
+  </header>
+
+  <div class="container">
+
+    <!-- STEP 1: Hospital -->
+    <div class="step" id="step-hospital">
+      <h2>1. Em qual hospital foi o atendimento?</h2>
+      <div class="field">
+        <label>Hospital</label>
+        <select id="hospital-select" class="input"><option value="">— selecione —</option></select>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="confirmarHospital()">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Foto -->
+    <div class="step hidden" id="step-foto">
+      <h2>2. Foto do formulário</h2>
+      <label class="foto-input-wrap" id="foto-input-wrap">
+        <input type="file" id="foto-input" accept="image/*" capture="environment"/>
+        <div id="foto-placeholder">
+          📷 Toque pra tirar foto<br>
+          <small style="color:rgba(255,255,255,0.4)">ou selecione um arquivo</small>
+        </div>
+        <img id="foto-preview"/>
+      </label>
+      <div class="actions">
+        <button class="btn outline" onclick="voltarStep('step-hospital')">← Voltar</button>
+        <button class="btn" id="btn-extrair" onclick="extrairDados()" disabled>Extrair dados →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Extraindo -->
+    <div class="step hidden" id="step-extraindo" style="text-align:center;padding:60px">
+      <div class="spinner"></div>
+      <p style="margin-top:14px;color:rgba(255,255,255,0.7)">Extraindo dados da foto...</p>
+      <p style="margin-top:6px;font-size:12px;color:rgba(255,255,255,0.4)">Pode levar 15-40 segundos.</p>
+    </div>
+
+    <!-- STEP 4: Revisão -->
+    <div class="step hidden" id="step-revisao">
+      <h2>3. Confira e edite</h2>
+      <div class="alert">Revise os dados extraídos e ajuste o que estiver errado.</div>
+
+      <h3>Atendimento</h3>
+      <div class="grid2">
+        <div class="field"><label>Paciente</label><input id="r-paciente" class="input"/></div>
+        <div class="field"><label>Nº atendimento</label><input id="r-num-atend" class="input"/></div>
+        <div class="field"><label>Data</label><input id="r-data" type="date" class="input"/></div>
+        <div class="field"><label>Tipo</label>
+          <select id="r-tipo" class="input">
+            <option value="INT">Internação</option>
+            <option value="AMB">Ambulatorial</option>
+          </select>
+        </div>
+        <div class="field"><label>Convênio</label><input id="r-convenio" class="input"/></div>
+        <div class="field"><label>Plano</label><input id="r-plano" class="input"/></div>
+      </div>
+
+      <h3>Procedimentos realizados</h3>
+      <div id="r-procedimentos"></div>
+      <button class="btn outline" onclick="addProcedimento()">+ Adicionar procedimento</button>
+
+      <div class="actions" style="margin-top:24px">
+        <button class="btn outline" onclick="voltarStep('step-foto')">← Trocar foto</button>
+        <button class="btn success" id="btn-salvar" onclick="salvar()">✓ Salvar atendimento</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: Sucesso -->
+    <div class="step hidden" id="step-sucesso">
+      <div class="alert success">✓ Atendimento salvo com sucesso!</div>
+      <p style="margin-bottom:14px"><strong>Nº atendimento:</strong> <span id="atend-id-saved">—</span></p>
+      <div class="actions">
+        <button class="btn" onclick="resetAndNovo()">+ Novo atendimento</button>
+      </div>
+    </div>
+
+    <!-- Histórico -->
+    <div class="step" id="historico">
+      <h2>Seus últimos envios</h2>
+      <div id="historico-content"><p style="color:rgba(255,255,255,0.5)">Carregando...</p></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+const EDGE_PARSE_URL = `${SUPABASE_URL}/functions/v1/parse-formulario`;
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// State
+let HOSPITAIS = [];
+let CURRENT_USER = null;        // auth user (Supabase)
+let CURRENT_MEDICO = null;      // medicos table row
+let CURRENT_HOSPITAL = null;
+let CURRENT_FOTO_B64 = null;
+let CURRENT_FOTO_DATAURL = null;
+let CURRENT_EXTRACAO = null;
+
+// =================================
+// AUTH (Magic Link)
+// =================================
+async function enviarMagicLink() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+    document.getElementById('login-erro').textContent = 'E-mail inválido.';
+    return;
+  }
+  const btn = document.getElementById('btn-enviar-link');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.href.split('#')[0].split('?')[0] },
+    });
+    if (error) throw error;
+    document.getElementById('login-step-email').style.display = 'none';
+    document.getElementById('login-step-sent').style.display = 'block';
+    document.getElementById('login-sent-msg').innerHTML =
+      `Enviamos um link de acesso para <strong>${email}</strong>.<br>Verifique sua caixa de entrada (e SPAM). O link expira em 1 hora.`;
+  } catch (e) {
+    document.getElementById('login-erro').textContent = 'Erro: ' + e.message;
+    btn.disabled = false; btn.textContent = 'Enviar link de acesso';
+  }
+}
+
+document.getElementById('login-email').addEventListener('keypress', e => {
+  if (e.key === 'Enter') enviarMagicLink();
+});
+
+async function checkAuth() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) {
+    document.getElementById('login-overlay').style.display = 'flex';
+    document.getElementById('cadastro-overlay').style.display = 'none';
+    document.getElementById('main').style.display = 'none';
+    return;
+  }
+  CURRENT_USER = user;
+  // Procura registro em medicos com auth_user_id ou email
+  const { data: medicos, error } = await sb.from('medicos')
+    .select('*')
+    .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
+    .limit(1);
+  if (medicos && medicos.length > 0) {
+    CURRENT_MEDICO = medicos[0];
+    // Se achou por email mas sem auth_user_id, vincula agora
+    if (!CURRENT_MEDICO.auth_user_id) {
+      await sb.from('medicos').update({ auth_user_id: user.id, email: user.email })
+        .eq('id', CURRENT_MEDICO.id);
+      CURRENT_MEDICO.auth_user_id = user.id;
+    }
+    await entrarPortal();
+  } else {
+    mostrarCadastro();
+  }
+}
+
+function mostrarCadastro() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('cadastro-overlay').style.display = 'flex';
+}
+
+async function completarCadastro() {
+  const nome = document.getElementById('cad-nome').value.trim();
+  const crm = document.getElementById('cad-crm').value.trim();
+  if (!nome || !crm) {
+    document.getElementById('cad-erro').textContent = 'Preencha nome e CRM.';
+    return;
+  }
+  try {
+    const { data, error } = await sb.from('medicos').insert({
+      nome,
+      crm,
+      email: CURRENT_USER.email,
+      auth_user_id: CURRENT_USER.id,
+      ativo: true,
+    }).select().single();
+    if (error) throw error;
+    CURRENT_MEDICO = data;
+    await entrarPortal();
+  } catch (e) {
+    document.getElementById('cad-erro').textContent = 'Erro ao cadastrar: ' + e.message;
+  }
+}
+
+async function entrarPortal() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('cadastro-overlay').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  document.getElementById('header-pill').innerHTML =
+    `${CURRENT_MEDICO.nome.split(' ')[0]} (CRM ${CURRENT_MEDICO.crm}) <a href="#" onclick="logout();return false;">Sair</a>`;
+  await carregarHospitais();
+  await carregarHistorico();
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') checkAuth();
+});
+
+// =================================
+// HOSPITAIS
+// =================================
+async function carregarHospitais() {
+  const { data } = await sb.from('hospitais').select('id,nome').eq('ativo', true).order('nome');
+  HOSPITAIS = data || [];
+  const sel = document.getElementById('hospital-select');
+  sel.innerHTML = '<option value="">— selecione —</option>';
+  HOSPITAIS.forEach(h => {
+    const o = document.createElement('option');
+    o.value = h.id; o.textContent = h.nome;
+    sel.appendChild(o);
+  });
+}
+
+function confirmarHospital() {
+  const hid = document.getElementById('hospital-select').value;
+  if (!hid) { alert('Selecione o hospital.'); return; }
+  CURRENT_HOSPITAL = HOSPITAIS.find(h => h.id === hid);
+  mostrarStep('step-foto');
+}
+
+// =================================
+// UPLOAD FOTO
+// =================================
+document.getElementById('foto-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const { base64, dataUrl } = await comprimirImagem(file, 1600, 0.82);
+    CURRENT_FOTO_B64 = base64;
+    CURRENT_FOTO_DATAURL = dataUrl;
+    const img = document.getElementById('foto-preview');
+    img.src = dataUrl;
+    img.style.display = 'block';
+    document.getElementById('foto-placeholder').style.display = 'none';
+    document.getElementById('btn-extrair').disabled = false;
+  } catch (err) {
+    alert('Erro ao processar imagem: ' + err.message);
+  }
+});
+
+async function comprimirImagem(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => img.src = reader.result;
+    img.onload = () => {
+      const ratio = Math.min(maxWidth / img.width, 1);
+      const w = Math.round(img.width * ratio);
+      const h = Math.round(img.height * ratio);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      const base64 = dataUrl.split(',')[1];
+      resolve({ base64, dataUrl });
+    };
+    img.onerror = reject;
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// =================================
+// EXTRAÇÃO via EDGE FUNCTION
+// =================================
+async function extrairDados() {
+  mostrarStep('step-extraindo');
+  try {
+    const session = (await sb.auth.getSession()).data.session;
+    const resp = await fetch(EDGE_PARSE_URL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${session?.access_token || SUPABASE_KEY}`,
+      },
+      body: JSON.stringify({
+        image_base64: CURRENT_FOTO_B64,
+        media_type: 'image/jpeg',
+      }),
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(`Edge Function ${resp.status}: ${err.slice(0, 300)}`);
+    }
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    CURRENT_EXTRACAO = data.extracao;
+    renderRevisao(CURRENT_EXTRACAO);
+    mostrarStep('step-revisao');
+  } catch (e) {
+    console.error(e);
+    mostrarStep('step-foto');
+    alert('Erro ao extrair dados: ' + e.message);
+  }
+}
+
+// =================================
+// REVISÃO
+// =================================
+function renderRevisao(ex) {
+  const p = ex.paciente || {};
+  const a = ex.atendimento || {};
+  document.getElementById('r-paciente').value = p.nome || '';
+  document.getElementById('r-num-atend').value = a.numero || '';
+  document.getElementById('r-data').value = a.data || '';
+  document.getElementById('r-tipo').value = a.tipo || 'INT';
+  document.getElementById('r-convenio').value = a.convenio || '';
+  document.getElementById('r-plano').value = a.plano || '';
+
+  const wrap = document.getElementById('r-procedimentos');
+  wrap.innerHTML = '';
+  (ex.procedimentos || []).forEach(pr => addProcedimento(pr));
+  if ((ex.procedimentos || []).length === 0) addProcedimento();
+}
+
+function addProcedimento(dados = {}) {
+  const wrap = document.getElementById('r-procedimentos');
+  const row = document.createElement('div');
+  row.className = 'proc-row';
+  row.innerHTML = `
+    <button type="button" class="remove" onclick="this.parentElement.remove()" title="Remover">×</button>
+    <div class="grid3">
+      <div class="field"><label>TUSS</label><input class="input p-tuss" value="${dados.tuss || ''}"/></div>
+      <div class="field"><label>Descrição</label><input class="input p-desc" value="${(dados.descricao || '').replace(/"/g,'&quot;')}"/></div>
+      <div class="field"><label>Via / Principal</label>
+        <input class="input p-via" placeholder="U/M/D/B" value="${dados.via || ''}" style="width:60px;display:inline-block;margin-right:6px"/>
+        <label style="display:inline;font-size:11px"><input type="checkbox" class="p-principal" ${dados.principal ? 'checked' : ''}/> Principal</label>
+      </div>
+    </div>
+  `;
+  wrap.appendChild(row);
+}
+
+// =================================
+// SALVAR
+// =================================
+async function salvar() {
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  try {
+    const dataAtend = document.getElementById('r-data').value || null;
+
+    const atendPayload = {
+      hospital_id: CURRENT_HOSPITAL.id,
+      numero_atend: document.getElementById('r-num-atend').value.trim() || `AUTO-${Date.now()}`,
+      paciente_nome: document.getElementById('r-paciente').value.trim(),
+      data_atendimento: dataAtend,
+      plano_texto: document.getElementById('r-plano').value.trim() || null,
+      tipo_atendimento: document.getElementById('r-tipo').value,
+    };
+    const { data: atend, error: errAtend } = await sb.from('atendimentos').insert(atendPayload).select().single();
+    let atendimento = atend;
+    if (errAtend) {
+      const { data: existing } = await sb.from('atendimentos')
+        .select('*').eq('hospital_id', CURRENT_HOSPITAL.id).eq('numero_atend', atendPayload.numero_atend).maybeSingle();
+      if (!existing) throw errAtend;
+      atendimento = existing;
+    }
+
+    const procRows = document.querySelectorAll('#r-procedimentos .proc-row');
+    for (const row of procRows) {
+      const tuss = row.querySelector('.p-tuss').value.trim() || null;
+      const desc = row.querySelector('.p-desc').value.trim();
+      const via = row.querySelector('.p-via').value.trim() || null;
+      if (!desc) continue;
+      const { error: errProc } = await sb.from('procedimentos').insert({
+        atendimento_id: atendimento.id, tuss, descricao: desc, via,
+      });
+      if (errProc) throw errProc;
+    }
+
+    const { error: errCap } = await sb.from('capturas_formulario').insert({
+      medico_id: CURRENT_MEDICO.id,
+      hospital_id: CURRENT_HOSPITAL.id,
+      foto_path: `medico-upload/${Date.now()}.jpg`,
+      foto_data_url: CURRENT_FOTO_DATAURL,
+      json_extracao: CURRENT_EXTRACAO,
+      confianca_extracao: CURRENT_EXTRACAO?.confianca || null,
+      atendimento_id: atendimento.id,
+      revisado: true,
+      revisado_em: new Date().toISOString(),
+    });
+    if (errCap) throw errCap;
+
+    document.getElementById('atend-id-saved').textContent = atendimento.numero_atend;
+    mostrarStep('step-sucesso');
+    carregarHistorico();
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao salvar: ' + (e.message || JSON.stringify(e)));
+  } finally {
+    btn.disabled = false; btn.textContent = '✓ Salvar atendimento';
+  }
+}
+
+function resetAndNovo() {
+  CURRENT_FOTO_B64 = null;
+  CURRENT_FOTO_DATAURL = null;
+  CURRENT_EXTRACAO = null;
+  document.getElementById('foto-input').value = '';
+  document.getElementById('foto-preview').style.display = 'none';
+  document.getElementById('foto-placeholder').style.display = 'block';
+  document.getElementById('btn-extrair').disabled = true;
+  mostrarStep('step-foto');
+}
+
+// =================================
+// HISTÓRICO
+// =================================
+function calcularStatusAgregado(linhas) {
+  if (!linhas || linhas.length === 0) return { status: 'aguardando', label: 'Aguardando pagamento' };
+  const statuses = linhas.map(l => l.status_pagamento || 'aguardando');
+  if (statuses.every(s => s === 'pago')) return { status: 'pago', label: 'Pago' };
+  if (statuses.some(s => s === 'nao_pago')) return { status: 'nao_pago', label: 'Glosado' };
+  if (statuses.some(s => s === 'parcial')) return { status: 'parcial', label: 'Pago parcial' };
+  if (statuses.every(s => s === 'aguardando')) return { status: 'aguardando', label: 'Aguardando pagamento' };
+  return { status: 'parcial', label: 'Pago parcial' };
+}
+
+function formatBRLValue(v) {
+  const n = parseFloat(v || 0);
+  return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function carregarHistorico() {
+  if (!CURRENT_MEDICO) return;
+  const { data, error } = await sb.from('capturas_formulario')
+    .select(`
+      id, created_at,
+      atendimento:atendimentos(
+        numero_atend, paciente_nome, data_atendimento,
+        procedimentos(linhas_repasse(status_pagamento, valor_repassado))
+      )
+    `)
+    .eq('medico_id', CURRENT_MEDICO.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  const wrap = document.getElementById('historico-content');
+  if (error) {
+    console.error(error);
+    wrap.innerHTML = '<p style="color:#ff7b7b">Erro ao carregar histórico.</p>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    wrap.innerHTML = '<p style="color:rgba(255,255,255,0.5)">Nenhuma captura ainda.</p>';
+    return;
+  }
+
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Enviado em</th><th>Atendimento</th><th>Paciente</th><th>Data proc.</th><th style="text-align:right">Valor</th><th>Status</th></tr></thead>
+    <tbody>${data.map(c => {
+      const a = c.atendimento || {};
+      const procs = a.procedimentos || [];
+      const todasLinhas = procs.flatMap(p => p.linhas_repasse || []);
+      const { status, label } = calcularStatusAgregado(todasLinhas);
+      const valor = todasLinhas.reduce((s, l) => s + (parseFloat(l.valor_repassado) || 0), 0);
+      const valorTxt = valor > 0 ? formatBRLValue(valor) : '—';
+      return `<tr>
+        <td>${new Date(c.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</td>
+        <td>${a.numero_atend || '—'}</td>
+        <td>${a.paciente_nome || '—'}</td>
+        <td>${a.data_atendimento ? a.data_atendimento.split('-').reverse().join('/') : '—'}</td>
+        <td class="h-valor">${valorTxt}</td>
+        <td><span class="h-badge ${status}">${label}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>
+  <p style="margin-top:14px;font-size:11px;color:rgba(255,255,255,0.4);line-height:1.5">
+    <strong style="color:rgba(255,255,255,0.6)">Status:</strong>
+    <span class="h-badge aguardando" style="margin-left:6px">Aguardando</span> hospital ainda não pagou ·
+    <span class="h-badge pago" style="margin-left:6px">Pago</span> pagamento confirmado ·
+    <span class="h-badge parcial" style="margin-left:6px">Parcial</span> recebimento parcial ·
+    <span class="h-badge nao_pago" style="margin-left:6px">Glosado</span> hospital rejeitou
+  </p>`;
+}
+
+// =================================
+// HELPERS
+// =================================
+function mostrarStep(id) {
+  ['step-hospital','step-foto','step-extraindo','step-revisao','step-sucesso'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+function voltarStep(id) { mostrarStep(id); }
+
+window.addEventListener('load', () => {
+  checkAuth();
+});
+</script>
+</body>
+</html>
