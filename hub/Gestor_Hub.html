@@ -130,13 +130,13 @@
 <div id="login-overlay">
   <div class="login-box">
     <div class="login-logo">🔐</div>
-    <div class="login-title">Acesso Gestores</div>
+    <div class="login-title">Portal Endovascular SP</div>
     <div class="login-sub">Endovascular SP</div>
-    <div class="login-badge">Admin</div>
-    <input id="login-senha" class="login-input" type="password"
-           placeholder="Senha de gestão"
-           onkeydown="if(event.key==='Enter') tentarLogin()"/>
-    <button class="login-btn" onclick="tentarLogin()">Acessar →</button>
+    <div class="login-badge">Acesso restrito</div>
+    <button class="login-btn" onclick="entrarComGoogle()" style="display:flex;align-items:center;justify-content:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#fff" d="M16.51 8.18c0-.57-.05-1.1-.14-1.62H9v3.07h4.21a3.6 3.6 0 01-1.56 2.36v1.97h2.52a7.62 7.62 0 002.34-5.78z"/><path fill="#34A853" d="M9 16.5c2.12 0 3.9-.7 5.2-1.9l-2.52-1.96c-.7.47-1.6.75-2.68.75-2.06 0-3.8-1.39-4.43-3.26H1.97v2.04A8.5 8.5 0 009 16.5z"/><path fill="#FBBC05" d="M4.57 10.13a5.1 5.1 0 010-3.26V4.83H1.97a8.5 8.5 0 000 7.34l2.6-2.04z"/><path fill="#EA4335" d="M9 3.58c1.15 0 2.18.4 3 1.17l2.24-2.24A8.5 8.5 0 001.97 4.83l2.6 2.04C5.2 4.97 6.94 3.58 9 3.58z"/></svg>
+      Entrar com Google
+    </button>
     <div class="login-erro" id="login-erro"></div>
   </div>
 </div>
@@ -158,7 +158,7 @@
 
     <div class="hub-cards">
 
-      <div class="hub-card rec">
+      <div class="hub-card rec" data-card="gestor">
         <div class="hub-card-icon">💰</div>
         <div class="hub-card-title">Recebimento</div>
         <div class="hub-card-desc">Honorários, repasses e compensações por profissional</div>
@@ -175,7 +175,7 @@
         </div>
       </div>
 
-      <div class="hub-card prod">
+      <div class="hub-card prod" data-card="gestor">
         <div class="hub-card-icon">📊</div>
         <div class="hub-card-title">Produtividade</div>
         <div class="hub-card-desc">Atendimentos realizados por profissional e período</div>
@@ -189,7 +189,7 @@
         </div>
       </div>
 
-      <div class="hub-card insights">
+      <div class="hub-card insights" data-card="gestor">
         <div class="hub-card-icon">💡</div>
         <div class="hub-card-title">Dashboard de Insights</div>
         <div class="hub-card-desc">Top pacientes, top procedimentos e indicadores de performance</div>
@@ -200,7 +200,7 @@
         </div>
       </div>
 
-      <div class="hub-card operacional">
+      <div class="hub-card operacional" data-card="gestor">
         <div class="hub-card-icon">💬</div>
         <div class="hub-card-title">Dashboard Operacional</div>
         <div class="hub-card-desc">KPIs do atendimento WhatsApp/Instagram (Tier 1): conversão, tempo de resposta, ranking</div>
@@ -211,7 +211,7 @@
         </div>
       </div>
 
-      <div class="hub-card fotona">
+      <div class="hub-card fotona" data-card="gestor">
         <div class="hub-card-icon">💎</div>
         <div class="hub-card-title">Beauty Legs</div>
         <div class="hub-card-desc">Parceria Fotona: faturamento, indicadores, mix de procedimentos e renda passiva</div>
@@ -222,7 +222,7 @@
         </div>
       </div>
 
-      <div class="hub-card adm">
+      <div class="hub-card adm" data-card="gestor">
         <div class="hub-card-icon">🗂️</div>
         <div class="hub-card-title">Gestão Administrativa</div>
         <div class="hub-card-desc">Funcionários, cargos & escopos, folha & remuneração, movimentações e POPs</div>
@@ -233,7 +233,7 @@
         </div>
       </div>
 
-      <div class="hub-card hospitalar">
+      <div class="hub-card hospitalar" data-card="atendimentos">
         <div class="hub-card-icon">🏥</div>
         <div class="hub-card-title">Atendimentos Hospitalares</div>
         <div class="hub-card-desc">Procedimentos em hospitais externos, captura via foto e conciliação automática de repasses</div>
@@ -244,7 +244,7 @@
         </div>
       </div>
 
-      <div class="hub-card previas">
+      <div class="hub-card previas" data-card="previas">
         <div class="hub-card-icon">📋</div>
         <div class="hub-card-title">Prévias</div>
         <div class="hub-card-desc">Geração automatizada das fichas que a Recepção imprime diariamente, com tabelas SVN sincronizadas</div>
@@ -255,7 +255,7 @@
         </div>
       </div>
 
-      <div class="hub-card acessos">
+      <div class="hub-card acessos" data-card="gestor" data-role="admin">
         <div class="hub-card-icon">🔑</div>
         <div class="hub-card-title">Gestão de Acessos</div>
         <div class="hub-card-desc">Cadastro de usuários e permissões dos portais Endovascular SP</div>
@@ -272,62 +272,91 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Lista de hashes SHA-256 de senhas válidas. Cada hash corresponde a um acesso individual.
-// Para revogar, remover o hash. Para adicionar, calcular SHA-256 da senha e incluir aqui.
-const HASHES = [
-  '123cd8b4a5b4b2076e11633ff7e6813548f356d4b77780fad532b28e42f1f735', // Thiago + Dr. Igor (senha compartilhada legacy)
-  '4132f982e4defc57b565a23d0ef1217d5a6294c1f257244425e6004bbad52b24', // financeiro@cfodeconsultorio.com
-  '174419d17ff10aff0c1d14e3c74dc767ce11893ac2707e47286e92859ff4b23d', // cmortati@cfodeconsultorio.com
-  '14f3dfb49cbacd89fbf761c25a41017c2987d146fea78c45e7917ddac09ad9c3', // guilherme@vcgestao.com
-];
-const SK   = 'gestor_hub_auth';
+// Autenticação via Google OAuth + autorização via public.users.cards (Supabase).
+// Cada hub-card no HTML traz `data-card="..."` e opcionalmente `data-role="admin"`.
+// Quem não tem o card permitido (ou role exigida) não vê aquele card no Hub.
 
-async function tentarLogin() {
-  const senha = document.getElementById('login-senha').value.trim();
-  if (!senha) return;
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(senha));
-  const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  if (HASHES.includes(hex)) {
-    sessionStorage.setItem(SK, '1');
-    sessionStorage.setItem('_xpa', senha);
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-  } else {
-    const el = document.getElementById('login-erro');
-    el.textContent = 'Senha incorreta.';
-    setTimeout(() => el.textContent = '', 3000);
-    document.getElementById('login-senha').value = '';
-    document.getElementById('login-senha').focus();
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function entrarComGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href.split('#')[0].split('?')[0] }
+  });
+  if (error) document.getElementById('login-erro').textContent = 'Erro: ' + error.message;
+}
+
+function mostrarLogin() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('main').style.display = 'none';
+}
+
+async function checkAuth() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return mostrarLogin();
+  const email = (user.email || '').toLowerCase();
+
+  // Consulta tabela central public.users (cards + role) + user_secrets (legacy_password pra sub-portais criptografados)
+  const [usrRes, secRes] = await Promise.all([
+    sb.from('users').select('email,name,role,slug,cards').eq('email', email).maybeSingle(),
+    sb.from('user_secrets').select('legacy_password').eq('email', email).maybeSingle()
+  ]);
+
+  if (usrRes.error || !usrRes.data) {
+    document.getElementById('login-erro').innerHTML =
+      'Email <strong>' + email + '</strong> não está cadastrado.<br/>Contate um administrador.';
+    await sb.auth.signOut();
+    return mostrarLogin();
   }
+
+  const me = usrRes.data;
+  const cards = me.cards || [];
+
+  // Sub-portais legados ainda usam PDATA criptografada com legacy_password no sessionStorage.
+  if (secRes.data && secRes.data.legacy_password) {
+    sessionStorage.setItem('_xpa', secRes.data.legacy_password);
+  }
+  if (me.name) {
+    sessionStorage.setItem('_xname', me.name.split(' ')[0]);
+    const span = document.querySelector('.hub-greeting span');
+    if (span) span.textContent = me.name.split(' ')[0];
+  }
+
+  // Filtra cards: esconde o que o usuário não tem permissão
+  let visiveis = 0;
+  document.querySelectorAll('.hub-card[data-card]').forEach(el => {
+    const reqCard = el.getAttribute('data-card');
+    const reqRole = el.getAttribute('data-role');
+    const ok = cards.includes(reqCard) && (!reqRole || me.role === reqRole);
+    el.style.display = ok ? '' : 'none';
+    if (ok) visiveis++;
+  });
+
+  // Se nenhum card visível, mostra mensagem
+  if (visiveis === 0) {
+    document.getElementById('login-erro').textContent =
+      'Você está autenticado mas não tem permissão pra ver nenhum card. Contate um administrador.';
+    return;
+  }
+
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
 }
 
 function navegar(el, e) {
   e.preventDefault();
-  const s = sessionStorage.getItem('_xpa');
-  if (s) sessionStorage.setItem('_xpa', s);
   window.location.href = el.href;
 }
 
-window.addEventListener('load', async () => {
-  const xname = sessionStorage.getItem('_xname');
-  if (xname) {
-    const span = document.querySelector('.hub-greeting span');
-    if (span) span.textContent = xname;
-  }
-  if (sessionStorage.getItem(SK) === '1') {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    return;
-  }
-  const s = sessionStorage.getItem('_xpa');
-  if (s) {
-    document.getElementById('login-senha').value = s;
-    await tentarLogin();
-  } else {
-    document.getElementById('login-senha').focus();
-  }
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') checkAuth();
+  else if (event === 'SIGNED_OUT') mostrarLogin();
 });
+checkAuth();
 </script>
 </body>
 </html>

@@ -145,7 +145,7 @@ async function rotear() {
   const email = (session.user.email || '').toLowerCase();
 
   const [usrRes, secRes] = await Promise.all([
-    sb.from('users').select('email, name, role, slug').eq('email', email).maybeSingle(),
+    sb.from('users').select('email, name, role, slug, cards').eq('email', email).maybeSingle(),
     sb.from('user_secrets').select('legacy_password').eq('email', email).maybeSingle()
   ]);
 
@@ -156,11 +156,11 @@ async function rotear() {
   }
 
   const user = usrRes.data;
+  const cards = user.cards || [];
 
   if (secRes.data && secRes.data.legacy_password) {
     sessionStorage.setItem('_xpa', secRes.data.legacy_password);
   }
-
   if (user.name) {
     sessionStorage.setItem('_xname', user.name.split(' ')[0]);
   }
@@ -169,13 +169,24 @@ async function rotear() {
 
   const baseUrl = window.location.origin + window.location.pathname.replace(/\/login\/?$/, '');
 
-  if (user.role === 'admin') {
-    window.location.href = baseUrl + '/hub/Gestor_Hub.html';
-  } else if (user.role === 'medico' && user.slug) {
+  // Roteamento por cards (mais granular que role):
+  // - médico SEM nenhum card de gestão: vai direto pro portal médico individual
+  // - todo o resto: vai pro Hub do Gestor, que filtra cards visíveis
+  const isMedicoSoProprio = user.role === 'medico'
+    && user.slug
+    && cards.includes('medico_proprio')
+    && !cards.includes('gestor')
+    && !cards.includes('atendimentos')
+    && !cards.includes('previas');
+
+  if (isMedicoSoProprio) {
     window.location.href = baseUrl + '/hub/' + encodeURIComponent(user.slug) + '_Hub.html';
-  } else {
-    setErro('Configuração de usuário incompleta (role: ' + user.role + ', slug: ' + (user.slug || 'vazio') + ').<br/>Contate o administrador.');
+  } else if (cards.length === 0) {
+    setErro('Seu usuário não tem nenhum card permitido. Contate o administrador.');
     await sb.auth.signOut();
+  } else {
+    // Hub do Gestor filtra cards visíveis automaticamente baseado em users.cards
+    window.location.href = baseUrl + '/hub/Gestor_Hub.html';
   }
 }
 
