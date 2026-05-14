@@ -5,6 +5,17 @@
   <meta charset='UTF-8'/>
   <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
   <title>Honorários Médicos — Endovascular SP</title>
+  <script>
+    // Gate: se ninguém está logado, redireciona pra /login.
+    // Aceita cookie SSO do Supabase (novo) OU sessionStorage._xpa (legado, vindo do Hub).
+    (function() {
+      var hasSbCookie = document.cookie.split('; ').some(function(c){ return /^sb-[a-z0-9]+-auth-token=/i.test(c); });
+      var hasLegacy = !!sessionStorage.getItem('_xpa') || sessionStorage.getItem('gestor_hub_auth') === '1';
+      if (!hasSbCookie && !hasLegacy) {
+        window.location.replace('/login/');
+      }
+    })();
+  </script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'></script>
   <style>
 :root{

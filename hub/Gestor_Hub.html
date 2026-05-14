@@ -280,7 +280,28 @@
 
 const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// SSO entre subdomínios: guarda o token Supabase num cookie de domínio compartilhado
+function makeCookieStorage(domain) {
+  const secure = location.protocol === 'https:' ? '; secure' : '';
+  return {
+    getItem: (k) => {
+      const c = document.cookie.split('; ').find(x => x.startsWith(encodeURIComponent(k) + '='));
+      if (!c) return null;
+      try { return decodeURIComponent(c.split('=').slice(1).join('=')); } catch { return null; }
+    },
+    setItem: (k, v) => {
+      document.cookie = `${encodeURIComponent(k)}=${encodeURIComponent(v)}; path=/; domain=${domain}; samesite=lax; max-age=2592000${secure}`;
+    },
+    removeItem: (k) => {
+      document.cookie = `${encodeURIComponent(k)}=; path=/; domain=${domain}; max-age=0${secure}`;
+    }
+  };
+}
+const _ssoOpts = location.hostname.endsWith('portalendovascularsp.com.br')
+  ? { auth: { storage: makeCookieStorage('.portalendovascularsp.com.br') } }
+  : {};
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, _ssoOpts);
 
 async function entrarComGoogle() {
   const { error } = await sb.auth.signInWithOAuth({
