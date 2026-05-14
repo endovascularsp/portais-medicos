@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push *)",
+      "Bash(grep -v \":0$\")",
+      "Bash(git diff *)",
+      "Read(//tmp/**)",
+      "Bash(git -c core.quotepath=false diff --name-only -z)",
+      "Bash(xargs -0 git add)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(awk *)",
+      "Bash(py --version)",
+      "Bash(node *)",
+      "Bash(grep -c \"Ticket Médio\\\\|chart-pag\\\\|range-filter\\\\|'R\\\\$ '\" produtividade/Igor_Rafael_Sincos_Produtividade.html)",
+      "Bash(grep -oE '\\\\{\"Profissional\": \"[^\"]*\", \"Tabela\": \"[^\"]*\", \"Origem\": \"[^\"]*\", \"Valor recebido\": [0-9.]*\\\\}' index.html)",
+      "Bash(gh repo *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://api.github.com/repos/endovascularsp/portais-medicos)"
+    ]
+  }
+}
