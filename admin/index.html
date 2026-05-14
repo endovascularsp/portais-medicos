@@ -26,7 +26,11 @@
       padding:20px 32px;display:flex;align-items:center;gap:16px}
     .header-info h1{font-size:16px;font-weight:700;color:#fff}
     .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
-    .header-badge{margin-left:auto;padding:4px 14px;border-radius:20px;
+    .header-back{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;margin-left:auto;border-radius:20px;
+      background:rgba(148,163,184,0.15);border:1.5px solid rgba(148,163,184,0.4);color:#94a3b8;
+      font-size:12px;font-weight:600;text-decoration:none;transition:all .2s;}
+    .header-back:hover{background:rgba(148,163,184,0.25)}
+    .header-badge{padding:4px 14px;border-radius:20px;
       background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.45);
       color:#f5c842;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
     .header-user{font-size:12px;color:rgba(255,255,255,0.6);padding-left:14px;border-left:1px solid rgba(255,255,255,0.1);margin-left:14px}
@@ -117,6 +121,7 @@
       <h1>🔑 Gestão de Acessos</h1>
       <p>Cadastro de usuários e permissões dos portais Endovascular SP</p>
     </div>
+    <a href="../hub/Gestor_Hub.html" class="header-back" title="Voltar ao Hub do Gestor">🏠 Home</a>
     <div class="header-badge">Admin</div>
     <span class="header-user" id="header-info">—</span>
   </header>
