@@ -108,30 +108,10 @@
 const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
 
-// SSO entre subdomínios: guarda o token Supabase num cookie de domínio compartilhado
-// (.portalendovascularsp.com.br) em vez do localStorage da página. Resultado: logou
-// uma vez, está logado em todos os portais (login, hub, admin, atendimentos, previas).
-// Em localhost cai no localStorage default (cookie cross-domain só funciona em prod).
-function makeCookieStorage(domain) {
-  const secure = location.protocol === 'https:' ? '; secure' : '';
-  return {
-    getItem: (k) => {
-      const c = document.cookie.split('; ').find(x => x.startsWith(encodeURIComponent(k) + '='));
-      if (!c) return null;
-      try { return decodeURIComponent(c.split('=').slice(1).join('=')); } catch { return null; }
-    },
-    setItem: (k, v) => {
-      document.cookie = `${encodeURIComponent(k)}=${encodeURIComponent(v)}; path=/; domain=${domain}; samesite=lax; max-age=2592000${secure}`;
-    },
-    removeItem: (k) => {
-      document.cookie = `${encodeURIComponent(k)}=; path=/; domain=${domain}; max-age=0${secure}`;
-    }
-  };
-}
-const _ssoOpts = location.hostname.endsWith('portalendovascularsp.com.br')
-  ? { auth: { storage: makeCookieStorage('.portalendovascularsp.com.br') } }
-  : {};
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, _ssoOpts);
+// (SSO via cookie compartilhado reservado pra próxima iteração — token Supabase
+// estoura 4KB do cookie único. Por enquanto, localStorage default: cada portal
+// guarda sessão própria; login vira 1 clique por subdomínio.)
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id) => document.getElementById(id);
 

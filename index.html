@@ -7,11 +7,12 @@
   <title>Honorários Médicos — Endovascular SP</title>
   <script>
     // Gate: se ninguém está logado, redireciona pra /login.
-    // Aceita cookie SSO do Supabase (novo) OU sessionStorage._xpa (legado, vindo do Hub).
+    // Aceita localStorage do Supabase (atual), cookie SSO (futuro), OU _xpa legado.
     (function() {
+      var hasSbLocal = Object.keys(localStorage).some(function(k){ return /^sb-[a-z0-9]+-auth-token$/i.test(k); });
       var hasSbCookie = document.cookie.split('; ').some(function(c){ return /^sb-[a-z0-9]+-auth-token=/i.test(c); });
       var hasLegacy = !!sessionStorage.getItem('_xpa') || sessionStorage.getItem('gestor_hub_auth') === '1';
-      if (!hasSbCookie && !hasLegacy) {
+      if (!hasSbLocal && !hasSbCookie && !hasLegacy) {
         window.location.replace('/login/');
       }
     })();
