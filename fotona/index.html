@@ -176,6 +176,37 @@
   .pass-card .sep{height:1px;background:var(--border);margin:12px 0}
   .pass-card .sim-note{font-size:11px;color:var(--muted-2);line-height:1.5;margin-top:10px;font-style:italic}
 
+  /* BODY MAP */
+  .bodymap{display:grid;grid-template-columns:340px 1fr;gap:36px;align-items:start;margin-top:8px}
+  .bodymap-figure{display:flex;justify-content:center;align-items:flex-start;padding:8px 0}
+  .body-svg{width:100%;max-width:300px;height:auto}
+  .body-silhouette{fill:rgba(255,255,255,0.05);stroke:rgba(232,232,232,0.45);stroke-width:1.5;stroke-linejoin:round}
+  .hotspot-group{cursor:pointer;transition:transform .18s ease-out;transform-origin:center}
+  .hotspot-group .hotspot-circle{fill:var(--red);stroke:#fff;stroke-width:2;transition:fill .18s,filter .18s}
+  .hotspot-group .hotspot-num{fill:#fff;font-size:11px;font-weight:700;pointer-events:none;font-family:'Inter',sans-serif}
+  .hotspot-group:hover,.hotspot-group.active{filter:drop-shadow(0 0 8px rgba(227,6,19,.7))}
+  .hotspot-group:hover .hotspot-circle,.hotspot-group.active .hotspot-circle{fill:#ff1a2c;stroke:#fff;stroke-width:2.5}
+  .bodymap-list{display:flex;flex-direction:column;gap:8px}
+  .bodymap-item{
+    display:grid;grid-template-columns:32px 1fr;gap:14px;align-items:center;
+    padding:11px 14px;border:1px solid var(--border);border-radius:8px;
+    background:var(--surface-2);cursor:pointer;transition:all .15s;
+  }
+  .bodymap-item:hover,.bodymap-item.active{border-color:var(--red);background:rgba(227,6,19,.08)}
+  .bodymap-num{
+    width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;
+  }
+  .bodymap-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;line-height:1.3}
+  .bodymap-procs{font-size:11px;color:var(--muted);line-height:1.5}
+  .bodymap-summary{
+    display:flex;gap:24px;flex-wrap:wrap;margin-bottom:18px;padding:14px 18px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+  }
+  .bodymap-summary .stat{display:flex;flex-direction:column;gap:2px}
+  .bodymap-summary .stat-value{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1}
+  .bodymap-summary .stat-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+
   /* DRILL-DOWN MODAL */
   .bl-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
   .bl-modal.open{display:flex}
@@ -215,6 +246,8 @@
     .kpi-row{grid-template-columns:repeat(2,1fr)}
     .grid-2,.grid-3{grid-template-columns:1fr}
     .pass-grid{grid-template-columns:1fr}
+    .bodymap{grid-template-columns:1fr;gap:24px}
+    .body-svg{max-width:260px}
     .bl-logo{height:84px}
     header.bl-header{padding:10px 24px}
   }
@@ -358,6 +391,132 @@
         <thead><tr><th>Procedimento</th><th class="num">Qtd</th><th class="num">Faturamento</th></tr></thead>
         <tbody id="tbl-proc"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- BODY MAP -->
+  <div class="section">
+    <h3>O alcance do Fotona — onde podemos aplicar</h3>
+    <div class="desc">
+      A plataforma Fotona não é um equipamento de "uma indicação só". Os 23 protocolos ativos da clínica cobrem praticamente o corpo inteiro — face, sono, pele, contorno corporal, articulações, saúde íntima, vasculares e unhas. Cada ponto vermelho marca uma região com tratamento disponível.
+    </div>
+    <div class="bodymap-summary">
+      <div class="stat"><span class="stat-value">11</span><span class="stat-label">Categorias</span></div>
+      <div class="stat"><span class="stat-value">23</span><span class="stat-label">Protocolos ativos</span></div>
+      <div class="stat"><span class="stat-value">8</span><span class="stat-label">Regiões do corpo</span></div>
+    </div>
+    <div class="bodymap">
+      <div class="bodymap-figure">
+        <svg viewBox="0 0 300 700" class="body-svg" aria-label="Mapa corporal de aplicações Fotona">
+          <g class="body-silhouette">
+            <!-- Head -->
+            <circle cx="150" cy="62" r="36"/>
+            <!-- Neck -->
+            <rect x="140" y="94" width="20" height="22" rx="2"/>
+            <!-- Torso -->
+            <path d="M 100 116 Q 102 112 106 112 L 194 112 Q 198 112 200 116 L 215 290 Q 215 322 210 338 L 90 338 Q 85 322 85 290 Z"/>
+            <!-- Left arm -->
+            <rect x="56" y="120" width="28" height="200" rx="14"/>
+            <!-- Right arm -->
+            <rect x="216" y="120" width="28" height="200" rx="14"/>
+            <!-- Left leg -->
+            <rect x="100" y="338" width="44" height="330" rx="20"/>
+            <!-- Right leg -->
+            <rect x="156" y="338" width="44" height="330" rx="20"/>
+          </g>
+          <!-- Hotspots -->
+          <g class="hotspot-group" data-region="1">
+            <circle class="hotspot-circle" cx="150" cy="60" r="13"/>
+            <text class="hotspot-num" x="150" y="64" text-anchor="middle">1</text>
+          </g>
+          <g class="hotspot-group" data-region="2">
+            <circle class="hotspot-circle" cx="150" cy="108" r="13"/>
+            <text class="hotspot-num" x="150" y="112" text-anchor="middle">2</text>
+          </g>
+          <g class="hotspot-group" data-region="3">
+            <circle class="hotspot-circle" cx="230" cy="180" r="13"/>
+            <text class="hotspot-num" x="230" y="184" text-anchor="middle">3</text>
+          </g>
+          <g class="hotspot-group" data-region="4">
+            <circle class="hotspot-circle" cx="150" cy="220" r="13"/>
+            <text class="hotspot-num" x="150" y="224" text-anchor="middle">4</text>
+          </g>
+          <g class="hotspot-group" data-region="5">
+            <circle class="hotspot-circle" cx="70" cy="250" r="13"/>
+            <text class="hotspot-num" x="70" y="254" text-anchor="middle">5</text>
+          </g>
+          <g class="hotspot-group" data-region="6">
+            <circle class="hotspot-circle" cx="150" cy="320" r="13"/>
+            <text class="hotspot-num" x="150" y="324" text-anchor="middle">6</text>
+          </g>
+          <g class="hotspot-group" data-region="7">
+            <circle class="hotspot-circle" cx="178" cy="520" r="13"/>
+            <text class="hotspot-num" x="178" y="524" text-anchor="middle">7</text>
+          </g>
+          <g class="hotspot-group" data-region="8">
+            <circle class="hotspot-circle" cx="122" cy="650" r="13"/>
+            <text class="hotspot-num" x="122" y="654" text-anchor="middle">8</text>
+          </g>
+        </svg>
+      </div>
+      <div class="bodymap-list">
+        <div class="bodymap-item" data-region="1">
+          <div class="bodymap-num">1</div>
+          <div>
+            <div class="bodymap-title">Face, olhos e couro cabeludo</div>
+            <div class="bodymap-procs">Fotona 4D · 5D · 6D · Véu de Noiva · SmoothEyes · HairEstart</div>
+          </div>
+        </div>
+        <div class="bodymap-item" data-region="2">
+          <div class="bodymap-num">2</div>
+          <div>
+            <div class="bodymap-title">Saúde do Sono — ronco e apneia</div>
+            <div class="bodymap-procs">NightLase</div>
+          </div>
+        </div>
+        <div class="bodymap-item" data-region="3">
+          <div class="bodymap-num">3</div>
+          <div>
+            <div class="bodymap-title">Pele — manchas e cicatrizes</div>
+            <div class="bodymap-procs">Lesões Benignas · Cicatrizes Atróficas</div>
+          </div>
+        </div>
+        <div class="bodymap-item" data-region="4">
+          <div class="bodymap-num">4</div>
+          <div>
+            <div class="bodymap-title">Corpo — flacidez, gordura e contorno</div>
+            <div class="bodymap-procs">MicroCoring · TensorTight · ThermoLipólise · TightSculpting · Beauty Legs Corporal</div>
+          </div>
+        </div>
+        <div class="bodymap-item" data-region="5">
+          <div class="bodymap-num">5</div>
+          <div>
+            <div class="bodymap-title">Dores articulares e inflamações</div>
+            <div class="bodymap-procs">ConfortLase · Fotobiomodulação</div>
+          </div>
+        </div>
+        <div class="bodymap-item" data-region="6">
+          <div class="bodymap-num">6</div>
+          <div>
+            <div class="bodymap-title">Saúde íntima feminina</div>
+            <div class="bodymap-procs">ProlapLase</div>
+          </div>
+        </div>
+        <div class="bodymap-item" data-region="7">
+          <div class="bodymap-num">7</div>
+          <div>
+            <div class="bodymap-title">Vasculares — varizes e telangiectasias</div>
+            <div class="bodymap-procs">Beauty Legs Vascular · Telangiectasias</div>
+          </div>
+        </div>
+        <div class="bodymap-item" data-region="8">
+          <div class="bodymap-num">8</div>
+          <div>
+            <div class="bodymap-title">Unhas — onicomicose e verrugas</div>
+            <div class="bodymap-procs">ClearSteps</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1189,9 +1348,32 @@ function refreshChips() {
   if (cur) cur.textContent = isAll() ? 'Todos os meses' : currentLabel();
 }
 
+// ============ BODY MAP INTERACTIONS ============
+function initBodymap() {
+  const items = document.querySelectorAll('.bodymap-item');
+  const hots = document.querySelectorAll('.hotspot-group');
+  const activate = (region) => {
+    items.forEach(el => el.classList.toggle('active', el.dataset.region === region));
+    hots.forEach(el => el.classList.toggle('active', el.dataset.region === region));
+  };
+  const clear = () => {
+    items.forEach(el => el.classList.remove('active'));
+    hots.forEach(el => el.classList.remove('active'));
+  };
+  items.forEach(el => {
+    el.addEventListener('mouseenter', () => activate(el.dataset.region));
+    el.addEventListener('mouseleave', clear);
+  });
+  hots.forEach(el => {
+    el.addEventListener('mouseenter', () => activate(el.dataset.region));
+    el.addEventListener('mouseleave', clear);
+  });
+}
+
 // ============ INIT ============
 buildPeriodChips();
 render();
+initBodymap();
 </script>
 
 </body>
