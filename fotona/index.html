@@ -361,6 +361,13 @@
     </div>
   </div>
 
+  <!-- CROSS-SELL -->
+  <div class="section">
+    <h3>Projeção: cross-sell de +1 procedimento por paciente</h3>
+    <div class="desc" id="desc-crossell"></div>
+    <div class="pass-grid" id="cross-grid"></div>
+  </div>
+
   <!-- RENDA PASSIVA -->
   <div class="section">
     <h3>Renda passiva — vasculares como indicadores</h3>
@@ -613,6 +620,7 @@ function render() {
   renderChartExec(agg);
   renderChartIndic(agg);
   renderTblProc(agg);
+  renderCrossell(agg);
   renderPassive(agg);
   renderDescriptions(agg);
 }
@@ -884,6 +892,43 @@ function renderTblProc(agg) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${p.proc}</td><td class="num muted">${p.qtd}</td><td class="num">R$ ${fmtBR(p.fat)}</td>`;
     tbody.appendChild(tr);
+  });
+}
+
+function renderCrossell(agg) {
+  const desc = document.getElementById('desc-crossell');
+  const grid = document.getElementById('cross-grid');
+  const pac = agg.qtd_pacientes;
+  const ticket = agg.ticket;
+  const fatAtual = agg.total_fat;
+  desc.innerHTML =
+    `Considerando os <b style="color:#fff">${pac} pacientes únicos</b> do período selecionado ` +
+    `e ticket médio de <b style="color:#fff">R$ ${fmtBR(ticket)}</b> por procedimento. ` +
+    `Se conseguirmos um trabalho de cross-sell em que cada paciente faça +1 procedimento ao valor médio, o impacto seria:`;
+  grid.innerHTML = '';
+  const cenarios = [
+    {pct: 1.00, label: '100% dos pacientes', tagline: 'cenário ótimo'},
+    {pct: 0.80, label: '80% dos pacientes',  tagline: 'cenário realista'},
+    {pct: 0.50, label: '50% dos pacientes',  tagline: 'cenário conservador'},
+  ];
+  cenarios.forEach(c => {
+    const pacAlvo = Math.round(pac * c.pct);
+    const receitaAdd = pacAlvo * ticket;
+    const receitaTotal = fatAtual + receitaAdd;
+    const cresc = fatAtual ? (receitaAdd / fatAtual * 100) : 0;
+    const card = document.createElement('div');
+    card.className = 'pass-card vasc';
+    card.innerHTML = `
+      <div class="name">${c.label}</div>
+      <div class="role">${c.tagline}</div>
+      <div class="row"><span class="label">Pacientes com +1 procedimento</span><span class="value">${pacAlvo}</span></div>
+      <div class="row"><span class="label">Receita adicional</span><span class="value red">R$ ${fmtBR(receitaAdd)}</span></div>
+      <div class="sep"></div>
+      <div class="row"><span class="label">Faturamento atual</span><span class="value">R$ ${fmtBR(fatAtual)}</span></div>
+      <div class="row"><span class="label">Faturamento projetado</span><span class="value red">R$ ${fmtBR(receitaTotal)}</span></div>
+      <div class="row"><span class="label">Crescimento</span><span class="value red">+${cresc.toFixed(0)}%</span></div>
+    `;
+    grid.appendChild(card);
   });
 }
 
