@@ -315,7 +315,7 @@
     <div class="kpi">
       <div class="kpi-label">Ticket Médio</div>
       <div class="kpi-value"><span class="currency">R$</span> <b id="kpi-ticket-pac"></b></div>
-      <div class="kpi-foot">por paciente (<span id="kpi-pac-unicos"></span> únicos)</div>
+      <div class="kpi-foot">por paciente</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Procedimentos</div>
@@ -366,6 +366,7 @@
     <h3>Projeção: cross-sell de +1 procedimento por paciente</h3>
     <div class="desc" id="desc-crossell"></div>
     <div class="pass-grid" id="cross-grid"></div>
+    <div class="chart-wrap" style="margin-top:24px"><canvas id="chart-cross"></canvas></div>
   </div>
 
   <!-- RENDA PASSIVA -->
@@ -705,7 +706,6 @@ function renderKpis(agg) {
 
   document.getElementById('kpi-ticket').textContent = fmtBR(agg.ticket);
   document.getElementById('kpi-ticket-pac').textContent = fmtBR(agg.ticket_paciente);
-  document.getElementById('kpi-pac-unicos').textContent = agg.qtd_pacientes;
   document.getElementById('kpi-qtd').textContent = agg.qtd;
   document.getElementById('kpi-proc-com-indic').textContent = `${agg.pct_com_indic.toFixed(0)}%`;
 }
@@ -929,6 +929,55 @@ function renderCrossell(agg) {
       <div class="row"><span class="label">Crescimento</span><span class="value red">+${cresc.toFixed(0)}%</span></div>
     `;
     grid.appendChild(card);
+  });
+  renderChartCross(agg);
+}
+
+function renderChartCross(agg) {
+  destroyChart('cross');
+  const ctx = document.getElementById('chart-cross');
+  const pac = agg.qtd_pacientes;
+  const ticket = agg.ticket;
+  const fatAtual = agg.total_fat;
+  const linhas = [
+    {label:'Atual',  add: 0},
+    {label:'+50%',   add: Math.round(pac * 0.50) * ticket},
+    {label:'+80%',   add: Math.round(pac * 0.80) * ticket},
+    {label:'+100%',  add: Math.round(pac * 1.00) * ticket},
+  ];
+  STATE.charts.cross = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: linhas.map(l => l.label),
+      datasets:[
+        {label:'Faturamento atual',  data: linhas.map(() => fatAtual), backgroundColor:'#4A4A4A', stack:'s', borderRadius:4},
+        {label:'Receita adicional',  data: linhas.map(l => l.add),    backgroundColor:COLORS.vasc, stack:'s', borderRadius:4},
+      ]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom', labels:{usePointStyle:true, pointStyle:'rect', padding:18, font:{size:11}}},
+        tooltip:{
+          backgroundColor:'#000', borderColor:'#E30613', borderWidth:1, padding:12,
+          callbacks:{
+            label:(c) => {
+              const v = c.parsed.x;
+              if (c.dataset.label === 'Receita adicional' && v === 0) return null;
+              return `${c.dataset.label}: R$ ${fmtBR(v)}`;
+            },
+            footer:(items) => {
+              const total = items.reduce((s, it) => s + it.parsed.x, 0);
+              return `Projetado: R$ ${fmtBR(total)}`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{stacked:true, grid:{color:'rgba(255,255,255,.05)'}, ticks:{callback:v => 'R$ '+fmtBR(v), font:{size:11}}},
+        y:{stacked:true, grid:{display:false}, ticks:{font:{size:12, weight:'600'}}}
+      }
+    }
   });
 }
 
