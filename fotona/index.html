@@ -177,9 +177,13 @@
   .pass-card .sim-note{font-size:11px;color:var(--muted-2);line-height:1.5;margin-top:10px;font-style:italic}
 
   /* BODY MAP */
-  .bodymap{display:grid;grid-template-columns:340px 1fr;gap:36px;align-items:start;margin-top:8px}
-  .bodymap-figure{display:flex;justify-content:center;align-items:flex-start;padding:8px 0}
-  .body-svg{width:100%;max-width:300px;height:auto}
+  .bodymap{display:grid;grid-template-columns:300px 1fr;gap:36px;align-items:stretch;margin-top:8px}
+  .bodymap-figure{
+    display:flex;justify-content:center;align-items:center;
+    background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;
+    padding:18px;
+  }
+  .body-svg{max-width:100%;max-height:100%;width:auto;height:auto;display:block}
   .body-silhouette{fill:rgba(255,255,255,0.05);stroke:rgba(232,232,232,0.45);stroke-width:1.5;stroke-linejoin:round}
   .hotspot-group{cursor:pointer;transition:transform .18s ease-out;transform-origin:center}
   .hotspot-group .hotspot-circle{fill:var(--red);stroke:#fff;stroke-width:2;transition:fill .18s,filter .18s}
@@ -246,7 +250,8 @@
     .kpi-row{grid-template-columns:repeat(2,1fr)}
     .grid-2,.grid-3{grid-template-columns:1fr}
     .pass-grid{grid-template-columns:1fr}
-    .bodymap{grid-template-columns:1fr;gap:24px}
+    .bodymap{grid-template-columns:1fr;gap:24px;align-items:start}
+    .bodymap-figure{height:auto !important;min-height:480px;padding:12px}
     .body-svg{max-width:260px}
     .bl-logo{height:84px}
     header.bl-header{padding:10px 24px}
@@ -1357,10 +1362,26 @@ function initBodymap() {
   });
 }
 
+// Sincroniza altura da figura SVG com a lista lateral (pra screenshots PPT alinhados).
+// Em telas estreitas (<1100px) o layout empilha, então deixa altura natural.
+function syncBodymapHeight() {
+  const list = document.querySelector('.bodymap-list');
+  const fig = document.querySelector('.bodymap-figure');
+  if (!list || !fig) return;
+  if (window.innerWidth < 1100) {
+    fig.style.height = '';
+    return;
+  }
+  fig.style.height = list.offsetHeight + 'px';
+}
+window.addEventListener('resize', syncBodymapHeight);
+window.addEventListener('load', syncBodymapHeight);
+
 // ============ INIT ============
 buildPeriodChips();
 render();
 initBodymap();
+syncBodymapHeight();
 </script>
 
 </body>
