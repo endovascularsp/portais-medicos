@@ -80,7 +80,7 @@
   .period-chip.btn-clear:hover{color:var(--red);border-color:var(--border);background:transparent;box-shadow:none}
 
   /* KPI ROW */
-  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+  .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:28px}
   .kpi{
     background:var(--surface);border:1px solid var(--border);border-radius:12px;
     padding:22px 22px 20px;position:relative;overflow:hidden;
@@ -313,6 +313,11 @@
       <div class="kpi-foot">por procedimento</div>
     </div>
     <div class="kpi">
+      <div class="kpi-label">Ticket Médio</div>
+      <div class="kpi-value"><span class="currency">R$</span> <b id="kpi-ticket-pac"></b></div>
+      <div class="kpi-foot">por paciente (<span id="kpi-pac-unicos"></span> únicos)</div>
+    </div>
+    <div class="kpi">
       <div class="kpi-label">Procedimentos</div>
       <div class="kpi-value"><b id="kpi-qtd"></b></div>
       <div class="kpi-foot"><span id="kpi-proc-com-indic"></span> com indicação médica</div>
@@ -524,12 +529,14 @@ function aggregate(rows) {
   const indicMap = {};
   const procMap = {};
   let total_fat = 0, total_liq = 0, total_indic = 0, fat_com_indic = 0;
+  const pacientesUnicos = new Set();
 
   for (const r of rows) {
     total_fat += r.fat_bruto;
     total_liq += r.valor_liq;
     total_indic += r.rep_indic;
     if (r.indicador) fat_com_indic += r.fat_bruto;
+    if (r.paciente) pacientesUnicos.add(r.paciente);
 
     // por mês
     if (!monthMap[r.pkey]) monthMap[r.pkey] = {key:r.pkey, fat:0, qtd:0, vasc:0, corp:0, fac:0, outros:0};
@@ -578,10 +585,13 @@ function aggregate(rows) {
     }
   }
 
+  const qtd_pacientes = pacientesUnicos.size;
   return {
     total_fat, total_liq, total_indic, fat_com_indic,
     qtd: rows.length,
+    qtd_pacientes,
     ticket: rows.length ? total_fat / rows.length : 0,
+    ticket_paciente: qtd_pacientes ? total_fat / qtd_pacientes : 0,
     pct_com_indic: total_fat ? fat_com_indic / total_fat * 100 : 0,
     months,
     by_cat: Object.values(catMap).sort((a,b) => b.fat - a.fat),
@@ -686,6 +696,8 @@ function renderKpis(agg) {
   }
 
   document.getElementById('kpi-ticket').textContent = fmtBR(agg.ticket);
+  document.getElementById('kpi-ticket-pac').textContent = fmtBR(agg.ticket_paciente);
+  document.getElementById('kpi-pac-unicos').textContent = agg.qtd_pacientes;
   document.getElementById('kpi-qtd').textContent = agg.qtd;
   document.getElementById('kpi-proc-com-indic').textContent = `${agg.pct_com_indic.toFixed(0)}%`;
 }
