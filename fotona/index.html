@@ -353,7 +353,6 @@
     <div class="kpi">
       <div class="kpi-label">Procedimentos</div>
       <div class="kpi-value"><b id="kpi-qtd"></b></div>
-      <div class="kpi-foot"><span id="kpi-proc-com-indic"></span> com indicação médica</div>
     </div>
   </div>
 
@@ -866,7 +865,6 @@ function renderKpis(agg) {
   document.getElementById('kpi-ticket').textContent = fmtBR(agg.ticket);
   document.getElementById('kpi-ticket-pac').textContent = fmtBR(agg.ticket_paciente);
   document.getElementById('kpi-qtd').textContent = agg.qtd;
-  document.getElementById('kpi-proc-com-indic').textContent = `${agg.pct_com_indic.toFixed(0)}%`;
 }
 
 function momHtml(mom, prevLabel) {
