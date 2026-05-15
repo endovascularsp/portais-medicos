@@ -179,11 +179,19 @@
   /* BODY MAP */
   .bodymap{display:grid;grid-template-columns:300px 1fr;gap:36px;align-items:stretch;margin-top:8px}
   .bodymap-figure{
-    display:flex;justify-content:center;align-items:center;
+    position:relative;
     background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;
-    padding:18px;
   }
-  .body-svg{max-width:100%;max-height:100%;width:auto;height:auto;display:block}
+  .body-svg{
+    position:absolute;
+    inset:18px;
+    margin:auto;
+    max-width:calc(100% - 36px);
+    max-height:calc(100% - 36px);
+    width:auto;
+    height:auto;
+    display:block;
+  }
   .body-silhouette{fill:rgba(255,255,255,0.05);stroke:rgba(232,232,232,0.45);stroke-width:1.5;stroke-linejoin:round}
   .hotspot-group{cursor:pointer;transition:transform .18s ease-out;transform-origin:center}
   .hotspot-group .hotspot-circle{fill:var(--red);stroke:#fff;stroke-width:2;transition:fill .18s,filter .18s}
@@ -251,8 +259,8 @@
     .grid-2,.grid-3{grid-template-columns:1fr}
     .pass-grid{grid-template-columns:1fr}
     .bodymap{grid-template-columns:1fr;gap:24px;align-items:start}
-    .bodymap-figure{height:auto !important;min-height:480px;padding:12px}
-    .body-svg{max-width:260px}
+    .bodymap-figure{height:auto;padding:18px;display:flex;justify-content:center;align-items:center}
+    .body-svg{position:static;inset:auto;max-width:260px;max-height:none;width:auto;height:auto}
     .bl-logo{height:84px}
     header.bl-header{padding:10px 24px}
   }
@@ -411,7 +419,7 @@
     </div>
     <div class="bodymap">
       <div class="bodymap-figure">
-        <svg viewBox="0 0 300 700" class="body-svg" aria-label="Mapa corporal de aplicações Fotona">
+        <svg viewBox="0 0 300 660" class="body-svg" aria-label="Mapa corporal de aplicações Fotona" preserveAspectRatio="xMidYMid meet">
           <g class="body-silhouette">
             <!-- Head -->
             <circle cx="150" cy="62" r="36"/>
@@ -424,9 +432,9 @@
             <!-- Right arm -->
             <rect x="216" y="120" width="28" height="200" rx="14"/>
             <!-- Left leg -->
-            <rect x="100" y="338" width="44" height="330" rx="20"/>
+            <rect x="100" y="338" width="44" height="290" rx="20"/>
             <!-- Right leg -->
-            <rect x="156" y="338" width="44" height="330" rx="20"/>
+            <rect x="156" y="338" width="44" height="290" rx="20"/>
           </g>
           <!-- Hotspots -->
           <g class="hotspot-group" data-region="1">
@@ -450,12 +458,12 @@
             <text class="hotspot-num" x="70" y="254" text-anchor="middle">5</text>
           </g>
           <g class="hotspot-group" data-region="6">
-            <circle class="hotspot-circle" cx="178" cy="520" r="13"/>
-            <text class="hotspot-num" x="178" y="524" text-anchor="middle">6</text>
+            <circle class="hotspot-circle" cx="178" cy="490" r="13"/>
+            <text class="hotspot-num" x="178" y="494" text-anchor="middle">6</text>
           </g>
           <g class="hotspot-group" data-region="7">
-            <circle class="hotspot-circle" cx="122" cy="650" r="13"/>
-            <text class="hotspot-num" x="122" y="654" text-anchor="middle">7</text>
+            <circle class="hotspot-circle" cx="122" cy="610" r="13"/>
+            <text class="hotspot-num" x="122" y="614" text-anchor="middle">7</text>
           </g>
         </svg>
       </div>
@@ -1362,26 +1370,10 @@ function initBodymap() {
   });
 }
 
-// Sincroniza altura da figura SVG com a lista lateral (pra screenshots PPT alinhados).
-// Em telas estreitas (<1100px) o layout empilha, então deixa altura natural.
-function syncBodymapHeight() {
-  const list = document.querySelector('.bodymap-list');
-  const fig = document.querySelector('.bodymap-figure');
-  if (!list || !fig) return;
-  if (window.innerWidth < 1100) {
-    fig.style.height = '';
-    return;
-  }
-  fig.style.height = list.offsetHeight + 'px';
-}
-window.addEventListener('resize', syncBodymapHeight);
-window.addEventListener('load', syncBodymapHeight);
-
 // ============ INIT ============
 buildPeriodChips();
 render();
 initBodymap();
-syncBodymapHeight();
 </script>
 
 </body>
