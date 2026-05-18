@@ -341,8 +341,14 @@ async function checkAuth() {
     if (ok) visiveis++;
   });
 
-  // Se nenhum card visível, mostra mensagem
+  // Se nenhum card visível: resgata médico que caiu aqui por engano.
+  // Quem tem slug + card medico_proprio é mandado pro Hub próprio dele
+  // (espelha a regra do login/index.html) em vez de ver um beco sem saída.
   if (visiveis === 0) {
+    if (me.role === 'medico' && me.slug && cards.includes('medico_proprio')) {
+      window.location.href = encodeURIComponent(me.slug) + '_Hub.html';
+      return;
+    }
     document.getElementById('login-erro').textContent =
       'Você está autenticado mas não tem permissão pra ver nenhum card. Contate um administrador.';
     return;
