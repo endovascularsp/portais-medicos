@@ -170,9 +170,9 @@
         <option value="recepcao">recepcao</option>
       </select>
 
-      <label>Slug do médico</label>
+      <label>Slug do médico <span id="slug-obrig" style="display:none;color:#f5a623">*</span></label>
       <input type="text" id="f-slug" placeholder="Igor_Rafael_Sincos (só pra médicos)" />
-      <div class="form-info">Só preencher se for médico que tem portal próprio. Define qual `*_Hub.html` carregar.</div>
+      <div class="form-info">Obrigatório quando Role = médico. Define qual `*_Hub.html` carregar (ex: <code>João_Fukuda</code> → <code>João_Fukuda_Hub.html</code>). Sem espaços, com underscore.</div>
 
       <label>Cards permitidos *</label>
       <div class="cards-grupo-label">⚙️ Gestor (guarda-chuva — marca todos os sub-cards)</div>
@@ -305,7 +305,27 @@ function esc(s){return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&
 
 document.addEventListener('DOMContentLoaded', () => {
   $('f-busca').addEventListener('input', render);
+  $('f-role').addEventListener('change', aoMudarRole);
+  $('f-name').addEventListener('input', sugerirSlug);
 });
+
+// Slug segue a mesma regra do gerador de PDATA: NFC + espaços viram "_", acentos mantidos.
+function sugerirSlug() {
+  if ($('f-role').value === 'medico' && !$('f-slug').value.trim() && $('f-name').value.trim()) {
+    $('f-slug').value = $('f-name').value.trim().normalize('NFC').replace(/\s+/g, '_');
+  }
+}
+
+function aoMudarRole() {
+  const ehMedico = $('f-role').value === 'medico';
+  $('slug-obrig').style.display = ehMedico ? 'inline' : 'none';
+  sugerirSlug();
+  if (ehMedico) {
+    const algumMarcado = [...document.querySelectorAll('.cards-checks input:checked')].length > 0;
+    const mp = document.querySelector('.cards-checks input[value="medico_proprio"]');
+    if (!algumMarcado && mp) mp.checked = true;
+  }
+}
 
 function abrirNovo() {
   MODAL_EDIT_EMAIL = null;
@@ -317,6 +337,7 @@ function abrirNovo() {
   document.querySelectorAll('.cards-checks input').forEach(i => i.checked = false);
   $('form-erro').textContent = '';
   $('btn-excluir').style.display = 'none';
+  aoMudarRole();
   $('modal').classList.add('show');
 }
 
@@ -334,6 +355,7 @@ function editar(email) {
   });
   $('form-erro').textContent = '';
   $('btn-excluir').style.display = u.email === CURRENT_USER.email ? 'none' : 'inline-block';
+  $('slug-obrig').style.display = ($('f-role').value === 'medico') ? 'inline' : 'none';
   $('modal').classList.add('show');
 }
 
@@ -349,6 +371,16 @@ async function salvar() {
   if (!email || !email.includes('@')) { $('form-erro').textContent = 'Email inválido.'; return; }
   if (!name) { $('form-erro').textContent = 'Nome obrigatório.'; return; }
   if (!cards.length) { $('form-erro').textContent = 'Marque ao menos 1 card.'; return; }
+
+  // Médico só acessa o portal próprio se: slug preenchido + card medico_proprio +
+  // sem gestor/atendimentos/previas (senão o login/index.html desvia pro Hub do Gestor).
+  if (role === 'medico') {
+    if (!slug) { $('form-erro').textContent = 'Médico precisa de Slug — é o que aponta pro portal próprio dele (ex: João_Fukuda).'; return; }
+    if (/\s/.test(slug)) { $('form-erro').textContent = 'Slug não pode ter espaço. Use underscore: Maria_Souza.'; return; }
+    if (!cards.includes('medico_proprio')) { $('form-erro').textContent = 'Médico precisa do card "👨‍⚕️ Portal individual do médico" marcado.'; return; }
+    const desviam = ['gestor', 'atendimentos', 'previas'].filter(c => cards.includes(c));
+    if (desviam.length && !confirm('Atenção: com o(s) card(s) [' + desviam.join(', ') + '] o login NÃO leva esse médico ao portal próprio dele — manda pro Hub do Gestor. Salvar mesmo assim?')) return;
+  }
 
   const payload = { email, name, role, slug, cards };
 
