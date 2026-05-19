@@ -174,6 +174,10 @@
       <input type="text" id="f-slug" placeholder="Igor_Rafael_Sincos (só pra médicos)" />
       <div class="form-info">Obrigatório quando Role = médico. Define qual `*_Hub.html` carregar (ex: <code>João_Fukuda</code> → <code>João_Fukuda_Hub.html</code>). Sem espaços, com underscore.</div>
 
+      <label>Senha legada do Hub <span id="senha-obrig" style="display:none;color:#f5a623">*</span></label>
+      <input type="text" id="f-senha" placeholder="ex: jul2026b — senha que abre o Hub do médico" autocomplete="off" />
+      <div class="form-info">Só pra médico. É a senha que decripta o portal dele — o sistema injeta sozinho no login Google (o médico nunca digita). Ao <strong>editar</strong>, deixe em branco para manter a atual.</div>
+
       <label>Cards permitidos *</label>
       <div class="cards-grupo-label">⚙️ Gestor (guarda-chuva — marca todos os sub-cards)</div>
       <div class="cards-checks">
@@ -319,6 +323,7 @@ function sugerirSlug() {
 function aoMudarRole() {
   const ehMedico = $('f-role').value === 'medico';
   $('slug-obrig').style.display = ehMedico ? 'inline' : 'none';
+  $('senha-obrig').style.display = (ehMedico && !MODAL_EDIT_EMAIL) ? 'inline' : 'none';
   sugerirSlug();
   if (ehMedico) {
     const algumMarcado = [...document.querySelectorAll('.cards-checks input:checked')].length > 0;
@@ -334,6 +339,7 @@ function abrirNovo() {
   $('f-name').value = '';
   $('f-role').value = 'recepcao';
   $('f-slug').value = '';
+  $('f-senha').value = '';
   document.querySelectorAll('.cards-checks input').forEach(i => i.checked = false);
   $('form-erro').textContent = '';
   $('btn-excluir').style.display = 'none';
@@ -350,12 +356,14 @@ function editar(email) {
   $('f-name').value = u.name || '';
   $('f-role').value = u.role || 'recepcao';
   $('f-slug').value = u.slug || '';
+  $('f-senha').value = '';
   document.querySelectorAll('.cards-checks input').forEach(i => {
     i.checked = (u.cards || []).includes(i.value);
   });
   $('form-erro').textContent = '';
   $('btn-excluir').style.display = u.email === CURRENT_USER.email ? 'none' : 'inline-block';
   $('slug-obrig').style.display = ($('f-role').value === 'medico') ? 'inline' : 'none';
+  $('senha-obrig').style.display = 'none';
   $('modal').classList.add('show');
 }
 
@@ -366,6 +374,7 @@ async function salvar() {
   const name = $('f-name').value.trim();
   const role = $('f-role').value;
   const slug = $('f-slug').value.trim() || null;
+  const senha = $('f-senha').value.trim();
   const cards = [...document.querySelectorAll('.cards-checks input:checked')].map(i => i.value);
 
   if (!email || !email.includes('@')) { $('form-erro').textContent = 'Email inválido.'; return; }
@@ -380,6 +389,9 @@ async function salvar() {
     if (!cards.includes('medico_proprio')) { $('form-erro').textContent = 'Médico precisa do card "👨‍⚕️ Portal individual do médico" marcado.'; return; }
     const desviam = ['gestor', 'atendimentos', 'previas'].filter(c => cards.includes(c));
     if (desviam.length && !confirm('Atenção: com o(s) card(s) [' + desviam.join(', ') + '] o login NÃO leva esse médico ao portal próprio dele — manda pro Hub do Gestor. Salvar mesmo assim?')) return;
+    // Senha legada é obrigatória ao criar médico (sem ela o Hub pede senha
+    // manual). Ao editar, em branco = mantém a atual.
+    if (!MODAL_EDIT_EMAIL && !senha) { $('form-erro').textContent = 'Médico precisa da Senha legada do Hub (a que abre o portal dele). Sem ela o acesso via Google ainda vai pedir senha.'; return; }
   }
 
   const payload = { email, name, role, slug, cards };
@@ -390,6 +402,18 @@ async function salvar() {
   } else {
     const { error } = await sb.from('users').insert(payload);
     if (error) { $('form-erro').textContent = 'Erro: ' + error.message; return; }
+  }
+
+  // Grava a senha legada em user_secrets (fecha a 2ª tranca: o login injeta
+  // isso e o Hub do médico entra sozinho, sem pedir senha).
+  if (role === 'medico' && senha) {
+    const { error: e2 } = await sb.from('user_secrets')
+      .upsert({ email, legacy_password: senha }, { onConflict: 'email' });
+    if (e2) {
+      $('form-erro').textContent = 'Usuário salvo, mas a SENHA não gravou em user_secrets: '
+        + e2.message + '. Rode o SQL de RLS (user_secrets_admin_all) e salve de novo.';
+      return;
+    }
   }
   fecharModal();
   carregar();
