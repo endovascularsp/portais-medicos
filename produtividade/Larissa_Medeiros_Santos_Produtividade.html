@@ -297,7 +297,7 @@ tr:hover td{background:var(--azul-cl);}
 
 <script>
 const DADOS_ENC = /*PDATA*/'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'/*PDATA*/;
-const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03"];
+const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03", "2026-04"];
 
 function br(v){return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 
@@ -341,7 +341,7 @@ async function tentarLogin(){
 function pidsDisp(){
   const prof = Object.keys(DADOS)[0];
   const info = DADOS[prof];
-  return PERIODOS_ORDER.filter(p => info.periodos && info.periodos[p]);
+  return Object.keys(info.periodos || {}).sort();
 }
 
 function inicializar(){

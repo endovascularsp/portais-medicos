@@ -326,7 +326,7 @@ body{background:#EEF2F6 !important;color:#0D1E30;}
 
 <script>
 const DADOS_ENC = /*PDATA*/'TqBYNFaubwmxJpE80xf3T34mJn5dRnXwcF980RiIaTeg4wkeYl0PGijkccoP8ZieNjEohyOI3ULQAy22w5SGTRux8SETJAfY7N9SZZH6fFRBJz8JJU4TtMSPUVULeyaf0VGdv7sdBTrzixfRROisU8jecT1H1G1+LMc9JKCmQflwWD/aqnaeESlRYOhGPdTd4OpaBGIpwmOjn+lSUZB4f0lIt2HXF10Mc5cNtXLYwcqtetoHxW6FaIxLOCD+owIWteSd9UT82EWUP4I37NJGEX7Fm5fQXpFx1ZBa68B+78jp2P0K+OzWxjN1mO+dJnbRy9YfnySlkY9ugX2s9sQltyPaB9Ap2mKOa9FUdD5fzUYEUd1L+4dQM52L+LXcRc+w/l1UOeppmXLbAgg2/ODVUdJp2ZX3uiwC6CHQvz3OmofrX81uGFqlcJjWgkLgqQpTC+F4hfF2FpaXX/Y23U9Yf5RNL4w3Vy8Jyd4m7zS4gJ1a88vXdjoDpFlr+uhZ9WU/dhLqzlrpeh6dgv9XdeF+18BgJDuGhdLrX46oZp49rDVwscU3j6nR7EJLqePBFUGzq+l9lgPYmKC1HLw/pd41PVSzm9MIlm/KIqO9PYdb4Op1OJC0VfspEPIyBfq4jZQ4/l6OxOIXbeESn/Ch6ffajdDc6B/VteTJmOPE9XjsziIZqyDhGfMX8gBuH34TsQf8+mGDaaJAiOJFtMUq8Ms/lm0zPckJJ0OZMI/ANwOmQOsJLRhIdouY0HsKC4SASaO/gWio5QshWzAevf8Q48/x7FLPrhj73oNRVCYEMM9r'/*PDATA*/;
-const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03"];
+const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03", "2026-04"];
 
 function br(v){return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 
@@ -371,7 +371,7 @@ async function tentarLogin(silent){
 function pidsDisp(){
   const prof = Object.keys(DADOS)[0];
   const info = DADOS[prof];
-  return PERIODOS_ORDER.filter(p => info.periodos && info.periodos[p]);
+  return Object.keys(info.periodos || {}).sort();
 }
 
 function inicializar(){

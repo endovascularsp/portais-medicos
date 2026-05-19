@@ -299,7 +299,7 @@ tr:hover td{background:var(--azul-cl);}
 
 <script>
 const DADOS_ENC = /*PDATA*/'nLO6o9CSI8cJT7LAzZ5zc4TnsIzmuKP+z/pnAqGPv1BnSI3mcU0LhIUSA7y2wZDgKC6Fp5hL9rBCyD2qCWA5F9AJC2cO4YmHgQKfSke+J3n80T5i0TuEKE3UO582JinA5dO4QtvgXC69UE0Bl1CLbsbQ/4zkl6qxkfDJb9WYwfY4ge/pCwH5wpDPr5DgtZdgpoZJJPDIf+f5eSXmqgutHPjrru692haGesru2RHzDQPVXmJRlLk1ng+qj/Xuzg3N1skkMqfgix4GNJC/kEaNckH7Ow2LK2GqD0SDV4x3mH7JCGFDfywknsbaYtdR4yvdLNuSQaUkRatxdwOpZ0VoOG9lQSnzTd3Qsg9XRxLu3gUp9qj+YJX7pUrQUcMp2htmSaVH+t533eDNXz1cDOEiZmrSGphytOs1yc5a3EDd+Y6MspdZWdcRcXCWq7gzzprAt4qXe8uIzQD7UDA0OVh2reTClV6divfzQlGSA/Egqhz8yzasrLSJOBY7Pn43Y55kTLr2F5LftmnE492ZELbBkz6mJF5dVItGjQcu2s+sHnqvi/JPSpvbqkPekHuVLhnYML7B0Nj4LrML1ZrCAK48Ulw8QwLim0380wzWS79sNUuxINPB72DoB4ZKAlWQ2V1liFbyGiNSHrvstKckjmGSZaaU3Gi5IQtXXKedMYClF9b4KpIKOoefqoym6PTWkj/dWE+a+OavNepusnbbv8vlmsN3Y2U62GJcgP8h8dH7AzFb9F5+Y9TLXv64I6xdM4ukglUybe05P7l2y4ayt5rRm/VIKObI9shBzDBWDLxOr9j/eurrAhLTx+PV75Zon95mgpr9obdjwMo9VeTcaDF+y8qcTOgmNNmR8Tl3fhGYuZ27UCGHSTpzJGrfSj2EqmGFBlIkIqnYRAbOA0fJXoOq3it3a1sfzHnPNNxsXtRhdEC0+v+1R5K6wfmJknongBdRfA11vCCMw6FbaW+PvnIJUam9x5UJQHvUGKaa2pbKBxFuBR7gIU995DEjekV5ayfmB4NETpQ5E9nR6JPjpK7tQHh+6bEqUnxP9zyBFEagcUD730icW3S5da/1gZTdGku+ESJmV8kr73L1LWNY3fKwHnTjEuarVYvTDEAJXGX3SWzfZgL014bNlMV8BX1njdjJa1FZyYKGkv3x0a0zKaXwtGkja9ML/usLtx9odcWD6y/jvqkX/dL5ngXIRmIKC6Dc5FJTVMk7dFpxzqnhdYPqVROVD6il0jMaLc5lBBHB1JQdpM2INscTInChQcqfGefaDfgl5MPzSa3vxi9f6Y7+qi3PD9iZrpAZ6poqeL8P6Wkym4roG1AVBuKtZZmUTd4clPFbOLRnJeneIrTDd9FyNORXD8jqYmTJ+0ZntsrLkIr/fdVlh3+k7iy/Na2Yi9FLY+oRSa4Kbk6N+7rn'/*PDATA*/;
-const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03"];
+const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03", "2026-04"];
 
 function br(v){return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 
@@ -343,7 +343,7 @@ async function tentarLogin(){
 function pidsDisp(){
   const prof = Object.keys(DADOS)[0];
   const info = DADOS[prof];
-  return PERIODOS_ORDER.filter(p => info.periodos && info.periodos[p]);
+  return Object.keys(info.periodos || {}).sort();
 }
 
 function inicializar(){

@@ -297,7 +297,7 @@ tr:hover td{background:var(--azul-cl);}
 
 <script>
 const DADOS_ENC = /*PDATA*/'UM97G1BlWcIReWpxOI+xbIDV6nU08RaL+NCoCMeH/8IeDsakPsGw4uPXfCzHrLweE62HADX+pkxNbqXFE3nD1CwsaVYt6yKPbvjsUrVW2fc/FHQQ+ckTbzBqrwx3YHPnPCR72usfVniBHBBtPCjYo1D9T0lxB3PxZKdVB0AteKx/lZ/91O6iTfUWCSHNheClUqc+gmYOiUHXo0fP2EQRUU2SfAFklP/sycfc1WPw4R5xiofwhytq+ST6XvxNK4giDSPuTBg00+Rf5wkH0F1LO90hYm/5uHrJlyQVj/9/6V+RY8JFq39vqX3lyMIyxm32EUDA9PcGLNUAZ/ONO19g+gjbpTxoGd/JmL87i2qKVPlLULRbfxvKzBMvQqNdZtY3j5xc7YVbGkExnd3saK2iPEPVUoHRJCZPoDezQjy7I01l9mHY8UBRH/ywHW1zxTkVqtvnpmjiFlk/GpE5Vzs1cnsOJNe56yFSXVo4LT12uhS2srWT3NU0lRc7hlFqNIu0i6eSHHSBcxpf31xNsgGLSMErKzNSIdca19yshCDcPa2y/VZc56QL5gZJVTGMe3EqVUPnkURdCQ/3cWvDu9+E46esU86xxMEkLnL9zr4/KuLcwUQ2caeQMCyWjuu2Z1H0myh2Mumpf8lMofrGjNLa0rf4DEwaYuXwrar6eBN/xm5zgmqCiy+0efyRiQyHM03pM3sXcpNmf3XeeY5ZDUH9LdUqkrYENMlQ5VpftXdw3lY6ix1k+O+eeh/0'/*PDATA*/;
-const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03"];
+const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03", "2026-04"];
 
 function br(v){return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 
@@ -341,7 +341,7 @@ async function tentarLogin(){
 function pidsDisp(){
   const prof = Object.keys(DADOS)[0];
   const info = DADOS[prof];
-  return PERIODOS_ORDER.filter(p => info.periodos && info.periodos[p]);
+  return Object.keys(info.periodos || {}).sort();
 }
 
 function inicializar(){
