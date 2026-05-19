@@ -143,6 +143,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .table-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .table-count{font-size:12px;color:var(--texto2);background:var(--cinza-cl);
   padding:4px 12px;border-radius:20px;border:1px solid var(--borda);font-weight:600;}
+.btn-export{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
+  border-radius:20px;border:1.5px solid #A18960;background:#A18960;color:#0B1F3A;
+  font-size:12px;font-weight:800;cursor:pointer;transition:all .15s;}
+.btn-export:hover{filter:brightness(1.07);}
 .table-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{background:var(--cinza-cl);color:var(--navy);font-weight:800;font-size:11px;
@@ -270,7 +274,10 @@ tr:hover td{background:var(--azul-cl);}
     <div class='table-section'>
       <div class='table-header'>
         <div class='section-title' style='margin:0'>🗓️ Lista de Atendimentos</div>
-        <div class='table-count' id='table-count'></div>
+        <div style='display:flex;align-items:center;gap:10px'>
+          <button class='btn-export' onclick='exportarCSV()'>⬇ Exportar Excel</button>
+          <div class='table-count' id='table-count'></div>
+        </div>
       </div>
       <div class='table-wrap'>
         <table>
@@ -433,6 +440,39 @@ function footMoM(cur, prev, prevLabel){
   if(!(prev>0)) return `<div class="card-foot">sem base no mês anterior</div>`;
   const d=(cur-prev)/prev*100, cls=d>=0?'delta-pos':'delta-neg', ar=d>=0?'▲':'▼';
   return `<div class="card-foot"><span class="${cls}">${ar} ${Math.abs(d).toFixed(1)}%</span> vs ${prevLabel}</div>`;
+}
+
+function exportarCSV(){
+  const pids = filtroAtual.tipo==='mes' ? [filtroAtual.pid] : filtroAtual.pids;
+  const { atendimentos } = agregar(pids);
+  const profKey = Object.keys(DADOS)[0];
+  const info = DADOS[profKey];
+  const prof = info.profissional || profKey;
+  const P = info.periodos || {};
+  const labs = pids.map(p => (P[p] && P[p].label) ? P[p].label : p);
+  const periodo = labs.length > 1 ? (labs[0] + ' a ' + labs[labs.length-1]) : (labs[0] || '');
+  const esc = v => {
+    let s = (v == null ? '' : String(v));
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const linhas = [['Data','Paciente','Procedimentos','Forma de Pagamento','Parcelas','Valor (R$)']];
+  let totalGeral = 0;
+  (atendimentos || []).forEach(a => {
+    const procs = (a.procedimentos || []).map(p => p.nome + (p.qtd > 1 ? ' (' + p.qtd + ')' : '')).join(' | ');
+    const valor = Number(a.valor) || 0; totalGeral += valor;
+    linhas.push([ a.data || '', a.paciente || '', procs, a.pagamento || '',
+                  (a.parcelas || 1), valor.toFixed(2).replace('.', ',') ]);
+  });
+  linhas.push([]);
+  linhas.push(['', '', '', '', 'TOTAL', totalGeral.toFixed(2).replace('.', ',')]);
+  const csv = '﻿' + linhas.map(r => r.map(esc).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const safe = (prof + '_' + periodo).replace(/[^A-Za-z0-9À-ÿ]+/g, '_').replace(/^_+|_+$/g, '');
+  const a = document.createElement('a');
+  a.href = url; a.download = 'Produtividade_' + safe + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function render(){
