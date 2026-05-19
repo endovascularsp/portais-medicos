@@ -312,7 +312,7 @@ let DADOS = null;
 let filtroAtual = {tipo:'mes', pid:null};
 let chartPag = null;
 
-async function tentarLogin(){
+async function tentarLogin(silent){
   const inp = document.getElementById('login-senha');
   const senha = inp.value.trim();
   if(!senha){document.getElementById('login-erro').textContent='Digite a senha.';return;}
@@ -333,6 +333,7 @@ async function tentarLogin(){
     document.getElementById('portal').style.display='block';
     inicializar();
   } catch(e){
+    if(silent){ sessionStorage.removeItem('_xpa'); inp.value=''; document.getElementById('login-erro').textContent=''; document.getElementById('login-senha').focus(); return; }
     document.getElementById('login-erro').textContent='Código incorreto. Verifique e tente novamente.';
     inp.value=''; inp.focus();
   }
@@ -576,7 +577,7 @@ function renderChartPagamento(pag){
   const _cp = sessionStorage.getItem('_xpa');
   if(_cp){
     const inp = document.getElementById('login-senha');
-    if(inp){inp.value=_cp;tentarLogin();}
+    if(inp){inp.value=_cp;tentarLogin(true);}
   } else {
     document.getElementById('login-senha').focus();
   }
