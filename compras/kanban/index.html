@@ -86,10 +86,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   min-height:calc(100vh - 64px - 50px);align-items:flex-start;overflow-x:auto;}
 .col{background:#fff;border:1px solid var(--borda);border-radius:var(--radius);
   display:flex;flex-direction:column;min-height:120px;min-width:0;}
-.col-header{padding:12px 14px;border-bottom:2px solid;display:flex;align-items:center;
+.col-header{padding:10px 12px;border-bottom:2px solid;display:flex;align-items:center;
   justify-content:space-between;gap:6px;}
-.col-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.4px;
-  display:flex;align-items:center;gap:5px;min-width:0;}
+.col-title{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.3px;
+  display:flex;align-items:center;gap:5px;min-width:0;flex:1;line-height:1.2;}
 .col-title .num{display:inline-flex;width:18px;height:18px;background:currentColor;color:#fff;
   border-radius:50%;font-size:10px;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
 .col-title .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -97,9 +97,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   border-radius:10px;font-weight:700;flex-shrink:0;}
 
 /* Cores por etapa do novo fluxo */
-.col.compras_pendentes    .col-header{border-color:#94a3b8;color:#475569;}
+.col.pedido_feito         .col-header{border-color:#94a3b8;color:#475569;}
 .col.aguardando_aprovacao .col-header{border-color:var(--laranja);color:var(--laranja);}
-.col.compra_aprovada      .col-header{border-color:var(--verde);color:var(--verde);}
+.col.compras_pendentes    .col-header{border-color:var(--verde);color:var(--verde);}
 .col.compra_realizada     .col-header{border-color:var(--azul);color:var(--azul);}
 .col.inclusao_conta_azul  .col-header{border-color:var(--roxo);color:var(--roxo);}
 .col.recebimento          .col-header{border-color:#0891b2;color:#0891b2;}
@@ -214,11 +214,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <label>Status:</label>
   <select id="filtro-status" onchange="aplicarFiltros()">
     <option value="">Todos</option>
-    <option value="compras_pendentes">① Compras Pendentes</option>
+    <option value="pedido_feito">① Pedido Feito</option>
     <option value="aguardando_aprovacao">② Aguardando Aprovação</option>
-    <option value="compra_aprovada">③ Compra Aprovada</option>
+    <option value="compras_pendentes">③ Compras Pendentes</option>
     <option value="compra_realizada">④ Compra Realizada</option>
-    <option value="inclusao_conta_azul">⑤ Inclusão Conta Azul</option>
+    <option value="inclusao_conta_azul">⑤ Conta Azul</option>
     <option value="recebimento">⑥ Recebimento</option>
     <option value="concluida">⑦ Concluída</option>
     <option value="recusada">❌ Recusada</option>
@@ -227,37 +227,30 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <select id="filtro-centro" onchange="aplicarFiltros()">
     <option value="">Todos</option>
   </select>
-  <label>Urgência:</label>
-  <select id="filtro-urg" onchange="aplicarFiltros()">
-    <option value="">Todas</option>
-    <option value="alta">🔥 Alta</option>
-    <option value="media">⏱️ Média</option>
-    <option value="baixa">😌 Baixa</option>
-  </select>
   <label>Busca:</label>
   <input type="text" id="filtro-busca" placeholder="número ou justificativa" oninput="aplicarFiltros()"/>
   <div class="stats" id="stats">—</div>
 </div>
 
 <div class="kanban">
-  <div class="col compras_pendentes">
-    <div class="col-header"><div class="col-title"><span class="num">1</span><span class="lbl">Compras Pendentes</span></div><div class="col-count" id="c-1">0</div></div>
-    <div class="col-body" id="col-compras_pendentes"></div>
+  <div class="col pedido_feito">
+    <div class="col-header"><div class="col-title"><span class="num">1</span><span class="lbl">Pedido Feito</span></div><div class="col-count" id="c-1">0</div></div>
+    <div class="col-body" id="col-pedido_feito"></div>
   </div>
   <div class="col aguardando_aprovacao">
     <div class="col-header"><div class="col-title"><span class="num">2</span><span class="lbl">Aguardando Aprovação</span></div><div class="col-count" id="c-2">0</div></div>
     <div class="col-body" id="col-aguardando_aprovacao"></div>
   </div>
-  <div class="col compra_aprovada">
-    <div class="col-header"><div class="col-title"><span class="num">3</span><span class="lbl">Compra Aprovada</span></div><div class="col-count" id="c-3">0</div></div>
-    <div class="col-body" id="col-compra_aprovada"></div>
+  <div class="col compras_pendentes">
+    <div class="col-header"><div class="col-title"><span class="num">3</span><span class="lbl">Compras Pendentes</span></div><div class="col-count" id="c-3">0</div></div>
+    <div class="col-body" id="col-compras_pendentes"></div>
   </div>
   <div class="col compra_realizada">
     <div class="col-header"><div class="col-title"><span class="num">4</span><span class="lbl">Compra Realizada</span></div><div class="col-count" id="c-4">0</div></div>
     <div class="col-body" id="col-compra_realizada"></div>
   </div>
   <div class="col inclusao_conta_azul">
-    <div class="col-header"><div class="col-title"><span class="num">5</span><span class="lbl">Inclusão Conta Azul</span></div><div class="col-count" id="c-5">0</div></div>
+    <div class="col-header"><div class="col-title"><span class="num">5</span><span class="lbl">Conta Azul</span></div><div class="col-count" id="c-5">0</div></div>
     <div class="col-body" id="col-inclusao_conta_azul"></div>
   </div>
   <div class="col recebimento">
@@ -359,19 +352,17 @@ function aplicarFiltros() {
 function renderKanban() {
   const fs = document.getElementById('filtro-status').value;
   const fc = document.getElementById('filtro-centro').value;
-  const fu = document.getElementById('filtro-urg').value;
   const fb = (document.getElementById('filtro-busca').value || '').toLowerCase().trim();
 
   const filtrados = TODAS.filter(s => {
     if (fs && s.status !== fs) return false;
     if (fc && String(s.centro_custo_id) !== fc) return false;
-    if (fu && s.urgencia !== fu) return false;
     if (fb && !((s.numero || '') + ' ' + (s.justificativa || '')).toLowerCase().includes(fb)) return false;
     return true;
   });
 
   const cols = {
-    compras_pendentes:[], aguardando_aprovacao:[], compra_aprovada:[],
+    pedido_feito:[], aguardando_aprovacao:[], compras_pendentes:[],
     compra_realizada:[], inclusao_conta_azul:[], recebimento:[], concluida:[]
   };
   for (const s of filtrados) {
@@ -387,9 +378,9 @@ function renderKanban() {
       el.innerHTML = lista.map(s => cardHtml(s)).join('');
     }
   }
-  document.getElementById('c-1').textContent = cols.compras_pendentes.length;
+  document.getElementById('c-1').textContent = cols.pedido_feito.length;
   document.getElementById('c-2').textContent = cols.aguardando_aprovacao.length;
-  document.getElementById('c-3').textContent = cols.compra_aprovada.length;
+  document.getElementById('c-3').textContent = cols.compras_pendentes.length;
   document.getElementById('c-4').textContent = cols.compra_realizada.length;
   document.getElementById('c-5').textContent = cols.inclusao_conta_azul.length;
   document.getElementById('c-6').textContent = cols.recebimento.length;
@@ -537,19 +528,19 @@ function renderAcoes(status) {
 
   let html = '<button class="btn outline" onclick="fecharModal()">Fechar</button>';
 
-  // Etapa 1 — Compradora tria: encaminha pra aprovação ou aprova direto
-  if (status === 'compras_pendentes' && ehCompradora) {
+  // Etapa 1 (Pedido Feito) — Compradora tria: encaminha pra aprovação ou aprova direto
+  if (status === 'pedido_feito' && ehCompradora) {
     html += '<button class="btn recusar" onclick="acaoRecusar()">❌ Recusar</button>';
     html += '<button class="btn outline" onclick="acaoEncaminharAprovacao()">↗️ Encaminhar pra Aprovação</button>';
     html += '<button class="btn aprovar" onclick="acaoAprovarDireto()">✅ Aprovar direto</button>';
   }
-  // Etapa 2 — Head Op (aprovador) decide
+  // Etapa 2 (Aguardando Aprovação) — Head Op decide
   else if (status === 'aguardando_aprovacao' && ehAprovador) {
     html += '<button class="btn recusar" onclick="acaoRecusar()">❌ Recusar</button>';
     html += '<button class="btn aprovar" onclick="acaoAprovar()">✅ Aprovar</button>';
   }
-  // Etapa 3 — Compradora vai executar e marcar como Comprada (com valor final + método)
-  else if (status === 'compra_aprovada' && ehCompradora) {
+  // Etapa 3 (Compras Pendentes — aprovadas, aguardando compra) — Compradora marca como Comprada
+  else if (status === 'compras_pendentes' && ehCompradora) {
     html += '<button class="btn cotar" onclick="acaoMarcarComprada()">💼 Marcar como Comprada</button>';
   }
   // Etapa 4 — Financeiro lança no Conta Azul
@@ -584,7 +575,7 @@ async function acaoAprovarDireto() {
   if (!confirm('Aprovar direto SEM passar pela aprovação do Head de Operações?')) return;
   const coment = prompt('Comentário (opcional):') || null;
   await transicionar({
-    status: 'compra_aprovada',
+    status: 'compras_pendentes',
     aprovado_em: new Date().toISOString(),
     aprovador_email: USER_EMAIL
   }, 'aprovada (sem revisão Head Op)', coment);
@@ -594,7 +585,7 @@ async function acaoAprovarDireto() {
 async function acaoAprovar() {
   const coment = prompt('Comentário (opcional):') || null;
   await transicionar({
-    status: 'compra_aprovada',
+    status: 'compras_pendentes',
     aprovado_em: new Date().toISOString(),
     aprovador_email: USER_EMAIL
   }, 'aprovada', coment);

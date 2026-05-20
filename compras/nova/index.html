@@ -517,7 +517,7 @@ async function enviar() {
       urgencia,
       data_limite,
       observacoes,
-      status: 'compras_pendentes',
+      status: 'pedido_feito',
       aprovador_email
     }).select().single();
     if (e1) throw new Error('Solicitação: ' + e1.message);
