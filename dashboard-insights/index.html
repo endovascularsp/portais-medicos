@@ -5,6 +5,40 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Dashboard de Insights — Endovascular SP</title>
+  <style>html{visibility:hidden}</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Gate de permissão: cards 'gestor' OU 'gestor_insights' entram.
+    (async function() {
+      const _isLocalPreview = location.protocol === 'file:'
+        || location.hostname === 'localhost'
+        || location.hostname === '127.0.0.1';
+      if (_isLocalPreview) {
+        console.log('[dashboard-insights] preview local — gate Supabase ignorado');
+        document.documentElement.style.visibility = 'visible';
+        return;
+      }
+      try {
+        const sb = window.supabase.createClient(
+          'https://egpcrqrvctnpxbdjdhtf.supabase.co',
+          'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW'
+        );
+        const { data: { user } } = await sb.auth.getUser();
+        if (!user) { window.location.replace('/login/'); return; }
+        const { data: me } = await sb.from('users')
+          .select('cards')
+          .eq('email', (user.email || '').toLowerCase())
+          .maybeSingle();
+        const cards = (me && me.cards) || [];
+        const podeVer = cards.includes('gestor') || cards.includes('gestor_insights');
+        if (!podeVer) { window.location.replace('/hub/Gestor_Hub.html'); return; }
+        document.documentElement.style.visibility = 'visible';
+      } catch (e) {
+        console.error('gate erro:', e);
+        window.location.replace('/login/');
+      }
+    })();
+  </script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff}
@@ -30,7 +64,7 @@
     .login-btn:hover{opacity:.88}
     .login-erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
 
-    #main{display:none;min-height:100vh;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%)}
+    #main{display:block;min-height:100vh;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%)}
 
     header{background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
 .header-marca-area{display:flex;align-items:center;gap:16px;}
@@ -112,20 +146,6 @@ html,body{overflow-x:hidden;max-width:100%;}
 </head>
 <body>
 
-<div id="login-overlay">
-  <div class="login-box">
-    <div class="login-logo">💡</div>
-    <div class="login-title">Dashboard de Insights</div>
-    <div class="login-sub">Endovascular SP</div>
-    <div class="login-badge">Admin</div>
-    <input id="login-senha" class="login-input" type="password"
-           placeholder="Senha de gestão"
-           onkeydown="if(event.key==='Enter') tentarLogin()"/>
-    <button class="login-btn" onclick="tentarLogin()">Acessar →</button>
-    <div class="login-erro" id="login-erro"></div>
-  </div>
-</div>
-
 <div id="main">
   <header>
   <link rel="icon" href="../assets/logo.png" type="image/png" />
@@ -186,7 +206,7 @@ const SK   = 'gestor_hub_auth';
 
 // Fontes de dados (PDATA plaintext)
 const FONTES = [
-  { url: '../index.html',           empresa: 'Endovascular SP' },
+  { url: '../recebimento.html',     empresa: 'Endovascular SP' },
   { url: '../oxy/index.html',       empresa: 'Oxy Recovery'    },
   { url: '../cirurgias/index.html', empresa: 'Cirurgias'       }
 ];
@@ -195,16 +215,14 @@ let _DADOS = null; // estrutura: { 'periodo-id': { label, atendimentosPorEmpresa
 let _EMPRESA_ATIVA = 'Todas';
 let _PERIODO_ATIVO = null;
 
+// tentarLogin neutralizada em 2026-05-20 — migrado pra gate Supabase no <head>.
 async function tentarLogin() {
-  const senha = document.getElementById('login-senha').value.trim();
-  if (!senha) return;
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(senha));
-  const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  if (hex === HASH) {
+  // No-op: o gate Supabase já validou no head.
+  inicializar();
+  return;
+  // Código antigo abaixo, mantido como referência (nunca executa):
+  if (false) {
     sessionStorage.setItem(SK, '1');
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    inicializar();
   } else {
     const el = document.getElementById('login-erro');
     el.textContent = 'Senha incorreta.';
@@ -383,27 +401,9 @@ async function inicializar() {
   renderizar();
 }
 
-window.addEventListener('load', async () => {
-  if (sessionStorage.getItem(SK) === '1') {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    inicializar();
-    return;
-  }
-  // Auto-login a partir do _xpa (vindo do login Google)
-  const _cp = sessionStorage.getItem('_xpa');
-  if (_cp) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(_cp));
-    const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-    if (hex === HASH) {
-      sessionStorage.setItem(SK, '1');
-      document.getElementById('login-overlay').style.display = 'none';
-      document.getElementById('main').style.display = 'block';
-      inicializar();
-      return;
-    }
-  }
-  document.getElementById('login-senha').focus();
+// Boot direto — gate Supabase no <head> já validou a permissão antes do conteúdo aparecer.
+window.addEventListener('load', () => {
+  inicializar();
 });
 </script>
 </body>
