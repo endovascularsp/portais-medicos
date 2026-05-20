@@ -1,14 +1,23 @@
-"""Fix mobile v4 — completa v3 com 2 problemas adicionais reportados pelo Thiago:
+"""Fix mobile v5 — REVERTE agressividade do v4 e padroniza.
 
-- Recebimento: botão Home sobrepondo título 'Endovascular' no header
-- Produtividade: cards extrapolando à direita
+Lições do v4:
+- Encolher logo/h1/p afetou o Hub que estava OK com fontes maiores
+- Esconder span quebrou hierarquia visual
 
-Soluções:
-- Header em mobile: altura auto, esconde subtítulo, h1 menor com ellipsis,
-  logo menor, botões action mais compactos. Mantém em 1 linha com flex 1:auto:auto
-- Cards (kpi/metric/chart/card-box): max-width:100% + overflow:hidden + box-sizing,
-  grid em 2 colunas fixas (em vez de auto-fit que pode vazar), KPI label/valor com
-  word-break pra acomodar valores grandes
+v5 reverte:
+- NÃO encolhe logo (mantém 44x44)
+- NÃO esconde subtítulo (span/p ficam visíveis)
+- NÃO reduz font do h1/p
+
+E padroniza Recebimento ↔ Produtividade:
+- Header em mobile: flex-wrap:wrap + header-actions{flex:0 0 100%} → ações
+  quebram pra linha de baixo quando não couberem na mesma linha do logo
+- Resolve "Home sobrepondo Endovascular" do Recebimento (não tem mais sobreposição
+  porque action-bar vai pra próxima linha)
+- Produtividade já se comporta bem porque tem só 2 botões; com a regra, ainda
+  mais consistente
+
+Demais regras (cards, range-filter, periodo-bloco, tabelas) preservadas do v4.
 """
 import os, glob, re, sys
 
@@ -28,37 +37,36 @@ SENTINEL_V1 = '/* fix-mobile-overflow */'
 SENTINEL_V2 = '/* fix-mobile-overflow-v2 */'
 SENTINEL_V3 = '/* fix-mobile-overflow-v3 */'
 SENTINEL_V4 = '/* fix-mobile-overflow-v4 */'
+SENTINEL_V5 = '/* fix-mobile-overflow-v5 */'
 
-REGRA_V4 = (
-    f'\n{SENTINEL_V4}\n'
+REGRA_V5 = (
+    f'\n{SENTINEL_V5}\n'
     'html,body{overflow-x:hidden!important;max-width:100vw;}\n'
     '@media(max-width:600px){\n'
-    '  /* === Header === */\n'
-    '  .header{\n'
-    '    height:auto!important;min-height:56px!important;\n'
-    '    padding:8px 14px!important;\n'
-    '    flex-wrap:nowrap!important;gap:8px!important;\n'
-    '    box-sizing:border-box;\n'
+    '  body{padding:0!important;margin:0!important;}\n'
+    '  /* === Header: PERMITE quebrar em linhas, ações na linha de baixo === */\n'
+    '  .header,header{\n'
+    '    flex-wrap:wrap!important;height:auto!important;min-height:0!important;\n'
+    '    padding-left:14px!important;padding-right:14px!important;\n'
+    '    gap:8px!important;\n'
     '  }\n'
-    '  .header-logo{flex:1 1 auto!important;min-width:0!important;overflow:hidden;gap:8px!important;}\n'
-    '  .header-logo img,.header-logo .logo-svg{width:32px!important;height:32px!important;}\n'
-    '  .header-logo h1{font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}\n'
-    '  .header-logo span{display:none!important;}\n'
-    '  .header-info h1{font-size:13px!important;}\n'
-    '  .header-info p{font-size:10px!important;}\n'
-    '  .header-actions{flex:0 0 auto!important;gap:4px!important;}\n'
-    '  .header-action-btn{padding:5px 8px!important;font-size:10px!important;gap:3px!important;}\n'
-    '  .header-action-btn .icon-text,.header-badge{display:none;}\n'
-    '  /* === Containers/widths === */\n'
+    '  .header-logo{flex:1 1 auto!important;min-width:0;}\n'
+    '  .header-actions{\n'
+    '    flex:0 0 100%!important;justify-content:flex-end!important;\n'
+    '    gap:6px!important;margin-top:4px;\n'
+    '  }\n'
+    '  .header-action-btn{padding:5px 10px!important;font-size:11px!important;}\n'
+    '  .header-badge{margin-left:auto!important;}\n'
+    '  /* === Login boxes === */\n'
     '  .login-card,.login-box,.senha-box,.login-input-wrap{\n'
     '    width:auto!important;max-width:calc(100vw - 24px)!important;\n'
     '  }\n'
-    '  body{padding:0!important;margin:0!important;}\n'
+    '  /* === Padding lateral em barras === */\n'
     '  .admin-nav,.portais-nav,.admin-portais-nav,.main,.hub-body{\n'
     '    padding-left:14px!important;padding-right:14px!important;\n'
     '    box-sizing:border-box;\n'
     '  }\n'
-    '  /* === Periodo-bloco === */\n'
+    '  /* === Periodo-bloco em coluna === */\n'
     '  .periodo-bloco{flex-direction:column!important;align-items:stretch!important;gap:10px!important;\n'
     '    box-sizing:border-box;max-width:100%;}\n'
     '  .periodo-bloco .f-grp{flex-wrap:wrap!important;width:100%;}\n'
@@ -76,16 +84,14 @@ REGRA_V4 = (
     '  }\n'
     '  .portais-nav::-webkit-scrollbar,.admin-nav::-webkit-scrollbar,.admin-portais-nav::-webkit-scrollbar{display:none;}\n'
     '  .portais-nav-btn,.admin-nav-btn,.admin-portais-nav-btn{flex-shrink:0!important;}\n'
-    '  /* === Cards: travam largura e quebram conteudo === */\n'
-    '  .kpi,.metric-card,.card,.card-box,.chart-card,.full-col,.insight-card{\n'
+    '  /* === Cards: max-width 100% + 2 colunas === */\n'
+    '  .kpi,.metric-card,.card,.card-box,.chart-card,.full-col,.insight-card,.hub-card{\n'
     '    max-width:100%!important;\n'
-    '    overflow:hidden!important;\n'
     '    box-sizing:border-box!important;\n'
     '  }\n'
     '  .kpi-row,.cards,.metrics-grid,.two-col,.three-col,.grid-2,.grid-main,.insights-grid{\n'
     '    grid-template-columns:repeat(2,minmax(0,1fr))!important;\n'
-    '    gap:8px!important;\n'
-    '    width:100%;max-width:100%;\n'
+    '    gap:8px!important;width:100%;max-width:100%;\n'
     '  }\n'
     '  .kpi{padding:14px 14px 14px 12px!important;}\n'
     '  .kpi-ic{top:10px!important;right:10px!important;width:26px!important;height:26px!important;font-size:12px!important;}\n'
@@ -93,42 +99,46 @@ REGRA_V4 = (
     '  .kpi-val{font-size:16px!important;word-break:break-word;line-height:1.2;}\n'
     '  .kpi-foot{font-size:10px!important;}\n'
     '  .metric-valor{font-size:18px!important;word-break:break-word;}\n'
+    '  /* Hub: cards em 1 coluna em mobile (eram 3 em desktop) */\n'
+    '  .hub-cards{grid-template-columns:1fr!important;gap:14px!important;}\n'
     '  /* Chart wrappers */\n'
     '  .chart-wrap{max-width:100%!important;overflow:hidden;}\n'
     '  canvas{max-width:100%!important;}\n'
     '  /* === Tabelas: container scrollavel === */\n'
     '  .table-scroll,.table-wrap,#bottom-detail{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%;}\n'
-    '  /* === Chips (Produtividade) === */\n'
+    '  /* === Chips Produtividade === */\n'
     '  .destaques{flex-wrap:wrap!important;gap:6px!important;max-width:100%;}\n'
     '  .chip{font-size:10px!important;padding:5px 7px!important;}\n'
-    '  /* === Imagens === */\n'
     '  img{max-width:100%!important;height:auto;}\n'
-    '  /* === Em telas MUITO estreitas (<360px): 1 KPI por linha === */\n'
     '}\n'
-    '@media(max-width:360px){\n'
+    '@media(max-width:380px){\n'
     '  .kpi-row,.cards,.metrics-grid,.two-col,.three-col,.grid-2,.grid-main,.insights-grid{\n'
     '    grid-template-columns:1fr!important;\n'
     '  }\n'
-    '  .header-action-btn span{display:none;}\n'
     '}\n'
 )
 
 def aplicar(arq):
     with open(arq, 'r', encoding='utf-8') as f:
         html = f.read()
-    if SENTINEL_V4 in html:
-        return 'JA_V4', html
-    # Remove sentinels antigos
-    for sentinel in (SENTINEL_V3, SENTINEL_V2, SENTINEL_V1):
+    if SENTINEL_V5 in html:
+        return 'JA_V5', html
+    # Remove sentinels antigos (v1, v2, v3, v4) e seus blocos
+    for sentinel in (SENTINEL_V4, SENTINEL_V3, SENTINEL_V2, SENTINEL_V1):
         if sentinel in html:
-            pat = re.compile(re.escape(sentinel) + r'.*?\n}\n(?:@media[^{]*\{[^}]*\}\n)?', re.DOTALL)
+            # Pega tudo do sentinel até o último '}' do bloco @media seguinte
+            # Padrão: sentinel + linha vazia ou conteudo + um ou mais @media{...}
+            pat = re.compile(
+                re.escape(sentinel) + r'.*?\n}\n(?:@media[^{]*\{[^}]*\}\n)*',
+                re.DOTALL
+            )
             html = pat.sub('', html, count=1)
-    # Insere v4 logo após o primeiro <style>
+    # Insere v5 logo após o primeiro <style>
     m = re.search(r'<style[^>]*>', html)
     if not m:
         return 'SEM_STYLE', html
     pos = m.end()
-    novo = html[:pos] + REGRA_V4 + html[pos:]
+    novo = html[:pos] + REGRA_V5 + html[pos:]
     if 'name="viewport"' not in novo and "name='viewport'" not in novo:
         novo = novo.replace('<head>', '<head>\n  <meta name="viewport" content="width=device-width,initial-scale=1.0">', 1)
     if not DRY:
@@ -137,10 +147,10 @@ def aplicar(arq):
     return 'OK', novo
 
 htmls = listar_htmls()
-print(f"Aplicando fix mobile v4 em {len(htmls)} arquivos. Modo: {'DRY-RUN' if DRY else 'APLICANDO'}")
+print(f"Aplicando fix mobile v5 em {len(htmls)} arquivos. Modo: {'DRY-RUN' if DRY else 'APLICANDO'}")
 print('=' * 80)
 
-stats = {'OK': 0, 'JA_V4': 0, 'SEM_STYLE': 0}
+stats = {'OK': 0, 'JA_V5': 0, 'SEM_STYLE': 0}
 for arq in htmls:
     try:
         status, _ = aplicar(arq)
@@ -149,4 +159,4 @@ for arq in htmls:
         continue
     stats[status] = stats.get(status, 0) + 1
 
-print(f'\nTotal: OK={stats["OK"]}  ja-v4={stats["JA_V4"]}  sem-style={stats["SEM_STYLE"]}')
+print(f'\nTotal: OK={stats["OK"]}  ja-v5={stats["JA_V5"]}  sem-style={stats["SEM_STYLE"]}')
