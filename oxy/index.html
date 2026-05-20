@@ -234,6 +234,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--navy);color:#f
 .tab-novo:hover:not(.active){border-color:var(--navy-med);color:var(--navy-med);}
 .tabs-flex{display:flex;gap:6px;flex-wrap:wrap;}
 .range-sep{width:1px;height:30px;background:var(--borda);}
+.range-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.range-filter select{padding:4px 8px;border-radius:8px;border:1.5px solid var(--borda);
+  background:#fff;font-size:12px;color:var(--texto-primario);font-weight:600;cursor:pointer;
+  font-family:inherit;outline:none;transition:border 0.15s;}
+.range-filter select:focus{border-color:var(--navy-med);}
+.range-ate{font-size:12px;color:var(--texto2);}
+.range-btn{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;
+  cursor:pointer;border:1.5px solid;transition:all 0.15s;font-family:inherit;}
+.range-btn.apply{background:var(--navy-med);color:#fff;border-color:var(--navy-med);}
+.range-btn.apply:hover{background:var(--navy);border-color:var(--navy);}
+.range-btn.clear{background:#fff;color:var(--texto2);border-color:var(--borda);}
+.range-btn.clear:hover{background:var(--cinza-cl);}
 .prof-select{padding:6px 12px;border:1.5px solid var(--borda);border-radius:20px;
   font-size:12px;font-weight:600;color:var(--navy);background:#fff;cursor:pointer;
   max-width:220px;font-family:inherit;outline:none;transition:border 0.15s;}
@@ -323,6 +335,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--navy);color:#f
       <div class='f-grp'>
         <span class='periodo-label-novo'>Mês:</span>
         <div id='periodo-tabs' class='tabs-flex'></div>
+      </div>
+      <div class='range-sep'></div>
+      <div class='f-grp'>
+        <span class='periodo-label-novo'>Intervalo:</span>
+        <div class='range-filter'>
+          <select id='range-de'></select>
+          <span class='range-ate'>até</span>
+          <select id='range-ate'></select>
+          <button class='range-btn apply' onclick='aplicarRange()'>Aplicar</button>
+          <button class='range-btn clear' onclick='limparRange()'>Limpar</button>
+        </div>
       </div>
       <div class='range-sep'></div>
       <div class='f-grp'>
@@ -884,6 +907,7 @@ function mudarPeriodo(id, updateTabs){
 // Fixo em Oxy Recovery — este arquivo é o admin Oxy. Navegação cruzada vai pelo admin-nav.
 let FILTRO_EMPRESA = 'Oxy Recovery';
 let _DADOS_PROFS_PERIODO = {};
+let RANGE_ATIVO = null; // {de, ate} ou null
 
 function inicializarPortalPermanente(){
   const periodos = Object.keys(TODOS_PERIODOS).sort();
@@ -900,11 +924,104 @@ function inicializarPortalPermanente(){
     }).join('');
   }
 
+  // Popular range-de / range-ate
+  const opts = periodos.map(pid => '<option value="'+pid+'">'+TODOS_PERIODOS[pid].label+'</option>').join('');
+  const rde = document.getElementById('range-de');
+  const rate = document.getElementById('range-ate');
+  if(rde) { rde.innerHTML = opts; rde.value = periodos[0]; }
+  if(rate){ rate.innerHTML = opts; rate.value = periodos[periodos.length-1]; }
+
   mudarPeriodo(PERIODO_ATUAL, false);
+}
+
+function aplicarRange(){
+  const de = document.getElementById('range-de').value;
+  const ate = document.getElementById('range-ate').value;
+  if(!de || !ate) return;
+  if(de > ate){ alert('O mês "de" deve ser anterior ou igual ao mês "até".'); return; }
+  RANGE_ATIVO = {de, ate};
+  PERIODO_ATUAL = ate;
+  document.querySelectorAll('#periodo-tabs .tab-novo').forEach(t => t.classList.remove('active'));
+  _renderRangeGeral();
+}
+
+function limparRange(){
+  RANGE_ATIVO = null;
+  const periodos = Object.keys(TODOS_PERIODOS).sort();
+  const rde = document.getElementById('range-de');
+  const rate = document.getElementById('range-ate');
+  if(rde)  rde.value = periodos[0];
+  if(rate) rate.value = periodos[periodos.length-1];
+  mudarPeriodo(PERIODO_ATUAL, true);
+}
+
+// Agrega TODOS os profissionais (FILTRO_EMPRESA) no range. Resultado em DADOS_PROFS.
+function _renderRangeGeral(){
+  if(!RANGE_ATIVO) return;
+  const periodos = Object.keys(TODOS_PERIODOS).sort()
+    .filter(pid => pid >= RANGE_ATIVO.de && pid <= RANGE_ATIVO.ate);
+  if(!periodos.length) return;
+
+  const agg = {};
+  for(const pid of periodos){
+    const profs = (TODOS_PERIODOS[pid]||{}).profs || {};
+    Object.entries(profs).forEach(([slug, p]) => {
+      if((p.empresa || 'Endovascular SP') !== FILTRO_EMPRESA) return;
+      if(!agg[slug]){
+        agg[slug] = {
+          profissional: p.profissional, empresa: p.empresa, mes:'', ano:'', periodo_id:'',
+          resumo:{}, por_categoria:[], por_pagamento:[], por_tabela:[], atendimentos:[],
+          _cat:{}, _pag:{}, _tab:{}
+        };
+      }
+      const a = agg[slug];
+      Object.entries(p.resumo||{}).forEach(([k,v])=>{
+        if(typeof v === 'number') a.resumo[k] = (a.resumo[k]||0) + v;
+        else if(!a.resumo[k]) a.resumo[k] = v;
+      });
+      (p.por_categoria||[]).forEach(c => {
+        const key = c.Categoria || '—';
+        a._cat[key] = a._cat[key] || {Categoria: key, 'Valor recebido': 0};
+        a._cat[key]['Valor recebido'] += (c['Valor recebido']||0);
+      });
+      (p.por_pagamento||[]).forEach(c => {
+        const key = c['Tipo de pagamento'] || 'Outros';
+        a._pag[key] = a._pag[key] || {'Tipo de pagamento': key, 'Valor recebido': 0};
+        a._pag[key]['Valor recebido'] += (c['Valor recebido']||0);
+      });
+      (p.por_tabela||[]).forEach(c => {
+        const key = c.Tabela || '—';
+        a._tab[key] = a._tab[key] || {Tabela: key, Origem: c.Origem, 'Valor recebido': 0};
+        a._tab[key]['Valor recebido'] += (c['Valor recebido']||0);
+      });
+      (p.atendimentos||[]).forEach(at => a.atendimentos.push(at));
+    });
+  }
+  Object.values(agg).forEach(a => {
+    a.por_categoria = Object.values(a._cat);
+    a.por_pagamento = Object.values(a._pag);
+    a.por_tabela    = Object.values(a._tab);
+    delete a._cat; delete a._pag; delete a._tab;
+  });
+
+  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
+  Object.assign(DADOS_PROFS, agg);
+
+  const lDe  = (TODOS_PERIODOS[periodos[0]]||{}).label || periodos[0];
+  const lAte = (TODOS_PERIODOS[periodos[periodos.length-1]]||{}).label || periodos[periodos.length-1];
+  PERIODO_LABEL = (periodos.length === 1) ? lDe : (lDe + ' → ' + lAte);
+  const hp = document.getElementById('header-periodo'); if(hp) hp.textContent = PERIODO_LABEL;
+
+  Object.keys(CHARTS).forEach(k => { if(CHARTS[k]){ CHARTS[k].destroy(); delete CHARTS[k]; }});
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const gv = document.getElementById('view-geral'); if(gv) gv.classList.add('active');
+  _atualizarSelectProfs();
+  renderGeral();
 }
 
 function mudarPeriodo(id, updateTabs){
   PERIODO_ATUAL = id;
+  RANGE_ATIVO = null; // clique em tab cancela range
   const pdata = TODOS_PERIODOS[id];
   if(!pdata) return;
 
