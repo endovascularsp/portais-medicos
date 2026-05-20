@@ -228,7 +228,8 @@ Para injetar no `index.html`, substituir o bloco entre `/*PDATA*/` e o `;` segui
 4. Injetar PDATA nos portais individuais de cada profissional
 5. Injetar PDATA nos portais Oxy Recovery e Cirurgias
 6. Atualizar planilha `Acessos_Portal_Honorarios_2026.xlsx` se houver novos profissionais
-7. `git add -A && git commit -m "Fechamento Mês/2026" && git push`
+7. **Rodar `python _cache_bust_hubs.py`** — atualiza `?v=YYYYMMDD` em todos os links dos 20 Hubs (sem esse passo, médicos com sessão cacheada veem PDATA antigo sem o mês novo)
+8. `git add -A && git commit -m "Fechamento Mês/2026" && git push`
 
 ---
 
