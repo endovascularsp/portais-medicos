@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Compras · Endovascular SP</title>
+  <link rel="icon" href="../assets/logo.png" type="image/png"/>
+  <style>html{visibility:hidden}</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Gate de permissão: qualquer card de compras_* permite acesso ao splash
+    (async function() {
+      const _isLocalPreview = location.protocol === 'file:'
+        || location.hostname === 'localhost'
+        || location.hostname === '127.0.0.1';
+      if (_isLocalPreview) {
+        console.log('[compras] preview local — gate Supabase ignorado');
+        document.documentElement.style.visibility = 'visible';
+        return;
+      }
+      try {
+        const sb = window.supabase.createClient(
+          'https://egpcrqrvctnpxbdjdhtf.supabase.co',
+          'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW'
+        );
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { window.location.replace('/login/'); return; }
+        const email = (session.user.email || '').toLowerCase();
+        const _cacheKey = '_cards_' + email;
+        const _cacheT   = '_cards_t_' + email;
+        let cards = null;
+        try {
+          const stored = sessionStorage.getItem(_cacheKey);
+          const storedT = parseInt(sessionStorage.getItem(_cacheT) || '0', 10);
+          if (stored && (Date.now() - storedT) < 30 * 60 * 1000) {
+            cards = JSON.parse(stored);
+          }
+        } catch (e) {}
+        if (!cards) {
+          const { data: me } = await sb.from('users')
+            .select('cards')
+            .eq('email', email)
+            .maybeSingle();
+          cards = (me && me.cards) || [];
+          try {
+            sessionStorage.setItem(_cacheKey, JSON.stringify(cards));
+            sessionStorage.setItem(_cacheT, String(Date.now()));
+          } catch (e) {}
+        }
+        const podeVer = cards.some(c => c.startsWith('compras_')) || cards.includes('gestor');
+        if (!podeVer) { window.location.replace('/hub/Gestor_Hub.html'); return; }
+        document.documentElement.style.visibility = 'visible';
+      } catch (e) {
+        console.error('gate erro:', e);
+        window.location.replace('/login/');
+      }
+    })();
+  </script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{overflow-x:hidden;max-width:100vw;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#0B1F3A;color:#fff;min-height:100vh;
+         display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+    .splash{max-width:520px;text-align:center;}
+    .icon{font-size:64px;margin-bottom:18px;}
+    h1{font-size:28px;font-weight:800;margin-bottom:10px;}
+    .sub{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:24px;}
+    .badge{display:inline-block;background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.45);
+           color:#f5c842;font-size:11px;font-weight:700;letter-spacing:1px;padding:5px 14px;
+           border-radius:20px;text-transform:uppercase;margin-bottom:24px;}
+    .roadmap{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+             border-radius:14px;padding:22px 24px;text-align:left;margin-bottom:24px;}
+    .roadmap h3{font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);
+                letter-spacing:0.6px;text-transform:uppercase;margin-bottom:12px;}
+    .roadmap ul{list-style:none;padding:0;}
+    .roadmap li{padding:6px 0;font-size:14px;color:rgba(255,255,255,0.75);display:flex;align-items:center;gap:8px;}
+    .roadmap li.done{color:rgba(125,217,146,0.85);}
+    .roadmap li.next{color:#7eb8f7;}
+    .voltar{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:24px;
+            background:rgba(148,163,184,0.15);border:1.5px solid rgba(148,163,184,0.40);
+            color:#cbd5e1;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.15s;}
+    .voltar:hover{background:rgba(148,163,184,0.28);}
+  </style>
+</head>
+<body>
+  <div class="splash">
+    <div class="icon">🛒</div>
+    <h1>Portal de Compras</h1>
+    <div class="sub">Endovascular SP — Solicitações, aprovação e fluxo de compras</div>
+    <div class="badge">Em construção</div>
+    <div class="roadmap">
+      <h3>Roadmap</h3>
+      <ul>
+        <li class="done">✅ Levantamento de requisitos</li>
+        <li class="done">✅ Schema do banco definido (7 tabelas)</li>
+        <li class="next">⏳ Criação das tabelas no Supabase</li>
+        <li>📋 Cadastro dos 4 novos cards de permissão</li>
+        <li>📝 Tela de Nova Solicitação</li>
+        <li>📊 Kanban (4 colunas) pra Compradora e Financeiro</li>
+        <li>✉️ Notificações por email</li>
+      </ul>
+    </div>
+    <a href="../hub/Gestor_Hub.html" class="voltar">← Voltar ao Hub</a>
+  </div>
+</body>
+</html>
