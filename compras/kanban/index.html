@@ -203,7 +203,16 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 </header>
 
 <div class="toolbar">
-  <label>Centro:</label>
+  <label>Status:</label>
+  <select id="filtro-status" onchange="aplicarFiltros()">
+    <option value="">Todos</option>
+    <option value="aguardando_aprovacao">⏳ Aguardando Aprovação</option>
+    <option value="em_cotacao">💼 Em Cotação</option>
+    <option value="aguardando_pagto">💳 Aguardando Pagto</option>
+    <option value="concluida">✅ Concluída</option>
+    <option value="recusada">❌ Recusada</option>
+  </select>
+  <label>Centro de Custo:</label>
   <select id="filtro-centro" onchange="aplicarFiltros()">
     <option value="">Todos</option>
   </select>
@@ -320,11 +329,13 @@ function aplicarFiltros() {
 }
 
 function renderKanban() {
+  const fs = document.getElementById('filtro-status').value;
   const fc = document.getElementById('filtro-centro').value;
   const fu = document.getElementById('filtro-urg').value;
   const fb = (document.getElementById('filtro-busca').value || '').toLowerCase().trim();
 
   const filtrados = TODAS.filter(s => {
+    if (fs && s.status !== fs) return false;
     if (fc && String(s.centro_custo_id) !== fc) return false;
     if (fu && s.urgencia !== fu) return false;
     if (fb && !((s.numero || '') + ' ' + (s.justificativa || '')).toLowerCase().includes(fb)) return false;
