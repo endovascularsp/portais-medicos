@@ -224,9 +224,9 @@ Para injetar no `index.html`, substituir o bloco entre `/*PDATA*/` e o `;` segui
 
 1. Receber Excel de fechamento do mês → salvar como `Fechamento - Endovascular SP.xlsx`
 2. Rodar script Python para gerar novo PDATA
-3. Injetar PDATA no `index.html` (dashboard admin)
-4. Injetar PDATA nos portais individuais de cada profissional
-5. Injetar PDATA nos portais Oxy Recovery e Cirurgias
+3. Injetar PDATA nos **3 admins**: `index.html` (Endo SP), `oxy/index.html` (Oxy Recovery), `cirurgias/index.html` (Cirurgias). **ATENÇÃO:** os 3 admins têm formatos diferentes — Endo SP usa slug sem sufixo, Oxy usa slug + `_Oxy_Recovery`, Cirurgias usa slug puro. Se algum admin for esquecido, médicos que acessam pelo path `/oxy/` ou `/cirurgias/` (sem nome de arquivo) veem mês desatualizado. Bug histórico: Fechamento Abril/2026 pulou `oxy/index.html` e `cirurgias/index.html`, reconstruído via `_reconstruir_abril_admins.py` em 19/05/2026.
+4. Injetar PDATA nos portais individuais de cada profissional (raiz, oxy/, cirurgias/)
+5. Conferir que os 3 admins têm o mês novo (`python -c "import re,json;[print(f,sorted(json.loads(re.search(r'/\\*PDATA\\*/(.*?)/\\*PDATA\\*/',open(f,encoding='utf-8').read(),re.S).group(1).strip()).keys())) for f in ['index.html','oxy/index.html','cirurgias/index.html']]"`)
 6. Atualizar planilha `Acessos_Portal_Honorarios_2026.xlsx` se houver novos profissionais
 7. **Rodar `python _cache_bust_hubs.py`** — atualiza `?v=YYYYMMDD` em todos os links dos 20 Hubs (sem esse passo, médicos com sessão cacheada veem PDATA antigo sem o mês novo)
 8. `git add -A && git commit -m "Fechamento Mês/2026" && git push`
