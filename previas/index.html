@@ -6,6 +6,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Prévias — Endovascular SP</title>
   <style>
+/* fix-mobile-overflow-v2 */
+html,body{overflow-x:hidden!important;max-width:100vw;}
+@media(max-width:600px){
+  .login-card,.login-box,.senha-box,.login-input-wrap{
+    width:auto!important;max-width:calc(100vw - 24px)!important;
+  }
+  body{padding:0!important;margin:0!important;}
+  .header,.admin-nav,.portais-nav,.admin-portais-nav,.main,.hub-body{
+    padding-left:14px!important;padding-right:14px!important;
+  }
+  img{max-width:100%!important;height:auto;}
+  table{max-width:100%;}
+}
+
+
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff;font-size:14px}
 
