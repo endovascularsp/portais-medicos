@@ -14,47 +14,88 @@
     }
   </script>
   <style>
-/* fix-mobile-overflow-v3 */
+/* fix-mobile-overflow-v4 */
 html,body{overflow-x:hidden!important;max-width:100vw;}
 @media(max-width:600px){
-  /* Containers e widths */
+  /* === Header === */
+  .header{
+    height:auto!important;min-height:56px!important;
+    padding:8px 14px!important;
+    flex-wrap:nowrap!important;gap:8px!important;
+    box-sizing:border-box;
+  }
+  .header-logo{flex:1 1 auto!important;min-width:0!important;overflow:hidden;gap:8px!important;}
+  .header-logo img,.header-logo .logo-svg{width:32px!important;height:32px!important;}
+  .header-logo h1{font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .header-logo span{display:none!important;}
+  .header-info h1{font-size:13px!important;}
+  .header-info p{font-size:10px!important;}
+  .header-actions{flex:0 0 auto!important;gap:4px!important;}
+  .header-action-btn{padding:5px 8px!important;font-size:10px!important;gap:3px!important;}
+  .header-action-btn .icon-text,.header-badge{display:none;}
+  /* === Containers/widths === */
   .login-card,.login-box,.senha-box,.login-input-wrap{
     width:auto!important;max-width:calc(100vw - 24px)!important;
   }
   body{padding:0!important;margin:0!important;}
-  .header,.admin-nav,.portais-nav,.admin-portais-nav,.main,.hub-body{
+  .admin-nav,.portais-nav,.admin-portais-nav,.main,.hub-body{
     padding-left:14px!important;padding-right:14px!important;
+    box-sizing:border-box;
   }
-  /* Periodo-bloco: empilha tudo em coluna */
-  .periodo-bloco{flex-direction:column!important;align-items:stretch!important;gap:10px!important;}
+  /* === Periodo-bloco === */
+  .periodo-bloco{flex-direction:column!important;align-items:stretch!important;gap:10px!important;
+    box-sizing:border-box;max-width:100%;}
   .periodo-bloco .f-grp{flex-wrap:wrap!important;width:100%;}
   .periodo-bloco .range-sep{display:none!important;}
-  /* Range filter: selects e botoes em 2 colunas */
   .range-filter{flex-wrap:wrap!important;gap:6px!important;width:100%;}
   .range-filter select{flex:1 1 calc(50% - 3px)!important;min-width:0!important;}
   .range-filter .range-ate{flex:0 0 100%!important;text-align:center;}
   .range-btn{flex:1 1 calc(50% - 3px)!important;}
-  /* Prof-select: full width */
   .prof-select{flex:1 1 100%!important;min-width:0!important;max-width:100%!important;width:100%;}
-  /* Tabs */
   .tabs-flex,.periodo-tabs{flex-wrap:wrap!important;}
-  /* Portais/admin-nav: scroll horizontal interno (nao vazam pro corpo) */
+  /* === Nav portais: scroll horizontal interno === */
   .portais-nav,.admin-nav,.admin-portais-nav{
-    flex-wrap:nowrap!important;
-    overflow-x:auto!important;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+    flex-wrap:nowrap!important;overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
   }
   .portais-nav::-webkit-scrollbar,.admin-nav::-webkit-scrollbar,.admin-portais-nav::-webkit-scrollbar{display:none;}
   .portais-nav-btn,.admin-nav-btn,.admin-portais-nav-btn{flex-shrink:0!important;}
-  /* Tabelas: container com overflow-x */
-  .table-scroll,.table-wrap,#bottom-detail{overflow-x:auto!important;-webkit-overflow-scrolling:touch;}
-  /* Chips destaques (Produtividade): empilham */
-  .destaques{flex-wrap:wrap!important;gap:6px!important;}
-  .chip{font-size:11px!important;padding:5px 8px!important;}
-  /* Imagens */
+  /* === Cards: travam largura e quebram conteudo === */
+  .kpi,.metric-card,.card,.card-box,.chart-card,.full-col,.insight-card{
+    max-width:100%!important;
+    overflow:hidden!important;
+    box-sizing:border-box!important;
+  }
+  .kpi-row,.cards,.metrics-grid,.two-col,.three-col,.grid-2,.grid-main,.insights-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+    width:100%;max-width:100%;
+  }
+  .kpi{padding:14px 14px 14px 12px!important;}
+  .kpi-ic{top:10px!important;right:10px!important;width:26px!important;height:26px!important;font-size:12px!important;}
+  .kpi-label{font-size:10px!important;letter-spacing:0.3px!important;}
+  .kpi-val{font-size:16px!important;word-break:break-word;line-height:1.2;}
+  .kpi-foot{font-size:10px!important;}
+  .metric-valor{font-size:18px!important;word-break:break-word;}
+  /* Chart wrappers */
+  .chart-wrap{max-width:100%!important;overflow:hidden;}
+  canvas{max-width:100%!important;}
+  /* === Tabelas: container scrollavel === */
+  .table-scroll,.table-wrap,#bottom-detail{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%;}
+  /* === Chips (Produtividade) === */
+  .destaques{flex-wrap:wrap!important;gap:6px!important;max-width:100%;}
+  .chip{font-size:10px!important;padding:5px 7px!important;}
+  /* === Imagens === */
   img{max-width:100%!important;height:auto;}
+  /* === Em telas MUITO estreitas (<360px): 1 KPI por linha === */
 }
+@media(max-width:360px){
+  .kpi-row,.cards,.metrics-grid,.two-col,.three-col,.grid-2,.grid-main,.insights-grid{
+    grid-template-columns:1fr!important;
+  }
+  .header-action-btn span{display:none;}
+}
+
 
 
 
