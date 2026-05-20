@@ -1043,5 +1043,23 @@ document.getElementById('login-senha').focus();
   }
 })();
 </script>
+<!-- UX6-HIDE-404 -->
+<script>
+// UX #6: esconde links em admin-nav/portais-nav que apontam para arquivo inexistente.
+// Funciona em producao HTTP. Em file:// local nao roda (silencioso).
+(function(){
+  if (location.protocol === 'file:') return;
+  const seletores = '.portais-nav a[href], .admin-nav a[href], .admin-portais-nav a[href]';
+  const links = document.querySelectorAll(seletores);
+  links.forEach(async (a) => {
+    if (!a.href || a.classList.contains('active') || a.getAttribute('href') === '#') return;
+    try {
+      const r = await fetch(a.href, {method:'HEAD'});
+      if (!r.ok) a.style.display = 'none';
+    } catch (e) { /* network err: deixa visivel */ }
+  });
+})();
+</script>
+
 </body>
 </html>

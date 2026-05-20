@@ -882,5 +882,39 @@ function renderChartPagamento(pagGlobal){
 // Boot direto — gate Supabase no <head> já validou a permissão antes do conteúdo aparecer.
 inicializar();
 </script>
+<!-- UX6-HIDE-404 -->
+<script>
+// UX #6: esconde links em admin-nav/portais-nav que apontam para arquivo inexistente.
+// Funciona em producao HTTP. Em file:// local nao roda (silencioso).
+(function(){
+  if (location.protocol === 'file:') return;
+  const seletores = '.portais-nav a[href], .admin-nav a[href], .admin-portais-nav a[href]';
+  const links = document.querySelectorAll(seletores);
+  links.forEach(async (a) => {
+    if (!a.href || a.classList.contains('active') || a.getAttribute('href') === '#') return;
+    try {
+      const r = await fetch(a.href, {method:'HEAD'});
+      if (!r.ok) a.style.display = 'none';
+    } catch (e) { /* network err: deixa visivel */ }
+  });
+})();
+</script>
+
+<!-- UX5-TIMESTAMP -->
+<script>
+// UX #5: mostra 'Dados de DD/MM/AAAA' baseado na ultima atualizacao do arquivo
+(function(){
+  try {
+    const dt = new Date(document.lastModified);
+    if (isNaN(dt.getTime())) return;
+    const fmt = dt.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'});
+    const tag = document.createElement('div');
+    tag.className = 'ts-rodape';
+    tag.innerHTML = '<style>.ts-rodape{text-align:center;font-size:11px;color:rgba(255,255,255,0.45);padding:14px;letter-spacing:0.3px;}@media(max-width:600px){.ts-rodape{padding:10px;font-size:10px;}}</style>📅 Dados atualizados em <strong style="color:rgba(255,255,255,0.75);">' + fmt + '</strong> · Endovascular SP © 2026';
+    document.body.appendChild(tag);
+  } catch(e){}
+})();
+</script>
+
 </body>
 </html>
