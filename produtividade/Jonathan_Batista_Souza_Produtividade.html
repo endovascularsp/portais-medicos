@@ -7,11 +7,11 @@
 <title>Portal de Produtividade — Jonathan Batista Souza</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-/* fix-mobile-overflow-v6 */
+/* fix-mobile-overflow-v7 */
 html,body{overflow-x:hidden!important;max-width:100vw;}
 @media(max-width:600px){
   body{padding:0!important;margin:0!important;}
-  /* === Header (APENAS .header — não toca em <header> genérico do Hub) === */
+  /* === Header (apenas .header classe) === */
   .header{
     flex-wrap:wrap!important;height:auto!important;min-height:0!important;
     padding-left:14px!important;padding-right:14px!important;
@@ -23,16 +23,18 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     gap:6px!important;margin-top:4px;
   }
   .header > .header-actions .header-action-btn{padding:5px 10px!important;font-size:11px!important;}
+  /* === Imagens dentro de qualquer header-logo (resolve Hub: img base64 sem class .logo-svg) === */
+  .header-logo img{width:44px!important;height:44px!important;flex-shrink:0!important;}
   /* === Login boxes === */
   .login-card,.login-box,.senha-box,.login-input-wrap{
     width:auto!important;max-width:calc(100vw - 24px)!important;
   }
-  /* === Padding lateral em barras === */
+  /* === Padding lateral === */
   .admin-nav,.portais-nav,.admin-portais-nav,.main,.hub-body{
     padding-left:14px!important;padding-right:14px!important;
     box-sizing:border-box;
   }
-  /* === Periodo-bloco em coluna === */
+  /* === Periodo-bloco === */
   .periodo-bloco{flex-direction:column!important;align-items:stretch!important;gap:10px!important;
     box-sizing:border-box;max-width:100%;}
   .periodo-bloco .f-grp{flex-wrap:wrap!important;width:100%;}
@@ -50,17 +52,16 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
   }
   .portais-nav::-webkit-scrollbar,.admin-nav::-webkit-scrollbar,.admin-portais-nav::-webkit-scrollbar{display:none;}
   .portais-nav-btn,.admin-nav-btn,.admin-portais-nav-btn{flex-shrink:0!important;}
-  /* === KPIs (pequenos): 2 colunas === */
+  /* === KPIs: 2 colunas === */
   .kpi-row,.cards,.metrics-grid,.insights-grid{
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
     gap:8px!important;width:100%;max-width:100%;
   }
-  /* === Cards de gráfico (grandes): 1 coluna === */
+  /* === Cards de gráfico: 1 coluna em mobile === */
   .two-col,.three-col,.grid-2,.grid-main,.grid-pag{
     grid-template-columns:1fr!important;
     gap:14px!important;
   }
-  /* Cards individuais: travados em max-width 100% */
   .kpi,.metric-card,.card,.card-box,.chart-card,.full-col,.insight-card,.hub-card{
     max-width:100%!important;
     box-sizing:border-box!important;
@@ -71,22 +72,25 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
   .kpi-val{font-size:16px!important;word-break:break-word;line-height:1.2;}
   .kpi-foot{font-size:10px!important;}
   .metric-valor{font-size:18px!important;word-break:break-word;}
-  /* Hub cards: 1 coluna (eram 3 em desktop) */
+  /* Hub cards: 1 coluna */
   .hub-cards{grid-template-columns:1fr!important;gap:14px!important;}
-  /* Chart wrappers */
-  .chart-wrap{max-width:100%!important;overflow:hidden;}
+  /* === Chart-wrap: SEM overflow:hidden, altura maior pra legibilidade === */
+  .chart-wrap{max-width:100%!important;height:300px!important;}
   canvas{max-width:100%!important;}
-  /* === Tabelas: container scrollavel === */
+  /* === Tabelas: scroll === */
   .table-scroll,.table-wrap,#bottom-detail{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%;}
   /* === Chips Produtividade === */
   .destaques{flex-wrap:wrap!important;gap:6px!important;max-width:100%;}
   .chip{font-size:10px!important;padding:5px 7px!important;}
-  img{max-width:100%!important;height:auto;}
+  /* === Imagens (mas NÃO header-logo img que tem regra propria acima) === */
+  img:not(.header-logo img){max-width:100%!important;height:auto;}
 }
 @media(max-width:380px){
   .kpi-row,.cards,.metrics-grid,.insights-grid{
     grid-template-columns:1fr!important;
   }
+}
+
 }
 
 }
