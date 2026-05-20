@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Nova Solicitação · Compras · Endovascular SP</title>
+  <link rel="icon" href="../../assets/logo.png" type="image/png"/>
+  <style>html{visibility:hidden}</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Gate de permissão — qualquer card de compras_* permite acesso
+    let SB, USER, USER_EMAIL, USER_DEPT_ID, USER_CARDS = [];
+    (async function() {
+      const _isLocalPreview = location.protocol === 'file:'
+        || location.hostname === 'localhost'
+        || location.hostname === '127.0.0.1';
+      if (_isLocalPreview) {
+        console.log('[compras/nova] preview local — gate ignorado, dados mockados');
+        document.documentElement.style.visibility = 'visible';
+        USER_EMAIL = 'preview@local';
+        return;
+      }
+      try {
+        SB = window.supabase.createClient(
+          'https://egpcrqrvctnpxbdjdhtf.supabase.co',
+          'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW'
+        );
+        const { data: { session } } = await SB.auth.getSession();
+        if (!session) { window.location.replace('/login/'); return; }
+        USER = session.user;
+        USER_EMAIL = (USER.email || '').toLowerCase();
+        const { data: me } = await SB.from('users')
+          .select('cards, departamento_id, name')
+          .eq('email', USER_EMAIL).maybeSingle();
+        USER_CARDS = (me && me.cards) || [];
+        USER_DEPT_ID = me && me.departamento_id;
+        const podeVer = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
+        if (!podeVer) { window.location.replace('/hub/Gestor_Hub.html'); return; }
+        document.documentElement.style.visibility = 'visible';
+        // Inicializa após auth
+        window.addEventListener('DOMContentLoaded', inicializar);
+      } catch (e) {
+        console.error('gate erro:', e);
+        window.location.replace('/login/');
+      }
+    })();
+  </script>
+  <style>
+/* fix-mobile-overflow-v7 */
+html,body{overflow-x:hidden!important;max-width:100vw;}
+@media(max-width:600px){
+  body{padding:0!important;margin:0!important;}
+  .header{flex-wrap:wrap!important;height:auto!important;min-height:0!important;
+    padding-left:14px!important;padding-right:14px!important;gap:8px!important;}
+  .header > .header-logo{flex:1 1 auto!important;min-width:0;}
+  .header > .header-actions{flex:0 0 100%!important;justify-content:flex-end!important;gap:6px!important;margin-top:4px;}
+  .header-logo img{width:44px!important;height:44px!important;flex-shrink:0!important;}
+  .main{padding-left:14px!important;padding-right:14px!important;box-sizing:border-box;}
+  .row-2{grid-template-columns:1fr!important;}
+}
+
+:root{
+  --navy:#0B1F3A;--navy-med:#23476f;--azul:#1A5296;--azul-cl:#D6E8F7;
+  --gold:#A18960;--gold-bg:#F5F0E5;--gold-borda:rgba(161,137,96,0.40);
+  --bg:#F2F5F9;--borda:#C4D4E8;--cinza-cl:#F7FAFD;
+  --texto:#0D1E30;--texto2:#4A6278;
+  --verde:#2D7A3C;--vermelho:#C0392B;--laranja:#D4621A;
+  --sombra:0 2px 14px rgba(11,31,58,0.08);--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+
+/* === Header padronizado === */
+.header{background:var(--navy);color:#fff;padding:0 32px;display:flex;align-items:center;
+  justify-content:space-between;height:72px;border-bottom:3px solid var(--azul);
+  box-shadow:0 2px 20px rgba(11,31,58,0.25);}
+.header-logo{display:flex;align-items:center;gap:14px;}
+.header-logo img{width:44px;height:44px;}
+.header-logo h1{font-size:18px;font-weight:800;color:#fff;}
+.header-logo span{font-size:11.5px;color:rgba(255,255,255,0.7);display:block;margin-top:2px;}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.header-action-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;
+  border-radius:20px;background:rgba(255,255,255,0.10);border:1.5px solid rgba(255,255,255,0.20);
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;font-family:inherit;
+  transition:all 0.15s;}
+.header-action-btn:hover{background:rgba(255,255,255,0.18);}
+.header-action-btn.home{background:rgba(148,163,184,0.15);color:#cbd5e1;}
+
+/* === Main + form === */
+.main{max-width:900px;margin:0 auto;padding:28px 32px 60px;}
+.page-title{font-size:24px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+.page-sub{font-size:13px;color:var(--texto2);margin-bottom:22px;}
+
+.card{background:#fff;border:1px solid var(--borda);border-radius:var(--radius);
+  padding:24px 26px;box-shadow:var(--sombra);margin-bottom:18px;}
+.card-title{font-size:13px;font-weight:800;letter-spacing:0.5px;color:var(--navy);
+  text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.card-title .ic{font-size:18px;}
+
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.field label{font-size:12px;font-weight:700;color:var(--texto2);
+  letter-spacing:0.3px;text-transform:uppercase;}
+.field label .obrig{color:var(--vermelho);}
+.field input[type=text],
+.field input[type=number],
+.field input[type=date],
+.field input[type=url],
+.field select,
+.field textarea{
+  padding:10px 14px;border:1.5px solid var(--borda);border-radius:8px;
+  font-size:14px;color:var(--texto);background:#fff;font-family:inherit;outline:none;
+  transition:border 0.15s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus{border-color:var(--gold);}
+.field textarea{resize:vertical;min-height:80px;}
+.field .hint{font-size:11px;color:var(--texto2);font-style:italic;margin-top:2px;}
+
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.row-3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;}
+
+/* === Itens (carrinho) === */
+.itens-lista{display:flex;flex-direction:column;gap:14px;margin-bottom:14px;}
+.item-row{background:var(--cinza-cl);border:1px solid var(--borda);border-radius:10px;padding:16px 18px;position:relative;}
+.item-row .item-num{position:absolute;top:14px;left:18px;font-size:11px;font-weight:800;
+  color:var(--texto2);letter-spacing:0.5px;text-transform:uppercase;}
+.item-row .item-remove{position:absolute;top:14px;right:14px;background:transparent;border:none;
+  color:var(--vermelho);font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;font-weight:600;}
+.item-row .item-remove:hover{background:rgba(192,57,43,0.10);}
+.item-row .item-body{margin-top:22px;}
+.btn-add-item{background:var(--gold-bg);border:1.5px dashed var(--gold);color:var(--gold);
+  padding:12px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;
+  width:100%;transition:all 0.15s;font-family:inherit;}
+.btn-add-item:hover{background:var(--gold);color:#fff;}
+
+/* Autocomplete fornecedor */
+.forn-wrap{position:relative;}
+.forn-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--borda);
+  border-top:none;border-radius:0 0 8px 8px;max-height:240px;overflow-y:auto;z-index:50;
+  box-shadow:0 6px 18px rgba(11,31,58,0.12);display:none;}
+.forn-list.show{display:block;}
+.forn-list-item{padding:10px 14px;font-size:13px;color:var(--texto);cursor:pointer;
+  border-bottom:1px solid var(--cinza-cl);}
+.forn-list-item:hover,.forn-list-item.active{background:var(--azul-cl);}
+.forn-list-item.add-new{color:var(--gold);font-weight:700;background:var(--gold-bg);}
+
+/* === Anexos === */
+.anexos-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.anexo-item{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--cinza-cl);border:1px solid var(--borda);border-radius:8px;font-size:13px;}
+.anexo-item .ic{font-size:18px;}
+.anexo-item .nome{flex:1;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.anexo-item .rm{background:transparent;border:none;color:var(--vermelho);cursor:pointer;font-size:14px;font-weight:700;}
+.anexo-controls{display:flex;gap:10px;flex-wrap:wrap;}
+.anexo-btn{padding:9px 16px;border:1.5px solid var(--borda);border-radius:8px;background:#fff;
+  cursor:pointer;font-size:12px;font-weight:700;color:var(--navy-med);font-family:inherit;
+  display:inline-flex;align-items:center;gap:6px;}
+.anexo-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* Urgência radios */
+.urg-radios{display:flex;gap:8px;}
+.urg-radio{flex:1;}
+.urg-radio input{display:none;}
+.urg-radio label{display:block;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;
+  text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--texto2);
+  transition:all 0.15s;}
+.urg-radio input:checked + label.baixa{border-color:var(--verde);background:#E8F5EB;color:var(--verde);}
+.urg-radio input:checked + label.media{border-color:var(--laranja);background:#FFF3E0;color:var(--laranja);}
+.urg-radio input:checked + label.alta{border-color:var(--vermelho);background:#FFEBEE;color:var(--vermelho);}
+
+/* === Ações === */
+.acoes{display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap;}
+.btn{padding:11px 24px;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;
+  border:1.5px solid;transition:all 0.15s;font-family:inherit;}
+.btn.cancelar{background:#fff;color:var(--texto2);border-color:var(--borda);}
+.btn.cancelar:hover{background:var(--cinza-cl);}
+.btn.enviar{background:var(--gold);color:#fff;border-color:var(--gold);}
+.btn.enviar:hover{background:var(--navy);border-color:var(--navy);}
+.btn:disabled{opacity:0.5;cursor:wait;}
+
+/* Mensagens */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--navy);color:#fff;padding:14px 22px;
+  border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);
+  z-index:999;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.erro{background:var(--vermelho);}
+.toast.sucesso{background:var(--verde);}
+.aviso{padding:12px 16px;background:#FFF3E0;border:1px solid #FCD9B6;border-left:4px solid var(--laranja);
+  border-radius:8px;font-size:13px;color:#7A4F00;margin-bottom:16px;}
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <img src="../../assets/logo.png" alt="Endo"/>
+    <div><h1>Compras</h1><span>Nova Solicitação</span></div>
+  </div>
+  <div class="header-actions">
+    <a href="../" class="header-action-btn">← Compras</a>
+    <a href="../../hub/Gestor_Hub.html" class="header-action-btn home">🏠 Home</a>
+  </div>
+</header>
+
+<main class="main">
+  <div class="page-title">🛒 Nova Solicitação</div>
+  <div class="page-sub">Preencha os campos abaixo. Após enviar, seu gestor receberá um email pra aprovar.</div>
+
+  <div id="aviso-dept" class="aviso" style="display:none;"></div>
+
+  <!-- === Identificação === -->
+  <div class="card">
+    <div class="card-title"><span class="ic">📋</span> Identificação</div>
+    <div class="row-2">
+      <div class="field">
+        <label>Centro de Custo <span class="obrig">*</span></label>
+        <select id="f-centro" required>
+          <option value="">— Selecione —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Urgência <span class="obrig">*</span></label>
+        <div class="urg-radios">
+          <div class="urg-radio"><input type="radio" name="urg" id="urg-b" value="baixa"/><label for="urg-b" class="baixa">😌 Baixa</label></div>
+          <div class="urg-radio"><input type="radio" name="urg" id="urg-m" value="media" checked/><label for="urg-m" class="media">⏱️ Média</label></div>
+          <div class="urg-radio"><input type="radio" name="urg" id="urg-a" value="alta"/><label for="urg-a" class="alta">🔥 Alta</label></div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Data limite (opcional)</label>
+      <input type="date" id="f-data-limite"/>
+      <div class="hint">Quando você precisa do produto entregue? Deixe em branco se flexível.</div>
+    </div>
+  </div>
+
+  <!-- === Itens (carrinho) === -->
+  <div class="card">
+    <div class="card-title"><span class="ic">🧾</span> Itens</div>
+    <div id="itens-lista" class="itens-lista"></div>
+    <button type="button" class="btn-add-item" onclick="adicionarItem()">+ Adicionar outro item</button>
+  </div>
+
+  <!-- === Justificativa === -->
+  <div class="card">
+    <div class="card-title"><span class="ic">💬</span> Justificativa</div>
+    <div class="field">
+      <label>Motivo da compra <span class="obrig">*</span></label>
+      <textarea id="f-justificativa" required placeholder="Ex: Reposição de estoque mensal de materiais cirúrgicos. Aumento de demanda em Abril."></textarea>
+    </div>
+    <div class="field">
+      <label>Observações adicionais (opcional)</label>
+      <textarea id="f-obs" placeholder="Detalhes técnicos, especificações, contexto extra..."></textarea>
+    </div>
+  </div>
+
+  <!-- === Anexos === -->
+  <div class="card">
+    <div class="card-title"><span class="ic">📎</span> Anexos</div>
+    <div id="anexos-lista" class="anexos-lista"></div>
+    <div class="anexo-controls">
+      <input type="file" id="f-file" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.csv" multiple style="display:none" onchange="anexarArquivo(event)"/>
+      <button type="button" class="anexo-btn" onclick="document.getElementById('f-file').click()">📄 Adicionar arquivo</button>
+      <button type="button" class="anexo-btn" onclick="adicionarLink()">🔗 Adicionar link</button>
+    </div>
+    <div class="hint" style="margin-top:6px;">PDFs (orçamento, NF), imagens, planilhas Excel ou links externos (Mercado Livre etc.).</div>
+  </div>
+
+  <!-- === Ações === -->
+  <div class="acoes">
+    <button class="btn cancelar" onclick="if(confirm('Cancelar e perder o que foi preenchido?')) location.href='../'">Cancelar</button>
+    <button class="btn enviar" id="btn-enviar" onclick="enviar()">Enviar solicitação →</button>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let CENTROS = [];
+let FORNECEDORES = [];
+let DEPT = null;        // info do depto do solicitante (com gestor_email)
+let ITENS = [];         // estado dos itens do carrinho
+let ANEXOS = [];        // estado dos anexos
+let ITEM_SEQ = 0;
+let ANEXO_SEQ = 0;
+
+async function inicializar() {
+  // Carrega centros de custo
+  const { data: cs } = await SB.from('compras_centros_custo')
+    .select('id, codigo, nome').eq('ativo', true).order('nome');
+  CENTROS = cs || [];
+  const selCentro = document.getElementById('f-centro');
+  selCentro.innerHTML = '<option value="">— Selecione —</option>'
+    + CENTROS.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+
+  // Carrega fornecedores
+  const { data: fs } = await SB.from('compras_fornecedores')
+    .select('id, nome').eq('ativo', true).order('nome');
+  FORNECEDORES = fs || [];
+
+  // Carrega depto do solicitante (pra pegar gestor_email)
+  if (USER_DEPT_ID) {
+    const { data: d } = await SB.from('compras_departamentos')
+      .select('id, nome, gestor_email').eq('id', USER_DEPT_ID).maybeSingle();
+    DEPT = d;
+  }
+
+  // Aviso se solicitante não tem departamento
+  if (!USER_DEPT_ID) {
+    const av = document.getElementById('aviso-dept');
+    av.style.display = 'block';
+    av.innerHTML = '⚠️ <strong>Você ainda não tem Departamento cadastrado.</strong> Peça pra um admin (Gestão de Acessos) preencher seu departamento, senão sua solicitação não vai ter aprovador automático.';
+  } else if (!DEPT || !DEPT.gestor_email) {
+    const av = document.getElementById('aviso-dept');
+    av.style.display = 'block';
+    av.innerHTML = `⚠️ <strong>O departamento "${DEPT?.nome || '—'}" não tem gestor cadastrado.</strong> Sua solicitação será criada, mas precisará de aprovação manual pela Compradora.`;
+  }
+
+  // Começa com 1 item vazio
+  adicionarItem();
+}
+
+// === Itens (carrinho) ===
+
+function adicionarItem() {
+  const id = ++ITEM_SEQ;
+  ITENS.push({ id, descricao:'', quantidade:1, unidade:'', fornecedor_id:null, fornecedor_nome:'', valor_estimado:null });
+  renderItens();
+}
+
+function removerItem(id) {
+  if (ITENS.length === 1) {
+    showToast('Precisa de pelo menos 1 item', 'erro');
+    return;
+  }
+  ITENS = ITENS.filter(i => i.id !== id);
+  renderItens();
+}
+
+function updateItem(id, field, value) {
+  const item = ITENS.find(i => i.id === id);
+  if (item) item[field] = value;
+}
+
+function renderItens() {
+  const cont = document.getElementById('itens-lista');
+  cont.innerHTML = ITENS.map((it, idx) => `
+    <div class="item-row" data-id="${it.id}">
+      <div class="item-num">Item ${idx+1}</div>
+      ${ITENS.length > 1 ? `<button class="item-remove" onclick="removerItem(${it.id})">✕ remover</button>` : ''}
+      <div class="item-body">
+        <div class="field">
+          <label>Descrição <span class="obrig">*</span></label>
+          <input type="text" placeholder="Ex: Papel A4 75g, ATROPINA 0,25MG ampola, ou cole o link do produto"
+                 value="${escapeAttr(it.descricao)}" oninput="updateItem(${it.id}, 'descricao', this.value)" required/>
+        </div>
+        <div class="row-3">
+          <div class="field">
+            <label>Quantidade <span class="obrig">*</span></label>
+            <input type="number" min="0.01" step="0.01" value="${it.quantidade}" oninput="updateItem(${it.id}, 'quantidade', parseFloat(this.value)||1)" required/>
+          </div>
+          <div class="field">
+            <label>Unidade</label>
+            <input type="text" placeholder="un, cx, L, kg..." value="${escapeAttr(it.unidade)}" oninput="updateItem(${it.id}, 'unidade', this.value)"/>
+          </div>
+          <div class="field">
+            <label>Valor estimado (R$)</label>
+            <input type="number" min="0" step="0.01" placeholder="opcional" value="${it.valor_estimado || ''}" oninput="updateItem(${it.id}, 'valor_estimado', parseFloat(this.value)||null)"/>
+          </div>
+        </div>
+        <div class="field forn-wrap">
+          <label>Fornecedor sugerido (opcional)</label>
+          <input type="text" id="forn-input-${it.id}" placeholder="Digite pra buscar ou cadastrar novo"
+                 value="${escapeAttr(it.fornecedor_nome)}"
+                 oninput="buscarFornecedor(${it.id}, this.value)"
+                 onfocus="buscarFornecedor(${it.id}, this.value)"
+                 onblur="setTimeout(()=>fecharFornList(${it.id}), 180)"
+                 autocomplete="off"/>
+          <div class="forn-list" id="forn-list-${it.id}"></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeAttr(s) {
+  return String(s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// === Autocomplete fornecedor ===
+
+function buscarFornecedor(itemId, query) {
+  const item = ITENS.find(i => i.id === itemId);
+  if (item) { item.fornecedor_nome = query; item.fornecedor_id = null; }
+  const q = (query || '').toLowerCase().trim();
+  const list = document.getElementById('forn-list-' + itemId);
+  let matches = FORNECEDORES;
+  if (q) matches = FORNECEDORES.filter(f => f.nome.toLowerCase().includes(q));
+  matches = matches.slice(0, 20);
+  let html = matches.map(f =>
+    `<div class="forn-list-item" onmousedown="selecFornecedor(${itemId}, ${f.id}, '${escapeAttr(f.nome)}')">${f.nome}</div>`
+  ).join('');
+  if (q && !FORNECEDORES.find(f => f.nome.toLowerCase() === q)) {
+    html += `<div class="forn-list-item add-new" onmousedown="cadastrarFornecedor(${itemId}, '${escapeAttr(query)}')">+ Cadastrar "${escapeAttr(query)}" como novo fornecedor</div>`;
+  }
+  list.innerHTML = html;
+  list.classList.toggle('show', html.length > 0);
+}
+
+function selecFornecedor(itemId, fornId, fornNome) {
+  const item = ITENS.find(i => i.id === itemId);
+  if (item) { item.fornecedor_id = fornId; item.fornecedor_nome = fornNome; }
+  document.getElementById('forn-input-' + itemId).value = fornNome;
+  fecharFornList(itemId);
+}
+
+function fecharFornList(itemId) {
+  const el = document.getElementById('forn-list-' + itemId);
+  if (el) el.classList.remove('show');
+}
+
+async function cadastrarFornecedor(itemId, nome) {
+  nome = nome.trim();
+  if (!nome) return;
+  if (!SB) {
+    // Preview local: só simula
+    const fakeId = -Math.floor(Math.random() * 9999);
+    FORNECEDORES.push({ id: fakeId, nome });
+    selecFornecedor(itemId, fakeId, nome);
+    showToast('(preview) Fornecedor cadastrado localmente', 'sucesso');
+    return;
+  }
+  const { data, error } = await SB.from('compras_fornecedores')
+    .insert({ nome, validado: false, criado_por: USER_EMAIL })
+    .select().single();
+  if (error) { showToast('Erro ao cadastrar fornecedor: ' + error.message, 'erro'); return; }
+  FORNECEDORES.push({ id: data.id, nome: data.nome });
+  selecFornecedor(itemId, data.id, data.nome);
+  showToast(`Fornecedor "${nome}" cadastrado. Compradora vai validar depois.`, 'sucesso');
+}
+
+// === Anexos ===
+
+function anexarArquivo(ev) {
+  const files = Array.from(ev.target.files || []);
+  for (const file of files) {
+    const tipo = file.type.startsWith('image/') ? 'imagem'
+              : file.name.match(/\.(xlsx|xls|csv)$/i) ? 'excel'
+              : 'pdf';
+    ANEXOS.push({ id: ++ANEXO_SEQ, tipo, file, filename: file.name });
+  }
+  ev.target.value = '';
+  renderAnexos();
+}
+
+function adicionarLink() {
+  const url = prompt('Cole a URL (ex: link de produto no Mercado Livre):');
+  if (!url || !url.trim()) return;
+  let u = url.trim();
+  if (!u.match(/^https?:\/\//)) u = 'https://' + u;
+  ANEXOS.push({ id: ++ANEXO_SEQ, tipo: 'link', url_externa: u, filename: u.replace(/^https?:\/\//, '').slice(0, 60) });
+  renderAnexos();
+}
+
+function removerAnexo(id) {
+  ANEXOS = ANEXOS.filter(a => a.id !== id);
+  renderAnexos();
+}
+
+function renderAnexos() {
+  const cont = document.getElementById('anexos-lista');
+  cont.innerHTML = ANEXOS.map(a => {
+    const ic = a.tipo === 'link' ? '🔗' : a.tipo === 'imagem' ? '🖼️' : a.tipo === 'excel' ? '📊' : '📄';
+    return `<div class="anexo-item">
+      <span class="ic">${ic}</span>
+      <span class="nome">${escapeAttr(a.filename)}</span>
+      <button class="rm" onclick="removerAnexo(${a.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// === Envio ===
+
+async function enviar() {
+  const centro_custo_id = parseInt(document.getElementById('f-centro').value, 10) || null;
+  const urgencia = document.querySelector('input[name=urg]:checked').value;
+  const data_limite = document.getElementById('f-data-limite').value || null;
+  const justificativa = document.getElementById('f-justificativa').value.trim();
+  const observacoes = document.getElementById('f-obs').value.trim() || null;
+
+  // Validações
+  if (!centro_custo_id) { showToast('Selecione o Centro de Custo', 'erro'); return; }
+  if (!justificativa) { showToast('Justificativa é obrigatória', 'erro'); return; }
+  const itensValidos = ITENS.filter(i => i.descricao && i.descricao.trim() && i.quantidade > 0);
+  if (!itensValidos.length) { showToast('Adicione ao menos 1 item com descrição', 'erro'); return; }
+
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+
+  try {
+    if (!SB) {
+      // Preview local
+      await new Promise(r => setTimeout(r, 600));
+      showToast('(preview) Solicitação simulada com sucesso', 'sucesso');
+      setTimeout(() => location.href = '../', 1200);
+      return;
+    }
+
+    // 1) INSERT solicitação
+    const aprovador_email = DEPT?.gestor_email || null;
+    const { data: sol, error: e1 } = await SB.from('compras_solicitacoes').insert({
+      solicitante_email: USER_EMAIL,
+      departamento_id: USER_DEPT_ID,
+      centro_custo_id,
+      justificativa,
+      urgencia,
+      data_limite,
+      observacoes,
+      status: 'aguardando_aprovacao',
+      aprovador_email
+    }).select().single();
+    if (e1) throw new Error('Solicitação: ' + e1.message);
+
+    // 2) INSERT itens
+    const itensInsert = itensValidos.map(i => ({
+      solicitacao_id: sol.id,
+      descricao: i.descricao.trim(),
+      quantidade: i.quantidade,
+      unidade: (i.unidade || '').trim() || null,
+      fornecedor_sugerido_id: i.fornecedor_id,
+      valor_estimado: i.valor_estimado
+    }));
+    const { error: e2 } = await SB.from('compras_itens').insert(itensInsert);
+    if (e2) throw new Error('Itens: ' + e2.message);
+
+    // 3) Upload de anexos + INSERT em compras_anexos
+    for (const a of ANEXOS) {
+      if (a.tipo === 'link') {
+        await SB.from('compras_anexos').insert({
+          solicitacao_id: sol.id, tipo: 'link',
+          url_externa: a.url_externa,
+          uploaded_by: USER_EMAIL
+        });
+      } else {
+        const path = `${sol.id}/${Date.now()}_${a.filename}`;
+        const { error: eu } = await SB.storage.from('compras-anexos').upload(path, a.file);
+        if (eu) { console.warn('Falha upload', a.filename, eu.message); continue; }
+        await SB.from('compras_anexos').insert({
+          solicitacao_id: sol.id, tipo: a.tipo,
+          filename: a.filename, file_path: path,
+          uploaded_by: USER_EMAIL
+        });
+      }
+    }
+
+    // 4) Histórico
+    await SB.from('compras_historico').insert({
+      solicitacao_id: sol.id, acao: 'criada',
+      por_email: USER_EMAIL,
+      comentario: `Solicitação criada com ${itensValidos.length} item(ns)`
+    });
+
+    showToast(`Solicitação ${sol.numero} criada! Aprovador receberá email em breve.`, 'sucesso');
+    setTimeout(() => location.href = '../', 1600);
+  } catch (e) {
+    console.error(e);
+    showToast('Erro ao enviar: ' + e.message, 'erro');
+    btn.disabled = false; btn.textContent = 'Enviar solicitação →';
+  }
+}
+
+// === Util ===
+function showToast(msg, tipo) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (tipo || '');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// Em preview local, inicializa sem auth
+if (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  // Mocks
+  window.addEventListener('DOMContentLoaded', () => {
+    CENTROS = [{id:1,codigo:'END',nome:'Endovascular'},{id:2,codigo:'OXY',nome:'Oxy Recovery'}];
+    FORNECEDORES = [{id:1,nome:'MERCADO LIVRE'},{id:2,nome:'KALUNGA'},{id:3,nome:'MAGAZINE LUIZA'}];
+    document.getElementById('f-centro').innerHTML = '<option value="">— Selecione —</option>'
+      + CENTROS.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+    adicionarItem();
+  });
+}
+</script>
+</body>
+</html>
