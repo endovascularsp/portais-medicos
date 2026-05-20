@@ -429,14 +429,24 @@ async function checkAuth() {
   }
 
   // Filtra cards: esconde o que o usuário não tem permissão.
-  // Regra do guarda-chuva: quem tem 'gestor' vê automaticamente todos os 'gestor_*'.
+  // Regra do guarda-chuva: quem tem 'gestor' vê automaticamente:
+  //   - todos os gestor_* (sub-cards do Gestor)
+  //   - todos os compras_* (Solicitante/Aprovador/Compradora/Financeiro)
+  //   - atendimentos e previas (portais operacionais ligados ao Gestor)
+  // Cards específicos (medico_proprio, gestor_acessos) ainda precisam ser marcados.
   const temGestorGuardaChuva = cards.includes('gestor');
+  function coberto(reqCard) {
+    if (!temGestorGuardaChuva) return false;
+    if (reqCard.startsWith('gestor_')) return true;
+    if (reqCard.startsWith('compras_')) return true;
+    if (reqCard === 'atendimentos' || reqCard === 'previas') return true;
+    return false;
+  }
   let visiveis = 0;
   document.querySelectorAll('.hub-card[data-card]').forEach(el => {
     const reqCard = el.getAttribute('data-card');
     const reqRole = el.getAttribute('data-role');
-    const guardaChuvaCobre = temGestorGuardaChuva && reqCard.startsWith('gestor_');
-    const ok = (cards.includes(reqCard) || guardaChuvaCobre) && (!reqRole || me.role === reqRole);
+    const ok = (cards.includes(reqCard) || coberto(reqCard)) && (!reqRole || me.role === reqRole);
     el.style.display = ok ? '' : 'none';
     if (ok) visiveis++;
   });
