@@ -48,7 +48,8 @@
   --sombra:0 2px 14px rgba(11,31,58,0.08);--radius:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);overflow-x:hidden;}
+html{overflow-x:hidden;}
 
 .senha-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A,#0d2d55 60%,#0B1F3A);
   display:flex;align-items:center;justify-content:center;z-index:9999;}
@@ -237,7 +238,8 @@ tr:hover td{background:var(--azul-cl);}
 .empty-row td{text-align:center;padding:40px;color:var(--texto2);}
 /* mobile-600 */
 @media(max-width:600px){
-  .header{padding:0 14px;min-height:60px;}
+  .header{padding:0 14px;min-height:60px;flex-wrap:wrap;gap:8px;}
+  .header > div{flex-wrap:wrap;}
   .header-left h1{font-size:16px;}
   .main{padding:18px 14px;}
   .admin-nav{padding:8px 14px;gap:8px;}
@@ -247,11 +249,16 @@ tr:hover td{background:var(--azul-cl);}
   .kpi-ic{width:30px;height:30px;top:12px;right:10px;font-size:14px;}
   .chart-wrap{height:220px;}
   .periodo-bloco{padding:12px 14px;gap:10px;flex-direction:column;align-items:stretch;}
+  .periodo-bloco .range-sep{display:none;}
   .periodo-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .range-filter{gap:6px;flex-wrap:nowrap;overflow-x:auto;}
+  .range-filter{gap:6px;flex-wrap:wrap;}
+  .range-filter select{flex:1;min-width:0;}
+  .prof-select{max-width:100%;width:100%;}
   .destaques{gap:7px;}
   .chip{font-size:11px;padding:6px 10px;}
   .heat-table{min-width:520px;}
+  .grid-main,.grid-2{grid-template-columns:1fr;gap:14px;}
+  .card-box,.chart-card{padding:14px 16px;}
 }
 /* mobile-600-v2 */
 @media(max-width:600px){
@@ -259,6 +266,11 @@ tr:hover td{background:var(--azul-cl);}
   .admin-nav,.portais-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .admin-nav::-webkit-scrollbar,.portais-nav::-webkit-scrollbar{display:none;}
   .admin-nav-btn,.portais-nav-btn{flex-shrink:0;}
+}
+/* mobile muito estreito: 1 KPI por linha */
+@media(max-width:380px){
+  .kpi-row,.cards,.metrics-grid{grid-template-columns:1fr;gap:10px;}
+  .kpi-val{font-size:17px;}
 }
 
 /* ===== OXY — TEMA CLARO INVERTIDO ===== */
