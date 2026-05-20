@@ -489,7 +489,8 @@ async function entrarComGoogle() {
 }
 
 async function checkAuth() {
-  const { data: { user }, error } = await sb.auth.getUser();
+  const { data: { session }, error } = await sb.auth.getSession();
+  const user = session ? session.user : null;
   if (error || !user) {
     mostrarLogin();
     return;

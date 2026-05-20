@@ -392,7 +392,8 @@ function mostrarLogin() {
 }
 
 async function checkAuth() {
-  const { data: { user } } = await sb.auth.getUser();
+  const { data: { session } } = await sb.auth.getSession();
+  const user = session ? session.user : null;
   if (!user) return mostrarLogin();
   const email = (user.email || '').toLowerCase();
 

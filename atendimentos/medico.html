@@ -365,7 +365,8 @@ document.getElementById('login-email').addEventListener('keypress', e => {
 });
 
 async function checkAuth() {
-  const { data: { user } } = await sb.auth.getUser();
+  const { data: { session } } = await sb.auth.getSession();
+  const user = session ? session.user : null;
   if (!user) {
     document.getElementById('login-overlay').style.display = 'flex';
     document.getElementById('cadastro-overlay').style.display = 'none';

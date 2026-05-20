@@ -117,13 +117,33 @@ html{visibility:hidden}</style>
         'https://egpcrqrvctnpxbdjdhtf.supabase.co',
         'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW'
       );
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user) { window.location.replace('/login/'); return; }
-      const { data: me } = await sb.from('users')
-        .select('cards')
-        .eq('email', (user.email || '').toLowerCase())
-        .maybeSingle();
-      const cards = (me && me.cards) || [];
+      // Usa getSession() (lê localStorage, instantâneo) em vez de getUser() (vai no servidor)
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { window.location.replace('/login/'); return; }
+        const user = session.user;
+        const email = (user.email || '').toLowerCase();
+        // Cache de cards em sessionStorage (30 min). Evita query no Supabase a cada navegação.
+        const _cacheKey = '_cards_' + email;
+        const _cacheT   = '_cards_t_' + email;
+        let cards = null;
+        try {
+          const stored = sessionStorage.getItem(_cacheKey);
+          const storedT = parseInt(sessionStorage.getItem(_cacheT) || '0', 10);
+          if (stored && (Date.now() - storedT) < 30 * 60 * 1000) {
+            cards = JSON.parse(stored);
+          }
+        } catch (e) {}
+        if (!cards) {
+          const { data: me } = await sb.from('users')
+            .select('cards')
+            .eq('email', email)
+            .maybeSingle();
+          cards = (me && me.cards) || [];
+          try {
+            sessionStorage.setItem(_cacheKey, JSON.stringify(cards));
+            sessionStorage.setItem(_cacheT, String(Date.now()));
+          } catch (e) {}
+        }
       const podeVer = cards.includes('gestor') || cards.includes('gestor_produtividade');
       if (!podeVer) { window.location.replace('/hub/Gestor_Hub.html'); return; }
       document.documentElement.style.visibility = 'visible';
