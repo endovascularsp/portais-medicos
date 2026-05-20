@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Kanban · Compras · Endovascular SP</title>
+  <link rel="icon" href="../../assets/logo.png" type="image/png"/>
+  <style>html{visibility:hidden}</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    let SB, USER_EMAIL, USER_CARDS = [];
+    (async function() {
+      const _isLocalPreview = location.protocol === 'file:'
+        || location.hostname === 'localhost'
+        || location.hostname === '127.0.0.1';
+      if (_isLocalPreview) {
+        document.documentElement.style.visibility = 'visible';
+        USER_EMAIL = 'preview@local';
+        USER_CARDS = ['compras_aprovador','compras_compradora','compras_financeiro'];
+        return;
+      }
+      try {
+        SB = window.supabase.createClient(
+          'https://egpcrqrvctnpxbdjdhtf.supabase.co',
+          'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW'
+        );
+        const { data: { session } } = await SB.auth.getSession();
+        if (!session) { window.location.replace('/login/'); return; }
+        USER_EMAIL = (session.user.email || '').toLowerCase();
+        const { data: me } = await SB.from('users')
+          .select('cards').eq('email', USER_EMAIL).maybeSingle();
+        USER_CARDS = (me && me.cards) || [];
+        // Kanban: só Compradora, Financeiro, Aprovador ou Gestor
+        const podeVer = USER_CARDS.includes('compras_compradora')
+                     || USER_CARDS.includes('compras_financeiro')
+                     || USER_CARDS.includes('compras_aprovador')
+                     || USER_CARDS.includes('gestor');
+        if (!podeVer) { window.location.replace('../'); return; }
+        document.documentElement.style.visibility = 'visible';
+        window.addEventListener('DOMContentLoaded', inicializar);
+      } catch (e) {
+        console.error('gate erro:', e);
+        window.location.replace('/login/');
+      }
+    })();
+  </script>
+  <style>
+html,body{overflow-x:hidden!important;max-width:100vw;}
+:root{
+  --navy:#0B1F3A;--navy-med:#23476f;--azul:#1A5296;--azul-cl:#D6E8F7;
+  --gold:#A18960;--gold-bg:#F5F0E5;
+  --bg:#F2F5F9;--borda:#C4D4E8;--cinza-cl:#F7FAFD;
+  --texto:#0D1E30;--texto2:#4A6278;
+  --verde:#2D7A3C;--vermelho:#C0392B;--laranja:#D4621A;--roxo:#7e57c2;
+  --sombra:0 2px 10px rgba(11,31,58,0.08);--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+
+.header{background:var(--navy);color:#fff;padding:0 24px;display:flex;align-items:center;
+  justify-content:space-between;height:64px;border-bottom:3px solid var(--azul);}
+.header-logo{display:flex;align-items:center;gap:12px;}
+.header-logo img{width:38px;height:38px;}
+.header-logo h1{font-size:17px;font-weight:800;}
+.header-logo span{font-size:11px;color:rgba(255,255,255,0.7);display:block;margin-top:2px;}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.header-action-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;
+  border-radius:20px;background:rgba(255,255,255,0.10);border:1.5px solid rgba(255,255,255,0.20);
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;
+  transition:all 0.15s;font-family:inherit;}
+.header-action-btn:hover{background:rgba(255,255,255,0.18);}
+.header-action-btn.home{background:rgba(148,163,184,0.15);color:#cbd5e1;}
+
+.toolbar{background:#fff;border-bottom:1px solid var(--borda);padding:12px 24px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.toolbar select,.toolbar input{padding:6px 12px;border:1.5px solid var(--borda);border-radius:8px;
+  font-size:12px;color:var(--navy);background:#fff;font-family:inherit;font-weight:600;}
+.toolbar select:focus,.toolbar input:focus{border-color:var(--gold);outline:none;}
+.toolbar label{font-size:11px;font-weight:700;color:var(--texto2);text-transform:uppercase;
+  letter-spacing:0.4px;margin-right:4px;}
+.toolbar .stats{margin-left:auto;font-size:12px;color:var(--texto2);font-weight:600;}
+.toolbar .stats b{color:var(--navy);}
+
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px 24px;
+  min-height:calc(100vh - 64px - 50px);align-items:flex-start;}
+.col{background:#fff;border:1px solid var(--borda);border-radius:var(--radius);
+  display:flex;flex-direction:column;min-height:120px;}
+.col-header{padding:14px 16px;border-bottom:2px solid;display:flex;align-items:center;
+  justify-content:space-between;}
+.col-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;
+  display:flex;align-items:center;gap:6px;}
+.col-count{font-size:11px;background:var(--cinza-cl);color:var(--navy);padding:2px 8px;
+  border-radius:10px;font-weight:700;}
+.col.aguardando_aprovacao{border-top:none;}
+.col.aguardando_aprovacao .col-header{border-color:var(--laranja);color:var(--laranja);}
+.col.em_cotacao .col-header{border-color:var(--azul);color:var(--azul);}
+.col.aguardando_pagto .col-header{border-color:var(--roxo);color:var(--roxo);}
+.col.concluida .col-header{border-color:var(--verde);color:var(--verde);}
+
+.col-body{padding:10px;display:flex;flex-direction:column;gap:10px;
+  max-height:calc(100vh - 200px);overflow-y:auto;}
+.empty{padding:24px 12px;text-align:center;font-size:12px;color:var(--texto2);font-style:italic;}
+
+.card{background:var(--cinza-cl);border:1px solid var(--borda);border-radius:10px;padding:12px 14px;
+  cursor:pointer;transition:all 0.15s;}
+.card:hover{border-color:var(--gold);background:#fff;transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(11,31,58,0.10);}
+.card-numero{font-size:11px;font-weight:800;color:var(--navy);letter-spacing:0.4px;}
+.card-just{font-size:13px;font-weight:700;color:var(--texto);margin:6px 0;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:10px;}
+.card-meta .tag{padding:2px 7px;border-radius:10px;font-weight:700;background:#fff;
+  border:1px solid var(--borda);color:var(--texto2);}
+.card-meta .tag.urg-alta{background:#FFEBEE;color:var(--vermelho);border-color:#FFCDD2;}
+.card-meta .tag.urg-media{background:#FFF3E0;color:var(--laranja);border-color:#FFE0B2;}
+.card-meta .tag.urg-baixa{background:#E8F5EB;color:var(--verde);border-color:#C8E6C9;}
+.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;
+  padding-top:8px;border-top:1px solid var(--borda);font-size:10px;color:var(--texto2);}
+.card-valor{font-weight:800;color:var(--navy);}
+
+/* === Modal === */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,31,58,0.6);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:90vh;
+  overflow-y:auto;display:flex;flex-direction:column;}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--borda);display:flex;
+  align-items:center;justify-content:space-between;}
+.modal-head h2{font-size:18px;font-weight:800;color:var(--navy);}
+.modal-head .closebtn{background:transparent;border:none;font-size:22px;cursor:pointer;
+  color:var(--texto2);}
+.modal-body{padding:20px 24px;}
+.modal-sec{margin-bottom:18px;}
+.modal-sec h3{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;
+  letter-spacing:0.5px;margin-bottom:8px;}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px;}
+.kv .k{color:var(--texto2);font-weight:600;}
+.kv .v{color:var(--texto);font-weight:600;}
+.item-line{padding:8px 0;border-bottom:1px solid var(--borda);font-size:13px;}
+.item-line:last-child{border:none;}
+.item-line .desc{font-weight:700;color:var(--navy);}
+.item-line .qtd{color:var(--texto2);font-size:12px;}
+.anexo-link{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--gold-bg);
+  border:1px solid var(--gold);border-radius:6px;font-size:12px;color:var(--gold);
+  text-decoration:none;margin:2px 4px 2px 0;}
+.anexo-link:hover{background:var(--gold);color:#fff;}
+.hist-line{padding:6px 0;font-size:12px;color:var(--texto2);}
+.hist-line b{color:var(--navy);}
+
+.modal-foot{padding:16px 24px;border-top:1px solid var(--borda);display:flex;
+  gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+.btn{padding:9px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;
+  border:1.5px solid;transition:all 0.15s;font-family:inherit;}
+.btn.outline{background:#fff;color:var(--texto2);border-color:var(--borda);}
+.btn.outline:hover{background:var(--cinza-cl);}
+.btn.aprovar{background:var(--verde);color:#fff;border-color:var(--verde);}
+.btn.aprovar:hover{filter:brightness(1.1);}
+.btn.recusar{background:#fff;color:var(--vermelho);border-color:var(--vermelho);}
+.btn.recusar:hover{background:var(--vermelho);color:#fff;}
+.btn.cotar{background:var(--azul);color:#fff;border-color:var(--azul);}
+.btn.cotar:hover{filter:brightness(1.1);}
+.btn.pagar{background:var(--roxo);color:#fff;border-color:var(--roxo);}
+.btn.pagar:hover{filter:brightness(1.1);}
+.btn:disabled{opacity:0.5;cursor:wait;}
+
+/* Form embutido no modal (cotar/pagar) */
+.modal-form{background:var(--cinza-cl);border:1px solid var(--borda);border-radius:8px;
+  padding:14px 16px;margin-top:10px;}
+.modal-form .field{margin-bottom:10px;}
+.modal-form .field:last-child{margin-bottom:0;}
+.modal-form label{display:block;font-size:11px;font-weight:700;color:var(--texto2);
+  text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;}
+.modal-form input,.modal-form select,.modal-form textarea{
+  width:100%;padding:8px 12px;border:1.5px solid var(--borda);border-radius:6px;
+  font-size:13px;font-family:inherit;background:#fff;}
+
+/* Toast */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--navy);color:#fff;padding:12px 20px;
+  border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);
+  z-index:2000;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.erro{background:var(--vermelho);}
+.toast.sucesso{background:var(--verde);}
+
+@media(max-width:900px){
+  .kanban{grid-template-columns:1fr;padding:14px;gap:12px;}
+  .col-body{max-height:none;}
+  .toolbar{padding:10px 14px;}
+}
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <img src="../../assets/logo.png" alt="Endo"/>
+    <div><h1>Compras</h1><span>Kanban</span></div>
+  </div>
+  <div class="header-actions">
+    <a href="../" class="header-action-btn">← Compras</a>
+    <a href="../../hub/Gestor_Hub.html" class="header-action-btn home">🏠 Home</a>
+  </div>
+</header>
+
+<div class="toolbar">
+  <label>Centro:</label>
+  <select id="filtro-centro" onchange="aplicarFiltros()">
+    <option value="">Todos</option>
+  </select>
+  <label>Urgência:</label>
+  <select id="filtro-urg" onchange="aplicarFiltros()">
+    <option value="">Todas</option>
+    <option value="alta">🔥 Alta</option>
+    <option value="media">⏱️ Média</option>
+    <option value="baixa">😌 Baixa</option>
+  </select>
+  <label>Busca:</label>
+  <input type="text" id="filtro-busca" placeholder="número ou justificativa" oninput="aplicarFiltros()"/>
+  <div class="stats" id="stats">—</div>
+</div>
+
+<div class="kanban">
+  <div class="col aguardando_aprovacao">
+    <div class="col-header"><div class="col-title">⏳ Aguardando Aprovação</div><div class="col-count" id="c-ap">0</div></div>
+    <div class="col-body" id="col-aguardando_aprovacao"></div>
+  </div>
+  <div class="col em_cotacao">
+    <div class="col-header"><div class="col-title">💼 Em Cotação</div><div class="col-count" id="c-co">0</div></div>
+    <div class="col-body" id="col-em_cotacao"></div>
+  </div>
+  <div class="col aguardando_pagto">
+    <div class="col-header"><div class="col-title">💳 Aguardando Pagto</div><div class="col-count" id="c-pa">0</div></div>
+    <div class="col-body" id="col-aguardando_pagto"></div>
+  </div>
+  <div class="col concluida">
+    <div class="col-header"><div class="col-title">✅ Concluída</div><div class="col-count" id="c-cn">0</div></div>
+    <div class="col-body" id="col-concluida"></div>
+  </div>
+</div>
+
+<!-- === Modal de Detalhes === -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)fecharModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="m-numero">Solicitação —</h2>
+      <button class="closebtn" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+    <div class="modal-foot" id="m-foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let TODAS = [];          // todas as solicitações com joins
+let FORNECEDORES = [];
+let CENTROS = [];
+let SEL = null;          // solicitação selecionada no modal
+
+async function inicializar() {
+  await Promise.all([carregarMeta(), carregarSolicitacoes()]);
+  renderKanban();
+}
+
+async function carregarMeta() {
+  if (!SB) {
+    CENTROS = [{id:1,nome:'Endovascular'},{id:2,nome:'Oxy Recovery'}];
+    FORNECEDORES = [{id:1,nome:'KALUNGA'},{id:2,nome:'MERCADO LIVRE'}];
+  } else {
+    const [c, f] = await Promise.all([
+      SB.from('compras_centros_custo').select('id,nome').eq('ativo',true).order('nome'),
+      SB.from('compras_fornecedores').select('id,nome').eq('ativo',true).order('nome')
+    ]);
+    CENTROS = c.data || [];
+    FORNECEDORES = f.data || [];
+  }
+  const sel = document.getElementById('filtro-centro');
+  sel.innerHTML = '<option value="">Todos</option>' +
+    CENTROS.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+async function carregarSolicitacoes() {
+  if (!SB) {
+    // Mock pra preview local
+    TODAS = [
+      {id:1,numero:'2026-001',status:'aguardando_aprovacao',urgencia:'alta',
+       solicitante_email:'heloisa@end.com.br',justificativa:'Material de escritório urgente',
+       centro_custo_id:1,departamento_id:2,centro_nome:'Endovascular',depto_nome:'Concierge',
+       criado_em:'2026-05-20T14:00:00',itens_count:2,total_estimado:450},
+      {id:2,numero:'2026-002',status:'em_cotacao',urgencia:'media',
+       solicitante_email:'mayara@end.com.br',justificativa:'Compras mensais',
+       centro_custo_id:1,centro_nome:'Endovascular',depto_nome:'Recepção',
+       criado_em:'2026-05-19T10:00:00',itens_count:5,total_estimado:1200},
+    ];
+    return;
+  }
+  const { data, error } = await SB.from('compras_solicitacoes')
+    .select(`
+      id, numero, status, urgencia, solicitante_email, justificativa,
+      centro_custo_id, departamento_id, criado_em,
+      aprovador_email, comprador_email, valor_final, metodo_pagamento,
+      compras_centros_custo(nome),
+      compras_departamentos(nome),
+      compras_itens(id, valor_estimado)
+    `)
+    .order('criado_em', { ascending: false });
+  if (error) { showToast('Erro carregando: ' + error.message, 'erro'); return; }
+  TODAS = (data || []).map(s => ({
+    ...s,
+    centro_nome: s.compras_centros_custo?.nome || '—',
+    depto_nome: s.compras_departamentos?.nome || '—',
+    itens_count: (s.compras_itens || []).length,
+    total_estimado: (s.compras_itens || []).reduce((t,i) => t + (parseFloat(i.valor_estimado) || 0), 0)
+  }));
+}
+
+function aplicarFiltros() {
+  renderKanban();
+}
+
+function renderKanban() {
+  const fc = document.getElementById('filtro-centro').value;
+  const fu = document.getElementById('filtro-urg').value;
+  const fb = (document.getElementById('filtro-busca').value || '').toLowerCase().trim();
+
+  const filtrados = TODAS.filter(s => {
+    if (fc && String(s.centro_custo_id) !== fc) return false;
+    if (fu && s.urgencia !== fu) return false;
+    if (fb && !((s.numero || '') + ' ' + (s.justificativa || '')).toLowerCase().includes(fb)) return false;
+    return true;
+  });
+
+  const cols = {aguardando_aprovacao:[], em_cotacao:[], aguardando_pagto:[], concluida:[]};
+  for (const s of filtrados) {
+    if (s.status === 'recusada') continue;
+    if (cols[s.status]) cols[s.status].push(s);
+  }
+  for (const [st, lista] of Object.entries(cols)) {
+    const el = document.getElementById('col-' + st);
+    if (lista.length === 0) {
+      el.innerHTML = '<div class="empty">Nenhuma solicitação</div>';
+    } else {
+      el.innerHTML = lista.map(s => cardHtml(s)).join('');
+    }
+  }
+  document.getElementById('c-ap').textContent = cols.aguardando_aprovacao.length;
+  document.getElementById('c-co').textContent = cols.em_cotacao.length;
+  document.getElementById('c-pa').textContent = cols.aguardando_pagto.length;
+  document.getElementById('c-cn').textContent = cols.concluida.length;
+  document.getElementById('stats').innerHTML =
+    `<b>${filtrados.length}</b> solicitação(ões) · <b>R$ ${fmtBRL(filtrados.reduce((t,s)=>t+s.total_estimado,0))}</b> estimado`;
+}
+
+function cardHtml(s) {
+  const dt = new Date(s.criado_em).toLocaleDateString('pt-BR');
+  const urg = s.urgencia === 'alta' ? '🔥 Alta' : s.urgencia === 'baixa' ? '😌 Baixa' : '⏱️ Média';
+  const valor = s.status === 'aguardando_pagto' || s.status === 'concluida'
+    ? (s.valor_final != null ? `R$ ${fmtBRL(s.valor_final)}` : '—')
+    : (s.total_estimado > 0 ? `R$ ${fmtBRL(s.total_estimado)} est.` : '');
+  return `
+    <div class="card" onclick="abrirModal(${s.id})">
+      <div class="card-numero">#${s.numero}</div>
+      <div class="card-just">${escapeHtml(s.justificativa || '—')}</div>
+      <div class="card-meta">
+        <span class="tag urg-${s.urgencia}">${urg}</span>
+        <span class="tag">${escapeHtml(s.depto_nome || '—')}</span>
+        <span class="tag">${escapeHtml(s.centro_nome || '—')}</span>
+        <span class="tag">${s.itens_count} item(ns)</span>
+      </div>
+      <div class="card-footer">
+        <span>${escapeHtml((s.solicitante_email || '').split('@')[0])} · ${dt}</span>
+        <span class="card-valor">${valor}</span>
+      </div>
+    </div>`;
+}
+
+function fmtBRL(v) {
+  return (parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function escapeHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// === Modal de detalhes ===
+
+async function abrirModal(solicitacaoId) {
+  SEL = TODAS.find(s => s.id === solicitacaoId);
+  if (!SEL) return;
+  document.getElementById('m-numero').textContent = `Solicitação #${SEL.numero}`;
+  const body = document.getElementById('m-body');
+
+  // Carrega itens detalhados + anexos + historico
+  let itens = [], anexos = [], hist = [];
+  if (SB) {
+    const [iR, aR, hR] = await Promise.all([
+      SB.from('compras_itens').select('*, compras_fornecedores(nome)').eq('solicitacao_id', SEL.id),
+      SB.from('compras_anexos').select('*').eq('solicitacao_id', SEL.id),
+      SB.from('compras_historico').select('*').eq('solicitacao_id', SEL.id).order('criado_em',{ascending:true})
+    ]);
+    itens = iR.data || [];
+    anexos = aR.data || [];
+    hist = hR.data || [];
+  } else {
+    itens = [{descricao:'Papel A4 75g',quantidade:10,unidade:'cx',valor_estimado:250,compras_fornecedores:{nome:'KALUNGA'}}];
+  }
+
+  body.innerHTML = `
+    <div class="modal-sec">
+      <h3>Identificação</h3>
+      <div class="kv">
+        <div class="k">Solicitante</div><div class="v">${escapeHtml(SEL.solicitante_email)}</div>
+        <div class="k">Departamento</div><div class="v">${escapeHtml(SEL.depto_nome)}</div>
+        <div class="k">Centro de custo</div><div class="v">${escapeHtml(SEL.centro_nome)}</div>
+        <div class="k">Urgência</div><div class="v">${SEL.urgencia}</div>
+        <div class="k">Status</div><div class="v">${SEL.status}</div>
+        ${SEL.aprovador_email ? `<div class="k">Aprovador</div><div class="v">${escapeHtml(SEL.aprovador_email)}</div>` : ''}
+        ${SEL.valor_final != null ? `<div class="k">Valor final</div><div class="v">R$ ${fmtBRL(SEL.valor_final)}</div>` : ''}
+        ${SEL.metodo_pagamento ? `<div class="k">Método pagto</div><div class="v">${SEL.metodo_pagamento}</div>` : ''}
+      </div>
+    </div>
+    <div class="modal-sec">
+      <h3>Justificativa</h3>
+      <div style="font-size:13px;color:var(--texto);line-height:1.5;">${escapeHtml(SEL.justificativa)}</div>
+    </div>
+    <div class="modal-sec">
+      <h3>Itens (${itens.length})</h3>
+      ${itens.map(i => `
+        <div class="item-line">
+          <div class="desc">${escapeHtml(i.descricao)}</div>
+          <div class="qtd">${i.quantidade} ${i.unidade || ''} ${i.compras_fornecedores?.nome ? '· ' + escapeHtml(i.compras_fornecedores.nome) : ''} ${i.valor_estimado ? '· R$ ' + fmtBRL(i.valor_estimado) + ' estimado' : ''}</div>
+        </div>
+      `).join('')}
+    </div>
+    ${anexos.length > 0 ? `
+    <div class="modal-sec">
+      <h3>Anexos (${anexos.length})</h3>
+      ${anexos.map(a => anexoHtml(a)).join('')}
+    </div>` : ''}
+    ${hist.length > 0 ? `
+    <div class="modal-sec">
+      <h3>Histórico</h3>
+      ${hist.map(h => `
+        <div class="hist-line">
+          <b>${h.acao}</b> por ${escapeHtml((h.por_email||'').split('@')[0])} em ${new Date(h.criado_em).toLocaleString('pt-BR')}
+          ${h.comentario ? '<br/><i style="opacity:0.8">' + escapeHtml(h.comentario) + '</i>' : ''}
+        </div>
+      `).join('')}
+    </div>` : ''}
+  `;
+
+  // Renderiza ações conforme status
+  renderAcoes(SEL.status);
+
+  document.getElementById('modal').classList.add('show');
+}
+
+function anexoHtml(a) {
+  const ic = a.tipo === 'link' ? '🔗' : a.tipo === 'imagem' ? '🖼️' : a.tipo === 'excel' ? '📊' : '📄';
+  if (a.tipo === 'link') {
+    return `<a class="anexo-link" href="${escapeHtml(a.url_externa)}" target="_blank">${ic} ${escapeHtml(a.url_externa.slice(0,60))}</a>`;
+  }
+  // Pra anexos no Storage, gera URL signed
+  return `<a class="anexo-link" href="#" onclick="baixarAnexo('${a.file_path}', '${escapeHtml(a.filename)}');return false;">${ic} ${escapeHtml(a.filename)}</a>`;
+}
+
+async function baixarAnexo(path, filename) {
+  if (!SB) { showToast('(preview) Download simulado: ' + filename, 'sucesso'); return; }
+  const { data, error } = await SB.storage.from('compras-anexos').createSignedUrl(path, 60);
+  if (error) { showToast('Erro download: ' + error.message, 'erro'); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+function fecharModal() {
+  document.getElementById('modal').classList.remove('show');
+  SEL = null;
+}
+
+function renderAcoes(status) {
+  const foot = document.getElementById('m-foot');
+  const podeAprovar = USER_CARDS.includes('compras_aprovador') || USER_CARDS.includes('compras_compradora') || USER_CARDS.includes('gestor');
+  const podeCotar   = USER_CARDS.includes('compras_compradora') || USER_CARDS.includes('gestor');
+  const podePagar   = USER_CARDS.includes('compras_financeiro') || USER_CARDS.includes('gestor');
+
+  let html = '<button class="btn outline" onclick="fecharModal()">Fechar</button>';
+  if (status === 'aguardando_aprovacao' && podeAprovar) {
+    html += '<button class="btn recusar" onclick="acaoRecusar()">❌ Recusar</button>';
+    html += '<button class="btn aprovar" onclick="acaoAprovar()">✅ Aprovar</button>';
+  } else if (status === 'em_cotacao' && podeCotar) {
+    html += '<button class="btn cotar" onclick="acaoCotar()">💼 Mover pra Aguardando Pagto</button>';
+  } else if (status === 'aguardando_pagto' && podePagar) {
+    html += '<button class="btn pagar" onclick="acaoPagar()">💳 Marcar como Paga</button>';
+  }
+  foot.innerHTML = html;
+}
+
+// === Ações de transição ===
+
+async function acaoAprovar() {
+  const coment = prompt('Comentário (opcional):') || null;
+  await transicionar({status:'em_cotacao', aprovado_em: new Date().toISOString(), aprovador_email: USER_EMAIL}, 'aprovada', coment);
+}
+
+async function acaoRecusar() {
+  const motivo = prompt('Motivo da recusa (obrigatório):');
+  if (!motivo || !motivo.trim()) return;
+  await transicionar({status:'recusada', motivo_recusa: motivo.trim(), aprovado_em: new Date().toISOString(), aprovador_email: USER_EMAIL}, 'recusada', motivo);
+}
+
+async function acaoCotar() {
+  document.getElementById('m-foot').innerHTML = `
+    <div class="modal-form" style="flex:1 1 100%;">
+      <div class="field">
+        <label>Valor final (R$) *</label>
+        <input type="number" min="0" step="0.01" id="cot-valor" placeholder="ex: 1450.00"/>
+      </div>
+      <div class="field">
+        <label>Método de pagamento *</label>
+        <select id="cot-metodo">
+          <option value="">— Selecione —</option>
+          <option value="pix">PIX</option>
+          <option value="boleto">Boleto</option>
+          <option value="cartao_credito">Cartão de Crédito</option>
+          <option value="link_pagamento">Link de pagamento</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Comentário (opcional)</label>
+        <textarea id="cot-coment" placeholder="Ex: cotação validada com 3 fornecedores"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn outline" onclick="abrirModal(${SEL.id})">Cancelar</button>
+        <button class="btn cotar" onclick="confirmarCotar()">Confirmar cotação →</button>
+      </div>
+    </div>`;
+}
+
+async function confirmarCotar() {
+  const valor = parseFloat(document.getElementById('cot-valor').value);
+  const metodo = document.getElementById('cot-metodo').value;
+  const coment = document.getElementById('cot-coment').value.trim() || null;
+  if (!valor || valor <= 0) { showToast('Informe valor final', 'erro'); return; }
+  if (!metodo) { showToast('Selecione método de pagamento', 'erro'); return; }
+  await transicionar({
+    status:'aguardando_pagto', valor_final: valor, metodo_pagamento: metodo,
+    comprador_email: USER_EMAIL, comprado_em: new Date().toISOString()
+  }, 'cotada', `Valor R$ ${fmtBRL(valor)} · ${metodo}` + (coment ? ' · ' + coment : ''));
+}
+
+async function acaoPagar() {
+  const coment = prompt('Comentário do pagamento (ex: ID transação, opcional):') || null;
+  await transicionar({status:'concluida', pago_em: new Date().toISOString(), pago_por: USER_EMAIL}, 'paga', coment);
+}
+
+async function transicionar(updates, acao, comentario) {
+  if (!SB) {
+    showToast('(preview) Ação simulada: ' + acao, 'sucesso');
+    fecharModal();
+    return;
+  }
+  const { error: e1 } = await SB.from('compras_solicitacoes').update(updates).eq('id', SEL.id);
+  if (e1) { showToast('Erro: ' + e1.message, 'erro'); return; }
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao, por_email: USER_EMAIL, comentario
+  });
+  showToast(`Solicitação ${SEL.numero}: ${acao}`, 'sucesso');
+  fecharModal();
+  await carregarSolicitacoes();
+  renderKanban();
+}
+
+// === Toast ===
+function showToast(msg, tipo) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (tipo || '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Em preview local
+if (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  window.addEventListener('DOMContentLoaded', inicializar);
+}
+</script>
+</body>
+</html>
