@@ -262,6 +262,12 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       <input type="text" id="f-senha" placeholder="ex: jul2026b — senha que abre o Hub do médico" autocomplete="off" />
       <div class="form-info">Só pra médico. É a senha que decripta o portal dele — o sistema injeta sozinho no login Google (o médico nunca digita). Ao <strong>editar</strong>, deixe em branco para manter a atual.</div>
 
+      <label>Departamento</label>
+      <select id="f-departamento">
+        <option value="">— Sem departamento —</option>
+      </select>
+      <div class="form-info">Define quem aprova as solicitações de compra desse funcionário (gestor do departamento). Opcional pra médicos e admins; <strong>obrigatório</strong> pra funcionários que vão usar o Portal Compras.</div>
+
       <label>Cards permitidos *</label>
       <div class="cards-grupo-label">⚙️ Gestor (guarda-chuva — marca todos os sub-cards)</div>
       <div class="cards-checks">
@@ -318,6 +324,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let CURRENT_USER = null;
 let USUARIOS = [];
+let DEPARTAMENTOS = []; // populado em carregarDepartamentos()
 let MODAL_EDIT_EMAIL = null;  // null = criando; senão = editando
 
 const $ = id => document.getElementById(id);
@@ -363,7 +370,18 @@ function mostrarApp() {
 }
 async function sair() { await sb.auth.signOut(); location.reload(); }
 
+async function carregarDepartamentos() {
+  const { data, error } = await sb.from('compras_departamentos')
+    .select('id, nome').eq('ativo', true).order('nome');
+  if (error) { console.warn('Falha ao carregar departamentos:', error.message); return; }
+  DEPARTAMENTOS = data || [];
+  const sel = $('f-departamento');
+  sel.innerHTML = '<option value="">— Sem departamento —</option>' +
+    DEPARTAMENTOS.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+}
+
 async function carregar() {
+  await carregarDepartamentos();
   const { data, error } = await sb.from('users').select('*').order('role,name');
   if (error) {
     $('tbody').innerHTML = '<tr><td colspan="6" class="empty">Erro: ' + error.message + '</td></tr>';
@@ -433,6 +451,7 @@ function abrirNovo() {
   $('f-role').value = 'recepcao';
   $('f-slug').value = '';
   $('f-senha').value = '';
+  $('f-departamento').value = '';
   document.querySelectorAll('.cards-checks input').forEach(i => i.checked = false);
   $('form-erro').textContent = '';
   $('btn-excluir').style.display = 'none';
@@ -450,6 +469,7 @@ function editar(email) {
   $('f-role').value = u.role || 'recepcao';
   $('f-slug').value = u.slug || '';
   $('f-senha').value = '';
+  $('f-departamento').value = u.departamento_id || '';
   document.querySelectorAll('.cards-checks input').forEach(i => {
     i.checked = (u.cards || []).includes(i.value);
   });
@@ -469,6 +489,7 @@ async function salvar() {
   const slug = $('f-slug').value.trim() || null;
   const senha = $('f-senha').value.trim();
   const cards = [...document.querySelectorAll('.cards-checks input:checked')].map(i => i.value);
+  const departamento_id = $('f-departamento').value ? parseInt($('f-departamento').value, 10) : null;
 
   if (!email || !email.includes('@')) { $('form-erro').textContent = 'Email inválido.'; return; }
   if (!name) { $('form-erro').textContent = 'Nome obrigatório.'; return; }
@@ -487,10 +508,15 @@ async function salvar() {
     if (!MODAL_EDIT_EMAIL && !senha) { $('form-erro').textContent = 'Médico precisa da Senha legada do Hub (a que abre o portal dele). Sem ela o acesso via Google ainda vai pedir senha.'; return; }
   }
 
-  const payload = { email, name, role, slug, cards };
+  // Aviso de UX: solicitante de Compras sem departamento não terá aprovador
+  if (cards.includes('compras_solicitante') && !departamento_id) {
+    if (!confirm('Esse usuário tem o card Compras-Solicitante mas sem Departamento. As solicitações dele não terão aprovador automático. Salvar mesmo assim?')) return;
+  }
+
+  const payload = { email, name, role, slug, cards, departamento_id };
 
   if (MODAL_EDIT_EMAIL) {
-    const { error } = await sb.from('users').update({ name, role, slug, cards }).eq('email', email);
+    const { error } = await sb.from('users').update({ name, role, slug, cards, departamento_id }).eq('email', email);
     if (error) { $('form-erro').textContent = 'Erro: ' + error.message; return; }
   } else {
     const { error } = await sb.from('users').insert(payload);
