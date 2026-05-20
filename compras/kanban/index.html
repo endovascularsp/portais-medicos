@@ -81,21 +81,29 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .toolbar .stats{margin-left:auto;font-size:12px;color:var(--texto2);font-weight:600;}
 .toolbar .stats b{color:var(--navy);}
 
-.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px 24px;
-  min-height:calc(100vh - 64px - 50px);align-items:flex-start;}
+/* 7 colunas — scroll horizontal natural quando aperta */
+.kanban{display:grid;grid-template-columns:repeat(7,minmax(220px,1fr));gap:10px;padding:14px 20px;
+  min-height:calc(100vh - 64px - 50px);align-items:flex-start;overflow-x:auto;}
 .col{background:#fff;border:1px solid var(--borda);border-radius:var(--radius);
-  display:flex;flex-direction:column;min-height:120px;}
-.col-header{padding:14px 16px;border-bottom:2px solid;display:flex;align-items:center;
-  justify-content:space-between;}
-.col-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;
-  display:flex;align-items:center;gap:6px;}
+  display:flex;flex-direction:column;min-height:120px;min-width:0;}
+.col-header{padding:12px 14px;border-bottom:2px solid;display:flex;align-items:center;
+  justify-content:space-between;gap:6px;}
+.col-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.4px;
+  display:flex;align-items:center;gap:5px;min-width:0;}
+.col-title .num{display:inline-flex;width:18px;height:18px;background:currentColor;color:#fff;
+  border-radius:50%;font-size:10px;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
+.col-title .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .col-count{font-size:11px;background:var(--cinza-cl);color:var(--navy);padding:2px 8px;
-  border-radius:10px;font-weight:700;}
-.col.aguardando_aprovacao{border-top:none;}
+  border-radius:10px;font-weight:700;flex-shrink:0;}
+
+/* Cores por etapa do novo fluxo */
+.col.compras_pendentes    .col-header{border-color:#94a3b8;color:#475569;}
 .col.aguardando_aprovacao .col-header{border-color:var(--laranja);color:var(--laranja);}
-.col.em_cotacao .col-header{border-color:var(--azul);color:var(--azul);}
-.col.aguardando_pagto .col-header{border-color:var(--roxo);color:var(--roxo);}
-.col.concluida .col-header{border-color:var(--verde);color:var(--verde);}
+.col.compra_aprovada      .col-header{border-color:var(--verde);color:var(--verde);}
+.col.compra_realizada     .col-header{border-color:var(--azul);color:var(--azul);}
+.col.inclusao_conta_azul  .col-header{border-color:var(--roxo);color:var(--roxo);}
+.col.recebimento          .col-header{border-color:#0891b2;color:#0891b2;}
+.col.concluida            .col-header{border-color:var(--navy);color:var(--navy);}
 
 .col-body{padding:10px;display:flex;flex-direction:column;gap:10px;
   max-height:calc(100vh - 200px);overflow-y:auto;}
@@ -206,10 +214,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <label>Status:</label>
   <select id="filtro-status" onchange="aplicarFiltros()">
     <option value="">Todos</option>
-    <option value="aguardando_aprovacao">⏳ Aguardando Aprovação</option>
-    <option value="em_cotacao">💼 Em Cotação</option>
-    <option value="aguardando_pagto">💳 Aguardando Pagto</option>
-    <option value="concluida">✅ Concluída</option>
+    <option value="compras_pendentes">① Compras Pendentes</option>
+    <option value="aguardando_aprovacao">② Aguardando Aprovação</option>
+    <option value="compra_aprovada">③ Compra Aprovada</option>
+    <option value="compra_realizada">④ Compra Realizada</option>
+    <option value="inclusao_conta_azul">⑤ Inclusão Conta Azul</option>
+    <option value="recebimento">⑥ Recebimento</option>
+    <option value="concluida">⑦ Concluída</option>
     <option value="recusada">❌ Recusada</option>
   </select>
   <label>Centro de Custo:</label>
@@ -229,20 +240,32 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 </div>
 
 <div class="kanban">
+  <div class="col compras_pendentes">
+    <div class="col-header"><div class="col-title"><span class="num">1</span><span class="lbl">Compras Pendentes</span></div><div class="col-count" id="c-1">0</div></div>
+    <div class="col-body" id="col-compras_pendentes"></div>
+  </div>
   <div class="col aguardando_aprovacao">
-    <div class="col-header"><div class="col-title">⏳ Aguardando Aprovação</div><div class="col-count" id="c-ap">0</div></div>
+    <div class="col-header"><div class="col-title"><span class="num">2</span><span class="lbl">Aguardando Aprovação</span></div><div class="col-count" id="c-2">0</div></div>
     <div class="col-body" id="col-aguardando_aprovacao"></div>
   </div>
-  <div class="col em_cotacao">
-    <div class="col-header"><div class="col-title">💼 Em Cotação</div><div class="col-count" id="c-co">0</div></div>
-    <div class="col-body" id="col-em_cotacao"></div>
+  <div class="col compra_aprovada">
+    <div class="col-header"><div class="col-title"><span class="num">3</span><span class="lbl">Compra Aprovada</span></div><div class="col-count" id="c-3">0</div></div>
+    <div class="col-body" id="col-compra_aprovada"></div>
   </div>
-  <div class="col aguardando_pagto">
-    <div class="col-header"><div class="col-title">💳 Aguardando Pagto</div><div class="col-count" id="c-pa">0</div></div>
-    <div class="col-body" id="col-aguardando_pagto"></div>
+  <div class="col compra_realizada">
+    <div class="col-header"><div class="col-title"><span class="num">4</span><span class="lbl">Compra Realizada</span></div><div class="col-count" id="c-4">0</div></div>
+    <div class="col-body" id="col-compra_realizada"></div>
+  </div>
+  <div class="col inclusao_conta_azul">
+    <div class="col-header"><div class="col-title"><span class="num">5</span><span class="lbl">Inclusão Conta Azul</span></div><div class="col-count" id="c-5">0</div></div>
+    <div class="col-body" id="col-inclusao_conta_azul"></div>
+  </div>
+  <div class="col recebimento">
+    <div class="col-header"><div class="col-title"><span class="num">6</span><span class="lbl">Recebimento</span></div><div class="col-count" id="c-6">0</div></div>
+    <div class="col-body" id="col-recebimento"></div>
   </div>
   <div class="col concluida">
-    <div class="col-header"><div class="col-title">✅ Concluída</div><div class="col-count" id="c-cn">0</div></div>
+    <div class="col-header"><div class="col-title"><span class="num">7</span><span class="lbl">Concluída</span></div><div class="col-count" id="c-7">0</div></div>
     <div class="col-body" id="col-concluida"></div>
   </div>
 </div>
@@ -306,9 +329,14 @@ async function carregarSolicitacoes() {
   }
   const { data, error } = await SB.from('compras_solicitacoes')
     .select(`
-      id, numero, status, urgencia, solicitante_email, justificativa,
-      centro_custo_id, departamento_id, criado_em,
-      aprovador_email, comprador_email, valor_final, metodo_pagamento,
+      id, numero, status, urgencia, solicitante_email, justificativa, observacoes,
+      centro_custo_id, departamento_id, criado_em, motivo_recusa,
+      encaminhado_aprovacao_em,
+      aprovador_email, aprovado_em,
+      comprador_email, comprado_em, valor_final, metodo_pagamento,
+      conta_azul_em, conta_azul_por, conta_azul_ref,
+      recebido_em, recebido_por,
+      encerrado_em, encerrado_por,
       compras_centros_custo(nome),
       compras_departamentos(nome),
       compras_itens(id, valor_estimado)
@@ -342,23 +370,30 @@ function renderKanban() {
     return true;
   });
 
-  const cols = {aguardando_aprovacao:[], em_cotacao:[], aguardando_pagto:[], concluida:[]};
+  const cols = {
+    compras_pendentes:[], aguardando_aprovacao:[], compra_aprovada:[],
+    compra_realizada:[], inclusao_conta_azul:[], recebimento:[], concluida:[]
+  };
   for (const s of filtrados) {
     if (s.status === 'recusada') continue;
     if (cols[s.status]) cols[s.status].push(s);
   }
   for (const [st, lista] of Object.entries(cols)) {
     const el = document.getElementById('col-' + st);
+    if (!el) continue;
     if (lista.length === 0) {
       el.innerHTML = '<div class="empty">Nenhuma solicitação</div>';
     } else {
       el.innerHTML = lista.map(s => cardHtml(s)).join('');
     }
   }
-  document.getElementById('c-ap').textContent = cols.aguardando_aprovacao.length;
-  document.getElementById('c-co').textContent = cols.em_cotacao.length;
-  document.getElementById('c-pa').textContent = cols.aguardando_pagto.length;
-  document.getElementById('c-cn').textContent = cols.concluida.length;
+  document.getElementById('c-1').textContent = cols.compras_pendentes.length;
+  document.getElementById('c-2').textContent = cols.aguardando_aprovacao.length;
+  document.getElementById('c-3').textContent = cols.compra_aprovada.length;
+  document.getElementById('c-4').textContent = cols.compra_realizada.length;
+  document.getElementById('c-5').textContent = cols.inclusao_conta_azul.length;
+  document.getElementById('c-6').textContent = cols.recebimento.length;
+  document.getElementById('c-7').textContent = cols.concluida.length;
   document.getElementById('stats').innerHTML =
     `<b>${filtrados.length}</b> solicitação(ões) · <b>R$ ${fmtBRL(filtrados.reduce((t,s)=>t+s.total_estimado,0))}</b> estimado`;
 }
@@ -366,8 +401,10 @@ function renderKanban() {
 function cardHtml(s) {
   const dt = new Date(s.criado_em).toLocaleDateString('pt-BR');
   const urg = s.urgencia === 'alta' ? '🔥 Alta' : s.urgencia === 'baixa' ? '😌 Baixa' : '⏱️ Média';
-  const valor = s.status === 'aguardando_pagto' || s.status === 'concluida'
-    ? (s.valor_final != null ? `R$ ${fmtBRL(s.valor_final)}` : '—')
+  // Após compra realizada já temos valor final; antes mostra estimado
+  const temValorFinal = ['compra_realizada','inclusao_conta_azul','recebimento','concluida'].includes(s.status);
+  const valor = temValorFinal && s.valor_final != null
+    ? `R$ ${fmtBRL(s.valor_final)}`
     : (s.total_estimado > 0 ? `R$ ${fmtBRL(s.total_estimado)} est.` : '');
   return `
     <div class="card" onclick="abrirModal(${s.id})">
@@ -426,8 +463,12 @@ async function abrirModal(solicitacaoId) {
         <div class="k">Urgência</div><div class="v">${SEL.urgencia}</div>
         <div class="k">Status</div><div class="v">${SEL.status}</div>
         ${SEL.aprovador_email ? `<div class="k">Aprovador</div><div class="v">${escapeHtml(SEL.aprovador_email)}</div>` : ''}
+        ${SEL.comprador_email ? `<div class="k">Compradora</div><div class="v">${escapeHtml(SEL.comprador_email)}</div>` : ''}
         ${SEL.valor_final != null ? `<div class="k">Valor final</div><div class="v">R$ ${fmtBRL(SEL.valor_final)}</div>` : ''}
         ${SEL.metodo_pagamento ? `<div class="k">Método pagto</div><div class="v">${SEL.metodo_pagamento}</div>` : ''}
+        ${SEL.conta_azul_ref ? `<div class="k">Conta Azul ref</div><div class="v">${escapeHtml(SEL.conta_azul_ref)}</div>` : ''}
+        ${SEL.recebido_por ? `<div class="k">Recebido por</div><div class="v">${escapeHtml(SEL.recebido_por)} em ${new Date(SEL.recebido_em).toLocaleDateString('pt-BR')}</div>` : ''}
+        ${SEL.motivo_recusa ? `<div class="k" style="color:var(--vermelho)">Motivo recusa</div><div class="v" style="color:var(--vermelho)">${escapeHtml(SEL.motivo_recusa)}</div>` : ''}
       </div>
     </div>
     <div class="modal-sec">
@@ -489,45 +530,99 @@ function fecharModal() {
 
 function renderAcoes(status) {
   const foot = document.getElementById('m-foot');
-  const podeAprovar = USER_CARDS.includes('compras_aprovador') || USER_CARDS.includes('compras_compradora') || USER_CARDS.includes('gestor');
-  const podeCotar   = USER_CARDS.includes('compras_compradora') || USER_CARDS.includes('gestor');
-  const podePagar   = USER_CARDS.includes('compras_financeiro') || USER_CARDS.includes('gestor');
+  const ehCompradora = USER_CARDS.includes('compras_compradora') || USER_CARDS.includes('gestor');
+  const ehAprovador  = USER_CARDS.includes('compras_aprovador')  || USER_CARDS.includes('gestor');
+  const ehFinanceiro = USER_CARDS.includes('compras_financeiro') || USER_CARDS.includes('gestor');
+  const temAlgumCard = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
 
   let html = '<button class="btn outline" onclick="fecharModal()">Fechar</button>';
-  if (status === 'aguardando_aprovacao' && podeAprovar) {
+
+  // Etapa 1 — Compradora tria: encaminha pra aprovação ou aprova direto
+  if (status === 'compras_pendentes' && ehCompradora) {
+    html += '<button class="btn recusar" onclick="acaoRecusar()">❌ Recusar</button>';
+    html += '<button class="btn outline" onclick="acaoEncaminharAprovacao()">↗️ Encaminhar pra Aprovação</button>';
+    html += '<button class="btn aprovar" onclick="acaoAprovarDireto()">✅ Aprovar direto</button>';
+  }
+  // Etapa 2 — Head Op (aprovador) decide
+  else if (status === 'aguardando_aprovacao' && ehAprovador) {
     html += '<button class="btn recusar" onclick="acaoRecusar()">❌ Recusar</button>';
     html += '<button class="btn aprovar" onclick="acaoAprovar()">✅ Aprovar</button>';
-  } else if (status === 'em_cotacao' && podeCotar) {
-    html += '<button class="btn cotar" onclick="acaoCotar()">💼 Mover pra Aguardando Pagto</button>';
-  } else if (status === 'aguardando_pagto' && podePagar) {
-    html += '<button class="btn pagar" onclick="acaoPagar()">💳 Marcar como Paga</button>';
   }
+  // Etapa 3 — Compradora vai executar e marcar como Comprada (com valor final + método)
+  else if (status === 'compra_aprovada' && ehCompradora) {
+    html += '<button class="btn cotar" onclick="acaoMarcarComprada()">💼 Marcar como Comprada</button>';
+  }
+  // Etapa 4 — Financeiro lança no Conta Azul
+  else if (status === 'compra_realizada' && ehFinanceiro) {
+    html += '<button class="btn pagar" onclick="acaoLancarContaAzul()">📒 Lançar no Conta Azul</button>';
+  }
+  // Etapa 5 — Quem recebe fisicamente (qualquer compras_*) marca chegada
+  else if (status === 'inclusao_conta_azul' && temAlgumCard) {
+    html += '<button class="btn cotar" onclick="acaoMarcarRecebido()">📦 Marcar como Recebido</button>';
+  }
+  // Etapa 6 — Compradora encerra
+  else if (status === 'recebimento' && ehCompradora) {
+    html += '<button class="btn aprovar" onclick="acaoEncerrar()">✅ Encerrar</button>';
+  }
+  // Etapa 7 ou Recusada — apenas visualização
   foot.innerHTML = html;
 }
 
-// === Ações de transição ===
+// === Ações de transição (fluxo de 7 etapas) ===
 
-async function acaoAprovar() {
-  const coment = prompt('Comentário (opcional):') || null;
-  await transicionar({status:'em_cotacao', aprovado_em: new Date().toISOString(), aprovador_email: USER_EMAIL}, 'aprovada', coment);
+// Etapa 1 → 2 (Compradora encaminha pra aprovação do Head Op)
+async function acaoEncaminharAprovacao() {
+  const coment = prompt('Comentário pra o aprovador (opcional):') || null;
+  await transicionar({
+    status: 'aguardando_aprovacao',
+    encaminhado_aprovacao_em: new Date().toISOString()
+  }, 'encaminhada pra aprovação', coment);
 }
 
+// Etapa 1 → 3 (Compradora aprova direto, sem precisar do Head Op)
+async function acaoAprovarDireto() {
+  if (!confirm('Aprovar direto SEM passar pela aprovação do Head de Operações?')) return;
+  const coment = prompt('Comentário (opcional):') || null;
+  await transicionar({
+    status: 'compra_aprovada',
+    aprovado_em: new Date().toISOString(),
+    aprovador_email: USER_EMAIL
+  }, 'aprovada (sem revisão Head Op)', coment);
+}
+
+// Etapa 2 → 3 (Head Op aprova)
+async function acaoAprovar() {
+  const coment = prompt('Comentário (opcional):') || null;
+  await transicionar({
+    status: 'compra_aprovada',
+    aprovado_em: new Date().toISOString(),
+    aprovador_email: USER_EMAIL
+  }, 'aprovada', coment);
+}
+
+// Qualquer etapa pre-compra → Recusada
 async function acaoRecusar() {
   const motivo = prompt('Motivo da recusa (obrigatório):');
   if (!motivo || !motivo.trim()) return;
-  await transicionar({status:'recusada', motivo_recusa: motivo.trim(), aprovado_em: new Date().toISOString(), aprovador_email: USER_EMAIL}, 'recusada', motivo);
+  await transicionar({
+    status: 'recusada',
+    motivo_recusa: motivo.trim(),
+    aprovado_em: new Date().toISOString(),
+    aprovador_email: USER_EMAIL
+  }, 'recusada', motivo);
 }
 
-async function acaoCotar() {
+// Etapa 3 → 4 (Compradora faz a compra: valor final + método pagto)
+async function acaoMarcarComprada() {
   document.getElementById('m-foot').innerHTML = `
     <div class="modal-form" style="flex:1 1 100%;">
       <div class="field">
         <label>Valor final (R$) *</label>
-        <input type="number" min="0" step="0.01" id="cot-valor" placeholder="ex: 1450.00"/>
+        <input type="number" min="0" step="0.01" id="cp-valor" placeholder="ex: 1450.00"/>
       </div>
       <div class="field">
         <label>Método de pagamento *</label>
-        <select id="cot-metodo">
+        <select id="cp-metodo">
           <option value="">— Selecione —</option>
           <option value="pix">PIX</option>
           <option value="boleto">Boleto</option>
@@ -537,30 +632,78 @@ async function acaoCotar() {
       </div>
       <div class="field">
         <label>Comentário (opcional)</label>
-        <textarea id="cot-coment" placeholder="Ex: cotação validada com 3 fornecedores"></textarea>
+        <textarea id="cp-coment" placeholder="Ex: comprado na Kalunga, NF 12345"></textarea>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
         <button class="btn outline" onclick="abrirModal(${SEL.id})">Cancelar</button>
-        <button class="btn cotar" onclick="confirmarCotar()">Confirmar cotação →</button>
+        <button class="btn cotar" onclick="confirmarCompra()">Confirmar compra →</button>
       </div>
     </div>`;
 }
 
-async function confirmarCotar() {
-  const valor = parseFloat(document.getElementById('cot-valor').value);
-  const metodo = document.getElementById('cot-metodo').value;
-  const coment = document.getElementById('cot-coment').value.trim() || null;
+async function confirmarCompra() {
+  const valor = parseFloat(document.getElementById('cp-valor').value);
+  const metodo = document.getElementById('cp-metodo').value;
+  const coment = document.getElementById('cp-coment').value.trim() || null;
   if (!valor || valor <= 0) { showToast('Informe valor final', 'erro'); return; }
   if (!metodo) { showToast('Selecione método de pagamento', 'erro'); return; }
   await transicionar({
-    status:'aguardando_pagto', valor_final: valor, metodo_pagamento: metodo,
-    comprador_email: USER_EMAIL, comprado_em: new Date().toISOString()
-  }, 'cotada', `Valor R$ ${fmtBRL(valor)} · ${metodo}` + (coment ? ' · ' + coment : ''));
+    status: 'compra_realizada',
+    valor_final: valor,
+    metodo_pagamento: metodo,
+    comprador_email: USER_EMAIL,
+    comprado_em: new Date().toISOString()
+  }, 'comprada', `R$ ${fmtBRL(valor)} via ${metodo}` + (coment ? ' · ' + coment : ''));
 }
 
-async function acaoPagar() {
-  const coment = prompt('Comentário do pagamento (ex: ID transação, opcional):') || null;
-  await transicionar({status:'concluida', pago_em: new Date().toISOString(), pago_por: USER_EMAIL}, 'paga', coment);
+// Etapa 4 → 5 (Financeiro lança no Conta Azul)
+async function acaoLancarContaAzul() {
+  document.getElementById('m-foot').innerHTML = `
+    <div class="modal-form" style="flex:1 1 100%;">
+      <div class="field">
+        <label>Referência no Conta Azul (opcional)</label>
+        <input type="text" id="ca-ref" placeholder="ex: ID do lançamento, nº NF"/>
+      </div>
+      <div class="field">
+        <label>Comentário (opcional)</label>
+        <textarea id="ca-coment" placeholder="Notas internas do lançamento"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn outline" onclick="abrirModal(${SEL.id})">Cancelar</button>
+        <button class="btn pagar" onclick="confirmarLancar()">Confirmar lançamento →</button>
+      </div>
+    </div>`;
+}
+
+async function confirmarLancar() {
+  const ref = document.getElementById('ca-ref').value.trim() || null;
+  const coment = document.getElementById('ca-coment').value.trim() || null;
+  await transicionar({
+    status: 'inclusao_conta_azul',
+    conta_azul_em: new Date().toISOString(),
+    conta_azul_por: USER_EMAIL,
+    conta_azul_ref: ref
+  }, 'lançada no Conta Azul', (ref ? 'Ref: ' + ref : '') + (coment ? (ref?' · ':'') + coment : ''));
+}
+
+// Etapa 5 → 6 (quem recebe fisicamente marca chegada)
+async function acaoMarcarRecebido() {
+  const coment = prompt('Comentário do recebimento (opcional — ex: chegou completo, faltou X):') || null;
+  await transicionar({
+    status: 'recebimento',
+    recebido_em: new Date().toISOString(),
+    recebido_por: USER_EMAIL
+  }, 'recebida no escritório', coment);
+}
+
+// Etapa 6 → 7 (Compradora encerra)
+async function acaoEncerrar() {
+  const coment = prompt('Notas finais (opcional):') || null;
+  await transicionar({
+    status: 'concluida',
+    encerrado_em: new Date().toISOString(),
+    encerrado_por: USER_EMAIL
+  }, 'concluída', coment);
 }
 
 async function transicionar(updates, acao, comentario) {

@@ -205,7 +205,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <main class="main">
   <div class="page-title">🛒 Nova Solicitação</div>
-  <div class="page-sub">Preencha os campos abaixo. Após enviar, seu gestor receberá um email pra aprovar.</div>
+  <div class="page-sub">Preencha os campos abaixo. Após enviar, a Compradora vai abrir e dar andamento.</div>
 
   <div id="aviso-dept" class="aviso" style="display:none;"></div>
 
@@ -507,7 +507,7 @@ async function enviar() {
       return;
     }
 
-    // 1) INSERT solicitação
+    // 1) INSERT solicitação (entra na etapa 1 — Compradora vai triar)
     const aprovador_email = DEPT?.gestor_email || null;
     const { data: sol, error: e1 } = await SB.from('compras_solicitacoes').insert({
       solicitante_email: USER_EMAIL,
@@ -517,7 +517,7 @@ async function enviar() {
       urgencia,
       data_limite,
       observacoes,
-      status: 'aguardando_aprovacao',
+      status: 'compras_pendentes',
       aprovador_email
     }).select().single();
     if (e1) throw new Error('Solicitação: ' + e1.message);
@@ -561,7 +561,7 @@ async function enviar() {
       comentario: `Solicitação criada com ${itensValidos.length} item(ns)`
     });
 
-    showToast(`Solicitação ${sol.numero} criada! Aprovador receberá email em breve.`, 'sucesso');
+    showToast(`Solicitação ${sol.numero} criada! Compradora será notificada.`, 'sucesso');
     setTimeout(() => location.href = '../', 1600);
   } catch (e) {
     console.error(e);
