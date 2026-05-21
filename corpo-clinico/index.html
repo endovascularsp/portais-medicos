@@ -194,8 +194,24 @@ table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);w
   <!-- ABA PROFISSIONAIS -->
   <div id="view-profs">
     <div class="toolbar">
-      <input type="text" id="busca" placeholder="buscar nome ou especialidade" oninput="renderProfs()" style="min-width:220px"/>
+      <input type="text" id="busca" placeholder="buscar nome ou especialidade" oninput="renderProfs()" style="min-width:200px"/>
       <select id="f-esp" onchange="renderProfs()"><option value="">Todas especialidades</option></select>
+      <select id="f-dia" onchange="renderProfs()">
+        <option value="">Qualquer dia</option>
+        <option value="1">Atende segunda</option>
+        <option value="2">Atende terça</option>
+        <option value="3">Atende quarta</option>
+        <option value="4">Atende quinta</option>
+        <option value="5">Atende sexta</option>
+      </select>
+      <select id="f-conv" onchange="renderProfs()">
+        <option value="">Convênio: indiferente</option>
+        <option value="sim">Só atende convênio</option>
+      </select>
+      <select id="f-online" onchange="renderProfs()">
+        <option value="">On-line: indiferente</option>
+        <option value="sim">Só atende on-line</option>
+      </select>
       <div class="stat" id="stat-profs">—</div>
     </div>
     <div class="grid" id="grid-profs"></div>
@@ -324,9 +340,15 @@ function diasDoProf(pid){
 function renderProfs(){
   const q = (document.getElementById('busca').value||'').toLowerCase().trim();
   const fe = document.getElementById('f-esp').value;
+  const fd = document.getElementById('f-dia').value;
+  const fc = document.getElementById('f-conv').value;
+  const fo = document.getElementById('f-online').value;
   const lista = PROFS.filter(p=>{
     if(fe && p.especialidade!==fe) return false;
     if(q && !((p.nome||'')+' '+(p.especialidade||'')).toLowerCase().includes(q)) return false;
+    if(fd && !ESCALA.some(e=>e.profissional_id===p.id && e.dia_semana===parseInt(fd,10))) return false;
+    if(fc==='sim' && !p.atende_convenio) return false;
+    if(fo==='sim' && !p.atende_online) return false;
     return true;
   });
   const g = document.getElementById('grid-profs');
@@ -481,25 +503,46 @@ function selSN(id,label,val){
     <option value="true" ${val===true?'selected':''}>Sim</option>
     <option value="false" ${val===false?'selected':''}>Não</option></select></div>`;
 }
+// select fechado — preserva valor legado que não esteja na lista
+function selOpt(id,label,val,opcoes){
+  const opts = (val && !opcoes.includes(val)) ? [val, ...opcoes] : opcoes;
+  return `<div class="field"><label>${label}</label><select id="${id}">
+    <option value="">—</option>
+    ${opts.map(o=>`<option ${val===o?'selected':''}>${escH(o)}</option>`).join('')}
+  </select></div>`;
+}
+// input com sugestões (datalist) — escolhe da lista ou digita
+function campoDL(id,label,val,opcoes){
+  return `<div class="field"><label>${label}</label>
+    <input id="${id}" list="dl-${id}" value="${escH(val==null?'':val)}" autocomplete="off"/>
+    <datalist id="dl-${id}">${opcoes.map(o=>`<option value="${escH(o)}"></option>`).join('')}</datalist></div>`;
+}
+const UFS=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+const SEXOS=['Masculino','Feminino'];
+const CIVIS=['Solteiro(a)','Casado(a)','Divorciado(a)','Viúvo(a)','União estável'];
+const EMPRESAS=['Endovascular','Oxy Recovery'];
+const TEMPOS=['15 min','20 min','30 min','40 min','45 min','1 hora','1 hora 15','1 hora 30','2 horas'];
+const IDADES=['Todas as idades','A partir dos 8 anos','A partir dos 12 anos','A partir dos 14 anos','A partir dos 15 anos','A partir dos 16 anos','A partir dos 18 anos'];
 function abrirEdicao(id){
   const p = id!=null ? PROFS.find(x=>x.id===id) : {};
   EDIT_ID = id;
+  const esps = [...new Set(PROFS.map(x=>x.especialidade).filter(Boolean))].sort();
   document.getElementById('ed-titulo').textContent = id!=null ? 'Editar — '+p.nome : 'Novo profissional';
   document.getElementById('ed-body').innerHTML = `
     <div class="sec"><h3>Dados pessoais</h3>
       ${campo('e-nome','Nome completo *',p.nome)}
-      <div class="row2">${campo('e-nasc','Data de nascimento',p.data_nascimento,'date')}${campo('e-sexo','Sexo',p.sexo)}</div>
-      <div class="row2">${campo('e-civil','Estado civil',p.estado_civil)}${campo('e-rg','RG',p.rg)}</div>
+      <div class="row2">${campo('e-nasc','Data de nascimento',p.data_nascimento,'date')}${selOpt('e-sexo','Sexo',p.sexo,SEXOS)}</div>
+      <div class="row2">${selOpt('e-civil','Estado civil',p.estado_civil,CIVIS)}${campo('e-rg','RG',p.rg)}</div>
       ${campo('e-cpf','CPF',p.cpf)}
       ${campo('e-end','Endereço',p.endereco)}
-      <div class="row3">${campo('e-cidade','Cidade',p.cidade)}${campo('e-estado','Estado',p.estado)}${campo('e-cep','CEP',p.cep)}</div>
+      <div class="row3">${campo('e-cidade','Cidade',p.cidade)}${selOpt('e-estado','Estado (UF)',p.estado,UFS)}${campo('e-cep','CEP',p.cep)}</div>
     </div>
     <div class="sec"><h3>Contato &amp; redes</h3>
       <div class="row2">${campo('e-cel','Celular',p.celular)}${campo('e-email','E-mail',p.email)}</div>
       <div class="row2">${campo('e-insta','Instagram',p.instagram)}${campo('e-face','Facebook',p.facebook)}</div>
     </div>
     <div class="sec"><h3>Dados profissionais</h3>
-      <div class="row2">${campo('e-esp','Especialidade',p.especialidade)}${campo('e-empresa','Empresa',p.empresa)}</div>
+      <div class="row2">${campoDL('e-esp','Especialidade',p.especialidade,esps)}${selOpt('e-empresa','Empresa',p.empresa,EMPRESAS)}</div>
       <div class="row2">
         <div class="field"><label>Conselho</label><select id="e-conselho">
           ${['CRM','CRN','CREFITO','Outro'].map(c=>`<option ${p.conselho===c?'selected':''}>${c}</option>`).join('')}</select></div>
@@ -507,8 +550,8 @@ function abrirEdicao(id){
       </div>
       ${campo('e-rqe','RQE',p.rqe)}
       <div class="row2">${selSN('e-online','Atende on-line',p.atende_online)}${selSN('e-conv','Atende convênio',p.atende_convenio)}</div>
-      ${campo('e-idade','Idade mínima / faixa atendida',p.faixa_idade)}
-      <div class="row3">${campo('e-t1','Tempo 1ª consulta',p.tempo_primeira_vez)}${campo('e-tret','Tempo retorno',p.tempo_retorno)}${campo('e-dret','Dias p/ retorno',p.dias_retorno)}</div>
+      ${campoDL('e-idade','Idade mínima / faixa atendida',p.faixa_idade,IDADES)}
+      <div class="row3">${campoDL('e-t1','Tempo 1ª consulta',p.tempo_primeira_vez,TEMPOS)}${campoDL('e-tret','Tempo retorno',p.tempo_retorno,TEMPOS)}${campo('e-dret','Dias p/ retorno',p.dias_retorno)}</div>
       <div class="row2">${campo('e-valor','Valor consulta (R$)',p.valor_consulta,'number')}${campo('e-pacote','Valor pacote c/ exames (R$)',p.valor_pacote,'number')}</div>
       <div class="field"><label>Principais enfoques / procedimentos</label><textarea id="e-proc">${escH(p.procedimentos||'')}</textarea></div>
     </div>
