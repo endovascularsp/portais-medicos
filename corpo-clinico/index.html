@@ -331,10 +331,13 @@ function trocarAba(a){
   });
 }
 
-// resumo dos dias de atendimento de um profissional (da escala)
-function diasDoProf(pid){
-  const ds = [...new Set(ESCALA.filter(e=>e.profissional_id===pid).map(e=>e.dia_semana))].sort();
-  return ds.map(d=>DIAS[d]).join(', ');
+// resumo da escala — dia abreviado + hora de início, pra decisão de agendamento
+const DIAS_ABR = ['','Seg','Ter','Qua','Qui','Sex','Sáb'];
+function escalaResumo(pid){
+  return ESCALA.filter(e=>e.profissional_id===pid)
+    .sort((a,b)=>a.dia_semana-b.dia_semana || (a.hora_inicio||'').localeCompare(b.hora_inicio||''))
+    .map(e=>DIAS_ABR[e.dia_semana] + (e.hora_inicio?' '+e.hora_inicio.slice(0,5):''))
+    .join(' · ');
 }
 
 function renderProfs(){
@@ -351,10 +354,13 @@ function renderProfs(){
     if(fo==='sim' && !p.atende_online) return false;
     return true;
   });
+  // agrupa por especialidade (vasculares juntos, dermato juntos…), depois nome
+  lista.sort((a,b)=>(a.especialidade||'zzz').localeCompare(b.especialidade||'zzz')
+    || (a.nome||'').localeCompare(b.nome||''));
   const g = document.getElementById('grid-profs');
   if(!lista.length){ g.innerHTML='<div class="vazio">Nenhum profissional encontrado.</div>'; }
   else g.innerHTML = lista.map(p=>{
-    const dias = diasDoProf(p.id);
+    const dias = escalaResumo(p.id);
     const semEscala = !dias;
     return `<div class="pcard" onclick="abrirFicha(${p.id})">
       <div class="avatar">${escH(iniciais(p.nome))}</div>
@@ -442,6 +448,7 @@ function abrirFicha(id){
       <div class="k">Empresa</div><div class="v">${escH(SEL.empresa||'—')}</div>
       <div class="k">Atende on-line</div><div class="v">${SEL.atende_online==null?'—':SEL.atende_online?'Sim':'Não'}</div>
       <div class="k">Atende convênio</div><div class="v">${SEL.atende_convenio==null?'—':SEL.atende_convenio?'Sim':'Não'}</div>
+      ${SEL.convenios?`<div class="k">Convênios</div><div class="v">${escH(SEL.convenios)}</div>`:''}
       <div class="k">Consulta particular</div><div class="v">${fmtBRL(SEL.valor_consulta)}</div>
       <div class="k">Pacote c/ exames</div><div class="v">${fmtBRL(SEL.valor_pacote)}</div>
       <div class="k">Tempo 1ª vez</div><div class="v">${escH(SEL.tempo_primeira_vez||'—')}</div>
@@ -550,6 +557,7 @@ function abrirEdicao(id){
       </div>
       ${campo('e-rqe','RQE',p.rqe)}
       <div class="row2">${selSN('e-online','Atende on-line',p.atende_online)}${selSN('e-conv','Atende convênio',p.atende_convenio)}</div>
+      ${campo('e-convenios','Quais convênios atende',p.convenios)}
       ${campoDL('e-idade','Idade mínima / faixa atendida',p.faixa_idade,IDADES)}
       <div class="row3">${campoDL('e-t1','Tempo 1ª consulta',p.tempo_primeira_vez,TEMPOS)}${campoDL('e-tret','Tempo retorno',p.tempo_retorno,TEMPOS)}${campo('e-dret','Dias p/ retorno',p.dias_retorno)}</div>
       <div class="row2">${campo('e-valor','Valor consulta (R$)',p.valor_consulta,'number')}${campo('e-pacote','Valor pacote c/ exames (R$)',p.valor_pacote,'number')}</div>
@@ -591,6 +599,7 @@ async function salvarProf(){
     conselho: document.getElementById('e-conselho').value,
     conselho_numero: g('e-cnum'), rqe: g('e-rqe'),
     atende_online: gsn('e-online'), atende_convenio: gsn('e-conv'),
+    convenios: g('e-convenios'),
     faixa_idade: g('e-idade'),
     tempo_primeira_vez: g('e-t1'), tempo_retorno: g('e-tret'), dias_retorno: g('e-dret'),
     valor_consulta: gnum('e-valor'), valor_pacote: gnum('e-pacote'),
