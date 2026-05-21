@@ -292,9 +292,28 @@ let FORNECEDORES = [];
 let CENTROS = [];
 let SEL = null;          // solicitação selecionada no modal
 
+function mostrarBannerErro(msg) {
+  let b = document.getElementById('banner-erro');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'banner-erro';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#C0392B;color:#fff;'
+      + 'padding:12px 20px;font-size:13px;font-weight:600;z-index:9999;text-align:center;';
+    document.body.appendChild(b);
+  }
+  b.textContent = '⚠ ' + msg;
+}
+
 async function inicializar() {
-  await Promise.all([carregarMeta(), carregarSolicitacoes()]);
-  renderKanban();
+  console.log('[kanban] inicializar() iniciado');
+  try {
+    await Promise.all([carregarMeta(), carregarSolicitacoes()]);
+    renderKanban();
+    console.log('[kanban] render concluído. TODAS =', TODAS.length, 'solicitações');
+  } catch (e) {
+    console.error('[kanban] erro em inicializar:', e);
+    mostrarBannerErro('Falha ao iniciar o Kanban: ' + (e.message || e));
+  }
 }
 
 async function carregarMeta() {
@@ -344,7 +363,14 @@ async function carregarSolicitacoes() {
       compras_itens(id, valor_estimado)
     `)
     .order('criado_em', { ascending: false });
-  if (error) { showToast('Erro carregando: ' + error.message, 'erro'); return; }
+  if (error) {
+    console.error('[kanban] erro na query de solicitações:', error);
+    mostrarBannerErro('Erro ao carregar solicitações: ' + (error.message || error)
+      + (error.code ? ' [' + error.code + ']' : '')
+      + (error.hint ? ' — ' + error.hint : ''));
+    return;
+  }
+  console.log('[kanban] query OK —', (data || []).length, 'solicitação(ões) retornada(s)');
   TODAS = (data || []).map(s => ({
     ...s,
     centro_nome: s.compras_centros_custo?.nome || '—',
