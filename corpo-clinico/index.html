@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Corpo Clínico · Endovascular SP</title>
+  <link rel="icon" href="../assets/logo.png" type="image/png"/>
+  <style>html{visibility:hidden}</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    let SB, USER_EMAIL, USER_CARDS = [];
+    (async function() {
+      const _local = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      if (_local) { document.documentElement.style.visibility='visible'; USER_EMAIL='preview@local'; return; }
+      try {
+        SB = window.supabase.createClient(
+          'https://egpcrqrvctnpxbdjdhtf.supabase.co',
+          'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW'
+        );
+        const { data: { session } } = await SB.auth.getSession();
+        if (!session) { window.location.replace('/login/'); return; }
+        USER_EMAIL = (session.user.email || '').toLowerCase();
+        const { data: me } = await SB.from('users').select('cards').eq('email', USER_EMAIL).maybeSingle();
+        USER_CARDS = (me && me.cards) || [];
+        // Corpo Clínico é informação operacional aberta — qualquer funcionário entra
+        if (!me) { window.location.replace('/hub/Gestor_Hub.html'); return; }
+        document.documentElement.style.visibility = 'visible';
+        if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', inicializar);
+        else inicializar();
+      } catch (e) { console.error('gate:', e); window.location.replace('/login/'); }
+    })();
+  </script>
+  <style id="boot-spinner-v1">
+#boot{visibility:visible;position:fixed;inset:0;background:#0B1F3A;z-index:99999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+html[style*="visible"] #boot{display:none;}
+#boot .sp{width:38px;height:38px;border:4px solid rgba(255,255,255,0.15);
+  border-top-color:#fff;border-radius:50%;animation:bootsp .8s linear infinite;}
+@keyframes bootsp{to{transform:rotate(360deg)}}
+#boot .tx{color:rgba(255,255,255,0.65);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;}
+  </style>
+  <style>
+html,body{overflow-x:hidden;max-width:100vw;}
+:root{
+  --navy:#0B1F3A;--azul:#1A5296;--azul-cl:#D6E8F7;--gold:#A18960;--gold-bg:#F5F0E5;
+  --bg:#F2F5F9;--borda:#C4D4E8;--cinza-cl:#F7FAFD;--texto:#0D1E30;--texto2:#4A6278;
+  --verde:#2D7A3C;--vermelho:#C0392B;--sombra:0 2px 12px rgba(11,31,58,0.08);--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+
+.header{background:var(--navy);color:#fff;padding:0 24px;display:flex;align-items:center;
+  justify-content:space-between;height:64px;border-bottom:3px solid var(--azul);}
+.header-logo{display:flex;align-items:center;gap:12px;}
+.header-logo img{width:38px;height:38px;}
+.header-logo h1{font-size:17px;font-weight:800;}
+.header-logo span{font-size:11px;color:rgba(255,255,255,0.7);display:block;margin-top:2px;}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.hbtn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:20px;
+  background:rgba(255,255,255,0.10);border:1.5px solid rgba(255,255,255,0.20);color:#fff;
+  font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;font-family:inherit;transition:all .15s;}
+.hbtn:hover{background:rgba(255,255,255,0.18);}
+.hbtn.nova{background:var(--gold);border-color:var(--gold);}
+.hbtn.home{background:rgba(148,163,184,0.15);color:#cbd5e1;}
+
+.tabs{background:#fff;border-bottom:1px solid var(--borda);padding:0 24px;display:flex;gap:4px;}
+.tab{padding:13px 20px;font-size:13px;font-weight:700;color:var(--texto2);cursor:pointer;
+  border-bottom:3px solid transparent;}
+.tab.active{color:var(--navy);border-bottom-color:var(--gold);}
+
+.main{max-width:1180px;margin:0 auto;padding:22px 24px 60px;}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+.toolbar input,.toolbar select{padding:8px 12px;border:1.5px solid var(--borda);border-radius:8px;
+  font-size:13px;font-family:inherit;background:#fff;color:var(--navy);}
+.toolbar .stat{margin-left:auto;font-size:12px;color:var(--texto2);font-weight:600;}
+
+/* === Cards de profissional === */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
+.pcard{background:#fff;border:1px solid var(--borda);border-radius:var(--radius);padding:16px;
+  box-shadow:var(--sombra);cursor:pointer;transition:all .15s;display:flex;gap:13px;align-items:flex-start;}
+.pcard:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 5px 15px rgba(11,31,58,0.12);}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--navy);color:#fff;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;}
+.pcard-nome{font-size:14.5px;font-weight:800;color:var(--navy);line-height:1.25;}
+.pcard-esp{font-size:12px;color:var(--gold);font-weight:700;margin-top:1px;}
+.pcard-dias{font-size:11.5px;color:var(--texto2);margin-top:7px;line-height:1.4;}
+.pcard-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;background:var(--cinza-cl);
+  border:1px solid var(--borda);color:var(--texto2);}
+.tag.on{background:#E8F5EB;color:var(--verde);border-color:#C8E6C9;}
+.tag.gap{background:#FFEBEE;color:var(--vermelho);border-color:#FFCDD2;}
+
+/* === Mapa de Sala === */
+.mapa-wrap{overflow-x:auto;background:#fff;border:1px solid var(--borda);border-radius:var(--radius);box-shadow:var(--sombra);}
+table.mapa{border-collapse:collapse;width:100%;min-width:720px;}
+table.mapa th,table.mapa td{border:1px solid var(--borda);padding:8px 10px;font-size:12px;text-align:left;vertical-align:top;}
+table.mapa th{background:var(--navy);color:#fff;font-weight:700;font-size:11px;position:sticky;top:0;}
+table.mapa th.sala{background:var(--azul);}
+table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);white-space:nowrap;}
+.slot{font-size:11.5px;line-height:1.3;}
+.slot b{color:var(--navy);}
+.slot .hr{color:var(--texto2);font-size:10px;}
+.slot-vazio{color:#cbd5e1;}
+
+/* === Modais === */
+.ov{position:fixed;inset:0;background:rgba(11,31,58,0.6);z-index:1000;display:none;
+  align-items:center;justify-content:center;padding:20px;}
+.ov.show{display:flex;}
+.modal{background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:92vh;
+  overflow-y:auto;display:flex;flex-direction:column;}
+.modal-h{padding:18px 22px;border-bottom:1px solid var(--borda);display:flex;
+  align-items:center;justify-content:space-between;gap:12px;}
+.modal-h h2{font-size:17px;font-weight:800;color:var(--navy);}
+.modal-h .x{background:transparent;border:none;font-size:22px;cursor:pointer;color:var(--texto2);}
+.modal-b{padding:18px 22px;}
+.modal-f{padding:14px 22px;border-top:1px solid var(--borda);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+.sec{margin-bottom:16px;}
+.sec h3{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.kv{display:grid;grid-template-columns:135px 1fr;gap:5px 12px;font-size:13px;}
+.kv .k{color:var(--texto2);font-weight:600;}
+.kv .v{color:var(--texto);font-weight:600;}
+.esc-linha{padding:6px 0;border-bottom:1px solid var(--borda);font-size:12.5px;}
+.esc-linha:last-child{border:none;}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.field label{font-size:11px;font-weight:700;color:var(--texto2);text-transform:uppercase;letter-spacing:.3px;}
+.field input,.field select,.field textarea{padding:9px 12px;border:1.5px solid var(--borda);
+  border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff;color:var(--texto);outline:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);}
+.field textarea{resize:vertical;min-height:64px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.btn{padding:9px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;
+  border:1.5px solid;font-family:inherit;transition:all .15s;}
+.btn.outline{background:#fff;color:var(--texto2);border-color:var(--borda);}
+.btn.salvar{background:var(--gold);color:#fff;border-color:var(--gold);}
+.btn.editar{background:var(--azul);color:#fff;border-color:var(--azul);}
+.btn.del{background:#fff;color:var(--vermelho);border-color:var(--vermelho);}
+
+.toast{position:fixed;bottom:26px;right:26px;background:var(--navy);color:#fff;padding:12px 20px;
+  border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);
+  z-index:2000;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.erro{background:var(--vermelho);}
+.toast.ok{background:var(--verde);}
+.vazio{text-align:center;padding:50px 20px;color:var(--texto2);}
+
+@media(max-width:600px){
+  .header{padding:0 14px;}.main{padding:16px 14px 50px;}
+  .header-logo span{display:none;}.tabs{padding:0 8px;}
+}
+  </style>
+</head>
+<body>
+<!--boot-spinner-v1--><div id="boot"><div class="sp"></div><div class="tx">Carregando dados…</div></div>
+
+<header class="header">
+  <div class="header-logo">
+    <img src="../assets/logo.png" alt="Endo"/>
+    <div><h1>Corpo Clínico</h1><span>Endovascular SP</span></div>
+  </div>
+  <div class="header-actions">
+    <button class="hbtn nova" onclick="abrirEdicao(null)">+ Novo profissional</button>
+    <a href="../hub/Gestor_Hub.html" class="hbtn home">🏠 Home</a>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" id="tab-profs" onclick="trocarAba('profs')">👥 Profissionais</div>
+  <div class="tab" id="tab-mapa" onclick="trocarAba('mapa')">🗺️ Mapa de Sala</div>
+</div>
+
+<main class="main">
+  <!-- ABA PROFISSIONAIS -->
+  <div id="view-profs">
+    <div class="toolbar">
+      <input type="text" id="busca" placeholder="buscar nome ou especialidade" oninput="renderProfs()" style="min-width:220px"/>
+      <select id="f-esp" onchange="renderProfs()"><option value="">Todas especialidades</option></select>
+      <div class="stat" id="stat-profs">—</div>
+    </div>
+    <div class="grid" id="grid-profs"></div>
+  </div>
+  <!-- ABA MAPA -->
+  <div id="view-mapa" style="display:none">
+    <div class="toolbar"><div class="stat" id="stat-mapa">—</div></div>
+    <div class="mapa-wrap"><table class="mapa" id="tbl-mapa"></table></div>
+  </div>
+</main>
+
+<!-- Modal Ficha -->
+<div class="ov" id="ov-ficha" onclick="if(event.target===this)fechar('ov-ficha')">
+  <div class="modal">
+    <div class="modal-h"><h2 id="fi-nome">—</h2><button class="x" onclick="fechar('ov-ficha')">✕</button></div>
+    <div class="modal-b" id="fi-body"></div>
+    <div class="modal-f" id="fi-foot"></div>
+  </div>
+</div>
+
+<!-- Modal Edição -->
+<div class="ov" id="ov-edit" onclick="if(event.target===this)fechar('ov-edit')">
+  <div class="modal">
+    <div class="modal-h"><h2 id="ed-titulo">Novo profissional</h2><button class="x" onclick="fechar('ov-edit')">✕</button></div>
+    <div class="modal-b" id="ed-body"></div>
+    <div class="modal-f">
+      <button class="btn outline" onclick="fechar('ov-edit')">Cancelar</button>
+      <button class="btn salvar" onclick="salvarProf()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DIAS = ['', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+let PROFS = [], SALAS = [], ESCALA = [], SEL = null;
+
+async function inicializar() {
+  await carregarTudo();
+  renderProfs();
+  renderMapa();
+}
+
+async function carregarTudo() {
+  if (!SB) {  // preview local
+    SALAS = [{id:1,nome:'Consultório 1',ordem:1},{id:2,nome:'Consultório 2',ordem:2}];
+    PROFS = [{id:1,nome:'Dr. Exemplo',especialidade:'Cirurgião Vascular',atende_online:true,
+      atende_convenio:false,valor_consulta:900,conselho:'CRM',conselho_numero:'12345'}];
+    ESCALA = [{id:1,profissional_id:1,sala_id:1,dia_semana:1,hora_inicio:'08:30'}];
+    return;
+  }
+  const [p, s, e] = await Promise.all([
+    SB.from('cc_profissionais').select('*').order('nome'),
+    SB.from('cc_salas').select('*').eq('ativo',true).order('ordem'),
+    SB.from('cc_escala').select('*'),
+  ]);
+  if (p.error) { showToast('Erro: ' + p.error.message, 'erro'); return; }
+  PROFS = p.data || []; SALAS = s.data || []; ESCALA = e.data || [];
+  // popula filtro de especialidade
+  const esps = [...new Set(PROFS.map(x => x.especialidade).filter(Boolean))].sort();
+  document.getElementById('f-esp').innerHTML = '<option value="">Todas especialidades</option>' +
+    esps.map(x => `<option>${escH(x)}</option>`).join('');
+}
+
+function escH(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function iniciais(nome){const p=String(nome||'?').replace(/^(Dr|Dra)\.?\s*/i,'').trim().split(/\s+/);
+  return ((p[0]||'?')[0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();}
+function fmtBRL(v){return v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function trocarAba(a){
+  document.getElementById('tab-profs').classList.toggle('active', a==='profs');
+  document.getElementById('tab-mapa').classList.toggle('active', a==='mapa');
+  document.getElementById('view-profs').style.display = a==='profs'?'':'none';
+  document.getElementById('view-mapa').style.display = a==='mapa'?'':'none';
+}
+
+// resumo dos dias de atendimento de um profissional (da escala)
+function diasDoProf(pid){
+  const ds = [...new Set(ESCALA.filter(e=>e.profissional_id===pid).map(e=>e.dia_semana))].sort();
+  return ds.map(d=>DIAS[d]).join(', ');
+}
+
+function renderProfs(){
+  const q = (document.getElementById('busca').value||'').toLowerCase().trim();
+  const fe = document.getElementById('f-esp').value;
+  const lista = PROFS.filter(p=>{
+    if(fe && p.especialidade!==fe) return false;
+    if(q && !((p.nome||'')+' '+(p.especialidade||'')).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const g = document.getElementById('grid-profs');
+  if(!lista.length){ g.innerHTML='<div class="vazio">Nenhum profissional encontrado.</div>'; }
+  else g.innerHTML = lista.map(p=>{
+    const dias = diasDoProf(p.id);
+    const semEscala = !dias;
+    return `<div class="pcard" onclick="abrirFicha(${p.id})">
+      <div class="avatar">${escH(iniciais(p.nome))}</div>
+      <div style="min-width:0">
+        <div class="pcard-nome">${escH(p.nome)}</div>
+        <div class="pcard-esp">${escH(p.especialidade||'—')}</div>
+        <div class="pcard-dias">${dias ? '📅 '+dias : '<span style="color:var(--vermelho)">⚠ sem escala definida</span>'}</div>
+        <div class="pcard-tags">
+          ${p.atende_online?'<span class="tag on">on-line</span>':''}
+          ${p.atende_convenio?'<span class="tag on">convênio</span>':''}
+          ${p.valor_consulta!=null?`<span class="tag">${fmtBRL(p.valor_consulta)}</span>`:''}
+          ${semEscala?'<span class="tag gap">pendência</span>':''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('stat-profs').innerHTML = `<b>${lista.length}</b> de ${PROFS.length} profissionais`;
+}
+
+function renderMapa(){
+  const dias = [1,2,3,4,5];
+  let h = '<thead><tr><th>Dia</th>' + SALAS.map(s=>`<th class="sala">${escH(s.nome)}</th>`).join('') + '</tr></thead><tbody>';
+  for(const d of dias){
+    h += `<tr><td class="dia">${DIAS[d]}</td>`;
+    for(const s of SALAS){
+      const blocos = ESCALA.filter(e=>e.dia_semana===d && e.sala_id===s.id);
+      if(!blocos.length){ h+='<td class="slot-vazio">·</td>'; continue; }
+      h += '<td>' + blocos.map(b=>{
+        const p = PROFS.find(x=>x.id===b.profissional_id);
+        const hr = b.hora_inicio ? b.hora_inicio.slice(0,5)+(b.hora_fim?'–'+b.hora_fim.slice(0,5):'') : '';
+        return `<div class="slot"><b>${escH(p?p.nome:'?')}</b>${hr?`<br><span class="hr">${hr}</span>`:''}</div>`;
+      }).join('') + '</td>';
+    }
+    h += '</tr>';
+  }
+  document.getElementById('tbl-mapa').innerHTML = h + '</tbody>';
+  const ocup = ESCALA.length, capac = SALAS.length*5;
+  document.getElementById('stat-mapa').innerHTML =
+    `<b>${ESCALA.length}</b> blocos de atendimento · ${SALAS.length} salas`;
+}
+
+function abrirFicha(id){
+  SEL = PROFS.find(p=>p.id===id); if(!SEL) return;
+  document.getElementById('fi-nome').textContent = SEL.nome;
+  const esc = ESCALA.filter(e=>e.profissional_id===id)
+    .sort((a,b)=>a.dia_semana-b.dia_semana || (a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+  const reg = [SEL.conselho, SEL.conselho_numero].filter(Boolean).join(' ');
+  document.getElementById('fi-body').innerHTML = `
+    <div class="sec"><h3>Atendimento</h3><div class="kv">
+      <div class="k">Especialidade</div><div class="v">${escH(SEL.especialidade||'—')}</div>
+      <div class="k">Empresa</div><div class="v">${escH(SEL.empresa||'—')}</div>
+      <div class="k">Atende on-line</div><div class="v">${SEL.atende_online?'Sim':'Não'}</div>
+      <div class="k">Atende convênio</div><div class="v">${SEL.atende_convenio?'Sim':'Não'}</div>
+      <div class="k">Consulta particular</div><div class="v">${fmtBRL(SEL.valor_consulta)}</div>
+      <div class="k">Tempo 1ª vez</div><div class="v">${escH(SEL.tempo_primeira_vez||'—')}</div>
+      <div class="k">Tempo retorno</div><div class="v">${escH(SEL.tempo_retorno||'—')}</div>
+      <div class="k">Faixa de idade</div><div class="v">${escH(SEL.faixa_idade||'—')}</div>
+    </div></div>
+    <div class="sec"><h3>Escala / Mapa de Sala</h3>
+      ${esc.length ? esc.map(e=>{
+        const s = SALAS.find(x=>x.id===e.sala_id);
+        const hr = e.hora_inicio?e.hora_inicio.slice(0,5)+(e.hora_fim?'–'+e.hora_fim.slice(0,5):''):'horário a confirmar';
+        return `<div class="esc-linha"><b>${DIAS[e.dia_semana]}</b> · ${escH(s?s.nome:'?')} · ${hr}</div>`;
+      }).join('') : '<div style="color:var(--vermelho);font-size:12.5px">⚠ Sem escala cadastrada — pendência pro Agendamento.</div>'}
+    </div>
+    ${SEL.procedimentos?`<div class="sec"><h3>Procedimentos que realiza</h3>
+      <div style="font-size:13px;line-height:1.5">${escH(SEL.procedimentos)}</div></div>`:''}
+    ${SEL.observacoes?`<div class="sec"><h3>Observações</h3>
+      <div style="font-size:13px;line-height:1.5;color:var(--texto2)">${escH(SEL.observacoes)}</div></div>`:''}
+    <div class="sec"><h3>Registro &amp; contato</h3><div class="kv">
+      <div class="k">Conselho</div><div class="v">${escH(reg||'—')}</div>
+      <div class="k">RQE</div><div class="v">${escH(SEL.rqe||'—')}</div>
+      <div class="k">CPF</div><div class="v">${escH(SEL.cpf||'—')}</div>
+      <div class="k">Celular</div><div class="v">${escH(SEL.celular||'—')}</div>
+      <div class="k">E-mail</div><div class="v">${escH(SEL.email||'—')}</div>
+      <div class="k">Instagram</div><div class="v">${SEL.instagram?'@'+escH(SEL.instagram.replace(/^@/,'')):'—'}</div>
+    </div></div>`;
+  document.getElementById('fi-foot').innerHTML =
+    `<button class="btn outline" onclick="fechar('ov-ficha')">Fechar</button>
+     <button class="btn editar" onclick="fechar('ov-ficha');abrirEdicao(${id})">✏️ Editar</button>`;
+  document.getElementById('ov-ficha').classList.add('show');
+}
+
+function campo(id,label,val,tipo){
+  return `<div class="field"><label>${label}</label>
+    <input id="${id}" type="${tipo||'text'}" value="${escH(val==null?'':val)}"/></div>`;
+}
+function abrirEdicao(id){
+  const p = id!=null ? PROFS.find(x=>x.id===id) : {};
+  EDIT_ID = id;
+  document.getElementById('ed-titulo').textContent = id!=null ? 'Editar — '+p.nome : 'Novo profissional';
+  document.getElementById('ed-body').innerHTML = `
+    ${campo('e-nome','Nome *',p.nome)}
+    <div class="row2">${campo('e-esp','Especialidade',p.especialidade)}${campo('e-empresa','Empresa',p.empresa)}</div>
+    <div class="row2">
+      <div class="field"><label>Atende on-line</label><select id="e-online">
+        <option value="false">Não</option><option value="true" ${p.atende_online?'selected':''}>Sim</option></select></div>
+      <div class="field"><label>Atende convênio</label><select id="e-conv">
+        <option value="false">Não</option><option value="true" ${p.atende_convenio?'selected':''}>Sim</option></select></div>
+    </div>
+    <div class="row2">${campo('e-t1','Tempo 1ª vez',p.tempo_primeira_vez)}${campo('e-tret','Tempo retorno',p.tempo_retorno)}</div>
+    <div class="row2">${campo('e-valor','Consulta particular (R$)',p.valor_consulta,'number')}${campo('e-idade','Faixa de idade',p.faixa_idade)}</div>
+    <div class="row2">
+      <div class="field"><label>Conselho</label><select id="e-conselho">
+        ${['CRM','CRN','CREFITO','Outro'].map(c=>`<option ${p.conselho===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      ${campo('e-cnum','Nº do registro',p.conselho_numero)}
+    </div>
+    <div class="row2">${campo('e-rqe','RQE',p.rqe)}${campo('e-cpf','CPF',p.cpf)}</div>
+    <div class="row2">${campo('e-cel','Celular',p.celular)}${campo('e-email','E-mail',p.email)}</div>
+    ${campo('e-insta','Instagram',p.instagram)}
+    <div class="field"><label>Procedimentos que realiza</label><textarea id="e-proc">${escH(p.procedimentos||'')}</textarea></div>
+    <div class="field"><label>Observações</label><textarea id="e-obs">${escH(p.observacoes||'')}</textarea></div>`;
+  document.getElementById('ov-edit').classList.add('show');
+}
+let EDIT_ID = null;
+
+async function salvarProf(){
+  const nome = document.getElementById('e-nome').value.trim();
+  if(!nome){ showToast('Nome é obrigatório','erro'); return; }
+  const vnum = document.getElementById('e-valor').value;
+  const dados = {
+    nome, especialidade: document.getElementById('e-esp').value.trim()||null,
+    empresa: document.getElementById('e-empresa').value.trim()||null,
+    atende_online: document.getElementById('e-online').value==='true',
+    atende_convenio: document.getElementById('e-conv').value==='true',
+    tempo_primeira_vez: document.getElementById('e-t1').value.trim()||null,
+    tempo_retorno: document.getElementById('e-tret').value.trim()||null,
+    valor_consulta: vnum?parseFloat(vnum):null,
+    faixa_idade: document.getElementById('e-idade').value.trim()||null,
+    conselho: document.getElementById('e-conselho').value,
+    conselho_numero: document.getElementById('e-cnum').value.trim()||null,
+    rqe: document.getElementById('e-rqe').value.trim()||null,
+    cpf: document.getElementById('e-cpf').value.trim()||null,
+    celular: document.getElementById('e-cel').value.trim()||null,
+    email: document.getElementById('e-email').value.trim()||null,
+    instagram: document.getElementById('e-insta').value.trim().replace(/^@/,'')||null,
+    procedimentos: document.getElementById('e-proc').value.trim()||null,
+    observacoes: document.getElementById('e-obs').value.trim()||null,
+  };
+  if(!SB){ showToast('(preview) salvo','ok'); fechar('ov-edit'); return; }
+  let err;
+  if(EDIT_ID!=null){
+    ({error:err} = await SB.from('cc_profissionais').update(dados).eq('id',EDIT_ID));
+  } else {
+    ({error:err} = await SB.from('cc_profissionais').insert(dados));
+  }
+  if(err){ showToast('Erro: '+err.message,'erro'); return; }
+  showToast(EDIT_ID!=null?'Profissional atualizado':'Profissional cadastrado','ok');
+  fechar('ov-edit');
+  await carregarTudo(); renderProfs(); renderMapa();
+}
+
+function fechar(id){ document.getElementById(id).classList.remove('show'); }
+function showToast(m,t){const e=document.getElementById('toast');e.textContent=m;
+  e.className='toast show '+(t||'');setTimeout(()=>e.classList.remove('show'),3500);}
+
+if(location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')
+  window.addEventListener('DOMContentLoaded', inicializar);
+</script>
+</body>
+</html>
