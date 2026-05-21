@@ -612,6 +612,12 @@ async function acaoRecusar() {
 
 // Etapa 3 → 4 (Compradora faz a compra: valor final + método pagto)
 async function acaoMarcarComprada() {
+  // Pré-seleciona o método que o solicitante sugeriu na Nova Solicitação
+  const ms = SEL.metodo_pagamento || '';
+  const sel = m => ms === m ? ' selected' : '';
+  const sugerido = ms
+    ? '<div class="hint" style="font-size:11px;color:var(--texto2);font-style:italic;margin-top:3px;">Sugerido pelo solicitante. Ajuste se necessário.</div>'
+    : '';
   document.getElementById('m-foot').innerHTML = `
     <div class="modal-form" style="flex:1 1 100%;">
       <div class="field">
@@ -621,12 +627,13 @@ async function acaoMarcarComprada() {
       <div class="field">
         <label>Método de pagamento *</label>
         <select id="cp-metodo">
-          <option value="">— Selecione —</option>
-          <option value="pix">PIX</option>
-          <option value="boleto">Boleto</option>
-          <option value="cartao_credito">Cartão de Crédito</option>
-          <option value="link_pagamento">Link de pagamento</option>
+          <option value=""${sel('')}>— Selecione —</option>
+          <option value="pix"${sel('pix')}>PIX</option>
+          <option value="boleto"${sel('boleto')}>Boleto</option>
+          <option value="cartao_credito"${sel('cartao_credito')}>Cartão de Crédito</option>
+          <option value="link_pagamento"${sel('link_pagamento')}>Link de pagamento</option>
         </select>
+        ${sugerido}
       </div>
       <div class="field">
         <label>Comentário (opcional)</label>
