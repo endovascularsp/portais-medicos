@@ -35,7 +35,14 @@
         const podeVer = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
         if (!podeVer) { window.location.replace('/hub/Gestor_Hub.html'); return; }
         document.documentElement.style.visibility = 'visible';
-        window.addEventListener('DOMContentLoaded', inicializar);
+        // O gate é async — quando termina, o DOM pode já estar pronto
+        // (DOMContentLoaded já passou). Checar readyState garante que
+        // inicializar() roda nos dois casos.
+        if (document.readyState === 'loading') {
+          window.addEventListener('DOMContentLoaded', inicializar);
+        } else {
+          inicializar();
+        }
       } catch (e) {
         console.error('gate erro:', e);
         window.location.replace('/login/');
