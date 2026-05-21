@@ -198,7 +198,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div><h1>Compras</h1><span>Nova Solicitação</span></div>
   </div>
   <div class="header-actions">
-    <a href="../" class="header-action-btn">← Compras</a>
+    <a href="../kanban/" class="header-action-btn">← Kanban</a>
     <a href="../../hub/Gestor_Hub.html" class="header-action-btn home">🏠 Home</a>
   </div>
 </header>
@@ -269,7 +269,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
   <!-- === Ações === -->
   <div class="acoes">
-    <button class="btn cancelar" onclick="if(confirm('Cancelar e perder o que foi preenchido?')) location.href='../'">Cancelar</button>
+    <button class="btn cancelar" onclick="if(confirm('Cancelar e perder o que foi preenchido?')) location.href='../kanban/'">Cancelar</button>
     <button class="btn enviar" id="btn-enviar" onclick="enviar()">Enviar solicitação →</button>
   </div>
 </main>
@@ -503,7 +503,7 @@ async function enviar() {
       // Preview local
       await new Promise(r => setTimeout(r, 600));
       showToast('(preview) Solicitação simulada com sucesso', 'sucesso');
-      setTimeout(() => location.href = '../', 1200);
+      setTimeout(() => location.href = '../kanban/', 1200);
       return;
     }
 
@@ -562,7 +562,7 @@ async function enviar() {
     });
 
     showToast(`Solicitação ${sol.numero} criada! Compradora será notificada.`, 'sucesso');
-    setTimeout(() => location.href = '../', 1600);
+    setTimeout(() => location.href = '../kanban/', 1600);
   } catch (e) {
     console.error(e);
     showToast('Erro ao enviar: ' + e.message, 'erro');

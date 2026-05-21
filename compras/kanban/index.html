@@ -30,12 +30,10 @@
         const { data: me } = await SB.from('users')
           .select('cards').eq('email', USER_EMAIL).maybeSingle();
         USER_CARDS = (me && me.cards) || [];
-        // Kanban: só Compradora, Financeiro, Aprovador ou Gestor
-        const podeVer = USER_CARDS.includes('compras_compradora')
-                     || USER_CARDS.includes('compras_financeiro')
-                     || USER_CARDS.includes('compras_aprovador')
-                     || USER_CARDS.includes('gestor');
-        if (!podeVer) { window.location.replace('../'); return; }
+        // Kanban é a tela única do portal: qualquer card compras_* entra.
+        // As ações por etapa continuam restritas por papel (ver renderAcoes).
+        const podeVer = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
+        if (!podeVer) { window.location.replace('/hub/Gestor_Hub.html'); return; }
         document.documentElement.style.visibility = 'visible';
         window.addEventListener('DOMContentLoaded', inicializar);
       } catch (e) {
@@ -70,6 +68,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   transition:all 0.15s;font-family:inherit;}
 .header-action-btn:hover{background:rgba(255,255,255,0.18);}
 .header-action-btn.home{background:rgba(148,163,184,0.15);color:#cbd5e1;}
+.header-action-btn.nova{background:var(--gold);border-color:var(--gold);}
+.header-action-btn.nova:hover{filter:brightness(1.1);background:var(--gold);}
 
 .toolbar{background:#fff;border-bottom:1px solid var(--borda);padding:12px 24px;
   display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
@@ -205,12 +205,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div><h1>Compras</h1><span>Kanban</span></div>
   </div>
   <div class="header-actions">
-    <a href="../" class="header-action-btn">← Compras</a>
+    <a href="../nova/" class="header-action-btn nova">+ Nova Solicitação</a>
     <a href="../../hub/Gestor_Hub.html" class="header-action-btn home">🏠 Home</a>
   </div>
 </header>
 
 <div class="toolbar">
+  <label>Ver:</label>
+  <select id="filtro-escopo" onchange="aplicarFiltros()">
+    <option value="todas">Todas as compras</option>
+    <option value="minhas">Só as minhas</option>
+  </select>
   <label>Status:</label>
   <select id="filtro-status" onchange="aplicarFiltros()">
     <option value="">Todos</option>
@@ -350,11 +355,13 @@ function aplicarFiltros() {
 }
 
 function renderKanban() {
+  const fe = document.getElementById('filtro-escopo').value;
   const fs = document.getElementById('filtro-status').value;
   const fc = document.getElementById('filtro-centro').value;
   const fb = (document.getElementById('filtro-busca').value || '').toLowerCase().trim();
 
   const filtrados = TODAS.filter(s => {
+    if (fe === 'minhas' && (s.solicitante_email || '').toLowerCase() !== USER_EMAIL) return false;
     if (fs && s.status !== fs) return false;
     if (fc && String(s.centro_custo_id) !== fc) return false;
     if (fb && !((s.numero || '') + ' ' + (s.justificativa || '')).toLowerCase().includes(fb)) return false;
@@ -556,6 +563,12 @@ function renderAcoes(status) {
     html += '<button class="btn aprovar" onclick="acaoEncerrar()">✅ Encerrar</button>';
   }
   // Etapa 7 ou Recusada — apenas visualização
+
+  // Cancelamento pelo próprio solicitante — só enquanto em "Pedido Feito"
+  const souDono = SEL && (SEL.solicitante_email || '').toLowerCase() === USER_EMAIL;
+  if (status === 'pedido_feito' && souDono) {
+    html += '<button class="btn recusar" onclick="acaoCancelar()">🗑️ Cancelar minha solicitação</button>';
+  }
   foot.innerHTML = html;
 }
 
@@ -695,6 +708,16 @@ async function acaoEncerrar() {
     encerrado_em: new Date().toISOString(),
     encerrado_por: USER_EMAIL
   }, 'concluída', coment);
+}
+
+// Cancelamento pelo solicitante (só em Pedido Feito)
+async function acaoCancelar() {
+  const motivo = prompt('Confirma o cancelamento? Motivo (opcional):');
+  if (motivo === null) return;
+  await transicionar({
+    status: 'recusada',
+    motivo_recusa: 'Cancelada pelo solicitante' + (motivo ? ': ' + motivo : '')
+  }, 'cancelada', motivo || 'Cancelada pelo solicitante');
 }
 
 async function transicionar(updates, acao, comentario) {
