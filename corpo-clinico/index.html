@@ -208,6 +208,32 @@ table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);w
   </div>
 </div>
 
+<!-- Modal Escala -->
+<div class="ov" id="ov-escala" onclick="if(event.target===this)fechar('ov-escala')">
+  <div class="modal">
+    <div class="modal-h"><h2 id="es-titulo">Escala —</h2><button class="x" onclick="fechar('ov-escala')">✕</button></div>
+    <div class="modal-b">
+      <div class="sec">
+        <h3>Blocos de atendimento</h3>
+        <div id="es-lista"></div>
+      </div>
+      <div class="sec">
+        <h3>Adicionar bloco</h3>
+        <div class="row2">
+          <div class="field"><label>Dia da semana</label><select id="es-dia"></select></div>
+          <div class="field"><label>Sala</label><select id="es-sala"></select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Hora início</label><input id="es-hi" type="time"/></div>
+          <div class="field"><label>Hora fim</label><input id="es-hf" type="time"/></div>
+        </div>
+        <button class="btn salvar" onclick="addBloco()">+ Adicionar bloco</button>
+      </div>
+    </div>
+    <div class="modal-f"><button class="btn outline" onclick="fechar('ov-escala')">Fechar</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -350,6 +376,7 @@ function abrirFicha(id){
     </div></div>`;
   document.getElementById('fi-foot').innerHTML =
     `<button class="btn outline" onclick="fechar('ov-ficha')">Fechar</button>
+     <button class="btn editar" onclick="abrirEscala(${id})">📅 Gerenciar escala</button>
      <button class="btn editar" onclick="fechar('ov-ficha');abrirEdicao(${id})">✏️ Editar</button>`;
   document.getElementById('ov-ficha').classList.add('show');
 }
@@ -421,6 +448,61 @@ async function salvarProf(){
   showToast(EDIT_ID!=null?'Profissional atualizado':'Profissional cadastrado','ok');
   fechar('ov-edit');
   await carregarTudo(); renderProfs(); renderMapa();
+}
+
+// === Escala (grade) ===
+let ESC_PROF = null;
+function abrirEscala(id){
+  ESC_PROF = PROFS.find(p=>p.id===id); if(!ESC_PROF) return;
+  document.getElementById('es-titulo').textContent = 'Escala — ' + ESC_PROF.nome;
+  document.getElementById('es-dia').innerHTML =
+    [1,2,3,4,5,6].map(d=>`<option value="${d}">${DIAS[d]}</option>`).join('');
+  document.getElementById('es-sala').innerHTML =
+    SALAS.map(s=>`<option value="${s.id}">${escH(s.nome)}</option>`).join('');
+  document.getElementById('es-hi').value = '';
+  document.getElementById('es-hf').value = '';
+  renderEscalaLista();
+  fechar('ov-ficha');
+  document.getElementById('ov-escala').classList.add('show');
+}
+function renderEscalaLista(){
+  const blocos = ESCALA.filter(e=>e.profissional_id===ESC_PROF.id)
+    .sort((a,b)=>a.dia_semana-b.dia_semana || (a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+  const el = document.getElementById('es-lista');
+  if(!blocos.length){
+    el.innerHTML = '<div style="font-size:12.5px;color:var(--texto2)">Nenhum bloco cadastrado. Adicione abaixo.</div>';
+    return;
+  }
+  el.innerHTML = blocos.map(b=>{
+    const s = SALAS.find(x=>x.id===b.sala_id);
+    const hr = b.hora_inicio ? b.hora_inicio.slice(0,5)+(b.hora_fim?'–'+b.hora_fim.slice(0,5):'') : 'sem horário';
+    return `<div class="esc-linha" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span><b>${DIAS[b.dia_semana]}</b> · ${escH(s?s.nome:'?')} · ${hr}</span>
+      <button class="btn del" style="padding:4px 11px;font-size:11px" onclick="removerBloco(${b.id})">remover</button></div>`;
+  }).join('');
+}
+async function addBloco(){
+  const dia  = parseInt(document.getElementById('es-dia').value, 10);
+  const sala = parseInt(document.getElementById('es-sala').value, 10);
+  const hi = document.getElementById('es-hi').value || null;
+  const hf = document.getElementById('es-hf').value || null;
+  if(!SB){ showToast('(preview) bloco adicionado','ok'); return; }
+  const { error } = await SB.from('cc_escala').insert({
+    profissional_id: ESC_PROF.id, sala_id: sala, dia_semana: dia,
+    hora_inicio: hi, hora_fim: hf });
+  if(error){ showToast('Erro: '+error.message,'erro'); return; }
+  showToast('Bloco adicionado','ok');
+  document.getElementById('es-hi').value = '';
+  document.getElementById('es-hf').value = '';
+  await carregarTudo(); renderProfs(); renderMapa(); renderEscalaLista();
+}
+async function removerBloco(id){
+  if(!confirm('Remover este bloco de escala?')) return;
+  if(!SB){ showToast('(preview) bloco removido','ok'); return; }
+  const { error } = await SB.from('cc_escala').delete().eq('id', id);
+  if(error){ showToast('Erro: '+error.message,'erro'); return; }
+  showToast('Bloco removido','ok');
+  await carregarTudo(); renderProfs(); renderMapa(); renderEscalaLista();
 }
 
 function fechar(id){ document.getElementById(id).classList.remove('show'); }
