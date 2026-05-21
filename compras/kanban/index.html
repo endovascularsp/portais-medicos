@@ -238,7 +238,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <option value="">Todos</option>
   </select>
   <label>Busca:</label>
-  <input type="text" id="filtro-busca" placeholder="número ou justificativa" oninput="aplicarFiltros()"/>
+  <input type="text" id="filtro-busca" placeholder="número, justificativa ou produto" oninput="aplicarFiltros()"/>
   <div class="stats" id="stats">—</div>
 </div>
 
@@ -359,7 +359,7 @@ async function carregarSolicitacoes() {
       encerrado_em, encerrado_por,
       compras_centros_custo(nome),
       compras_departamentos(nome),
-      compras_itens(id, valor_estimado)
+      compras_itens(id, valor_estimado, descricao)
     `)
     .order('criado_em', { ascending: false });
   if (error) {
@@ -372,7 +372,8 @@ async function carregarSolicitacoes() {
     centro_nome: s.compras_centros_custo?.nome || '—',
     depto_nome: s.compras_departamentos?.nome || '—',
     itens_count: (s.compras_itens || []).length,
-    total_estimado: (s.compras_itens || []).reduce((t,i) => t + (parseFloat(i.valor_estimado) || 0), 0)
+    total_estimado: (s.compras_itens || []).reduce((t,i) => t + (parseFloat(i.valor_estimado) || 0), 0),
+    itens_texto: (s.compras_itens || []).map(i => i.descricao || '').join(' ')
   }));
 }
 
@@ -390,7 +391,7 @@ function renderKanban() {
     if (fe === 'minhas' && (s.solicitante_email || '').toLowerCase() !== USER_EMAIL) return false;
     if (fs && s.status !== fs) return false;
     if (fc && String(s.centro_custo_id) !== fc) return false;
-    if (fb && !((s.numero || '') + ' ' + (s.justificativa || '')).toLowerCase().includes(fb)) return false;
+    if (fb && !((s.numero || '') + ' ' + (s.justificativa || '') + ' ' + (s.itens_texto || '')).toLowerCase().includes(fb)) return false;
     return true;
   });
 
