@@ -142,11 +142,21 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .hub-greeting span{color:#f5c842}
     .hub-sub{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:44px}
 
-    .hub-cards{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px}
+    /* Hierarquia: destaque (uso diário) > demais módulos > admin */
+    .hub-grupo-label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+      color:rgba(255,255,255,0.35);margin:0 0 14px 4px;}
+    .hub-cards-destaque{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:34px}
+    .hub-cards-mais{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:16px;margin-bottom:34px}
+    .hub-cards-admin{display:grid;grid-template-columns:1fr;max-width:360px}
     .hub-card{
       background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
       border-radius:20px;padding:32px 28px;transition:border-color .2s,background .2s;
     }
+    /* Cards do grupo "demais" e "admin": mais compactos */
+    .hub-cards-mais .hub-card,.hub-cards-admin .hub-card{padding:22px 22px;border-radius:16px;}
+    .hub-cards-mais .hub-card-icon,.hub-cards-admin .hub-card-icon{font-size:28px;margin-bottom:9px;}
+    .hub-cards-mais .hub-card-title,.hub-cards-admin .hub-card-title{font-size:17px;}
+    .hub-cards-mais .hub-card-desc,.hub-cards-admin .hub-card-desc{margin-bottom:16px;}
     .hub-card.prod{border-color:rgba(192,132,252,0.25)}
     .hub-card.prod:hover{border-color:rgba(192,132,252,0.5);background:rgba(192,132,252,0.06)}
     .hub-card.rec{border-color:rgba(126,184,247,0.25)}
@@ -209,8 +219,8 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       margin-top:60px;padding-bottom:20px;
     }
 
-    @media(max-width:1200px){.hub-cards{grid-template-columns:1fr 1fr}}
-    @media(max-width:600px){.hub-cards{grid-template-columns:1fr}}
+    @media(max-width:900px){.hub-cards-destaque{grid-template-columns:1fr}}
+    @media(max-width:600px){.hub-cards-mais{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -244,7 +254,8 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     <div class="hub-greeting">Bem-vindo, <span>Gestor</span> 👋</div>
     <div class="hub-sub">Selecione o módulo que deseja acessar:</div>
 
-    <div class="hub-cards">
+    <div class="hub-grupo-label">Uso diário</div>
+    <div class="hub-cards-destaque">
 
       <div class="hub-card rec" data-card="gestor_recebimento">
         <div class="hub-card-icon">💰</div>
@@ -276,6 +287,11 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
           </a>
         </div>
       </div>
+
+    </div>
+
+    <div class="hub-grupo-label">Mais módulos</div>
+    <div class="hub-cards-mais">
 
       <div class="hub-card insights" data-card="gestor_insights">
         <div class="hub-card-icon">💡</div>
@@ -353,6 +369,11 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
           </a>
         </div>
       </div>
+
+    </div>
+
+    <div class="hub-grupo-label">Administração</div>
+    <div class="hub-cards-admin">
 
       <div class="hub-card acessos" data-card="gestor_acessos" data-role="admin">
         <div class="hub-card-icon">🔑</div>
@@ -449,6 +470,16 @@ async function checkAuth() {
     const ok = (cards.includes(reqCard) || coberto(reqCard)) && (!reqRole || me.role === reqRole);
     el.style.display = ok ? '' : 'none';
     if (ok) visiveis++;
+  });
+
+  // Esconde o grupo (e seu rótulo) quando nenhum card dele ficou visível.
+  document.querySelectorAll('.hub-cards-destaque,.hub-cards-mais,.hub-cards-admin').forEach(grid => {
+    const algum = [...grid.querySelectorAll('.hub-card')].some(c => c.style.display !== 'none');
+    grid.style.display = algum ? '' : 'none';
+    const label = grid.previousElementSibling;
+    if (label && label.classList.contains('hub-grupo-label')) {
+      label.style.display = algum ? '' : 'none';
+    }
   });
 
   // Se nenhum card visível: resgata médico que caiu aqui por engano.
