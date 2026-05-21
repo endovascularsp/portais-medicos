@@ -558,38 +558,39 @@ function fecharModal() {
 
 function renderAcoes(status) {
   const foot = document.getElementById('m-foot');
-  const ehCompradora = USER_CARDS.includes('compras_compradora') || USER_CARDS.includes('gestor');
-  const ehAprovador  = USER_CARDS.includes('compras_aprovador')  || USER_CARDS.includes('gestor');
-  const ehFinanceiro = USER_CARDS.includes('compras_financeiro') || USER_CARDS.includes('gestor');
-  const temAlgumCard = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
+  // Política: qualquer pessoa com acesso ao portal movimenta as compras
+  // (todo passo fica registrado no histórico). A etapa de aprovação fica
+  // restrita a administradores (card 'gestor').
+  const temAcesso = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
+  const ehAdmin   = USER_CARDS.includes('gestor');
 
   let html = '<button class="btn outline" onclick="fecharModal()">Fechar</button>';
 
-  // Etapa 1 (Pedido Feito) — Compradora tria: encaminha pra aprovação ou aprova direto
-  if (status === 'pedido_feito' && ehCompradora) {
+  // Etapa 1 (Pedido Feito) — triagem: encaminha pra aprovação ou aprova direto
+  if (status === 'pedido_feito' && temAcesso) {
     html += '<button class="btn recusar" onclick="acaoRecusar()">❌ Recusar</button>';
     html += '<button class="btn outline" onclick="acaoEncaminharAprovacao()">↗️ Encaminhar pra Aprovação</button>';
     html += '<button class="btn aprovar" onclick="acaoAprovarDireto()">✅ Aprovar direto</button>';
   }
-  // Etapa 2 (Aguardando Aprovação) — Head Op decide
-  else if (status === 'aguardando_aprovacao' && ehAprovador) {
+  // Etapa 2 (Aguardando Aprovação) — só administradores aprovam/recusam
+  else if (status === 'aguardando_aprovacao' && ehAdmin) {
     html += '<button class="btn recusar" onclick="acaoRecusar()">❌ Recusar</button>';
     html += '<button class="btn aprovar" onclick="acaoAprovar()">✅ Aprovar</button>';
   }
-  // Etapa 3 (Compras Pendentes — aprovadas, aguardando compra) — Compradora marca como Comprada
-  else if (status === 'compras_pendentes' && ehCompradora) {
+  // Etapa 3 (Compras Pendentes) — efetivar a compra
+  else if (status === 'compras_pendentes' && temAcesso) {
     html += '<button class="btn cotar" onclick="acaoMarcarComprada()">💼 Marcar como Comprada</button>';
   }
-  // Etapa 4 — Financeiro lança no Conta Azul
-  else if (status === 'compra_realizada' && ehFinanceiro) {
+  // Etapa 4 (Compra Realizada) — lançar no Conta Azul
+  else if (status === 'compra_realizada' && temAcesso) {
     html += '<button class="btn pagar" onclick="acaoLancarContaAzul()">📒 Lançar no Conta Azul</button>';
   }
-  // Etapa 5 — Quem recebe fisicamente (qualquer compras_*) marca chegada
-  else if (status === 'inclusao_conta_azul' && temAlgumCard) {
+  // Etapa 5 (Conta Azul) — marcar recebimento físico
+  else if (status === 'inclusao_conta_azul' && temAcesso) {
     html += '<button class="btn cotar" onclick="acaoMarcarRecebido()">📦 Marcar como Recebido</button>';
   }
-  // Etapa 6 — Compradora encerra
-  else if (status === 'recebimento' && ehCompradora) {
+  // Etapa 6 (Recebimento) — encerrar
+  else if (status === 'recebimento' && temAcesso) {
     html += '<button class="btn aprovar" onclick="acaoEncerrar()">✅ Encerrar</button>';
   }
   // Etapa 7 ou Recusada — apenas visualização
