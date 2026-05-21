@@ -467,16 +467,22 @@ async function abrirModal(solicitacaoId) {
   // Carrega itens detalhados + anexos + historico
   let itens = [], anexos = [], hist = [];
   if (SB) {
+    // compras_itens tem 2 FKs pra compras_fornecedores (sugerido + final);
+    // precisa nomear a FK no embed senão o PostgREST acusa ambiguidade
+    // e a query inteira volta vazia.
     const [iR, aR, hR] = await Promise.all([
-      SB.from('compras_itens').select('*, compras_fornecedores(nome)').eq('solicitacao_id', SEL.id),
+      SB.from('compras_itens')
+        .select('*, fornecedor:compras_fornecedores!fornecedor_sugerido_id(nome)')
+        .eq('solicitacao_id', SEL.id),
       SB.from('compras_anexos').select('*').eq('solicitacao_id', SEL.id),
       SB.from('compras_historico').select('*').eq('solicitacao_id', SEL.id).order('criado_em',{ascending:true})
     ]);
+    if (iR.error) { console.error('[kanban] erro itens:', iR.error); mostrarBannerErro('Erro ao carregar itens: ' + iR.error.message); }
     itens = iR.data || [];
     anexos = aR.data || [];
     hist = hR.data || [];
   } else {
-    itens = [{descricao:'Papel A4 75g',quantidade:10,unidade:'cx',valor_estimado:250,compras_fornecedores:{nome:'KALUNGA'}}];
+    itens = [{descricao:'Papel A4 75g',quantidade:10,unidade:'cx',valor_estimado:250,fornecedor:{nome:'KALUNGA'}}];
   }
 
   body.innerHTML = `
@@ -505,7 +511,7 @@ async function abrirModal(solicitacaoId) {
       ${itens.map(i => `
         <div class="item-line">
           <div class="desc">${escapeHtml(i.descricao)}</div>
-          <div class="qtd">${i.quantidade} ${i.unidade || ''} ${i.compras_fornecedores?.nome ? '· ' + escapeHtml(i.compras_fornecedores.nome) : ''} ${i.valor_estimado ? '· R$ ' + fmtBRL(i.valor_estimado) + ' estimado' : ''}</div>
+          <div class="qtd">${i.quantidade} ${i.unidade || ''} ${i.fornecedor?.nome ? '· ' + escapeHtml(i.fornecedor.nome) : ''} ${i.valor_estimado ? '· R$ ' + fmtBRL(i.valor_estimado) + ' estimado' : ''}</div>
         </div>
       `).join('')}
     </div>
