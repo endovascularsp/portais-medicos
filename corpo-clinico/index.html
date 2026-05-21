@@ -102,6 +102,21 @@ table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);w
 .slot .hr{color:var(--texto2);font-size:10px;}
 .slot-vazio{color:#cbd5e1;}
 
+/* === Planta visual === */
+.planta-grupo{margin-bottom:24px;}
+.planta-grupo h3{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;
+  letter-spacing:0.6px;margin-bottom:11px;padding-bottom:6px;border-bottom:2px solid var(--borda);}
+.planta-salas{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:12px;}
+.sala-box{background:#fff;border:2px solid var(--borda);border-radius:11px;padding:14px;
+  min-height:96px;box-shadow:var(--sombra);}
+.sala-box.ocupada{border-color:var(--azul);background:linear-gradient(160deg,#fff 60%,var(--azul-cl));}
+.sala-box.livre{border-style:dashed;background:var(--cinza-cl);}
+.sala-box .sala-nome{font-size:10.5px;font-weight:800;color:var(--texto2);
+  text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;}
+.sala-box .sala-prof{font-size:13px;font-weight:700;color:var(--navy);line-height:1.35;margin-bottom:3px;}
+.sala-box .sala-prof .hr{font-weight:500;color:var(--texto2);font-size:11px;}
+.sala-box .sala-livre{font-size:12px;color:#b6c4d4;font-style:italic;}
+
 /* === Modais === */
 .ov{position:fixed;inset:0;background:rgba(11,31,58,0.6);z-index:1000;display:none;
   align-items:center;justify-content:center;padding:20px;}
@@ -129,6 +144,10 @@ table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);w
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);}
 .field textarea{resize:vertical;min-height:64px;}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media(max-width:560px){.row2,.row3{grid-template-columns:1fr;}}
+#ed-body .sec{margin-bottom:18px;}
+#ed-body .sec h3{padding-bottom:5px;border-bottom:1px solid var(--borda);}
 
 .btn{padding:9px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;
   border:1.5px solid;font-family:inherit;transition:all .15s;}
@@ -168,6 +187,7 @@ table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);w
 <div class="tabs">
   <div class="tab active" id="tab-profs" onclick="trocarAba('profs')">👥 Profissionais</div>
   <div class="tab" id="tab-mapa" onclick="trocarAba('mapa')">🗺️ Mapa de Sala</div>
+  <div class="tab" id="tab-planta" onclick="trocarAba('planta')">🏥 Planta</div>
 </div>
 
 <main class="main">
@@ -184,6 +204,21 @@ table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);w
   <div id="view-mapa" style="display:none">
     <div class="toolbar"><div class="stat" id="stat-mapa">—</div></div>
     <div class="mapa-wrap"><table class="mapa" id="tbl-mapa"></table></div>
+  </div>
+  <!-- ABA PLANTA -->
+  <div id="view-planta" style="display:none">
+    <div class="toolbar">
+      <label style="font-size:11px;font-weight:700;color:var(--texto2);text-transform:uppercase;letter-spacing:.4px">Dia da semana</label>
+      <select id="planta-dia" onchange="renderPlanta()">
+        <option value="1">Segunda-feira</option>
+        <option value="2">Terça-feira</option>
+        <option value="3">Quarta-feira</option>
+        <option value="4">Quinta-feira</option>
+        <option value="5">Sexta-feira</option>
+      </select>
+      <div class="stat" id="stat-planta">—</div>
+    </div>
+    <div id="planta-area"></div>
   </div>
 </main>
 
@@ -244,6 +279,7 @@ async function inicializar() {
   await carregarTudo();
   renderProfs();
   renderMapa();
+  renderPlanta();
 }
 
 async function carregarTudo() {
@@ -273,10 +309,10 @@ function iniciais(nome){const p=String(nome||'?').replace(/^(Dr|Dra)\.?\s*/i,'')
 function fmtBRL(v){return v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
 function trocarAba(a){
-  document.getElementById('tab-profs').classList.toggle('active', a==='profs');
-  document.getElementById('tab-mapa').classList.toggle('active', a==='mapa');
-  document.getElementById('view-profs').style.display = a==='profs'?'':'none';
-  document.getElementById('view-mapa').style.display = a==='mapa'?'':'none';
+  ['profs','mapa','planta'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active', a===x);
+    document.getElementById('view-'+x).style.display = a===x?'':'none';
+  });
 }
 
 // resumo dos dias de atendimento de um profissional (da escala)
@@ -333,9 +369,43 @@ function renderMapa(){
     h += '</tr>';
   }
   document.getElementById('tbl-mapa').innerHTML = h + '</tbody>';
-  const ocup = ESCALA.length, capac = SALAS.length*5;
   document.getElementById('stat-mapa').innerHTML =
     `<b>${ESCALA.length}</b> blocos de atendimento · ${SALAS.length} salas`;
+}
+
+// Planta visual — salas em caixas, por dia selecionado
+function renderPlanta(){
+  const dia = parseInt(document.getElementById('planta-dia').value, 10);
+  const grupos = [
+    {titulo:'Consultórios', tipos:['consultorio']},
+    {titulo:'Salas de procedimento e demais espaços', tipos:['procedimento','spa','fotona']},
+  ];
+  let html = '';
+  for(const g of grupos){
+    const salas = SALAS.filter(s=>g.tipos.includes(s.tipo));
+    if(!salas.length) continue;
+    html += `<div class="planta-grupo"><h3>${g.titulo}</h3><div class="planta-salas">`;
+    for(const s of salas){
+      const blocos = ESCALA.filter(e=>e.dia_semana===dia && e.sala_id===s.id);
+      html += `<div class="sala-box ${blocos.length?'ocupada':'livre'}">
+        <div class="sala-nome">${escH(s.nome)}</div>`;
+      if(blocos.length){
+        html += blocos.map(b=>{
+          const p = PROFS.find(x=>x.id===b.profissional_id);
+          const hr = b.hora_inicio ? ` <span class="hr">${b.hora_inicio.slice(0,5)}</span>` : '';
+          return `<div class="sala-prof">${escH(p?p.nome:'?')}${hr}</div>`;
+        }).join('');
+      } else {
+        html += '<div class="sala-livre">livre</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
+  document.getElementById('planta-area').innerHTML = html;
+  const ocupadas = SALAS.filter(s=>ESCALA.some(e=>e.dia_semana===dia && e.sala_id===s.id)).length;
+  document.getElementById('stat-planta').innerHTML =
+    `<b>${ocupadas}</b> de ${SALAS.length} salas ocupadas`;
 }
 
 function abrirFicha(id){
@@ -348,11 +418,13 @@ function abrirFicha(id){
     <div class="sec"><h3>Atendimento</h3><div class="kv">
       <div class="k">Especialidade</div><div class="v">${escH(SEL.especialidade||'—')}</div>
       <div class="k">Empresa</div><div class="v">${escH(SEL.empresa||'—')}</div>
-      <div class="k">Atende on-line</div><div class="v">${SEL.atende_online?'Sim':'Não'}</div>
-      <div class="k">Atende convênio</div><div class="v">${SEL.atende_convenio?'Sim':'Não'}</div>
+      <div class="k">Atende on-line</div><div class="v">${SEL.atende_online==null?'—':SEL.atende_online?'Sim':'Não'}</div>
+      <div class="k">Atende convênio</div><div class="v">${SEL.atende_convenio==null?'—':SEL.atende_convenio?'Sim':'Não'}</div>
       <div class="k">Consulta particular</div><div class="v">${fmtBRL(SEL.valor_consulta)}</div>
+      <div class="k">Pacote c/ exames</div><div class="v">${fmtBRL(SEL.valor_pacote)}</div>
       <div class="k">Tempo 1ª vez</div><div class="v">${escH(SEL.tempo_primeira_vez||'—')}</div>
       <div class="k">Tempo retorno</div><div class="v">${escH(SEL.tempo_retorno||'—')}</div>
+      <div class="k">Dias p/ retorno</div><div class="v">${escH(SEL.dias_retorno||'—')}</div>
       <div class="k">Faixa de idade</div><div class="v">${escH(SEL.faixa_idade||'—')}</div>
     </div></div>
     <div class="sec"><h3>Escala / Mapa de Sala</h3>
@@ -366,13 +438,31 @@ function abrirFicha(id){
       <div style="font-size:13px;line-height:1.5">${escH(SEL.procedimentos)}</div></div>`:''}
     ${SEL.observacoes?`<div class="sec"><h3>Observações</h3>
       <div style="font-size:13px;line-height:1.5;color:var(--texto2)">${escH(SEL.observacoes)}</div></div>`:''}
-    <div class="sec"><h3>Registro &amp; contato</h3><div class="kv">
+    <div class="sec"><h3>Registro profissional</h3><div class="kv">
       <div class="k">Conselho</div><div class="v">${escH(reg||'—')}</div>
       <div class="k">RQE</div><div class="v">${escH(SEL.rqe||'—')}</div>
-      <div class="k">CPF</div><div class="v">${escH(SEL.cpf||'—')}</div>
+    </div></div>
+    <div class="sec"><h3>Contato</h3><div class="kv">
       <div class="k">Celular</div><div class="v">${escH(SEL.celular||'—')}</div>
       <div class="k">E-mail</div><div class="v">${escH(SEL.email||'—')}</div>
       <div class="k">Instagram</div><div class="v">${SEL.instagram?'@'+escH(SEL.instagram.replace(/^@/,'')):'—'}</div>
+      <div class="k">Facebook</div><div class="v">${escH(SEL.facebook||'—')}</div>
+    </div></div>
+    <div class="sec"><h3>Dados pessoais</h3><div class="kv">
+      <div class="k">CPF</div><div class="v">${escH(SEL.cpf||'—')}</div>
+      <div class="k">RG</div><div class="v">${escH(SEL.rg||'—')}</div>
+      <div class="k">Nascimento</div><div class="v">${escH(SEL.data_nascimento||'—')}</div>
+      <div class="k">Sexo</div><div class="v">${escH(SEL.sexo||'—')}</div>
+      <div class="k">Estado civil</div><div class="v">${escH(SEL.estado_civil||'—')}</div>
+      <div class="k">Endereço</div><div class="v">${escH([SEL.endereco,SEL.cidade,SEL.estado,SEL.cep].filter(Boolean).join(', ')||'—')}</div>
+    </div></div>
+    <div class="sec"><h3>Empresa &amp; dados bancários</h3><div class="kv">
+      <div class="k">Relação</div><div class="v">${SEL.relacao_clinica==='PJ'?'Pessoa jurídica':SEL.relacao_clinica==='PF'?'Pessoa física':'—'}</div>
+      <div class="k">CNPJ</div><div class="v">${escH(SEL.cnpj||'—')}</div>
+      <div class="k">Razão social</div><div class="v">${escH(SEL.razao_social||'—')}</div>
+      <div class="k">Simples Nacional</div><div class="v">${SEL.optante_simples==null?'—':SEL.optante_simples?'Sim':'Não'}</div>
+      <div class="k">Banco</div><div class="v">${escH([SEL.banco,SEL.agencia,SEL.conta].filter(Boolean).join(' · ')||'—')}</div>
+      <div class="k">Pix</div><div class="v">${escH(SEL.pix||'—')}</div>
     </div></div>`;
   document.getElementById('fi-foot').innerHTML =
     `<button class="btn outline" onclick="fechar('ov-ficha')">Fechar</button>
@@ -385,31 +475,57 @@ function campo(id,label,val,tipo){
   return `<div class="field"><label>${label}</label>
     <input id="${id}" type="${tipo||'text'}" value="${escH(val==null?'':val)}"/></div>`;
 }
+function selSN(id,label,val){
+  return `<div class="field"><label>${label}</label><select id="${id}">
+    <option value="">—</option>
+    <option value="true" ${val===true?'selected':''}>Sim</option>
+    <option value="false" ${val===false?'selected':''}>Não</option></select></div>`;
+}
 function abrirEdicao(id){
   const p = id!=null ? PROFS.find(x=>x.id===id) : {};
   EDIT_ID = id;
   document.getElementById('ed-titulo').textContent = id!=null ? 'Editar — '+p.nome : 'Novo profissional';
   document.getElementById('ed-body').innerHTML = `
-    ${campo('e-nome','Nome *',p.nome)}
-    <div class="row2">${campo('e-esp','Especialidade',p.especialidade)}${campo('e-empresa','Empresa',p.empresa)}</div>
-    <div class="row2">
-      <div class="field"><label>Atende on-line</label><select id="e-online">
-        <option value="false">Não</option><option value="true" ${p.atende_online?'selected':''}>Sim</option></select></div>
-      <div class="field"><label>Atende convênio</label><select id="e-conv">
-        <option value="false">Não</option><option value="true" ${p.atende_convenio?'selected':''}>Sim</option></select></div>
+    <div class="sec"><h3>Dados pessoais</h3>
+      ${campo('e-nome','Nome completo *',p.nome)}
+      <div class="row2">${campo('e-nasc','Data de nascimento',p.data_nascimento,'date')}${campo('e-sexo','Sexo',p.sexo)}</div>
+      <div class="row2">${campo('e-civil','Estado civil',p.estado_civil)}${campo('e-rg','RG',p.rg)}</div>
+      ${campo('e-cpf','CPF',p.cpf)}
+      ${campo('e-end','Endereço',p.endereco)}
+      <div class="row3">${campo('e-cidade','Cidade',p.cidade)}${campo('e-estado','Estado',p.estado)}${campo('e-cep','CEP',p.cep)}</div>
     </div>
-    <div class="row2">${campo('e-t1','Tempo 1ª vez',p.tempo_primeira_vez)}${campo('e-tret','Tempo retorno',p.tempo_retorno)}</div>
-    <div class="row2">${campo('e-valor','Consulta particular (R$)',p.valor_consulta,'number')}${campo('e-idade','Faixa de idade',p.faixa_idade)}</div>
-    <div class="row2">
-      <div class="field"><label>Conselho</label><select id="e-conselho">
-        ${['CRM','CRN','CREFITO','Outro'].map(c=>`<option ${p.conselho===c?'selected':''}>${c}</option>`).join('')}</select></div>
-      ${campo('e-cnum','Nº do registro',p.conselho_numero)}
+    <div class="sec"><h3>Contato &amp; redes</h3>
+      <div class="row2">${campo('e-cel','Celular',p.celular)}${campo('e-email','E-mail',p.email)}</div>
+      <div class="row2">${campo('e-insta','Instagram',p.instagram)}${campo('e-face','Facebook',p.facebook)}</div>
     </div>
-    <div class="row2">${campo('e-rqe','RQE',p.rqe)}${campo('e-cpf','CPF',p.cpf)}</div>
-    <div class="row2">${campo('e-cel','Celular',p.celular)}${campo('e-email','E-mail',p.email)}</div>
-    ${campo('e-insta','Instagram',p.instagram)}
-    <div class="field"><label>Procedimentos que realiza</label><textarea id="e-proc">${escH(p.procedimentos||'')}</textarea></div>
-    <div class="field"><label>Observações</label><textarea id="e-obs">${escH(p.observacoes||'')}</textarea></div>`;
+    <div class="sec"><h3>Dados profissionais</h3>
+      <div class="row2">${campo('e-esp','Especialidade',p.especialidade)}${campo('e-empresa','Empresa',p.empresa)}</div>
+      <div class="row2">
+        <div class="field"><label>Conselho</label><select id="e-conselho">
+          ${['CRM','CRN','CREFITO','Outro'].map(c=>`<option ${p.conselho===c?'selected':''}>${c}</option>`).join('')}</select></div>
+        ${campo('e-cnum','Nº do registro',p.conselho_numero)}
+      </div>
+      ${campo('e-rqe','RQE',p.rqe)}
+      <div class="row2">${selSN('e-online','Atende on-line',p.atende_online)}${selSN('e-conv','Atende convênio',p.atende_convenio)}</div>
+      ${campo('e-idade','Idade mínima / faixa atendida',p.faixa_idade)}
+      <div class="row3">${campo('e-t1','Tempo 1ª consulta',p.tempo_primeira_vez)}${campo('e-tret','Tempo retorno',p.tempo_retorno)}${campo('e-dret','Dias p/ retorno',p.dias_retorno)}</div>
+      <div class="row2">${campo('e-valor','Valor consulta (R$)',p.valor_consulta,'number')}${campo('e-pacote','Valor pacote c/ exames (R$)',p.valor_pacote,'number')}</div>
+      <div class="field"><label>Principais enfoques / procedimentos</label><textarea id="e-proc">${escH(p.procedimentos||'')}</textarea></div>
+    </div>
+    <div class="sec"><h3>Empresa &amp; dados bancários</h3>
+      <div class="row2">${campo('e-cnpj','CNPJ',p.cnpj)}${campo('e-razao','Razão social',p.razao_social)}</div>
+      <div class="row2">${selSN('e-simples','Optante Simples Nacional',p.optante_simples)}
+        <div class="field"><label>Relação com a clínica</label><select id="e-relacao">
+          <option value="">—</option>
+          <option value="PF" ${p.relacao_clinica==='PF'?'selected':''}>Pessoa física</option>
+          <option value="PJ" ${p.relacao_clinica==='PJ'?'selected':''}>Pessoa jurídica</option></select></div>
+      </div>
+      <div class="row3">${campo('e-banco','Banco',p.banco)}${campo('e-ag','Agência',p.agencia)}${campo('e-conta','Conta',p.conta)}</div>
+      ${campo('e-pix','Pix',p.pix)}
+    </div>
+    <div class="sec"><h3>Observações</h3>
+      <div class="field"><label>Notas livres</label><textarea id="e-obs">${escH(p.observacoes||'')}</textarea></div>
+    </div>`;
   document.getElementById('ov-edit').classList.add('show');
 }
 let EDIT_ID = null;
@@ -417,25 +533,30 @@ let EDIT_ID = null;
 async function salvarProf(){
   const nome = document.getElementById('e-nome').value.trim();
   if(!nome){ showToast('Nome é obrigatório','erro'); return; }
-  const vnum = document.getElementById('e-valor').value;
+  const g = id => { const el=document.getElementById(id); return el && el.value.trim() ? el.value.trim() : null; };
+  const gnum = id => { const v=document.getElementById(id).value; return v?parseFloat(v):null; };
+  const gsn = id => { const v=document.getElementById(id).value; return v===''?null:v==='true'; };
   const dados = {
-    nome, especialidade: document.getElementById('e-esp').value.trim()||null,
-    empresa: document.getElementById('e-empresa').value.trim()||null,
-    atende_online: document.getElementById('e-online').value==='true',
-    atende_convenio: document.getElementById('e-conv').value==='true',
-    tempo_primeira_vez: document.getElementById('e-t1').value.trim()||null,
-    tempo_retorno: document.getElementById('e-tret').value.trim()||null,
-    valor_consulta: vnum?parseFloat(vnum):null,
-    faixa_idade: document.getElementById('e-idade').value.trim()||null,
+    nome,
+    data_nascimento: g('e-nasc'), sexo: g('e-sexo'), estado_civil: g('e-civil'),
+    rg: g('e-rg'), cpf: g('e-cpf'), endereco: g('e-end'),
+    cidade: g('e-cidade'), estado: g('e-estado'), cep: g('e-cep'),
+    celular: g('e-cel'), email: g('e-email'),
+    instagram: (g('e-insta')||'').replace(/^@/,'')||null,
+    facebook: g('e-face'),
+    especialidade: g('e-esp'), empresa: g('e-empresa'),
     conselho: document.getElementById('e-conselho').value,
-    conselho_numero: document.getElementById('e-cnum').value.trim()||null,
-    rqe: document.getElementById('e-rqe').value.trim()||null,
-    cpf: document.getElementById('e-cpf').value.trim()||null,
-    celular: document.getElementById('e-cel').value.trim()||null,
-    email: document.getElementById('e-email').value.trim()||null,
-    instagram: document.getElementById('e-insta').value.trim().replace(/^@/,'')||null,
-    procedimentos: document.getElementById('e-proc').value.trim()||null,
-    observacoes: document.getElementById('e-obs').value.trim()||null,
+    conselho_numero: g('e-cnum'), rqe: g('e-rqe'),
+    atende_online: gsn('e-online'), atende_convenio: gsn('e-conv'),
+    faixa_idade: g('e-idade'),
+    tempo_primeira_vez: g('e-t1'), tempo_retorno: g('e-tret'), dias_retorno: g('e-dret'),
+    valor_consulta: gnum('e-valor'), valor_pacote: gnum('e-pacote'),
+    procedimentos: g('e-proc'),
+    cnpj: g('e-cnpj'), razao_social: g('e-razao'),
+    optante_simples: gsn('e-simples'),
+    relacao_clinica: document.getElementById('e-relacao').value||null,
+    banco: g('e-banco'), agencia: g('e-ag'), conta: g('e-conta'), pix: g('e-pix'),
+    observacoes: g('e-obs'),
   };
   if(!SB){ showToast('(preview) salvo','ok'); fechar('ov-edit'); return; }
   let err;
@@ -447,7 +568,7 @@ async function salvarProf(){
   if(err){ showToast('Erro: '+err.message,'erro'); return; }
   showToast(EDIT_ID!=null?'Profissional atualizado':'Profissional cadastrado','ok');
   fechar('ov-edit');
-  await carregarTudo(); renderProfs(); renderMapa();
+  await carregarTudo(); renderProfs(); renderMapa(); renderPlanta();
 }
 
 // === Escala (grade) ===
@@ -494,7 +615,7 @@ async function addBloco(){
   showToast('Bloco adicionado','ok');
   document.getElementById('es-hi').value = '';
   document.getElementById('es-hf').value = '';
-  await carregarTudo(); renderProfs(); renderMapa(); renderEscalaLista();
+  await carregarTudo(); renderProfs(); renderMapa(); renderPlanta(); renderEscalaLista();
 }
 async function removerBloco(id){
   if(!confirm('Remover este bloco de escala?')) return;
@@ -502,7 +623,7 @@ async function removerBloco(id){
   const { error } = await SB.from('cc_escala').delete().eq('id', id);
   if(error){ showToast('Erro: '+error.message,'erro'); return; }
   showToast('Bloco removido','ok');
-  await carregarTudo(); renderProfs(); renderMapa(); renderEscalaLista();
+  await carregarTudo(); renderProfs(); renderMapa(); renderPlanta(); renderEscalaLista();
 }
 
 function fechar(id){ document.getElementById(id).classList.remove('show'); }
