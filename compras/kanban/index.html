@@ -200,8 +200,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .toolbar{padding:10px 14px;}
 }
   </style>
+<style id="boot-spinner-v1">
+#boot{visibility:visible;position:fixed;inset:0;background:#0B1F3A;z-index:99999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+html[style*="visible"] #boot{display:none;}
+#boot .sp{width:38px;height:38px;border:4px solid rgba(255,255,255,0.15);
+  border-top-color:#fff;border-radius:50%;animation:bootsp .8s linear infinite;}
+@keyframes bootsp{to{transform:rotate(360deg)}}
+#boot .tx{color:rgba(255,255,255,0.65);font-family:'Segoe UI',system-ui,sans-serif;
+  font-size:13px;letter-spacing:.3px;}
+</style>
 </head>
 <body>
+<!--boot-spinner-v1--><div id="boot"><div class="sp"></div><div class="tx">Carregando dados…</div></div>
 
 <header class="header">
   <div class="header-logo">
