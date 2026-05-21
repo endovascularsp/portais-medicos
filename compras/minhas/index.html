@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Minhas Solicitações · Compras · Endovascular SP</title>
+  <link rel="icon" href="../../assets/logo.png" type="image/png"/>
+  <style>html{visibility:hidden}</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    let SB, USER_EMAIL, USER_CARDS = [];
+    (async function() {
+      const _isLocalPreview = location.protocol === 'file:'
+        || location.hostname === 'localhost'
+        || location.hostname === '127.0.0.1';
+      if (_isLocalPreview) {
+        document.documentElement.style.visibility = 'visible';
+        USER_EMAIL = 'preview@local';
+        return;
+      }
+      try {
+        SB = window.supabase.createClient(
+          'https://egpcrqrvctnpxbdjdhtf.supabase.co',
+          'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW'
+        );
+        const { data: { session } } = await SB.auth.getSession();
+        if (!session) { window.location.replace('/login/'); return; }
+        USER_EMAIL = (session.user.email || '').toLowerCase();
+        const { data: me } = await SB.from('users')
+          .select('cards').eq('email', USER_EMAIL).maybeSingle();
+        USER_CARDS = (me && me.cards) || [];
+        const podeVer = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
+        if (!podeVer) { window.location.replace('/hub/Gestor_Hub.html'); return; }
+        document.documentElement.style.visibility = 'visible';
+        window.addEventListener('DOMContentLoaded', inicializar);
+      } catch (e) {
+        console.error('gate erro:', e);
+        window.location.replace('/login/');
+      }
+    })();
+  </script>
+  <style>
+html,body{overflow-x:hidden!important;max-width:100vw;}
+:root{
+  --navy:#0B1F3A;--azul:#1A5296;--azul-cl:#D6E8F7;
+  --gold:#A18960;--gold-bg:#F5F0E5;
+  --bg:#F2F5F9;--borda:#C4D4E8;--cinza-cl:#F7FAFD;
+  --texto:#0D1E30;--texto2:#4A6278;
+  --verde:#2D7A3C;--vermelho:#C0392B;--laranja:#D4621A;--roxo:#7e57c2;--ciano:#0891b2;
+  --sombra:0 2px 10px rgba(11,31,58,0.08);--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+
+.header{background:var(--navy);color:#fff;padding:0 24px;display:flex;align-items:center;
+  justify-content:space-between;height:64px;border-bottom:3px solid var(--azul);}
+.header-logo{display:flex;align-items:center;gap:12px;}
+.header-logo img{width:38px;height:38px;}
+.header-logo h1{font-size:17px;font-weight:800;}
+.header-logo span{font-size:11px;color:rgba(255,255,255,0.7);display:block;margin-top:2px;}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.header-action-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;
+  border-radius:20px;background:rgba(255,255,255,0.10);border:1.5px solid rgba(255,255,255,0.20);
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;
+  transition:all 0.15s;font-family:inherit;}
+.header-action-btn:hover{background:rgba(255,255,255,0.18);}
+.header-action-btn.nova{background:var(--gold);border-color:var(--gold);}
+.header-action-btn.home{background:rgba(148,163,184,0.15);color:#cbd5e1;}
+
+.main{max-width:920px;margin:0 auto;padding:24px 24px 60px;}
+.page-title{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+.page-sub{font-size:13px;color:var(--texto2);margin-bottom:20px;}
+
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+.toolbar select,.toolbar input{padding:7px 12px;border:1.5px solid var(--borda);border-radius:8px;
+  font-size:12px;color:var(--navy);background:#fff;font-family:inherit;font-weight:600;}
+.toolbar select:focus,.toolbar input:focus{border-color:var(--gold);outline:none;}
+.toolbar label{font-size:11px;font-weight:700;color:var(--texto2);text-transform:uppercase;letter-spacing:0.4px;}
+.toolbar .stats{margin-left:auto;font-size:12px;color:var(--texto2);font-weight:600;}
+
+.lista{display:flex;flex-direction:column;gap:12px;}
+.vazio{text-align:center;padding:60px 20px;color:var(--texto2);}
+.vazio .ic{font-size:48px;margin-bottom:12px;}
+.vazio a{color:var(--gold);font-weight:700;text-decoration:none;}
+
+/* Card de solicitação */
+.sol{background:#fff;border:1px solid var(--borda);border-radius:var(--radius);
+  padding:16px 18px;box-shadow:var(--sombra);cursor:pointer;transition:all 0.15s;}
+.sol:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 5px 16px rgba(11,31,58,0.12);}
+.sol-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.sol-numero{font-size:12px;font-weight:800;color:var(--navy);letter-spacing:0.4px;}
+.sol-badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:12px;
+  text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;}
+.sol-just{font-size:14px;font-weight:700;color:var(--texto);margin:8px 0;line-height:1.35;}
+.sol-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--texto2);margin-bottom:12px;}
+.sol-meta .tag{background:var(--cinza-cl);border:1px solid var(--borda);padding:2px 8px;border-radius:10px;font-weight:600;}
+
+/* Progress bar das 7 etapas */
+.prog{display:flex;gap:3px;align-items:center;}
+.prog-step{flex:1;height:6px;border-radius:3px;background:var(--borda);}
+.prog-step.done{background:var(--verde);}
+.prog-step.current{background:var(--gold);}
+.prog-step.recusada{background:var(--vermelho);}
+.prog-label{font-size:10px;color:var(--texto2);font-weight:700;margin-top:5px;text-align:right;}
+
+/* Cores de status */
+.st-pedido_feito{background:#e2e8f0;color:#475569;}
+.st-aguardando_aprovacao{background:#FFF3E0;color:var(--laranja);}
+.st-compras_pendentes{background:#E8F5EB;color:var(--verde);}
+.st-compra_realizada{background:var(--azul-cl);color:var(--azul);}
+.st-inclusao_conta_azul{background:#EDE7F6;color:var(--roxo);}
+.st-recebimento{background:#CFFAFE;color:var(--ciano);}
+.st-concluida{background:var(--navy);color:#fff;}
+.st-recusada{background:#FFEBEE;color:var(--vermelho);}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,31,58,0.6);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:90vh;
+  overflow-y:auto;display:flex;flex-direction:column;}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--borda);display:flex;
+  align-items:center;justify-content:space-between;}
+.modal-head h2{font-size:17px;font-weight:800;color:var(--navy);}
+.modal-head .closebtn{background:transparent;border:none;font-size:22px;cursor:pointer;color:var(--texto2);}
+.modal-body{padding:18px 22px;}
+.modal-sec{margin-bottom:16px;}
+.modal-sec h3{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;
+  letter-spacing:0.5px;margin-bottom:8px;}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:5px 12px;font-size:13px;}
+.kv .k{color:var(--texto2);font-weight:600;}
+.kv .v{color:var(--texto);font-weight:600;}
+.item-line{padding:7px 0;border-bottom:1px solid var(--borda);font-size:13px;}
+.item-line:last-child{border:none;}
+.item-line .desc{font-weight:700;color:var(--navy);}
+.item-line .qtd{color:var(--texto2);font-size:12px;}
+.anexo-link{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--gold-bg);
+  border:1px solid var(--gold);border-radius:6px;font-size:12px;color:var(--gold);
+  text-decoration:none;margin:2px 4px 2px 0;}
+.hist-line{padding:5px 0;font-size:12px;color:var(--texto2);}
+.hist-line b{color:var(--navy);}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--borda);display:flex;gap:10px;
+  justify-content:flex-end;flex-wrap:wrap;}
+.btn{padding:9px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;
+  border:1.5px solid;font-family:inherit;transition:all 0.15s;}
+.btn.outline{background:#fff;color:var(--texto2);border-color:var(--borda);}
+.btn.cancelar{background:#fff;color:var(--vermelho);border-color:var(--vermelho);}
+.btn.cancelar:hover{background:var(--vermelho);color:#fff;}
+
+.toast{position:fixed;bottom:28px;right:28px;background:var(--navy);color:#fff;padding:12px 20px;
+  border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);
+  z-index:2000;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.erro{background:var(--vermelho);}
+.toast.sucesso{background:var(--verde);}
+
+@media(max-width:600px){
+  .header{padding:0 14px;}
+  .main{padding:18px 14px 50px;}
+  .header-logo span{display:none;}
+}
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <img src="../../assets/logo.png" alt="Endo"/>
+    <div><h1>Compras</h1><span>Minhas Solicitações</span></div>
+  </div>
+  <div class="header-actions">
+    <a href="../nova/" class="header-action-btn nova">+ Nova</a>
+    <a href="../" class="header-action-btn">← Compras</a>
+    <a href="../../hub/Gestor_Hub.html" class="header-action-btn home">🏠 Home</a>
+  </div>
+</header>
+
+<main class="main">
+  <div class="page-title">📋 Minhas Solicitações</div>
+  <div class="page-sub">Acompanhe o andamento das compras que você solicitou.</div>
+
+  <div class="toolbar">
+    <label>Status:</label>
+    <select id="filtro-status" onchange="render()">
+      <option value="">Todos</option>
+      <option value="andamento">Em andamento</option>
+      <option value="pedido_feito">① Pedido Feito</option>
+      <option value="aguardando_aprovacao">② Aguardando Aprovação</option>
+      <option value="compras_pendentes">③ Compras Pendentes</option>
+      <option value="compra_realizada">④ Compra Realizada</option>
+      <option value="inclusao_conta_azul">⑤ Conta Azul</option>
+      <option value="recebimento">⑥ Recebimento</option>
+      <option value="concluida">⑦ Concluída</option>
+      <option value="recusada">❌ Recusada</option>
+    </select>
+    <label>Busca:</label>
+    <input type="text" id="filtro-busca" placeholder="número ou justificativa" oninput="render()"/>
+    <div class="stats" id="stats">—</div>
+  </div>
+
+  <div class="lista" id="lista"></div>
+</main>
+
+<!-- Modal de detalhes -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)fecharModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="m-numero">Solicitação —</h2>
+      <button class="closebtn" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+    <div class="modal-foot" id="m-foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Ordem das 7 etapas (pra progress bar)
+const ETAPAS = ['pedido_feito','aguardando_aprovacao','compras_pendentes',
+                'compra_realizada','inclusao_conta_azul','recebimento','concluida'];
+const STATUS_LABEL = {
+  pedido_feito:'① Pedido Feito', aguardando_aprovacao:'② Aguardando Aprovação',
+  compras_pendentes:'③ Compras Pendentes', compra_realizada:'④ Compra Realizada',
+  inclusao_conta_azul:'⑤ Conta Azul', recebimento:'⑥ Recebimento',
+  concluida:'⑦ Concluída', recusada:'❌ Recusada'
+};
+let MINHAS = [];
+let SEL = null;
+
+async function inicializar() {
+  await carregar();
+  render();
+}
+
+async function carregar() {
+  if (!SB) {
+    MINHAS = [
+      {id:1,numero:'2026-001',status:'compras_pendentes',justificativa:'Material de escritório',
+       criado_em:'2026-05-20T10:00:00',itens_count:2,total:340,centro_nome:'Endovascular'},
+      {id:2,numero:'2026-002',status:'concluida',justificativa:'Compra de jalecos',
+       criado_em:'2026-05-15T09:00:00',itens_count:1,total:600,centro_nome:'Oxy Recovery'},
+    ];
+    return;
+  }
+  const { data, error } = await SB.from('compras_solicitacoes')
+    .select(`
+      id, numero, status, urgencia, justificativa, observacoes, criado_em,
+      motivo_recusa, valor_final, metodo_pagamento,
+      aprovado_em, comprado_em, conta_azul_em, conta_azul_ref, recebido_em, encerrado_em,
+      compras_centros_custo(nome),
+      compras_itens(id, valor_estimado)
+    `)
+    .eq('solicitante_email', USER_EMAIL)
+    .order('criado_em', { ascending: false });
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+  MINHAS = (data || []).map(s => ({
+    ...s,
+    centro_nome: s.compras_centros_custo?.nome || '—',
+    itens_count: (s.compras_itens || []).length,
+    total: (s.compras_itens || []).reduce((t,i) => t + (parseFloat(i.valor_estimado)||0), 0)
+  }));
+}
+
+function render() {
+  const fs = document.getElementById('filtro-status').value;
+  const fb = (document.getElementById('filtro-busca').value || '').toLowerCase().trim();
+  let lista = MINHAS.filter(s => {
+    if (fs === 'andamento') { if (s.status === 'concluida' || s.status === 'recusada') return false; }
+    else if (fs && s.status !== fs) return false;
+    if (fb && !((s.numero||'')+' '+(s.justificativa||'')).toLowerCase().includes(fb)) return false;
+    return true;
+  });
+  const cont = document.getElementById('lista');
+  if (lista.length === 0) {
+    cont.innerHTML = `<div class="vazio"><div class="ic">🗂️</div>
+      Nenhuma solicitação ${fs||fb ? 'com esse filtro' : 'ainda'}.<br/>
+      <a href="../nova/">+ Criar nova solicitação</a></div>`;
+  } else {
+    cont.innerHTML = lista.map(solHtml).join('');
+  }
+  const emAndamento = MINHAS.filter(s => s.status!=='concluida'&&s.status!=='recusada').length;
+  document.getElementById('stats').innerHTML =
+    `<b>${MINHAS.length}</b> no total · <b>${emAndamento}</b> em andamento`;
+}
+
+function solHtml(s) {
+  const dt = new Date(s.criado_em).toLocaleDateString('pt-BR');
+  const idx = ETAPAS.indexOf(s.status);
+  const recusada = s.status === 'recusada';
+  // progress bar
+  let steps = '';
+  for (let i = 0; i < 7; i++) {
+    let cls = 'prog-step';
+    if (recusada) cls += ' recusada';
+    else if (i < idx) cls += ' done';
+    else if (i === idx) cls += ' current';
+    steps += `<div class="${cls}"></div>`;
+  }
+  return `
+    <div class="sol" onclick="abrirModal(${s.id})">
+      <div class="sol-top">
+        <span class="sol-numero">#${s.numero}</span>
+        <span class="sol-badge st-${s.status}">${STATUS_LABEL[s.status]||s.status}</span>
+      </div>
+      <div class="sol-just">${escapeHtml(s.justificativa||'—')}</div>
+      <div class="sol-meta">
+        <span class="tag">📅 ${dt}</span>
+        <span class="tag">🏢 ${escapeHtml(s.centro_nome)}</span>
+        <span class="tag">🧾 ${s.itens_count} item(ns)</span>
+        ${s.total>0?`<span class="tag">R$ ${fmtBRL(s.total)} est.</span>`:''}
+        ${s.valor_final!=null?`<span class="tag">💰 R$ ${fmtBRL(s.valor_final)} final</span>`:''}
+      </div>
+      <div class="prog">${steps}</div>
+      <div class="prog-label">${recusada?'Recusada':STATUS_LABEL[s.status]||''}</div>
+    </div>`;
+}
+
+function fmtBRL(v){return (parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function abrirModal(id) {
+  SEL = MINHAS.find(s => s.id === id);
+  if (!SEL) return;
+  document.getElementById('m-numero').textContent = `Solicitação #${SEL.numero}`;
+
+  let itens = [], anexos = [], hist = [];
+  if (SB) {
+    const [iR,aR,hR] = await Promise.all([
+      SB.from('compras_itens').select('*, compras_fornecedores(nome)').eq('solicitacao_id', SEL.id),
+      SB.from('compras_anexos').select('*').eq('solicitacao_id', SEL.id),
+      SB.from('compras_historico').select('*').eq('solicitacao_id', SEL.id).order('criado_em',{ascending:true})
+    ]);
+    itens = iR.data||[]; anexos = aR.data||[]; hist = hR.data||[];
+  }
+
+  document.getElementById('m-body').innerHTML = `
+    <div class="modal-sec">
+      <h3>Status atual</h3>
+      <span class="sol-badge st-${SEL.status}">${STATUS_LABEL[SEL.status]||SEL.status}</span>
+      ${SEL.motivo_recusa?`<div style="margin-top:8px;font-size:13px;color:var(--vermelho)"><b>Motivo da recusa:</b> ${escapeHtml(SEL.motivo_recusa)}</div>`:''}
+    </div>
+    <div class="modal-sec">
+      <h3>Dados</h3>
+      <div class="kv">
+        <div class="k">Centro de custo</div><div class="v">${escapeHtml(SEL.centro_nome)}</div>
+        <div class="k">Criada em</div><div class="v">${new Date(SEL.criado_em).toLocaleString('pt-BR')}</div>
+        ${SEL.valor_final!=null?`<div class="k">Valor final</div><div class="v">R$ ${fmtBRL(SEL.valor_final)}</div>`:''}
+        ${SEL.metodo_pagamento?`<div class="k">Método pagto</div><div class="v">${SEL.metodo_pagamento}</div>`:''}
+      </div>
+    </div>
+    <div class="modal-sec">
+      <h3>Justificativa</h3>
+      <div style="font-size:13px;line-height:1.5;">${escapeHtml(SEL.justificativa)}</div>
+      ${SEL.observacoes?`<div style="font-size:12px;color:var(--texto2);margin-top:6px;">${escapeHtml(SEL.observacoes)}</div>`:''}
+    </div>
+    <div class="modal-sec">
+      <h3>Itens (${itens.length})</h3>
+      ${itens.map(i=>`<div class="item-line"><div class="desc">${escapeHtml(i.descricao)}</div>
+        <div class="qtd">${i.quantidade} ${i.unidade||''} ${i.compras_fornecedores?.nome?'· '+escapeHtml(i.compras_fornecedores.nome):''}</div></div>`).join('') || '<div style="font-size:12px;color:var(--texto2)">—</div>'}
+    </div>
+    ${anexos.length?`<div class="modal-sec"><h3>Anexos (${anexos.length})</h3>
+      ${anexos.map(a=>{const ic=a.tipo==='link'?'🔗':a.tipo==='imagem'?'🖼️':a.tipo==='excel'?'📊':'📄';
+        return a.tipo==='link'?`<a class="anexo-link" href="${escapeHtml(a.url_externa)}" target="_blank">${ic} ${escapeHtml((a.url_externa||'').slice(0,50))}</a>`
+        :`<span class="anexo-link">${ic} ${escapeHtml(a.filename)}</span>`;}).join('')}</div>`:''}
+    ${hist.length?`<div class="modal-sec"><h3>Histórico</h3>
+      ${hist.map(h=>`<div class="hist-line"><b>${h.acao}</b> · ${new Date(h.criado_em).toLocaleString('pt-BR')}
+        ${h.comentario?'<br/><i>'+escapeHtml(h.comentario)+'</i>':''}</div>`).join('')}</div>`:''}
+  `;
+
+  // Ação: cancelar — só enquanto em "Pedido Feito"
+  let foot = '<button class="btn outline" onclick="fecharModal()">Fechar</button>';
+  if (SEL.status === 'pedido_feito') {
+    foot += '<button class="btn cancelar" onclick="cancelarSolicitacao()">🗑️ Cancelar solicitação</button>';
+  }
+  document.getElementById('m-foot').innerHTML = foot;
+  document.getElementById('modal').classList.add('show');
+}
+
+function fecharModal(){document.getElementById('modal').classList.remove('show');SEL=null;}
+
+async function cancelarSolicitacao() {
+  if (!SEL) return;
+  const motivo = prompt('Confirma o cancelamento? Descreva o motivo (opcional):');
+  if (motivo === null) return; // clicou cancelar no prompt
+  if (!SB) { showToast('(preview) Cancelamento simulado','sucesso'); fecharModal(); return; }
+  const { error } = await SB.from('compras_solicitacoes')
+    .update({ status:'recusada', motivo_recusa: 'Cancelada pelo solicitante' + (motivo?': '+motivo:'') })
+    .eq('id', SEL.id);
+  if (error) { showToast('Erro: '+error.message,'erro'); return; }
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao:'cancelada', por_email: USER_EMAIL,
+    comentario: motivo || 'Cancelada pelo solicitante'
+  });
+  showToast(`Solicitação ${SEL.numero} cancelada`, 'sucesso');
+  fecharModal();
+  await carregar(); render();
+}
+
+function showToast(msg,tipo){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+(tipo||'');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+if (location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1') {
+  window.addEventListener('DOMContentLoaded', inicializar);
+}
+</script>
+</body>
+</html>
