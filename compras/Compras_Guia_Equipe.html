@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Guia do Portal de Compras | Endovascular SP</title>
+<style>
+:root{
+  --azul-escuro:#0B1F3A;--azul-medio:#1A5296;--azul-claro:#D6E8F7;
+  --azul-brilhante:#3A8DD4;--verde:#2D7A3C;--verde-claro:#E8F5EB;
+  --laranja:#D4621A;--laranja-claro:#FBE9D7;--vermelho:#C0392B;--vermelho-claro:#FADBD8;
+  --roxo:#7e57c2;--roxo-claro:#EDE7F6;--ciano:#0891b2;--ciano-claro:#CFFAFE;
+  --cinza:#475569;--cinza-claro:#E2E8F0;
+  --cinza-bg:#F2F5F9;--cinza-borda:#DDE4ED;
+  --texto-primario:#0D1E30;--texto-secundario:#4A6278;
+  --sombra:0 2px 14px rgba(11,31,58,0.12);--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);color:var(--texto-primario);line-height:1.5;}
+.container{max-width:1100px;margin:0 auto;padding:32px 28px 60px;}
+
+.header{background:linear-gradient(135deg,var(--azul-escuro) 0%,var(--azul-medio) 100%);color:white;border-radius:var(--radius);padding:28px 32px;margin-bottom:28px;box-shadow:var(--sombra);}
+.header-top{display:flex;align-items:center;gap:18px;margin-bottom:12px;}
+.logo-circle{width:56px;height:56px;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.35);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.header-title{font-size:22px;font-weight:700;letter-spacing:0.2px;}
+.header-sub{font-size:12.5px;opacity:0.82;margin-top:3px;letter-spacing:0.3px;}
+.header-desc{font-size:14px;opacity:0.92;margin-top:10px;line-height:1.55;}
+.header-meta{display:flex;gap:20px;margin-top:14px;flex-wrap:wrap;font-size:11.5px;opacity:0.78;letter-spacing:0.4px;text-transform:uppercase;}
+.header-meta span strong{font-weight:700;letter-spacing:0.2px;text-transform:none;font-size:13px;opacity:1;display:block;}
+
+.intro-card{background:white;border-radius:var(--radius);padding:22px 26px;box-shadow:var(--sombra);border:1px solid var(--cinza-borda);margin-bottom:24px;border-left:4px solid var(--azul-medio);}
+.intro-card h2{font-size:15px;color:var(--azul-escuro);margin-bottom:10px;letter-spacing:0.2px;}
+.intro-card p{font-size:13.5px;color:var(--texto-primario);margin-bottom:8px;}
+.intro-card p:last-child{margin-bottom:0;}
+.intro-card strong{color:var(--azul-medio);}
+
+.section-title{display:flex;align-items:center;gap:12px;margin:28px 0 14px;padding-left:4px;}
+.section-title .pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;}
+.section-title.solicitar .pill{background:var(--azul-claro);color:var(--azul-medio);border:1.5px solid #a9cdea;}
+.section-title.etapas .pill{background:var(--verde-claro);color:var(--verde);border:1.5px solid #b2d8b7;}
+.section-title.papeis .pill{background:var(--roxo-claro);color:var(--roxo);border:1.5px solid #d6c8ec;}
+.section-title h3{font-size:16px;color:var(--texto-primario);font-weight:700;}
+.section-title small{font-size:12px;color:var(--texto-secundario);font-weight:500;margin-left:auto;}
+
+table{width:100%;border-collapse:separate;border-spacing:0;background:white;border-radius:var(--radius);overflow:hidden;box-shadow:var(--sombra);border:1px solid var(--cinza-borda);}
+table th{background:var(--azul-escuro);color:white;font-size:12px;font-weight:600;padding:12px 14px;text-align:left;letter-spacing:0.3px;}
+table td{padding:14px;font-size:13px;border-bottom:1px solid var(--cinza-borda);vertical-align:top;}
+table tr:last-child td{border-bottom:none;}
+table tr:nth-child(even) td{background:var(--cinza-bg);}
+
+.tab-name{font-weight:700;color:var(--azul-escuro);font-size:13.5px;display:block;}
+.tab-icon{display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-right:6px;color:white;vertical-align:middle;}
+.tab-icon.cinza{background:var(--cinza);}
+.tab-icon.laranja{background:var(--laranja);}
+.tab-icon.verde{background:var(--verde);}
+.tab-icon.azul{background:var(--azul-medio);}
+.tab-icon.roxo{background:var(--roxo);}
+.tab-icon.ciano{background:var(--ciano);}
+.tab-icon.navy{background:var(--azul-escuro);}
+
+.quem{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;letter-spacing:0.2px;}
+.quem.solicitante{background:var(--cinza-claro);color:var(--cinza);}
+.quem.compradora{background:var(--verde-claro);color:var(--verde);}
+.quem.aprovador{background:var(--laranja-claro);color:var(--laranja);}
+.quem.financeiro{background:var(--roxo-claro);color:var(--roxo);}
+.quem.recepcao{background:var(--ciano-claro);color:var(--ciano);}
+
+.exemplo{background:var(--azul-claro);border-left:3px solid var(--azul-brilhante);padding:8px 12px;border-radius:6px;font-size:12px;color:var(--azul-escuro);margin-top:6px;}
+.exemplo strong{display:block;font-size:10.5px;letter-spacing:0.5px;text-transform:uppercase;color:var(--azul-medio);margin-bottom:3px;}
+.atencao{background:#FFF6E5;border-left:3px solid var(--laranja);padding:7px 11px;border-radius:6px;font-size:11.5px;color:#7a4810;margin-top:6px;}
+.atencao strong{display:block;font-size:10.5px;letter-spacing:0.5px;text-transform:uppercase;color:var(--laranja);margin-bottom:2px;}
+
+.regras-card{background:white;border-radius:var(--radius);padding:22px 26px;box-shadow:var(--sombra);border:1px solid var(--cinza-borda);margin-top:32px;}
+.regras-card h3{font-size:15px;color:var(--azul-escuro);margin-bottom:12px;}
+.regras-card ol{padding-left:20px;font-size:13px;}
+.regras-card ol li{margin-bottom:8px;line-height:1.55;}
+.regras-card ol li strong{color:var(--azul-medio);}
+
+.fluxo-decisao{background:white;border-radius:var(--radius);padding:22px 26px;box-shadow:var(--sombra);border:1px solid var(--cinza-borda);margin-top:24px;}
+.fluxo-decisao h3{font-size:15px;color:var(--azul-escuro);margin-bottom:14px;}
+.fluxo-step{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px dashed var(--cinza-borda);font-size:13px;}
+.fluxo-step:last-child{border-bottom:none;}
+.fluxo-step .num{width:26px;height:26px;border-radius:50%;background:var(--azul-medio);color:white;font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fluxo-step .q{flex:1;}
+.fluxo-step .q strong{color:var(--azul-escuro);display:block;margin-bottom:3px;}
+.fluxo-step .q span{color:var(--texto-secundario);font-size:12px;}
+
+.footer{margin-top:40px;padding-top:22px;border-top:2px solid var(--cinza-borda);font-size:11.5px;color:var(--texto-secundario);text-align:center;letter-spacing:0.3px;}
+.footer strong{color:var(--azul-medio);}
+
+@media print {
+  body{background:white;}
+  .container{padding:0;max-width:none;}
+  table,.intro-card,.regras-card,.fluxo-decisao{box-shadow:none;border:1px solid #999;}
+  .header{background:var(--azul-escuro)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .section-title{page-break-after:avoid;}
+  table{page-break-inside:auto;}
+  table tr{page-break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-top">
+      <div class="logo-circle">🛒</div>
+      <div>
+        <div class="header-title">Guia do Portal de Compras</div>
+        <div class="header-sub">Toda a equipe • Endovascular SP</div>
+      </div>
+    </div>
+    <div class="header-desc">
+      O Portal de Compras substitui o Pipefy. É onde toda solicitação de compra nasce, é aprovada, comprada, lançada no Conta Azul e recebida — tudo num lugar só, visível pra todo mundo.
+    </div>
+    <div class="header-meta">
+      <span><strong>7 etapas</strong>Do pedido à conclusão</span>
+      <span><strong>Acesso por Google</strong>Mesmo login dos outros portais</span>
+      <span><strong>Vigência: maio/2026</strong>Substitui o Pipefy</span>
+    </div>
+  </div>
+
+  <div class="intro-card">
+    <h2>Por que usar o Portal de Compras</h2>
+    <p>Antes, cada pedido de compra ficava espalhado — Pipefy, WhatsApp, conversa de corredor. Agora é tudo num lugar: você abre a solicitação, e ela caminha sozinha pelas etapas até o produto chegar.</p>
+    <p>Toda compra fica <strong>registrada e visível</strong>: quem pediu, o que pediu, quanto custou, quem aprovou, quando chegou. Nada se perde e ninguém precisa ficar cobrando status no particular.</p>
+    <p><strong>Como acessar:</strong> entre no Hub (mesmo login Google dos outros portais) → clique no card <strong>🛒 Compras</strong>. Você cai direto no Kanban, onde vê todas as compras em andamento.</p>
+  </div>
+
+  <!-- ============ COMO SOLICITAR ============ -->
+  <div class="section-title solicitar">
+    <span class="pill">📝 Como solicitar</span>
+    <h3>Abrir um pedido de compra — qualquer colaborador faz</h3>
+  </div>
+
+  <div class="fluxo-decisao">
+    <h3>Passo a passo da nova solicitação</h3>
+    <div class="fluxo-step">
+      <div class="num">1</div>
+      <div class="q">
+        <strong>No Kanban, clique em "+ Nova Solicitação"</strong>
+        <span>O botão dourado fica no canto superior direito da tela.</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">2</div>
+      <div class="q">
+        <strong>Escolha o Centro de Custo</strong>
+        <span>Endovascular ou Oxy Recovery — a unidade pra qual a compra é destinada.</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">3</div>
+      <div class="q">
+        <strong>Método de pagamento (opcional)</strong>
+        <span>PIX, Boleto, Cartão de Crédito ou Link de pagamento. É só uma sugestão — a Compradora confirma na hora de comprar. Pode deixar em branco.</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">4</div>
+      <div class="q">
+        <strong>Adicione os itens</strong>
+        <span>Para cada item: descrição (o que é), quantidade e unidade (caixa, unidade, litro...). Fornecedor e valor estimado são opcionais. Pode adicionar quantos itens quiser no mesmo pedido com "+ Adicionar outro item".</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">5</div>
+      <div class="q">
+        <strong>Escreva a justificativa</strong>
+        <span>Por que essa compra é necessária. Ex: "Reposição de estoque mensal de material de escritório". Campo obrigatório.</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">6</div>
+      <div class="q">
+        <strong>Anexe o que ajudar (opcional)</strong>
+        <span>Orçamento em PDF, foto do produto, planilha ou link (ex: carrinho do Mercado Livre). Quanto mais informação, mais rápido a Compradora resolve.</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">7</div>
+      <div class="q">
+        <strong>Clique em "Enviar solicitação"</strong>
+        <span>Pronto. O pedido entra na coluna "Pedido Feito" e a Angelina (Compras) dá sequência. Você acompanha pelo Kanban — filtro "Ver → Só as minhas" mostra só os seus.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AS 7 ETAPAS ============ -->
+  <div class="section-title etapas">
+    <span class="pill">📊 As 7 etapas</span>
+    <h3>O caminho de uma compra no Kanban</h3>
+    <small>cada coluna = uma etapa</small>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%">Etapa</th>
+        <th style="width:46%">O que significa</th>
+        <th style="width:32%">Quem dá o próximo passo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tab-name"><span class="tab-icon cinza">1</span>Pedido Feito</span></td>
+        <td>Um colaborador acabou de lançar a solicitação. Ela fica em aberto aguardando a Compradora abrir e analisar.</td>
+        <td><span class="quem compradora">Angelina</span> abre, confere e decide: aprova direto ou encaminha pra aprovação.</td>
+      </tr>
+      <tr>
+        <td><span class="tab-name"><span class="tab-icon laranja">2</span>Aguardando Aprovação</span></td>
+        <td>A Compradora entendeu que essa compra precisa do aval do Head de Operações antes de seguir.</td>
+        <td><span class="quem aprovador">Thiago</span> aprova ou recusa.</td>
+      </tr>
+      <tr>
+        <td><span class="tab-name"><span class="tab-icon verde">3</span>Compras Pendentes</span></td>
+        <td>A compra foi aprovada — seja pelo Thiago, seja direto pela Compradora. Está liberada para ser efetivada.</td>
+        <td><span class="quem compradora">Angelina</span> faz a compra e marca como comprada (informa valor final e forma de pagamento).</td>
+      </tr>
+      <tr>
+        <td><span class="tab-name"><span class="tab-icon azul">4</span>Compra Realizada</span></td>
+        <td>A Compradora já efetivou a compra. Agora o registro precisa entrar no controle financeiro.</td>
+        <td><span class="quem financeiro">Micaele</span> lança a compra no Conta Azul.</td>
+      </tr>
+      <tr>
+        <td><span class="tab-name"><span class="tab-icon roxo">5</span>Conta Azul</span></td>
+        <td>O Financeiro confirmou o lançamento no Conta Azul. Agora é aguardar o produto chegar.</td>
+        <td><span class="quem recepcao">Recepção</span> marca como recebido quando o produto chega fisicamente.</td>
+      </tr>
+      <tr>
+        <td><span class="tab-name"><span class="tab-icon ciano">6</span>Recebimento</span></td>
+        <td>O produto chegou no escritório. Falta a conferência final.</td>
+        <td><span class="quem compradora">Angelina</span> confere se está tudo certo e encerra.</td>
+      </tr>
+      <tr>
+        <td><span class="tab-name"><span class="tab-icon navy">7</span>Concluída</span></td>
+        <td>Compra finalizada — pedida, aprovada, comprada, lançada, recebida e conferida. Fim do ciclo.</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============ QUEM FAZ O QUE ============ -->
+  <div class="section-title papeis">
+    <span class="pill">👥 Quem faz o quê</span>
+    <h3>Os papéis no Portal de Compras</h3>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%">Papel</th>
+        <th style="width:26%">Quem é</th>
+        <th style="width:52%">Responsabilidade</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="quem solicitante">Solicitante</span></td>
+        <td>Qualquer colaborador da equipe</td>
+        <td>Abre o pedido de compra, descreve os itens e acompanha o andamento. Pode cancelar o próprio pedido enquanto ele ainda está em "Pedido Feito".</td>
+      </tr>
+      <tr>
+        <td><span class="quem compradora">Compradora</span></td>
+        <td>Angelina</td>
+        <td>Triagem dos pedidos novos, decide se precisa de aprovação, efetiva as compras, e faz a conferência final ao encerrar.</td>
+      </tr>
+      <tr>
+        <td><span class="quem aprovador">Aprovador</span></td>
+        <td>Thiago (Head de Operações)</td>
+        <td>Aprova ou recusa as compras que a Compradora encaminhou para avaliação.</td>
+      </tr>
+      <tr>
+        <td><span class="quem financeiro">Financeiro</span></td>
+        <td>Micaele</td>
+        <td>Lança no Conta Azul toda compra realizada, mantendo o controle financeiro em dia.</td>
+      </tr>
+      <tr>
+        <td><span class="quem recepcao">Recepção</span></td>
+        <td>Equipe da Recepção</td>
+        <td>Confirma o recebimento físico do produto quando ele chega ao escritório.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============ A JORNADA ============ -->
+  <div class="fluxo-decisao">
+    <h3>📋 A jornada de uma compra, do começo ao fim</h3>
+    <div class="fluxo-step">
+      <div class="num">1</div>
+      <div class="q">
+        <strong>Um colaborador lança o pedido</strong>
+        <span>A solicitação nasce na coluna "Pedido Feito" e fica visível pra todos.</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">2</div>
+      <div class="q">
+        <strong>A Angelina abre e decide</strong>
+        <span>Se for uma compra que ela pode resolver, aprova direto → vai pra "Compras Pendentes". Se precisar do aval do Thiago, encaminha → vai pra "Aguardando Aprovação".</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">3</div>
+      <div class="q">
+        <strong>Quando passa pelo Thiago</strong>
+        <span>Ele aprova (a compra vai pra "Compras Pendentes") ou recusa (encerra com o motivo registrado).</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">4</div>
+      <div class="q">
+        <strong>A Angelina efetiva a compra</strong>
+        <span>Com a compra aprovada, ela compra de fato e marca como "Compra Realizada", informando valor final e forma de pagamento.</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">5</div>
+      <div class="q">
+        <strong>A Micaele lança no Conta Azul</strong>
+        <span>Toda compra realizada precisa entrar no Conta Azul. Feito o lançamento, ela dá o ok e a compra vai pra coluna "Conta Azul".</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">6</div>
+      <div class="q">
+        <strong>A Recepção recebe o produto</strong>
+        <span>Quando o produto chega ao escritório, a Recepção marca como recebido → vai pra "Recebimento".</span>
+      </div>
+    </div>
+    <div class="fluxo-step">
+      <div class="num">7</div>
+      <div class="q">
+        <strong>A Angelina confere e encerra</strong>
+        <span>Última checagem: está tudo certo? Encerra a compra → "Concluída". Ciclo completo.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ REGRAS GERAIS ============ -->
+  <div class="regras-card">
+    <h3>📌 Regras gerais</h3>
+    <ol>
+      <li><strong>Todo pedido começa no portal.</strong> Compra que não passou pelo Portal de Compras não existe pro controle — nada de pedir por WhatsApp ou de viva voz.</li>
+      <li><strong>Capriche na descrição dos itens.</strong> Quanto mais claro o que você precisa (modelo, tamanho, link), mais rápido a Compradora resolve sem ter que ficar perguntando.</li>
+      <li><strong>Anexar orçamento ou link ajuda muito.</strong> Se você já achou o produto, cole o link ou anexe o orçamento — adianta o trabalho.</li>
+      <li><strong>Dá pra acompanhar tudo.</strong> No Kanban, use o filtro "Ver → Só as minhas" pra ver apenas os seus pedidos e em que etapa cada um está.</li>
+      <li><strong>Mudou de ideia?</strong> Enquanto o pedido estiver em "Pedido Feito", você mesmo pode cancelá-lo pelo card. Depois disso, fale com a Compradora.</li>
+      <li><strong>Compras é transparente.</strong> Todo mundo vê todas as compras — não tem nada escondido. Isso é proposital: dá pra aprender com o que os outros pedem e evitar pedidos duplicados.</li>
+      <li><strong>Dúvida?</strong> Fale com a Angelina (Compras) ou com o Thiago.</li>
+    </ol>
+  </div>
+
+  <div class="footer">
+    Endovascular SP • Portal de Compras • <strong>Guia da Equipe v1</strong> • maio/2026<br>
+    Dúvidas: Thiago Luiz — thiago.luiz@endovascularsp.com.br
+  </div>
+
+</div>
+</body>
+</html>
