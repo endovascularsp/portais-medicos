@@ -11,8 +11,9 @@ Idempotente: se ja tem ?v=NNNN no link, atualiza pra nova versao.
 """
 import re, glob, sys, datetime, os
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-HUBDIR = os.path.join(HERE, 'hub')
+# Script vive em _tools/ — a raiz do repo é um nível acima.
+ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+HUBDIR = os.path.join(ROOT, 'hub')
 
 version = sys.argv[1] if len(sys.argv) > 1 else datetime.date.today().strftime('%Y%m%d')
 print(f'Cache-busting version: ?v={version}')

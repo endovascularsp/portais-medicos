@@ -228,7 +228,7 @@ Para injetar no `index.html`, substituir o bloco entre `/*PDATA*/` e o `;` segui
 4. Injetar PDATA nos portais individuais de cada profissional (raiz, oxy/, cirurgias/)
 5. Conferir que os 3 admins têm o mês novo (`python -c "import re,json;[print(f,sorted(json.loads(re.search(r'/\\*PDATA\\*/(.*?)/\\*PDATA\\*/',open(f,encoding='utf-8').read(),re.S).group(1).strip()).keys())) for f in ['index.html','oxy/index.html','cirurgias/index.html']]"`)
 6. Atualizar planilha `Acessos_Portal_Honorarios_2026.xlsx` se houver novos profissionais
-7. **Rodar `python _cache_bust_hubs.py`** — atualiza `?v=YYYYMMDD` em todos os links dos 20 Hubs (sem esse passo, médicos com sessão cacheada veem PDATA antigo sem o mês novo)
+7. **Rodar `python _tools/_cache_bust_hubs.py`** — atualiza `?v=YYYYMMDD` em todos os links dos 20 Hubs (sem esse passo, médicos com sessão cacheada veem PDATA antigo sem o mês novo). Os scripts de manutenção ficam em `_tools/` — rodar sempre a partir da raiz do repo.
 8. `git add -A && git commit -m "Fechamento Mês/2026" && git push`
 
 ---
