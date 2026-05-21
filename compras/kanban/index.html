@@ -119,9 +119,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:10px;}
 .card-meta .tag{padding:2px 7px;border-radius:10px;font-weight:700;background:#fff;
   border:1px solid var(--borda);color:var(--texto2);}
-.card-meta .tag.urg-alta{background:#FFEBEE;color:var(--vermelho);border-color:#FFCDD2;}
-.card-meta .tag.urg-media{background:#FFF3E0;color:var(--laranja);border-color:#FFE0B2;}
-.card-meta .tag.urg-baixa{background:#E8F5EB;color:var(--verde);border-color:#C8E6C9;}
 .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;
   padding-top:8px;border-top:1px solid var(--borda);font-size:10px;color:var(--texto2);}
 .card-valor{font-weight:800;color:var(--navy);}
@@ -327,7 +324,7 @@ async function carregarSolicitacoes() {
   }
   const { data, error } = await SB.from('compras_solicitacoes')
     .select(`
-      id, numero, status, urgencia, solicitante_email, justificativa, observacoes,
+      id, numero, status, solicitante_email, justificativa, observacoes,
       centro_custo_id, departamento_id, criado_em, motivo_recusa,
       encaminhado_aprovacao_em,
       aprovador_email, aprovado_em,
@@ -398,7 +395,6 @@ function renderKanban() {
 
 function cardHtml(s) {
   const dt = new Date(s.criado_em).toLocaleDateString('pt-BR');
-  const urg = s.urgencia === 'alta' ? '🔥 Alta' : s.urgencia === 'baixa' ? '😌 Baixa' : '⏱️ Média';
   // Após compra realizada já temos valor final; antes mostra estimado
   const temValorFinal = ['compra_realizada','inclusao_conta_azul','recebimento','concluida'].includes(s.status);
   const valor = temValorFinal && s.valor_final != null
@@ -409,7 +405,6 @@ function cardHtml(s) {
       <div class="card-numero">#${s.numero}</div>
       <div class="card-just">${escapeHtml(s.justificativa || '—')}</div>
       <div class="card-meta">
-        <span class="tag urg-${s.urgencia}">${urg}</span>
         <span class="tag">${escapeHtml(s.depto_nome || '—')}</span>
         <span class="tag">${escapeHtml(s.centro_nome || '—')}</span>
         <span class="tag">${s.itens_count} item(ns)</span>
@@ -458,7 +453,6 @@ async function abrirModal(solicitacaoId) {
         <div class="k">Solicitante</div><div class="v">${escapeHtml(SEL.solicitante_email)}</div>
         <div class="k">Departamento</div><div class="v">${escapeHtml(SEL.depto_nome)}</div>
         <div class="k">Centro de custo</div><div class="v">${escapeHtml(SEL.centro_nome)}</div>
-        <div class="k">Urgência</div><div class="v">${SEL.urgencia}</div>
         <div class="k">Status</div><div class="v">${SEL.status}</div>
         ${SEL.aprovador_email ? `<div class="k">Aprovador</div><div class="v">${escapeHtml(SEL.aprovador_email)}</div>` : ''}
         ${SEL.comprador_email ? `<div class="k">Compradora</div><div class="v">${escapeHtml(SEL.comprador_email)}</div>` : ''}
