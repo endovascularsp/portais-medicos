@@ -121,6 +121,33 @@ table.mapa td.ocup .hr{color:var(--rosa);font-size:9.5px;font-weight:600;}
 table.mapa td.vaga{color:#c8d4e2;}
 table.mapa tr:hover td.vaga{background:var(--card2);}
 
+/* === Aba Roteiro — fluxograma === */
+.roteiro-intro{background:var(--card2);border:1px solid var(--borda);border-left:4px solid var(--rosa);
+  border-radius:10px;padding:12px 16px;font-size:12.5px;color:var(--texto2);
+  margin-bottom:22px;line-height:1.55;}
+.roteiro-intro b{color:var(--navy);}
+.fluxo{display:flex;flex-direction:column;align-items:center;padding-bottom:12px;}
+.fbox{background:var(--card);border:1px solid var(--borda);border-radius:10px;
+  padding:11px 16px;text-align:center;max-width:470px;box-shadow:var(--sombra);}
+.fbox b{display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--navy);}
+.fbox span{display:block;font-size:12px;font-weight:500;color:var(--texto2);margin-top:4px;line-height:1.45;}
+.fbox.ini{background:var(--rosa);border-color:var(--rosa);}
+.fbox.ini b,.fbox.ini span{color:#fff;}
+.fbox.fim{background:var(--verde);border-color:var(--verde);}
+.fbox.fim b,.fbox.fim span{color:#fff;}
+.fbox.dec{background:var(--navy);border-color:var(--navy);}
+.fbox.dec b{color:#fff;}.fbox.dec span{color:#cbd5e1;}
+.fbox.sm{max-width:310px;}
+.fseta{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;
+  border-top:9px solid #6b86a8;margin:7px 0;}
+.framos{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;}
+.framo{display:flex;flex-direction:column;align-items:center;}
+.ftag{font-size:10px;font-weight:800;letter-spacing:.6px;padding:3px 13px;border-radius:20px;margin-bottom:8px;}
+.ftag.conv{background:rgba(214,51,132,.2);color:#f9a8d4;border:1px solid rgba(214,51,132,.55);}
+.ftag.part{background:rgba(109,213,160,.18);color:#6dd5a0;border:1px solid rgba(109,213,160,.5);}
+@media(max-width:560px){.fbox{max-width:100%;}.framos{gap:14px;}}
+
 /* === Modais — claros === */
 .ov{position:fixed;inset:0;background:rgba(5,10,20,0.78);z-index:1000;display:none;
   align-items:center;justify-content:center;padding:20px;}
@@ -192,6 +219,7 @@ table.mapa tr:hover td.vaga{background:var(--card2);}
 <div class="tabs">
   <div class="tab active" id="tab-profs" onclick="trocarAba('profs')">👥 Profissionais</div>
   <div class="tab" id="tab-mapa" onclick="trocarAba('mapa')">🗺️ Mapa de Sala</div>
+  <div class="tab" id="tab-roteiro" onclick="trocarAba('roteiro')">📋 Roteiro</div>
 </div>
 
 <main class="main">
@@ -234,6 +262,54 @@ table.mapa tr:hover td.vaga{background:var(--card2);}
       <div class="stat" id="stat-mapa">—</div>
     </div>
     <div class="mapa-wrap"><table class="mapa" id="tbl-mapa"></table></div>
+  </div>
+  <!-- ABA ROTEIRO — fluxograma de atendimento -->
+  <div id="view-roteiro" style="display:none">
+    <div class="roteiro-intro">
+      <b>Roteiro de atendimento ao lead</b> — WhatsApp ou telefone. Siga o fluxo de cima
+      pra baixo em todo atendimento. As frases são sugestões; adapte o tom, mantenha a ordem.
+    </div>
+    <div class="fluxo">
+      <div class="fbox ini"><b>0 · Abertura</b>
+        <span>"Olá! Aqui é a [nome], da Endovascular SP 😊 Seja bem-vindo(a)! Como posso te ajudar?" — responda rápido, tom acolhedor.</span></div>
+      <div class="fseta"></div>
+      <div class="fbox"><b>1 · Identificação</b>
+        <span>"Com quem eu falo? O atendimento é pra você mesmo(a) ou pra outra pessoa?" — anote o nome do paciente.</span></div>
+      <div class="fseta"></div>
+      <div class="fbox"><b>2 · Entender a necessidade</b>
+        <span>"O que você está sentindo ou qual tratamento procura?" — pergunte se já tem pedido médico e se é urgente.</span></div>
+      <div class="fseta"></div>
+      <div class="fbox"><b>3 · 1ª vez ou retorno</b>
+        <span>"Você já se consultou com a gente antes?" — se já é paciente, puxe o cadastro.</span></div>
+      <div class="fseta"></div>
+      <div class="fbox"><b>4 · Direcionamento</b>
+        <span>"Procura um profissional específico ou quer indicação?" — confira a idade do paciente e use o Corpo Clínico.</span></div>
+      <div class="fseta"></div>
+      <div class="fbox dec"><b>5 · Forma de pagamento</b>
+        <span>"O atendimento será particular ou por convênio?"</span></div>
+      <div class="fseta"></div>
+      <div class="framos">
+        <div class="framo">
+          <div class="ftag conv">CONVÊNIO</div>
+          <div class="fbox sm"><b>SulAmérica · Omint · MedSênior</b>
+            <span>"Qual é o seu?" Outro convênio → ofereça o valor particular.</span></div>
+        </div>
+        <div class="framo">
+          <div class="ftag part">PARTICULAR</div>
+          <div class="fbox sm"><b>Informar o valor</b>
+            <span>Passe o valor da consulta do profissional escolhido.</span></div>
+        </div>
+      </div>
+      <div class="fseta"></div>
+      <div class="fbox"><b>6 · Agendamento</b>
+        <span>"Prefere presencial ou online? Manhã ou tarde?" — consulte o Mapa de Sala e confirme em voz alta: profissional, data, hora, valor.</span></div>
+      <div class="fseta"></div>
+      <div class="fbox"><b>7 · Dados e origem</b>
+        <span>"Confirma nome completo, data de nascimento e WhatsApp? E como conheceu a Endovascular?"</span></div>
+      <div class="fseta"></div>
+      <div class="fbox fim"><b>8 · Fechamento</b>
+        <span>"No dia traga documento com foto, carteirinha do convênio e exames anteriores. Chegue uns 15 min antes." — reforce o endereço e registre tudo no sistema.</span></div>
+    </div>
   </div>
 </main>
 
@@ -323,7 +399,7 @@ function iniciais(nome){const p=String(nome||'?').replace(/^(Dr|Dra)\.?\s*/i,'')
 function fmtBRL(v){return v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
 function trocarAba(a){
-  ['profs','mapa'].forEach(x=>{
+  ['profs','mapa','roteiro'].forEach(x=>{
     document.getElementById('tab-'+x).classList.toggle('active', a===x);
     document.getElementById('view-'+x).style.display = a===x?'':'none';
   });
