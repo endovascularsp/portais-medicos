@@ -611,6 +611,11 @@ function renderAcoes(status) {
   if (status === 'pedido_feito' && souDono) {
     html += '<button class="btn recusar" onclick="acaoCancelar()">🗑️ Cancelar minha solicitação</button>';
   }
+  // Excluir pedido — só administradores (card gestor), em qualquer etapa.
+  // Apaga de vez (pedido + itens + anexos + histórico via CASCADE).
+  if (ehAdmin) {
+    html += '<button class="btn recusar" onclick="acaoExcluir()">🗑️ Excluir pedido</button>';
+  }
   foot.innerHTML = html;
 }
 
@@ -767,6 +772,20 @@ async function acaoCancelar() {
     status: 'recusada',
     motivo_recusa: 'Cancelada pelo solicitante' + (motivo ? ': ' + motivo : '')
   }, 'cancelada', motivo || 'Cancelada pelo solicitante');
+}
+
+// Exclui o pedido de vez — itens, anexos e histórico vão junto (ON DELETE CASCADE).
+async function acaoExcluir() {
+  if (!confirm(`Excluir DEFINITIVAMENTE a solicitação ${SEL.numero}?\n\n`
+    + 'O pedido, os itens, anexos e todo o histórico serão apagados. '
+    + 'Não dá pra desfazer.')) return;
+  if (!SB) { showToast('(preview) exclusão simulada', 'sucesso'); fecharModal(); return; }
+  const { error } = await SB.from('compras_solicitacoes').delete().eq('id', SEL.id);
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+  showToast(`Solicitação ${SEL.numero} excluída`, 'sucesso');
+  fecharModal();
+  await carregarSolicitacoes();
+  renderKanban();
 }
 
 async function transicionar(updates, acao, comentario) {
