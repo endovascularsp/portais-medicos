@@ -105,11 +105,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* === Mapa de Sala — grade Hora × Sala, clara === */
 .mapa-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);box-shadow:var(--sombra);}
-table.mapa{border-collapse:collapse;width:100%;min-width:760px;}
-table.mapa th,table.mapa td{border:1px solid var(--borda);padding:6px 8px;font-size:11.5px;text-align:center;}
+table.mapa{border-collapse:collapse;width:100%;min-width:900px;table-layout:fixed;}
+table.mapa th,table.mapa td{border:1px solid var(--borda);padding:6px 8px;font-size:11.5px;
+  text-align:center;overflow-wrap:break-word;}
 table.mapa th{background:var(--navy);color:#fff;font-weight:700;font-size:10.5px;
   position:sticky;top:0;z-index:2;}
-table.mapa th.hcol{background:var(--rosa);width:62px;}
+table.mapa th.hcol,table.mapa td.hcol{width:58px;}
+table.mapa th.hcol{background:var(--rosa);}
 table.mapa td.hcol{background:var(--card2);font-weight:800;color:var(--navy);
   white-space:nowrap;font-size:11px;}
 table.mapa td.ocup{background:linear-gradient(150deg,var(--rosa-cl),#fff);
