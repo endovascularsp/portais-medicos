@@ -22,8 +22,9 @@
         USER_EMAIL = (session.user.email || '').toLowerCase();
         const { data: me } = await SB.from('users').select('cards').eq('email', USER_EMAIL).maybeSingle();
         USER_CARDS = (me && me.cards) || [];
-        // Corpo Clínico é informação operacional aberta — qualquer funcionário entra
-        if (!me) { window.location.replace('/hub/Gestor_Hub.html'); return; }
+        // Acesso pelo card corpo_clinico (ou guarda-chuva gestor)
+        const podeVer = USER_CARDS.includes('corpo_clinico') || USER_CARDS.includes('gestor');
+        if (!podeVer) { window.location.replace('/hub/Gestor_Hub.html'); return; }
         document.documentElement.style.visibility = 'visible';
         if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', inicializar);
         else inicializar();
