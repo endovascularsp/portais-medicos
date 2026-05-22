@@ -399,11 +399,19 @@ function iniciais(nome){const p=String(nome||'?').replace(/^(Dr|Dra)\.?\s*/i,'')
   return ((p[0]||'?')[0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();}
 function fmtBRL(v){return v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
-function trocarAba(a){
+async function trocarAba(a){
   ['profs','mapa','roteiro'].forEach(x=>{
     document.getElementById('tab-'+x).classList.toggle('active', a===x);
     document.getElementById('view-'+x).style.display = a===x?'':'none';
   });
+  // Ao entrar em Profissionais ou Mapa de Sala, recarrega os dados do
+  // banco e re-renderiza — assim o Mapa reflete qualquer edição feita
+  // na ficha do profissional (inclusive de outra pessoa, em outra sessão).
+  if (a === 'mapa' || a === 'profs') {
+    await carregarTudo();
+    renderProfs();
+    renderMapa();
+  }
 }
 
 // resumo da escala — dia + faixa de horário (início–fim quando houver fim)
