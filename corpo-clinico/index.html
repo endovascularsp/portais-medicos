@@ -121,6 +121,10 @@ table.mapa td.ocup b{color:var(--navy);font-size:11.5px;font-weight:700;display:
 table.mapa td.ocup .hr{color:var(--rosa);font-size:9.5px;font-weight:600;}
 table.mapa td.vaga{color:#c8d4e2;}
 table.mapa tr:hover td.vaga{background:var(--card2);}
+table.mapa td.conflito{background:rgba(192,57,43,0.16);border-left:3px solid var(--vermelho);
+  vertical-align:middle;color:var(--vermelho);font-weight:800;font-size:9.5px;letter-spacing:.4px;}
+table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-top:3px;color:var(--navy);}
+.alerta-conf{color:var(--vermelho);font-weight:800;}
 
 /* === Aba Roteiro — fluxograma === */
 .roteiro-intro{background:var(--card2);border:1px solid var(--borda);border-left:4px solid var(--rosa);
@@ -519,6 +523,7 @@ function renderMapa(){
       return {ini, fim, e};
     });
   });
+  let conflitos = 0;
   let h = '<thead><tr><th class="hcol">Hora</th>' +
     SALAS.map(s=>`<th>${escH(s.nome)}</th>`).join('') + '</tr></thead><tbody>';
   for(let fi=0; fi<FAIXAS.length; fi++){
@@ -526,18 +531,27 @@ function renderMapa(){
     for(const s of SALAS){
       const blocos = porSala[s.id];
       if(blocos.some(b=>b.ini<fi && b.fim>=fi)) continue;  // coberto por rowspan acima
-      const ini = blocos.find(b=>b.ini===fi);
-      if(ini){
-        const span = ini.fim - ini.ini + 1;
-        const p = PROFS.find(x=>x.id===ini.e.profissional_id);
-        const e = ini.e;
+      const iniciam = blocos.filter(b=>b.ini===fi);
+      if(iniciam.length === 0){
+        h += '<td class="vaga">·</td>';
+      } else if(iniciam.length === 1){
+        const e = iniciam[0].e;
+        const span = iniciam[0].fim - iniciam[0].ini + 1;
+        const p = PROFS.find(x=>x.id===e.profissional_id);
         const hr = e.hora_inicio
-          ? e.hora_inicio.slice(0,5)+(e.hora_fim?'–'+e.hora_fim.slice(0,5):'')
-          : '';
+          ? e.hora_inicio.slice(0,5)+(e.hora_fim?'–'+e.hora_fim.slice(0,5):'') : '';
         h += `<td class="ocup" rowspan="${span}"><b>${escH(p?p.nome:'?')}</b>`
            + (hr?`<span class="hr">${hr}</span>`:'') + '</td>';
       } else {
-        h += '<td class="vaga">·</td>';
+        // CONFLITO — 2+ profissionais na mesma sala e horário
+        conflitos++;
+        const span = Math.max(...iniciam.map(b=>b.fim-b.ini+1));
+        const nomes = iniciam.map(b=>{
+          const p = PROFS.find(x=>x.id===b.e.profissional_id);
+          return escH(p?p.nome:'?');
+        }).join(' ✕ ');
+        h += `<td class="conflito" rowspan="${span}">⚠️ CONFLITO`
+           + `<span class="cf">${nomes}</span></td>`;
       }
     }
     h += '</tr>';
@@ -545,8 +559,9 @@ function renderMapa(){
   document.getElementById('tbl-mapa').innerHTML = h + '</tbody>';
   const blocosDia = ESCALA.filter(e=>e.dia_semana===dia).length;
   const salasOcup = SALAS.filter(s=>ESCALA.some(e=>e.dia_semana===dia && e.sala_id===s.id)).length;
-  document.getElementById('stat-mapa').innerHTML =
-    `<b>${blocosDia}</b> atendimentos · ${salasOcup}/${SALAS.length} salas ocupadas`;
+  let stat = `<b>${blocosDia}</b> atendimentos · ${salasOcup}/${SALAS.length} salas ocupadas`;
+  if(conflitos) stat += ` · <span class="alerta-conf">⚠️ ${conflitos} conflito(s) de sala</span>`;
+  document.getElementById('stat-mapa').innerHTML = stat;
 }
 
 function abrirFicha(id){
