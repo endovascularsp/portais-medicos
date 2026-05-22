@@ -86,14 +86,16 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* === Cards de profissional — claros sobre o fundo azul === */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
-.pcard{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:16px;
+.pcard{background:var(--card);border:1px solid var(--borda);
+  border-left:5px solid var(--ec,#dbe4ef);
+  border-radius:var(--radius);padding:16px 16px 16px 14px;
   box-shadow:var(--sombra);cursor:pointer;transition:all .15s;display:flex;gap:13px;align-items:flex-start;}
-.pcard:hover{border-color:var(--rosa);transform:translateY(-2px);box-shadow:0 7px 22px rgba(0,0,0,0.42);}
+.pcard:hover{transform:translateY(-2px);box-shadow:0 7px 22px rgba(0,0,0,0.42);}
 .avatar{width:46px;height:46px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(140deg,#f472b6,var(--rosa));color:#fff;
+  background:var(--ec,#d63384);color:#fff;
   display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;}
 .pcard-nome{font-size:14.5px;font-weight:800;color:var(--navy);line-height:1.25;}
-.pcard-esp{font-size:12px;color:var(--rosa);font-weight:700;margin-top:1px;}
+.pcard-esp{font-size:12px;color:var(--ec,var(--rosa));font-weight:700;margin-top:1px;}
 .pcard-dias{font-size:11.5px;color:var(--texto2);margin-top:7px;line-height:1.4;}
 .pcard-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
 .tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;background:var(--card2);
@@ -337,6 +339,20 @@ function escalaResumo(pid){
     })
     .join(' · ');
 }
+// cor da especialidade — faixa lateral + avatar + título no card
+function corEspec(esp){
+  const e = (esp||'').toLowerCase();
+  if(e.includes('vascular'))   return '#d63384';
+  if(e.includes('dermato'))    return '#7e57c2';
+  if(e.includes('cardio'))     return '#e8590c';
+  if(e.includes('fisio'))      return '#2d9d6f';
+  if(e.includes('uro'))        return '#1a73c7';
+  if(e.includes('ortop'))      return '#b58900';
+  if(e.includes('endocrino'))  return '#0e9aa7';
+  if(e.includes('esporte'))    return '#6a8d3a';
+  if(e.includes('nutri'))      return '#ad5389';
+  return '#5a7088';
+}
 // tags de convênio — usa os convênios específicos do campo; cai pra genérico
 function tagsConvenio(p){
   if(p.convenios){
@@ -368,7 +384,7 @@ function renderProfs(){
   else g.innerHTML = lista.map(p=>{
     const dias = escalaResumo(p.id);
     const semEscala = !dias;
-    return `<div class="pcard" onclick="abrirFicha(${p.id})">
+    return `<div class="pcard" style="--ec:${corEspec(p.especialidade)}" onclick="abrirFicha(${p.id})">
       <div class="avatar">${escH(iniciais(p.nome))}</div>
       <div style="min-width:0">
         <div class="pcard-nome">${escH(p.nome)}</div>
