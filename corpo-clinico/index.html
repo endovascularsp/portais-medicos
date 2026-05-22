@@ -90,32 +90,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .tag.on{background:#E8F5EB;color:var(--verde);border-color:#C8E6C9;}
 .tag.gap{background:#FFEBEE;color:var(--vermelho);border-color:#FFCDD2;}
 
-/* === Mapa de Sala === */
+/* === Mapa de Sala — grade Hora × Sala === */
 .mapa-wrap{overflow-x:auto;background:#fff;border:1px solid var(--borda);border-radius:var(--radius);box-shadow:var(--sombra);}
-table.mapa{border-collapse:collapse;width:100%;min-width:720px;}
-table.mapa th,table.mapa td{border:1px solid var(--borda);padding:8px 10px;font-size:12px;text-align:left;vertical-align:top;}
-table.mapa th{background:var(--navy);color:#fff;font-weight:700;font-size:11px;position:sticky;top:0;}
-table.mapa th.sala{background:var(--azul);}
-table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);white-space:nowrap;}
-.slot{font-size:11.5px;line-height:1.3;}
-.slot b{color:var(--navy);}
-.slot .hr{color:var(--texto2);font-size:10px;}
-.slot-vazio{color:#cbd5e1;}
-
-/* === Planta visual === */
-.planta-grupo{margin-bottom:24px;}
-.planta-grupo h3{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;
-  letter-spacing:0.6px;margin-bottom:11px;padding-bottom:6px;border-bottom:2px solid var(--borda);}
-.planta-salas{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:12px;}
-.sala-box{background:#fff;border:2px solid var(--borda);border-radius:11px;padding:14px;
-  min-height:96px;box-shadow:var(--sombra);}
-.sala-box.ocupada{border-color:var(--azul);background:linear-gradient(160deg,#fff 60%,var(--azul-cl));}
-.sala-box.livre{border-style:dashed;background:var(--cinza-cl);}
-.sala-box .sala-nome{font-size:10.5px;font-weight:800;color:var(--texto2);
-  text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;}
-.sala-box .sala-prof{font-size:13px;font-weight:700;color:var(--navy);line-height:1.35;margin-bottom:3px;}
-.sala-box .sala-prof .hr{font-weight:500;color:var(--texto2);font-size:11px;}
-.sala-box .sala-livre{font-size:12px;color:#b6c4d4;font-style:italic;}
+table.mapa{border-collapse:collapse;width:100%;min-width:760px;}
+table.mapa th,table.mapa td{border:1px solid var(--borda);padding:6px 8px;font-size:11.5px;text-align:center;}
+table.mapa th{background:var(--navy);color:#fff;font-weight:700;font-size:10.5px;
+  position:sticky;top:0;z-index:2;}
+table.mapa th.hcol{background:var(--azul);width:62px;}
+table.mapa td.hcol{background:var(--cinza-cl);font-weight:800;color:var(--navy);
+  white-space:nowrap;font-size:11px;}
+table.mapa td.ocup{background:linear-gradient(150deg,var(--azul-cl),#fff);
+  border-left:3px solid var(--azul);vertical-align:middle;}
+table.mapa td.ocup b{color:var(--navy);font-size:11.5px;font-weight:700;display:block;line-height:1.25;}
+table.mapa td.ocup .hr{color:var(--texto2);font-size:9.5px;font-weight:600;}
+table.mapa td.vaga{color:#dbe4ee;}
+table.mapa tr:hover td.vaga{background:var(--cinza-cl);}
 
 /* === Modais === */
 .ov{position:fixed;inset:0;background:rgba(11,31,58,0.6);z-index:1000;display:none;
@@ -187,7 +176,6 @@ table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);w
 <div class="tabs">
   <div class="tab active" id="tab-profs" onclick="trocarAba('profs')">👥 Profissionais</div>
   <div class="tab" id="tab-mapa" onclick="trocarAba('mapa')">🗺️ Mapa de Sala</div>
-  <div class="tab" id="tab-planta" onclick="trocarAba('planta')">🏥 Planta</div>
 </div>
 
 <main class="main">
@@ -216,25 +204,20 @@ table.mapa td.dia{background:var(--cinza-cl);font-weight:800;color:var(--navy);w
     </div>
     <div class="grid" id="grid-profs"></div>
   </div>
-  <!-- ABA MAPA -->
+  <!-- ABA MAPA — grade Hora × Sala -->
   <div id="view-mapa" style="display:none">
-    <div class="toolbar"><div class="stat" id="stat-mapa">—</div></div>
-    <div class="mapa-wrap"><table class="mapa" id="tbl-mapa"></table></div>
-  </div>
-  <!-- ABA PLANTA -->
-  <div id="view-planta" style="display:none">
     <div class="toolbar">
-      <label style="font-size:11px;font-weight:700;color:var(--texto2);text-transform:uppercase;letter-spacing:.4px">Dia da semana</label>
-      <select id="planta-dia" onchange="renderPlanta()">
+      <label style="font-size:11px;font-weight:700;color:var(--texto2);text-transform:uppercase;letter-spacing:.4px">Dia</label>
+      <select id="mapa-dia" onchange="renderMapa()">
         <option value="1">Segunda-feira</option>
         <option value="2">Terça-feira</option>
         <option value="3">Quarta-feira</option>
         <option value="4">Quinta-feira</option>
         <option value="5">Sexta-feira</option>
       </select>
-      <div class="stat" id="stat-planta">—</div>
+      <div class="stat" id="stat-mapa">—</div>
     </div>
-    <div id="planta-area"></div>
+    <div class="mapa-wrap"><table class="mapa" id="tbl-mapa"></table></div>
   </div>
 </main>
 
@@ -295,7 +278,6 @@ async function inicializar() {
   await carregarTudo();
   renderProfs();
   renderMapa();
-  renderPlanta();
 }
 
 async function carregarTudo() {
@@ -325,19 +307,31 @@ function iniciais(nome){const p=String(nome||'?').replace(/^(Dr|Dra)\.?\s*/i,'')
 function fmtBRL(v){return v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
 function trocarAba(a){
-  ['profs','mapa','planta'].forEach(x=>{
+  ['profs','mapa'].forEach(x=>{
     document.getElementById('tab-'+x).classList.toggle('active', a===x);
     document.getElementById('view-'+x).style.display = a===x?'':'none';
   });
 }
 
-// resumo da escala — dia abreviado + hora de início, pra decisão de agendamento
+// resumo da escala — dia + faixa de horário (início–fim quando houver fim)
 const DIAS_ABR = ['','Seg','Ter','Qua','Qui','Sex','Sáb'];
 function escalaResumo(pid){
   return ESCALA.filter(e=>e.profissional_id===pid)
     .sort((a,b)=>a.dia_semana-b.dia_semana || (a.hora_inicio||'').localeCompare(b.hora_inicio||''))
-    .map(e=>DIAS_ABR[e.dia_semana] + (e.hora_inicio?' '+e.hora_inicio.slice(0,5):''))
+    .map(e=>{
+      let hr = '';
+      if(e.hora_inicio) hr = ' ' + e.hora_inicio.slice(0,5) + (e.hora_fim?'–'+e.hora_fim.slice(0,5):'');
+      return DIAS_ABR[e.dia_semana] + hr;
+    })
     .join(' · ');
+}
+// tags de convênio — usa os convênios específicos do campo; cai pra genérico
+function tagsConvenio(p){
+  if(p.convenios){
+    return p.convenios.split(/[,;/]+/).map(c=>c.trim()).filter(Boolean)
+      .map(c=>`<span class="tag on">${escH(c)}</span>`).join('');
+  }
+  return p.atende_convenio ? '<span class="tag on">convênio</span>' : '';
 }
 
 function renderProfs(){
@@ -370,7 +364,7 @@ function renderProfs(){
         <div class="pcard-dias">${dias ? '📅 '+dias : '<span style="color:var(--vermelho)">⚠ sem escala definida</span>'}</div>
         <div class="pcard-tags">
           ${p.atende_online?'<span class="tag on">on-line</span>':''}
-          ${p.atende_convenio?'<span class="tag on">convênio</span>':''}
+          ${tagsConvenio(p)}
           ${p.valor_consulta!=null?`<span class="tag">${fmtBRL(p.valor_consulta)}</span>`:''}
           ${semEscala?'<span class="tag gap">pendência</span>':''}
         </div>
@@ -380,60 +374,63 @@ function renderProfs(){
   document.getElementById('stat-profs').innerHTML = `<b>${lista.length}</b> de ${PROFS.length} profissionais`;
 }
 
+// Mapa de Sala — grade Hora × Sala, um dia por vez (modelo da planilha)
+const FAIXAS = [];
+for(let m=8*60+30; m<=18*60+30; m+=30){
+  FAIXAS.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`);
+}
+function faixaIdx(hhmm){
+  if(!hhmm) return -1;
+  const t = String(hhmm).slice(0,5);
+  const i = FAIXAS.indexOf(t);
+  if(i>=0) return i;
+  const mins = parseInt(t.slice(0,2),10)*60 + parseInt(t.slice(3,5),10);
+  for(let k=FAIXAS.length-1;k>=0;k--){
+    const fm = parseInt(FAIXAS[k].slice(0,2),10)*60 + parseInt(FAIXAS[k].slice(3,5),10);
+    if(fm<=mins) return k;
+  }
+  return 0;
+}
 function renderMapa(){
-  const dias = [1,2,3,4,5];
-  let h = '<thead><tr><th>Dia</th>' + SALAS.map(s=>`<th class="sala">${escH(s.nome)}</th>`).join('') + '</tr></thead><tbody>';
-  for(const d of dias){
-    h += `<tr><td class="dia">${DIAS[d]}</td>`;
+  const dia = parseInt(document.getElementById('mapa-dia').value, 10);
+  // por sala: blocos do dia com faixa de início e de fim
+  const porSala = {};
+  SALAS.forEach(s=>{
+    porSala[s.id] = ESCALA.filter(e=>e.dia_semana===dia && e.sala_id===s.id).map(e=>{
+      const ini = faixaIdx(e.hora_inicio);
+      let fim = e.hora_fim ? faixaIdx(e.hora_fim)-1 : ini;  // hora_fim é exclusiva
+      if(fim<ini || isNaN(fim)) fim = ini;
+      return {ini, fim, e};
+    });
+  });
+  let h = '<thead><tr><th class="hcol">Hora</th>' +
+    SALAS.map(s=>`<th>${escH(s.nome)}</th>`).join('') + '</tr></thead><tbody>';
+  for(let fi=0; fi<FAIXAS.length; fi++){
+    h += `<tr><td class="hcol">${FAIXAS[fi]}</td>`;
     for(const s of SALAS){
-      const blocos = ESCALA.filter(e=>e.dia_semana===d && e.sala_id===s.id);
-      if(!blocos.length){ h+='<td class="slot-vazio">·</td>'; continue; }
-      h += '<td>' + blocos.map(b=>{
-        const p = PROFS.find(x=>x.id===b.profissional_id);
-        const hr = b.hora_inicio ? b.hora_inicio.slice(0,5)+(b.hora_fim?'–'+b.hora_fim.slice(0,5):'') : '';
-        return `<div class="slot"><b>${escH(p?p.nome:'?')}</b>${hr?`<br><span class="hr">${hr}</span>`:''}</div>`;
-      }).join('') + '</td>';
+      const blocos = porSala[s.id];
+      if(blocos.some(b=>b.ini<fi && b.fim>=fi)) continue;  // coberto por rowspan acima
+      const ini = blocos.find(b=>b.ini===fi);
+      if(ini){
+        const span = ini.fim - ini.ini + 1;
+        const p = PROFS.find(x=>x.id===ini.e.profissional_id);
+        const e = ini.e;
+        const hr = e.hora_inicio
+          ? e.hora_inicio.slice(0,5)+(e.hora_fim?'–'+e.hora_fim.slice(0,5):'')
+          : '';
+        h += `<td class="ocup" rowspan="${span}"><b>${escH(p?p.nome:'?')}</b>`
+           + (hr?`<span class="hr">${hr}</span>`:'') + '</td>';
+      } else {
+        h += '<td class="vaga">·</td>';
+      }
     }
     h += '</tr>';
   }
   document.getElementById('tbl-mapa').innerHTML = h + '</tbody>';
+  const blocosDia = ESCALA.filter(e=>e.dia_semana===dia).length;
+  const salasOcup = SALAS.filter(s=>ESCALA.some(e=>e.dia_semana===dia && e.sala_id===s.id)).length;
   document.getElementById('stat-mapa').innerHTML =
-    `<b>${ESCALA.length}</b> blocos de atendimento · ${SALAS.length} salas`;
-}
-
-// Planta visual — salas em caixas, por dia selecionado
-function renderPlanta(){
-  const dia = parseInt(document.getElementById('planta-dia').value, 10);
-  const grupos = [
-    {titulo:'Consultórios', tipos:['consultorio']},
-    {titulo:'Salas de procedimento e demais espaços', tipos:['procedimento','spa','fotona']},
-  ];
-  let html = '';
-  for(const g of grupos){
-    const salas = SALAS.filter(s=>g.tipos.includes(s.tipo));
-    if(!salas.length) continue;
-    html += `<div class="planta-grupo"><h3>${g.titulo}</h3><div class="planta-salas">`;
-    for(const s of salas){
-      const blocos = ESCALA.filter(e=>e.dia_semana===dia && e.sala_id===s.id);
-      html += `<div class="sala-box ${blocos.length?'ocupada':'livre'}">
-        <div class="sala-nome">${escH(s.nome)}</div>`;
-      if(blocos.length){
-        html += blocos.map(b=>{
-          const p = PROFS.find(x=>x.id===b.profissional_id);
-          const hr = b.hora_inicio ? ` <span class="hr">${b.hora_inicio.slice(0,5)}</span>` : '';
-          return `<div class="sala-prof">${escH(p?p.nome:'?')}${hr}</div>`;
-        }).join('');
-      } else {
-        html += '<div class="sala-livre">livre</div>';
-      }
-      html += '</div>';
-    }
-    html += '</div></div>';
-  }
-  document.getElementById('planta-area').innerHTML = html;
-  const ocupadas = SALAS.filter(s=>ESCALA.some(e=>e.dia_semana===dia && e.sala_id===s.id)).length;
-  document.getElementById('stat-planta').innerHTML =
-    `<b>${ocupadas}</b> de ${SALAS.length} salas ocupadas`;
+    `<b>${blocosDia}</b> atendimentos · ${salasOcup}/${SALAS.length} salas ocupadas`;
 }
 
 function abrirFicha(id){
@@ -620,7 +617,7 @@ async function salvarProf(){
   if(err){ showToast('Erro: '+err.message,'erro'); return; }
   showToast(EDIT_ID!=null?'Profissional atualizado':'Profissional cadastrado','ok');
   fechar('ov-edit');
-  await carregarTudo(); renderProfs(); renderMapa(); renderPlanta();
+  await carregarTudo(); renderProfs(); renderMapa();
 }
 
 // === Escala (grade) ===
@@ -667,7 +664,7 @@ async function addBloco(){
   showToast('Bloco adicionado','ok');
   document.getElementById('es-hi').value = '';
   document.getElementById('es-hf').value = '';
-  await carregarTudo(); renderProfs(); renderMapa(); renderPlanta(); renderEscalaLista();
+  await carregarTudo(); renderProfs(); renderMapa(); renderEscalaLista();
 }
 async function removerBloco(id){
   if(!confirm('Remover este bloco de escala?')) return;
@@ -675,7 +672,7 @@ async function removerBloco(id){
   const { error } = await SB.from('cc_escala').delete().eq('id', id);
   if(error){ showToast('Erro: '+error.message,'erro'); return; }
   showToast('Bloco removido','ok');
-  await carregarTudo(); renderProfs(); renderMapa(); renderPlanta(); renderEscalaLista();
+  await carregarTudo(); renderProfs(); renderMapa(); renderEscalaLista();
 }
 
 function fechar(id){ document.getElementById(id).classList.remove('show'); }
