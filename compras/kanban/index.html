@@ -161,8 +161,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 .modal-foot{padding:14px 20px;border-top:1px solid var(--borda);display:flex;
   gap:6px;flex-wrap:wrap;justify-content:flex-end;}
-.btn{padding:6px 12px;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;
+.btn{padding:5px 11px;border-radius:14px;font-size:11.5px;font-weight:600;cursor:pointer;
   border:1.5px solid;transition:all 0.15s;font-family:inherit;white-space:nowrap;}
+/* Botoes pequenos usados no modal (anexos, adicionar item, editar/excluir item) */
+.anexo-btn{padding:5px 10px;border-radius:14px;border:1.5px solid var(--borda);background:#fff;
+  cursor:pointer;font-size:11.5px;font-weight:600;color:var(--navy-med);font-family:inherit;
+  display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap;}
+.anexo-btn:hover{border-color:var(--gold);color:var(--gold);}
 .btn.outline{background:#fff;color:var(--texto2);border-color:var(--borda);}
 .btn.outline:hover{background:var(--cinza-cl);}
 .btn.aprovar{background:var(--verde);color:#fff;border-color:var(--verde);}
@@ -750,13 +755,13 @@ function renderAcoes(status) {
   let html = '<button class="btn outline" onclick="fecharModal()">Fechar</button>';
   // Editar cabeçalho da solicitação — disponível em qualquer etapa
   if (temAcesso) {
-    html += '<button class="btn outline" onclick="entrarEdicaoSolic()">✏️ Editar solicitação</button>';
+    html += '<button class="btn outline" onclick="entrarEdicaoSolic()">✏️ Editar</button>';
   }
 
   // Etapa 1 (Pedido Feito) — triagem: encaminha pra aprovação ou aprova direto
   if (status === 'pedido_feito' && temAcesso) {
     html += '<button class="btn recusar" onclick="acaoRecusar()">❌ Recusar</button>';
-    html += '<button class="btn outline" onclick="acaoEncaminharAprovacao()">↗️ Encaminhar pra Aprovação</button>';
+    html += '<button class="btn outline" onclick="acaoEncaminharAprovacao()">↗️ Encaminhar p/ Aprovação</button>';
     html += '<button class="btn aprovar" onclick="acaoAprovarDireto()">✅ Aprovar direto</button>';
   }
   // Etapa 2 (Aguardando Aprovação) — só administradores aprovam/recusam
@@ -790,7 +795,7 @@ function renderAcoes(status) {
   // Excluir pedido — só administradores (card gestor), em qualquer etapa.
   // Apaga de vez (pedido + itens + anexos + histórico via CASCADE).
   if (ehAdmin) {
-    html += '<button class="btn recusar" onclick="acaoExcluir()">🗑️ Excluir pedido</button>';
+    html += '<button class="btn recusar" onclick="acaoExcluir()">🗑️ Excluir</button>';
   }
   foot.innerHTML = html;
 }
