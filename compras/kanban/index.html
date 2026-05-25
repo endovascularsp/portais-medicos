@@ -159,10 +159,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .hist-line{padding:6px 0;font-size:12px;color:var(--texto2);}
 .hist-line b{color:var(--navy);}
 
-.modal-foot{padding:16px 24px;border-top:1px solid var(--borda);display:flex;
-  gap:10px;flex-wrap:wrap;justify-content:flex-end;}
-.btn{padding:9px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;
-  border:1.5px solid;transition:all 0.15s;font-family:inherit;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--borda);display:flex;
+  gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.btn{padding:6px 12px;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;
+  border:1.5px solid;transition:all 0.15s;font-family:inherit;white-space:nowrap;}
 .btn.outline{background:#fff;color:var(--texto2);border-color:var(--borda);}
 .btn.outline:hover{background:var(--cinza-cl);}
 .btn.aprovar{background:var(--verde);color:#fff;border-color:var(--verde);}
@@ -303,6 +303,11 @@ let TODAS = [];          // todas as solicitações com joins
 let FORNECEDORES = [];
 let CENTROS = [];
 let SEL = null;          // solicitação selecionada no modal
+let SEL_ITENS = [];      // itens da solicitação aberta (carrega no abrirModal)
+let SEL_ANEXOS = [];     // anexos da solicitação aberta
+let SEL_HIST = [];       // histórico da solicitação aberta
+let EDITANDO_SOLIC = false; // modo edição da solicitação inteira (cabeçalho)
+let EDITANDO_ITEM = null;   // id do item sendo editado inline (ou null)
 
 function mostrarBannerErro(msg) {
   let b = document.getElementById('banner-erro');
@@ -467,13 +472,27 @@ function escapeHtml(s) {
 // === Modal de detalhes ===
 
 async function abrirModal(solicitacaoId) {
+  // Reset de edição (evita herdar de outro card)
+  EDITANDO_SOLIC = false;
+  EDITANDO_ITEM = null;
+
   SEL = TODAS.find(s => s.id === solicitacaoId);
   if (!SEL) return;
   document.getElementById('m-numero').textContent = `Solicitação #${SEL.numero}`;
-  const body = document.getElementById('m-body');
 
-  // Carrega itens detalhados + anexos + historico
-  let itens = [], anexos = [], hist = [];
+  await carregarDadosSolicitacao();
+  renderModal();
+  document.getElementById('modal').classList.add('show');
+}
+
+// Recarrega dados sem fechar (após salvar/excluir/upload)
+async function recarregarModal() {
+  if (!SEL) return;
+  await carregarDadosSolicitacao();
+  renderModal();
+}
+
+async function carregarDadosSolicitacao() {
   if (SB) {
     // compras_itens tem 2 FKs pra compras_fornecedores (sugerido + final);
     // precisa nomear a FK no embed senão o PostgREST acusa ambiguidade
@@ -481,19 +500,65 @@ async function abrirModal(solicitacaoId) {
     const [iR, aR, hR] = await Promise.all([
       SB.from('compras_itens')
         .select('*, fornecedor:compras_fornecedores!fornecedor_sugerido_id(nome)')
-        .eq('solicitacao_id', SEL.id),
-      SB.from('compras_anexos').select('*').eq('solicitacao_id', SEL.id),
+        .eq('solicitacao_id', SEL.id).order('id'),
+      SB.from('compras_anexos').select('*').eq('solicitacao_id', SEL.id).order('id'),
       SB.from('compras_historico').select('*').eq('solicitacao_id', SEL.id).order('criado_em',{ascending:true})
     ]);
-    if (iR.error) { console.error('Erro ao carregar itens:', iR.error); }
-    itens = iR.data || [];
-    anexos = aR.data || [];
-    hist = hR.data || [];
+    if (iR.error) console.error('Erro ao carregar itens:', iR.error);
+    SEL_ITENS = iR.data || [];
+    SEL_ANEXOS = aR.data || [];
+    SEL_HIST = hR.data || [];
   } else {
-    itens = [{descricao:'Papel A4 75g',quantidade:10,unidade:'cx',valor_estimado:250,fornecedor:{nome:'KALUNGA'}}];
+    SEL_ITENS = [{id:1,descricao:'Papel A4 75g',quantidade:10,unidade:'cx',valor_estimado:250,fornecedor:{nome:'KALUNGA'}}];
+    SEL_ANEXOS = [];
+    SEL_HIST = [];
   }
+}
 
+function renderModal() {
+  const body = document.getElementById('m-body');
   body.innerHTML = `
+    ${renderSecaoIdentificacao()}
+    ${renderSecaoJustificativa()}
+    ${renderSecaoItens()}
+    ${renderSecaoAnexos()}
+    ${renderSecaoHistorico()}
+  `;
+  renderAcoes(SEL.status);
+}
+
+function renderSecaoIdentificacao() {
+  if (EDITANDO_SOLIC) {
+    const optMet = (v, lbl) => `<option value="${v}"${SEL.metodo_pagamento===v?' selected':''}>${lbl}</option>`;
+    return `
+      <div class="modal-sec">
+        <h3>Identificação</h3>
+        <div class="kv">
+          <div class="k">Solicitante</div><div class="v">${escapeHtml(SEL.solicitante_email)}</div>
+          <div class="k">Departamento</div><div class="v">${escapeHtml(SEL.depto_nome)}</div>
+          <div class="k">Status</div><div class="v">${SEL.status}</div>
+        </div>
+        <div class="modal-form" style="margin-top:10px;">
+          <div class="field">
+            <label>Centro de custo</label>
+            <select id="ed-centro">
+              ${CENTROS.map(c => `<option value="${c.id}"${SEL.centro_custo_id===c.id?' selected':''}>${escapeHtml(c.nome)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Método de pagamento</label>
+            <select id="ed-metodo">
+              <option value="">— A definir —</option>
+              ${optMet('pix','PIX')}
+              ${optMet('boleto','Boleto')}
+              ${optMet('cartao_credito','Cartão de Crédito')}
+              ${optMet('link_pagamento','Link de pagamento')}
+            </select>
+          </div>
+        </div>
+      </div>`;
+  }
+  return `
     <div class="modal-sec">
       <h3>Identificação</h3>
       <div class="kv">
@@ -509,50 +574,143 @@ async function abrirModal(solicitacaoId) {
         ${SEL.recebido_por ? `<div class="k">Recebido por</div><div class="v">${escapeHtml(SEL.recebido_por)} em ${new Date(SEL.recebido_em).toLocaleDateString('pt-BR')}</div>` : ''}
         ${SEL.motivo_recusa ? `<div class="k" style="color:var(--vermelho)">Motivo recusa</div><div class="v" style="color:var(--vermelho)">${escapeHtml(SEL.motivo_recusa)}</div>` : ''}
       </div>
-    </div>
+    </div>`;
+}
+
+function renderSecaoJustificativa() {
+  if (EDITANDO_SOLIC) {
+    return `
+      <div class="modal-sec">
+        <h3>Justificativa</h3>
+        <div class="modal-form">
+          <div class="field">
+            <label>Motivo da compra</label>
+            <textarea id="ed-just" style="width:100%;min-height:70px;">${escapeHtml(SEL.justificativa || '')}</textarea>
+          </div>
+          <div class="field">
+            <label>Observações adicionais</label>
+            <textarea id="ed-obs" style="width:100%;min-height:60px;">${escapeHtml(SEL.observacoes || '')}</textarea>
+          </div>
+        </div>
+      </div>`;
+  }
+  return `
     <div class="modal-sec">
       <h3>Justificativa</h3>
       <div style="font-size:13px;color:var(--texto);line-height:1.5;">${escapeHtml(SEL.justificativa)}</div>
-    </div>
+      ${SEL.observacoes ? `<div style="font-size:12px;color:var(--texto2);line-height:1.5;margin-top:8px;"><b>Obs:</b> ${escapeHtml(SEL.observacoes)}</div>` : ''}
+    </div>`;
+}
+
+function renderSecaoItens() {
+  const linhas = SEL_ITENS.map(i => {
+    if (EDITANDO_ITEM === i.id) return renderItemEditavel(i);
+    return renderItemLeitura(i);
+  }).join('');
+  return `
     <div class="modal-sec">
-      <h3>Itens (${itens.length})</h3>
-      ${itens.map(i => `
-        <div class="item-line">
-          <div class="desc">${escapeHtml(i.descricao)}</div>
-          <div class="qtd">${i.quantidade} ${i.unidade || ''} ${i.fornecedor?.nome ? '· ' + escapeHtml(i.fornecedor.nome) : ''} ${i.valor_estimado ? '· R$ ' + fmtBRL(i.valor_estimado) + ' estimado' : ''}</div>
+      <h3>Itens (${SEL_ITENS.length})</h3>
+      ${linhas || '<div style="font-size:12px;color:var(--texto2);font-style:italic;">Sem itens.</div>'}
+      <button class="anexo-btn" style="margin-top:10px;" onclick="adicionarItemNovo()">+ Adicionar item</button>
+    </div>`;
+}
+
+function renderItemLeitura(i) {
+  return `
+    <div class="item-line" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+      <div style="flex:1;min-width:0;">
+        <div class="desc">${escapeHtml(i.descricao)}</div>
+        <div class="qtd">${i.quantidade} ${escapeHtml(i.unidade || '')} ${i.fornecedor?.nome ? '· ' + escapeHtml(i.fornecedor.nome) : ''} ${i.valor_estimado ? '· R$ ' + fmtBRL(i.valor_estimado) + ' estimado' : ''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="anexo-btn" style="padding:4px 10px;font-size:11px;" title="Editar item" onclick="editarItem(${i.id})">✏️</button>
+        <button class="anexo-btn" style="padding:4px 10px;font-size:11px;color:var(--vermelho);border-color:rgba(192,57,43,0.3);" title="Excluir item" onclick="excluirItem(${i.id})">✕</button>
+      </div>
+    </div>`;
+}
+
+function renderItemEditavel(i) {
+  const fornNome = i.fornecedor?.nome || '';
+  return `
+    <div class="item-line" style="background:var(--cinza-cl);padding:14px;border-radius:8px;border:1.5px solid var(--gold);">
+      <div class="modal-form" style="margin:0;background:transparent;border:none;padding:0;">
+        <div class="field">
+          <label>Descrição</label>
+          <input type="text" id="ei-desc-${i.id}" value="${escapeAttr(i.descricao || '')}"/>
         </div>
-      `).join('')}
-    </div>
-    ${anexos.length > 0 ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div class="field">
+            <label>Quantidade</label>
+            <input type="number" min="0.01" step="0.01" id="ei-qtd-${i.id}" value="${i.quantidade || 1}"/>
+          </div>
+          <div class="field">
+            <label>Unidade</label>
+            <input type="text" id="ei-un-${i.id}" value="${escapeAttr(i.unidade || '')}" placeholder="un, cx..."/>
+          </div>
+          <div class="field">
+            <label>Valor estimado (R$)</label>
+            <input type="number" min="0" step="0.01" id="ei-val-${i.id}" value="${i.valor_estimado || ''}"/>
+          </div>
+        </div>
+        <div class="field forn-wrap" style="position:relative;">
+          <label>Fornecedor sugerido</label>
+          <input type="text" id="ei-forn-input-${i.id}" value="${escapeAttr(fornNome)}"
+                 placeholder="Digite pra buscar ou cadastrar novo"
+                 oninput="buscarFornEdit(${i.id}, this.value)"
+                 onfocus="buscarFornEdit(${i.id}, this.value)"
+                 onblur="setTimeout(()=>fecharFornEdit(${i.id}), 180)"
+                 autocomplete="off"/>
+          <input type="hidden" id="ei-forn-id-${i.id}" value="${i.fornecedor_sugerido_id || ''}"/>
+          <div class="forn-list" id="ei-forn-list-${i.id}"
+               style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--borda);border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:0 6px 18px rgba(11,31,58,0.12);display:none;"></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+          <button class="btn outline" onclick="EDITANDO_ITEM=null;renderModal()">Cancelar</button>
+          <button class="btn cotar" onclick="salvarItem(${i.id})">✓ Salvar item</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderSecaoAnexos() {
+  const linhas = SEL_ANEXOS.map(a => anexoHtml(a)).join('');
+  return `
     <div class="modal-sec">
-      <h3>Anexos (${anexos.length})</h3>
-      ${anexos.map(a => anexoHtml(a)).join('')}
-    </div>` : ''}
-    ${hist.length > 0 ? `
+      <h3>Anexos (${SEL_ANEXOS.length})</h3>
+      <div style="margin-bottom:10px;">${linhas || '<div style="font-size:12px;color:var(--texto2);font-style:italic;">Sem anexos.</div>'}</div>
+      <input type="file" id="anx-file" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.csv" multiple style="display:none" onchange="adicionarArquivoNoModal(event)"/>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="anexo-btn" onclick="document.getElementById('anx-file').click()">📄 Adicionar arquivo</button>
+        <button class="anexo-btn" onclick="adicionarLinkNoModal()">🔗 Adicionar link</button>
+      </div>
+    </div>`;
+}
+
+function renderSecaoHistorico() {
+  if (!SEL_HIST.length) return '';
+  return `
     <div class="modal-sec">
       <h3>Histórico</h3>
-      ${hist.map(h => `
+      ${SEL_HIST.map(h => `
         <div class="hist-line">
-          <b>${h.acao}</b> por ${escapeHtml((h.por_email||'').split('@')[0])} em ${new Date(h.criado_em).toLocaleString('pt-BR')}
+          <b>${escapeHtml(h.acao)}</b> por ${escapeHtml((h.por_email||'').split('@')[0])} em ${new Date(h.criado_em).toLocaleString('pt-BR')}
           ${h.comentario ? '<br/><i style="opacity:0.8">' + escapeHtml(h.comentario) + '</i>' : ''}
         </div>
       `).join('')}
-    </div>` : ''}
-  `;
+    </div>`;
+}
 
-  // Renderiza ações conforme status
-  renderAcoes(SEL.status);
-
-  document.getElementById('modal').classList.add('show');
+function escapeAttr(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function anexoHtml(a) {
   const ic = a.tipo === 'link' ? '🔗' : a.tipo === 'imagem' ? '🖼️' : a.tipo === 'excel' ? '📊' : '📄';
-  if (a.tipo === 'link') {
-    return `<a class="anexo-link" href="${escapeHtml(a.url_externa)}" target="_blank">${ic} ${escapeHtml(a.url_externa.slice(0,60))}</a>`;
-  }
-  // Pra anexos no Storage, gera URL signed
-  return `<a class="anexo-link" href="#" onclick="baixarAnexo('${a.file_path}', '${escapeHtml(a.filename)}');return false;">${ic} ${escapeHtml(a.filename)}</a>`;
+  const lbl = a.tipo === 'link' ? (a.url_externa||'').slice(0,60) : (a.filename||'');
+  const linkInner = a.tipo === 'link'
+    ? `<a class="anexo-link" href="${escapeAttr(a.url_externa)}" target="_blank">${ic} ${escapeHtml(lbl)}</a>`
+    : `<a class="anexo-link" href="#" onclick="baixarAnexo('${escapeAttr(a.file_path)}', '${escapeAttr(a.filename)}');return false;">${ic} ${escapeHtml(lbl)}</a>`;
+  return `<span style="display:inline-flex;align-items:center;gap:2px;margin:2px 4px 2px 0;">${linkInner}<button class="anexo-btn" style="padding:4px 8px;font-size:11px;color:var(--vermelho);border-color:rgba(192,57,43,0.3);" title="Remover anexo" onclick="removerAnexoModal(${a.id}, '${escapeAttr(a.file_path||'')}')">✕</button></span>`;
 }
 
 async function baixarAnexo(path, filename) {
@@ -565,6 +723,11 @@ async function baixarAnexo(path, filename) {
 function fecharModal() {
   document.getElementById('modal').classList.remove('show');
   SEL = null;
+  SEL_ITENS = [];
+  SEL_ANEXOS = [];
+  SEL_HIST = [];
+  EDITANDO_SOLIC = false;
+  EDITANDO_ITEM = null;
 }
 
 function renderAcoes(status) {
@@ -575,7 +738,20 @@ function renderAcoes(status) {
   const temAcesso = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
   const ehAdmin   = USER_CARDS.includes('gestor');
 
+  // Em modo edição da solicitação, esconde os botões de transição —
+  // mostra só Cancelar/Salvar pra não confundir.
+  if (EDITANDO_SOLIC) {
+    foot.innerHTML =
+      '<button class="btn outline" onclick="cancelarEdicaoSolic()">× Cancelar</button>' +
+      '<button class="btn aprovar" onclick="salvarSolicitacao()">✓ Salvar mudanças</button>';
+    return;
+  }
+
   let html = '<button class="btn outline" onclick="fecharModal()">Fechar</button>';
+  // Editar cabeçalho da solicitação — disponível em qualquer etapa
+  if (temAcesso) {
+    html += '<button class="btn outline" onclick="entrarEdicaoSolic()">✏️ Editar solicitação</button>';
+  }
 
   // Etapa 1 (Pedido Feito) — triagem: encaminha pra aprovação ou aprova direto
   if (status === 'pedido_feito' && temAcesso) {
@@ -786,6 +962,278 @@ async function acaoExcluir() {
   fecharModal();
   await carregarSolicitacoes();
   renderKanban();
+}
+
+// === Modo edição — Solicitação (cabeçalho) ===
+
+function entrarEdicaoSolic() {
+  EDITANDO_SOLIC = true;
+  EDITANDO_ITEM = null;
+  renderModal();
+}
+
+function cancelarEdicaoSolic() {
+  EDITANDO_SOLIC = false;
+  renderModal();
+}
+
+async function salvarSolicitacao() {
+  const centro_custo_id = parseInt(document.getElementById('ed-centro').value, 10) || null;
+  const metodo_pagamento = document.getElementById('ed-metodo').value || null;
+  const justificativa = (document.getElementById('ed-just').value || '').trim();
+  const observacoes = (document.getElementById('ed-obs').value || '').trim() || null;
+
+  if (!justificativa) { showToast('Justificativa não pode ficar vazia', 'erro'); return; }
+
+  if (!SB) { showToast('(preview) Edição simulada', 'sucesso'); EDITANDO_SOLIC = false; renderModal(); return; }
+
+  const { error } = await SB.from('compras_solicitacoes')
+    .update({ centro_custo_id, metodo_pagamento, justificativa, observacoes })
+    .eq('id', SEL.id);
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao: 'editada', por_email: USER_EMAIL,
+    comentario: 'Cabeçalho da solicitação editado'
+  });
+
+  // Atualiza objeto local + lista global
+  Object.assign(SEL, { centro_custo_id, metodo_pagamento, justificativa, observacoes });
+  const idx = TODAS.findIndex(s => s.id === SEL.id);
+  if (idx >= 0) {
+    TODAS[idx] = { ...TODAS[idx], centro_custo_id, metodo_pagamento, justificativa, observacoes };
+    TODAS[idx].centro_nome = (CENTROS.find(c => c.id === centro_custo_id) || {}).nome || '—';
+    SEL.centro_nome = TODAS[idx].centro_nome;
+  }
+  EDITANDO_SOLIC = false;
+  await recarregarModal();
+  renderKanban();
+  showToast('Solicitação atualizada', 'sucesso');
+}
+
+// === Edição/exclusão de item ===
+
+function editarItem(itemId) {
+  EDITANDO_ITEM = itemId;
+  renderModal();
+}
+
+async function salvarItem(itemId) {
+  const descricao = (document.getElementById('ei-desc-' + itemId).value || '').trim();
+  const quantidade = parseFloat(document.getElementById('ei-qtd-' + itemId).value) || 1;
+  const unidade = (document.getElementById('ei-un-' + itemId).value || '').trim() || null;
+  const valor_estimado = parseFloat(document.getElementById('ei-val-' + itemId).value) || null;
+  const fornecedor_sugerido_id = parseInt(document.getElementById('ei-forn-id-' + itemId).value, 10) || null;
+
+  if (!descricao) { showToast('Descrição não pode ficar vazia', 'erro'); return; }
+
+  if (!SB) { showToast('(preview) Edição de item simulada', 'sucesso'); EDITANDO_ITEM = null; renderModal(); return; }
+
+  const { error } = await SB.from('compras_itens')
+    .update({ descricao, quantidade, unidade, valor_estimado, fornecedor_sugerido_id })
+    .eq('id', itemId);
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao: 'item editado', por_email: USER_EMAIL,
+    comentario: `Item: ${descricao}`
+  });
+
+  EDITANDO_ITEM = null;
+  await recarregarModal();
+  await carregarSolicitacoes(); // total/contagem podem ter mudado
+  renderKanban();
+  showToast('Item atualizado', 'sucesso');
+}
+
+async function excluirItem(itemId) {
+  const item = SEL_ITENS.find(i => i.id === itemId);
+  const desc = item ? item.descricao : 'item';
+  if (!confirm(`Excluir o item "${desc}"?\n\nSe for um item que você vai comprar em outro fornecedor, lembre de criar uma nova solicitação separada pra ele.`)) return;
+
+  if (!SB) { showToast('(preview) Exclusão simulada', 'sucesso'); SEL_ITENS = SEL_ITENS.filter(i => i.id !== itemId); renderModal(); return; }
+
+  const { error } = await SB.from('compras_itens').delete().eq('id', itemId);
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao: 'item excluído', por_email: USER_EMAIL,
+    comentario: `Item removido: ${desc}`
+  });
+
+  await recarregarModal();
+  await carregarSolicitacoes();
+  renderKanban();
+  showToast('Item excluído', 'sucesso');
+}
+
+async function adicionarItemNovo() {
+  const desc = prompt('Descrição do novo item:');
+  if (!desc || !desc.trim()) return;
+
+  if (!SB) {
+    SEL_ITENS.push({ id: Date.now(), descricao: desc.trim(), quantidade: 1, unidade: '', valor_estimado: null });
+    showToast('(preview) Item adicionado', 'sucesso');
+    renderModal();
+    return;
+  }
+
+  const { data, error } = await SB.from('compras_itens').insert({
+    solicitacao_id: SEL.id, descricao: desc.trim(), quantidade: 1
+  }).select().single();
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao: 'item adicionado', por_email: USER_EMAIL,
+    comentario: `Novo item: ${desc.trim()}`
+  });
+
+  // Abre direto em modo edição pra preencher qtd/unidade/fornecedor/valor
+  EDITANDO_ITEM = data.id;
+  await recarregarModal();
+  await carregarSolicitacoes();
+  renderKanban();
+  showToast('Item adicionado — preencha os detalhes', 'sucesso');
+}
+
+// === Autocomplete de fornecedor (modo edição de item) ===
+
+function buscarFornEdit(itemId, query) {
+  const q = (query || '').toLowerCase().trim();
+  const list = document.getElementById('ei-forn-list-' + itemId);
+  if (!list) return;
+  // Mudou o texto manualmente → desfaz o id selecionado até o usuário escolher de novo
+  const hid = document.getElementById('ei-forn-id-' + itemId);
+  if (hid) hid.value = '';
+  let matches = FORNECEDORES;
+  if (q) matches = FORNECEDORES.filter(f => (f.nome || '').toLowerCase().includes(q));
+  matches = matches.slice(0, 20);
+  let html = matches.map(f =>
+    `<div class="forn-list-item" style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--cinza-cl);" onmousedown="selecFornEdit(${itemId}, ${f.id}, '${escapeAttr(f.nome)}')">${escapeHtml(f.nome)}</div>`
+  ).join('');
+  if (q && !FORNECEDORES.find(f => (f.nome||'').toLowerCase() === q)) {
+    html += `<div class="forn-list-item add-new" style="padding:8px 12px;font-size:12px;cursor:pointer;background:var(--gold-bg);color:var(--gold);font-weight:700;" onmousedown="cadastrarFornEdit(${itemId}, '${escapeAttr(query)}')">+ Cadastrar "${escapeHtml(query)}" como novo fornecedor</div>`;
+  }
+  list.innerHTML = html;
+  list.style.display = html ? 'block' : 'none';
+}
+
+function selecFornEdit(itemId, fornId, fornNome) {
+  document.getElementById('ei-forn-input-' + itemId).value = fornNome;
+  document.getElementById('ei-forn-id-' + itemId).value = fornId;
+  fecharFornEdit(itemId);
+}
+
+function fecharFornEdit(itemId) {
+  const el = document.getElementById('ei-forn-list-' + itemId);
+  if (el) el.style.display = 'none';
+}
+
+async function cadastrarFornEdit(itemId, nome) {
+  nome = (nome || '').trim();
+  if (!nome) return;
+  if (!SB) {
+    const fakeId = -Math.floor(Math.random() * 9999);
+    FORNECEDORES.push({ id: fakeId, nome });
+    selecFornEdit(itemId, fakeId, nome);
+    showToast('(preview) Fornecedor cadastrado', 'sucesso');
+    return;
+  }
+  const { data, error } = await SB.from('compras_fornecedores')
+    .insert({ nome, validado: false, criado_por: USER_EMAIL })
+    .select().single();
+  if (error) { showToast('Erro ao cadastrar fornecedor: ' + error.message, 'erro'); return; }
+  FORNECEDORES.push({ id: data.id, nome: data.nome });
+  selecFornEdit(itemId, data.id, data.nome);
+  showToast(`Fornecedor "${nome}" cadastrado`, 'sucesso');
+}
+
+// === Anexos — adicionar/remover em qualquer etapa ===
+
+async function adicionarArquivoNoModal(ev) {
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  if (!files.length) return;
+
+  if (!SB) {
+    files.forEach(f => SEL_ANEXOS.push({ id: Date.now()+Math.random(), tipo: 'pdf', filename: f.name }));
+    showToast('(preview) Anexo simulado', 'sucesso');
+    renderModal();
+    return;
+  }
+
+  for (const file of files) {
+    const tipo = file.type.startsWith('image/') ? 'imagem'
+              : file.name.match(/\.(xlsx|xls|csv)$/i) ? 'excel'
+              : 'pdf';
+    const path = `${SEL.id}/${Date.now()}_${file.name}`;
+    const { error: eu } = await SB.storage.from('compras-anexos').upload(path, file);
+    if (eu) { showToast('Falha upload ' + file.name + ': ' + eu.message, 'erro'); continue; }
+    const { error: ei } = await SB.from('compras_anexos').insert({
+      solicitacao_id: SEL.id, tipo, filename: file.name, file_path: path, uploaded_by: USER_EMAIL
+    });
+    if (ei) { showToast('Falha registrar anexo: ' + ei.message, 'erro'); continue; }
+    await SB.from('compras_historico').insert({
+      solicitacao_id: SEL.id, acao: 'anexo adicionado', por_email: USER_EMAIL,
+      comentario: file.name
+    });
+  }
+  await recarregarModal();
+  showToast('Anexo(s) enviados', 'sucesso');
+}
+
+async function adicionarLinkNoModal() {
+  let url = prompt('Cole a URL (ex: link do produto no Mercado Livre):');
+  if (!url || !url.trim()) return;
+  url = url.trim();
+  if (!url.match(/^https?:\/\//)) url = 'https://' + url;
+
+  if (!SB) {
+    SEL_ANEXOS.push({ id: Date.now(), tipo: 'link', url_externa: url });
+    showToast('(preview) Link adicionado', 'sucesso');
+    renderModal();
+    return;
+  }
+
+  const { error } = await SB.from('compras_anexos').insert({
+    solicitacao_id: SEL.id, tipo: 'link', url_externa: url, uploaded_by: USER_EMAIL
+  });
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao: 'link adicionado', por_email: USER_EMAIL,
+    comentario: url
+  });
+
+  await recarregarModal();
+  showToast('Link adicionado', 'sucesso');
+}
+
+async function removerAnexoModal(anexoId, filePath) {
+  if (!confirm('Remover este anexo?')) return;
+
+  if (!SB) {
+    SEL_ANEXOS = SEL_ANEXOS.filter(a => a.id !== anexoId);
+    showToast('(preview) Anexo removido', 'sucesso');
+    renderModal();
+    return;
+  }
+
+  // Apaga do storage se for arquivo (link não tem file_path)
+  if (filePath) {
+    const { error: es } = await SB.storage.from('compras-anexos').remove([filePath]);
+    if (es) console.warn('Falha ao apagar storage:', es.message); // não bloqueia DB
+  }
+  const { error } = await SB.from('compras_anexos').delete().eq('id', anexoId);
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao: 'anexo removido', por_email: USER_EMAIL,
+    comentario: filePath || '(link)'
+  });
+
+  await recarregarModal();
+  showToast('Anexo removido', 'sucesso');
 }
 
 async function transicionar(updates, acao, comentario) {
