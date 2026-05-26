@@ -193,6 +193,10 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
 
 html,body{overflow-x:hidden;max-width:100%;}
 @media(max-width:600px){
+  /* Sobrescreve fix-mobile-overflow-v7 que forcava 2 colunas: aqui cards sao largos com listas, 1 coluna funciona melhor */
+  .insights-grid{grid-template-columns:1fr!important;gap:14px!important;}
+  .insight-card{padding:16px!important;}
+  .top-item{padding:10px 12px!important;}
   .top-name{white-space:normal;word-break:break-word;line-height:1.3;}
   .top-meta{white-space:normal;word-break:break-word;}
   .top-item{align-items:flex-start;}
