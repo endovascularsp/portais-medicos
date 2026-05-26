@@ -255,64 +255,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
 .empresa-tab{padding:5px 14px;border-radius:16px;border:1.5px solid #B0C8E4;background:white;color:var(--azul-escuro);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}
 .empresa-tab:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
 .empresa-tab.active{background:var(--azul-escuro);border-color:var(--azul-escuro);color:white;}
-/* ── Tela de Login ── */
-.login-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#0B1F3A 0%,#0d2d55 60%,#0B1F3A 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;}
-.login-overlay.saindo{opacity:0;pointer-events:none;}
-.login-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:22px;padding:52px 44px 44px;text-align:center;max-width:400px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
-.login-logo-wrap{margin-bottom:20px;}
-.login-titulo{color:white;font-size:26px;font-weight:700;letter-spacing:0.3px;margin-bottom:4px;}
-.login-sub{color:rgba(255,255,255,0.55);font-size:13px;margin-bottom:6px;}
-.login-periodo{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);font-size:12.5px;font-weight:600;padding:5px 16px;border-radius:20px;display:inline-block;margin-bottom:32px;}
-.login-input-wrap{position:relative;margin-bottom:14px;}
-.login-input{width:100%;padding:14px 18px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:white;font-size:16px;font-family:inherit;outline:none;letter-spacing:3px;text-align:center;transition:border 0.2s;}
-.login-input::placeholder{letter-spacing:0px;font-size:13.5px;color:rgba(255,255,255,0.35);}
-.login-input:focus{border-color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.12);}
-.login-btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#1A5296,#3A8DD4);color:white;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s;margin-top:4px;}
-.login-btn:hover:not(:disabled){background:linear-gradient(135deg,#1e5faf,#4A9EE0);transform:translateY(-1px);}
-.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
-.login-erro{color:#F87171;font-size:12.5px;margin-top:12px;min-height:20px;font-weight:500;}
-.login-rodape{color:rgba(255,255,255,0.25);font-size:11px;margin-top:28px;}
+/* CSS de login local removido em 2026-05-25 (gate Supabase no <head>) */
 
-/* ===== ADMIN AUTH CSS ===== */
-#senha-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100%; height: 100%;
-  z-index: 99999;
-  background: linear-gradient(135deg, #0a1628 0%, #102040 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#senha-overlay.hidden { display: none !important; }
-#senha-box {
-  background: #fff;
-  border-radius: 16px;
-  padding: 48px 40px;
-  box-shadow: 0 8px 40px rgba(0,0,0,.5);
-  text-align: center;
-  min-width: 320px;
-  max-width: 400px;
-  width: 90%;
-}
-#senha-box h2 { font-size: 1.2rem; color: #102040; margin: 0 0 8px; }
-#senha-box p  { font-size: .85rem; color: #666; margin: 0 0 24px; }
-#senha-input {
-  width: 100%; box-sizing: border-box;
-  border: 2px solid #dde; border-radius: 8px;
-  padding: 12px 16px; font-size: 1rem;
-  outline: none; transition: border-color .2s;
-}
-#senha-input:focus { border-color: #1a56db; }
-#senha-btn {
-  width: 100%; margin-top: 14px;
-  background: linear-gradient(90deg, #1a56db, #0e3fa3);
-  color: #fff; border: none; border-radius: 8px;
-  padding: 13px; font-size: 1rem; font-weight: 700;
-  cursor: pointer; transition: opacity .2s;
-}
-#senha-btn:hover { opacity: .9; }
-#senha-erro { color: #c0392b; font-size: .85rem; margin-top: 10px; min-height: 18px; }
+/* CSS de senha-overlay removido em 2026-05-25 (gate Supabase no <head>) */
 
 /* ─────────────────── Padrão visual novo (espelha Recebimento Endo) ─────────────────── */
 .admin-nav{background:var(--navy);border-bottom:1px solid rgba(255,255,255,0.08);
@@ -865,52 +810,11 @@ function mostrarProf(id,btnEl){
 }
 
 // ── Login / Descriptografia (só usado em portais com senha) ──
-async function _descriptografar(b64, senha){
-  try{
-    const packed=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-    const salt=packed.slice(0,16),nonce=packed.slice(16,28),ct=packed.slice(28);
-    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(senha),'PBKDF2',false,['deriveKey']);
-    const key=await crypto.subtle.deriveKey(
-      {name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},km,
-      {name:'AES-GCM',length:256},false,['decrypt']);
-    const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv:nonce},key,ct);
-    return JSON.parse(new TextDecoder().decode(dec));
-  }catch(e){return null;}
-}
+// _descriptografar removida em 2026-05-25 (gate SSO no <head>)
 
-async function tentarLogin(){
-  const inp=document.getElementById('login-senha');
-  const btn=document.getElementById('login-btn');
-  const erro=document.getElementById('login-erro');
-  const senha=inp.value.trim();
-  if(!senha)return;
-  btn.disabled=true; btn.textContent='Verificando…';
-  const dados=await _descriptografar(DADOS_ENCRIPTADOS,senha);
-  if(dados===null){
-    erro.textContent='Código incorreto. Verifique e tente novamente.';
-    btn.disabled=false; btn.textContent='Acessar →';
-    inp.value=''; inp.focus();
-  } else {
-    // Injeta os dados e inicializa o portal
-    Object.keys(dados).forEach(k=>{ DADOS_PROFS[k]=dados[k]; });
-    const ov=document.getElementById('login-overlay');
-    ov.classList.add('saindo');
-    setTimeout(()=>{ov.style.display='none'; inicializarPortal();},400);
-  }
-}
+// tentarLogin / _loginEnter removidos em 2026-05-25
 
-function _loginEnter(e){ if(e.key==='Enter') tentarLogin(); }
-
-function inicializarPortal(){
-  // Inicialização principal (chamada após login ou direto se sem senha)
-  const pl=document.getElementById('periodo-label');
-  if(pl) pl.textContent='Per\u00edodo: '+(typeof PERIODO_LABEL!=='undefined'?PERIODO_LABEL:'');
-  if(typeof MODO_MEDICO!=='undefined'&&MODO_MEDICO&&typeof PROF_FIXO!=='undefined'&&PROF_FIXO&&DADOS_PROFS[PROF_FIXO]){
-    mostrarProf(PROF_FIXO);
-  } else {
-    renderGeral();
-  }
-}
+// inicializarPortal removida em 2026-05-25 (era wrapper do tentarLogin antigo)
 
 function exportarCSVGeral(){
   const BOM='\uFEFF';
