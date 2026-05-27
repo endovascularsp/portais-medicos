@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Auditoria · Endovascular SP</title>
+  <link rel="icon" href="../assets/logo.png" type="image/png"/>
+  <style>html{visibility:hidden}</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Gate Supabase: exige sessao + card 'gestor'
+    let SB, USER_EMAIL, USER_CARDS = [];
+    (async function() {
+      const _local = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      if (_local) {
+        document.documentElement.style.visibility = 'visible';
+        USER_EMAIL = 'preview@local';
+        USER_CARDS = ['gestor'];
+        return;
+      }
+      try {
+        SB = window.supabase.createClient(
+          'https://egpcrqrvctnpxbdjdhtf.supabase.co',
+          'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW'
+        );
+        const { data: { session } } = await SB.auth.getSession();
+        if (!session) { window.location.replace('/login/'); return; }
+        USER_EMAIL = (session.user.email || '').toLowerCase();
+        const { data: me } = await SB.from('users')
+          .select('cards').eq('email', USER_EMAIL).maybeSingle();
+        USER_CARDS = (me && me.cards) || [];
+        if (!USER_CARDS.includes('gestor')) {
+          window.location.replace('/hub/Gestor_Hub.html');
+          return;
+        }
+        document.documentElement.style.visibility = 'visible';
+        if (document.readyState === 'loading') {
+          window.addEventListener('DOMContentLoaded', inicializar);
+        } else {
+          inicializar();
+        }
+      } catch (e) {
+        console.error('gate erro:', e);
+        window.location.replace('/login/');
+      }
+    })();
+  </script>
+  <style>
+html,body{overflow-x:hidden!important;max-width:100vw;}
+:root{
+  --navy:#0B1F3A; --navy-med:#23476f; --azul:#1A5296; --azul-cl:#D6E8F7;
+  --gold:#A18960; --gold-bg:#F5F0E5;
+  --bg:#F2F5F9; --borda:#C4D4E8; --cinza-cl:#F7FAFD;
+  --texto:#0D1E30; --texto2:#4A6278;
+  --verde:#2D7A3C; --vermelho:#C0392B; --laranja:#D4621A; --roxo:#7e57c2;
+  --sombra:0 2px 10px rgba(11,31,58,0.08); --radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+
+.header{background:var(--navy);color:#fff;padding:0 24px;display:flex;align-items:center;
+  justify-content:space-between;height:64px;border-bottom:3px solid var(--gold);}
+.header-logo{display:flex;align-items:center;gap:12px;}
+.header-logo img{width:38px;height:38px;}
+.header-logo h1{font-size:17px;font-weight:800;}
+.header-logo span{font-size:11px;color:rgba(255,255,255,0.7);display:block;margin-top:2px;}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.header-action-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;
+  border-radius:20px;background:rgba(255,255,255,0.10);border:1.5px solid rgba(255,255,255,0.20);
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;
+  transition:all 0.15s;font-family:inherit;}
+.header-action-btn:hover{background:rgba(255,255,255,0.18);}
+.header-action-btn.home{background:rgba(148,163,184,0.15);color:#cbd5e1;}
+
+.toolbar{background:#fff;border-bottom:1px solid var(--borda);padding:14px 24px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.toolbar label{font-size:11px;font-weight:700;color:var(--texto2);text-transform:uppercase;
+  letter-spacing:0.4px;margin-right:2px;}
+.toolbar select,.toolbar input{padding:6px 12px;border:1.5px solid var(--borda);border-radius:8px;
+  font-size:12px;color:var(--navy);background:#fff;font-family:inherit;font-weight:600;}
+.toolbar select:focus,.toolbar input:focus{border-color:var(--gold);outline:none;}
+.toolbar .btn-aplica{padding:6px 14px;border-radius:18px;background:var(--gold);color:#fff;
+  border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.toolbar .btn-aplica:hover{filter:brightness(1.07);}
+.toolbar .stats{margin-left:auto;font-size:12px;color:var(--texto2);font-weight:600;}
+.toolbar .stats b{color:var(--navy);}
+
+.main{padding:18px 24px;}
+.tabela-wrap{background:#fff;border:1px solid var(--borda);border-radius:var(--radius);
+  box-shadow:var(--sombra);overflow:hidden;}
+table.eventos{width:100%;border-collapse:collapse;font-size:13px;}
+table.eventos thead th{background:var(--navy);color:#fff;text-align:left;padding:11px 14px;
+  font-size:11px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;
+  position:sticky;top:0;z-index:5;}
+table.eventos tbody tr{cursor:pointer;transition:background 0.12s;}
+table.eventos tbody tr:hover{background:var(--cinza-cl);}
+table.eventos td{padding:10px 14px;border-bottom:1px solid var(--borda);vertical-align:middle;}
+table.eventos tr:last-child td{border-bottom:none;}
+table.eventos td.col-data{white-space:nowrap;color:var(--texto2);font-size:12px;font-variant-numeric:tabular-nums;}
+table.eventos td.col-user{font-weight:600;color:var(--navy);}
+table.eventos td.col-tabela{color:var(--navy-med);font-family:'SF Mono','Consolas',monospace;font-size:12px;}
+table.eventos td.col-id{color:var(--texto2);font-family:'SF Mono','Consolas',monospace;font-size:12px;}
+.op-tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10.5px;font-weight:800;
+  letter-spacing:0.4px;text-transform:uppercase;}
+.op-tag.op-INSERT{background:#E8F5EB;color:var(--verde);}
+.op-tag.op-UPDATE{background:#FFF3E0;color:var(--laranja);}
+.op-tag.op-DELETE{background:#FCEDEA;color:var(--vermelho);}
+
+.empty,.loading{padding:60px 20px;text-align:center;color:var(--texto2);font-size:14px;font-style:italic;}
+.loading::before{content:"";display:inline-block;width:18px;height:18px;border:3px solid var(--borda);
+  border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:10px;
+  vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.pager{display:flex;justify-content:center;align-items:center;gap:12px;padding:16px;
+  border-top:1px solid var(--borda);}
+.pager button{padding:6px 14px;border-radius:18px;background:#fff;border:1.5px solid var(--borda);
+  color:var(--navy);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.pager button:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
+.pager button:disabled{opacity:0.4;cursor:not-allowed;}
+.pager span{font-size:12px;color:var(--texto2);}
+
+/* === Modal === */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,31,58,0.6);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:16px;max-width:900px;width:100%;max-height:90vh;
+  overflow-y:auto;display:flex;flex-direction:column;}
+.modal-head{padding:18px 24px;border-bottom:1px solid var(--borda);display:flex;
+  align-items:center;justify-content:space-between;gap:12px;}
+.modal-head h2{font-size:17px;font-weight:800;color:var(--navy);}
+.modal-head .closebtn{background:transparent;border:none;font-size:22px;cursor:pointer;
+  color:var(--texto2);}
+.modal-body{padding:20px 24px;}
+.modal-sec{margin-bottom:18px;}
+.modal-sec h3{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;
+  letter-spacing:0.5px;margin-bottom:8px;}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px;}
+.kv .k{color:var(--texto2);font-weight:600;}
+.kv .v{color:var(--texto);font-weight:600;word-break:break-word;}
+.kv .v.mono{font-family:'SF Mono','Consolas',monospace;font-size:12px;}
+
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.diff-col{background:var(--cinza-cl);border:1px solid var(--borda);border-radius:10px;padding:14px;}
+.diff-col h4{font-size:10.5px;font-weight:800;color:var(--texto2);text-transform:uppercase;
+  letter-spacing:0.4px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.diff-col.antes h4{color:var(--vermelho);}
+.diff-col.depois h4{color:var(--verde);}
+.diff-fields{font-size:12.5px;}
+.diff-field{padding:6px 0;border-bottom:1px dashed var(--borda);}
+.diff-field:last-child{border-bottom:none;}
+.diff-field .fname{color:var(--texto2);font-weight:600;font-size:11px;text-transform:uppercase;
+  letter-spacing:0.3px;display:block;margin-bottom:2px;}
+.diff-field .fval{color:var(--navy);word-break:break-word;font-family:'SF Mono','Consolas',monospace;font-size:11.5px;}
+.diff-field.changed{background:#FFF3E0;margin:0 -8px;padding:6px 8px;border-radius:6px;border-bottom-color:transparent;}
+.diff-field.changed .fname{color:var(--laranja);}
+
+.modal-foot{padding:14px 24px;border-top:1px solid var(--borda);display:flex;
+  gap:10px;justify-content:flex-end;}
+.btn-close{padding:8px 18px;border-radius:18px;background:#fff;border:1.5px solid var(--borda);
+  color:var(--texto2);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-close:hover{background:var(--cinza-cl);}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 18px;
+  border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,0.2);
+  opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;z-index:2000;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.erro{background:var(--vermelho);}
+
+@media(max-width:900px){
+  .toolbar{padding:10px 14px;}
+  .main{padding:12px;}
+  .diff-grid{grid-template-columns:1fr;}
+  .kv{grid-template-columns:1fr;gap:2px 0;}
+  .kv .k{font-size:10px;text-transform:uppercase;letter-spacing:0.4px;margin-top:6px;}
+  table.eventos td.col-id{display:none;}
+}
+  </style>
+  <style id="boot-spinner-v1">
+#boot{visibility:visible;position:fixed;inset:0;background:#0B1F3A;z-index:99999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+html[style*="visible"] #boot{display:none;}
+#boot .sp{width:38px;height:38px;border:4px solid rgba(255,255,255,0.15);
+  border-top-color:#fff;border-radius:50%;animation:bootsp .8s linear infinite;}
+@keyframes bootsp{to{transform:rotate(360deg)}}
+#boot .tx{color:rgba(255,255,255,0.65);font-family:'Segoe UI',system-ui,sans-serif;
+  font-size:13px;letter-spacing:.3px;}
+  </style>
+</head>
+<body>
+<!--boot-spinner-v1--><div id="boot"><div class="sp"></div><div class="tx">Carregando dados…</div></div>
+
+<header class="header">
+  <div class="header-logo">
+    <img src="../assets/logo.png" alt="Endo"/>
+    <div><h1>🔍 Auditoria</h1><span>Histórico de ações</span></div>
+  </div>
+  <div class="header-actions">
+    <a href="../hub/Gestor_Hub.html" class="header-action-btn home">🏠 Home</a>
+  </div>
+</header>
+
+<div class="toolbar">
+  <label>De:</label>
+  <input type="date" id="f-de"/>
+  <label>Até:</label>
+  <input type="date" id="f-ate"/>
+  <label>Tabela:</label>
+  <select id="f-tabela">
+    <option value="">Todas</option>
+  </select>
+  <label>Operação:</label>
+  <select id="f-operacao">
+    <option value="">Todas</option>
+    <option value="INSERT">INSERT</option>
+    <option value="UPDATE">UPDATE</option>
+    <option value="DELETE">DELETE</option>
+  </select>
+  <label>Usuário:</label>
+  <input type="text" id="f-email" placeholder="email contém..." style="min-width:180px"/>
+  <button class="btn-aplica" onclick="aplicarFiltros()">Aplicar</button>
+  <div class="stats" id="stats">—</div>
+</div>
+
+<main class="main">
+  <div class="tabela-wrap">
+    <table class="eventos">
+      <thead>
+        <tr>
+          <th style="width:170px">Data/hora</th>
+          <th style="width:90px">Operação</th>
+          <th style="width:220px">Tabela</th>
+          <th style="width:140px" class="col-id">Registro</th>
+          <th>Usuário</th>
+        </tr>
+      </thead>
+      <tbody id="tb">
+        <tr><td colspan="5"><div class="loading">Carregando eventos...</div></td></tr>
+      </tbody>
+    </table>
+    <div class="pager" id="pager" style="display:none">
+      <button id="bt-prev" onclick="paginar(-1)">← Anterior</button>
+      <span id="pg-info">—</span>
+      <button id="bt-next" onclick="paginar(1)">Próximo →</button>
+    </div>
+  </div>
+</main>
+
+<!-- Modal de detalhes -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)fecharModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="m-title">Detalhe do evento</h2>
+      <button class="closebtn" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+    <div class="modal-foot">
+      <button class="btn-close" onclick="fecharModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TABELAS = [
+  'users','user_secrets',
+  'compras_solicitacoes','compras_itens','compras_anexos',
+  'compras_departamentos','compras_fornecedores','compras_centros_custo',
+  'cc_escala','cc_profissionais','cc_salas',
+  'atendimentos','capturas_formulario','hospitais','medicos','procedimentos',
+  'linhas_repasse','extratos',
+  'prev_previas_geradas','prev_tabelas_preco',
+  'attendances'
+];
+
+const PAGE_SIZE = 50;
+let PAGINA = 0;
+let TOTAL_FILTRADO = 0;
+let EVENTOS = []; // página atual
+
+function showToast(msg, tipo) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (tipo || '');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function inicializar() {
+  // Popula dropdown de tabela
+  const sel = document.getElementById('f-tabela');
+  TABELAS.sort().forEach(t => {
+    const o = document.createElement('option');
+    o.value = t; o.textContent = t;
+    sel.appendChild(o);
+  });
+
+  // Default: últimos 30 dias
+  const hoje = new Date();
+  const trintaDias = new Date(hoje); trintaDias.setDate(hoje.getDate() - 30);
+  document.getElementById('f-de').value = trintaDias.toISOString().slice(0,10);
+  document.getElementById('f-ate').value = hoje.toISOString().slice(0,10);
+
+  carregar();
+}
+
+async function carregar() {
+  const tb = document.getElementById('tb');
+  tb.innerHTML = '<tr><td colspan="5"><div class="loading">Carregando eventos...</div></td></tr>';
+  document.getElementById('pager').style.display = 'none';
+
+  const filtros = montarFiltros();
+  if (!SB) {
+    // Preview local: mock
+    EVENTOS = mockEventos();
+    TOTAL_FILTRADO = EVENTOS.length;
+    renderTabela();
+    return;
+  }
+
+  try {
+    // Conta total filtrado (pra paginação)
+    let qCount = SB.from('audit_log').select('id', { count: 'exact', head: true });
+    qCount = aplicarFiltrosQuery(qCount, filtros);
+    const { count } = await qCount;
+    TOTAL_FILTRADO = count || 0;
+
+    // Carrega a página
+    let q = SB.from('audit_log').select('*')
+      .order('criado_em', { ascending: false })
+      .range(PAGINA * PAGE_SIZE, PAGINA * PAGE_SIZE + PAGE_SIZE - 1);
+    q = aplicarFiltrosQuery(q, filtros);
+
+    const { data, error } = await q;
+    if (error) throw error;
+    EVENTOS = data || [];
+    renderTabela();
+  } catch (e) {
+    console.error(e);
+    tb.innerHTML = `<tr><td colspan="5"><div class="empty">Erro: ${e.message || e}</div></td></tr>`;
+    showToast('Erro ao carregar: ' + (e.message || e), 'erro');
+  }
+}
+
+function montarFiltros() {
+  return {
+    de: document.getElementById('f-de').value || null,
+    ate: document.getElementById('f-ate').value || null,
+    tabela: document.getElementById('f-tabela').value || null,
+    operacao: document.getElementById('f-operacao').value || null,
+    email: (document.getElementById('f-email').value || '').trim().toLowerCase() || null
+  };
+}
+
+function aplicarFiltrosQuery(q, f) {
+  if (f.de) q = q.gte('criado_em', f.de + 'T00:00:00');
+  if (f.ate) q = q.lte('criado_em', f.ate + 'T23:59:59');
+  if (f.tabela) q = q.eq('tabela', f.tabela);
+  if (f.operacao) q = q.eq('operacao', f.operacao);
+  if (f.email) q = q.ilike('por_email', `%${f.email}%`);
+  return q;
+}
+
+function aplicarFiltros() {
+  PAGINA = 0;
+  carregar();
+}
+
+function paginar(delta) {
+  const total_paginas = Math.ceil(TOTAL_FILTRADO / PAGE_SIZE);
+  const nova = PAGINA + delta;
+  if (nova < 0 || nova >= total_paginas) return;
+  PAGINA = nova;
+  carregar();
+}
+
+function renderTabela() {
+  const tb = document.getElementById('tb');
+  if (!EVENTOS.length) {
+    tb.innerHTML = '<tr><td colspan="5"><div class="empty">Nenhum evento encontrado nos filtros aplicados.</div></td></tr>';
+    document.getElementById('stats').innerHTML = '<b>0</b> eventos';
+    document.getElementById('pager').style.display = 'none';
+    return;
+  }
+
+  tb.innerHTML = EVENTOS.map(e => `
+    <tr onclick="abrirDetalhe(${e.id})">
+      <td class="col-data">${fmtData(e.criado_em)}</td>
+      <td><span class="op-tag op-${e.operacao}">${e.operacao}</span></td>
+      <td class="col-tabela">${escapeHtml(e.tabela)}</td>
+      <td class="col-id">${escapeHtml(e.registro_id || '—')}</td>
+      <td class="col-user">${escapeHtml((e.por_email || '').split('@')[0])}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('stats').innerHTML =
+    `<b>${TOTAL_FILTRADO}</b> evento(s) · página <b>${PAGINA + 1}</b> de <b>${Math.max(1, Math.ceil(TOTAL_FILTRADO / PAGE_SIZE))}</b>`;
+
+  const total_paginas = Math.ceil(TOTAL_FILTRADO / PAGE_SIZE);
+  if (total_paginas > 1) {
+    document.getElementById('pager').style.display = 'flex';
+    document.getElementById('pg-info').textContent =
+      `Mostrando ${PAGINA * PAGE_SIZE + 1}-${Math.min((PAGINA + 1) * PAGE_SIZE, TOTAL_FILTRADO)} de ${TOTAL_FILTRADO}`;
+    document.getElementById('bt-prev').disabled = PAGINA === 0;
+    document.getElementById('bt-next').disabled = PAGINA >= total_paginas - 1;
+  } else {
+    document.getElementById('pager').style.display = 'none';
+  }
+}
+
+function fmtData(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function abrirDetalhe(id) {
+  const ev = EVENTOS.find(e => e.id === id);
+  if (!ev) return;
+  document.getElementById('m-title').textContent =
+    `${ev.operacao} em ${ev.tabela}` + (ev.registro_id ? ` · registro #${ev.registro_id}` : '');
+  document.getElementById('m-body').innerHTML = renderModalBody(ev);
+  document.getElementById('modal').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+function renderModalBody(ev) {
+  let html = `
+    <div class="modal-sec">
+      <h3>Identificação</h3>
+      <div class="kv">
+        <div class="k">Quando</div><div class="v">${fmtData(ev.criado_em)}</div>
+        <div class="k">Quem</div><div class="v">${escapeHtml(ev.por_email)}</div>
+        <div class="k">Operação</div><div class="v"><span class="op-tag op-${ev.operacao}">${ev.operacao}</span></div>
+        <div class="k">Tabela</div><div class="v mono">${escapeHtml(ev.tabela)}</div>
+        <div class="k">Registro ID</div><div class="v mono">${escapeHtml(ev.registro_id || '—')}</div>
+        ${ev.por_user_id ? `<div class="k">User UUID</div><div class="v mono">${escapeHtml(ev.por_user_id)}</div>` : ''}
+      </div>
+    </div>
+  `;
+
+  if (ev.operacao === 'INSERT') {
+    html += `<div class="modal-sec"><h3>Dados criados</h3>${renderFields(ev.dados_depois, null, 'depois')}</div>`;
+  } else if (ev.operacao === 'DELETE') {
+    html += `<div class="modal-sec"><h3>Dados que foram apagados</h3>${renderFields(ev.dados_antes, null, 'antes')}</div>`;
+  } else { // UPDATE
+    html += `
+      <div class="modal-sec">
+        <h3>Comparação antes / depois (campos alterados destacados)</h3>
+        <div class="diff-grid">
+          <div class="diff-col antes">
+            <h4>🔻 Antes</h4>
+            ${renderFields(ev.dados_antes, ev.dados_depois, 'antes')}
+          </div>
+          <div class="diff-col depois">
+            <h4>🔺 Depois</h4>
+            ${renderFields(ev.dados_depois, ev.dados_antes, 'depois')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  return html;
+}
+
+function renderFields(dados, comparar, lado) {
+  if (!dados || typeof dados !== 'object') return '<p style="color:var(--texto2);font-style:italic">Sem dados.</p>';
+  const keys = Object.keys(dados);
+  if (!keys.length) return '<p style="color:var(--texto2);font-style:italic">Sem campos.</p>';
+  return '<div class="diff-fields">' + keys.map(k => {
+    const v = dados[k];
+    const changed = comparar && JSON.stringify(comparar[k]) !== JSON.stringify(v);
+    return `<div class="diff-field ${changed ? 'changed' : ''}">
+      <span class="fname">${escapeHtml(k)}</span>
+      <span class="fval">${fmtVal(v)}</span>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function fmtVal(v) {
+  if (v === null) return '<span style="color:var(--texto2);font-style:italic">null</span>';
+  if (v === undefined) return '<span style="color:var(--texto2);font-style:italic">—</span>';
+  if (typeof v === 'boolean') return v ? '✓ true' : '✗ false';
+  if (typeof v === 'object') return escapeHtml(JSON.stringify(v));
+  const s = String(v);
+  // Trunca strings muito longas
+  if (s.length > 200) return escapeHtml(s.slice(0,200)) + '<span style="color:var(--texto2)"> ...(' + s.length + ' chars)</span>';
+  return escapeHtml(s);
+}
+
+function mockEventos() {
+  return [
+    {id:1, criado_em:'2026-05-26T17:42:11', operacao:'DELETE', tabela:'users',
+     registro_id:'42', por_email:'thiago.luiz@endovascularsp.com.br',
+     dados_antes:{id:42,email:'fulano@teste.com',name:'Fulano',cards:['compras_solicitante']},
+     dados_depois:null},
+    {id:2, criado_em:'2026-05-26T15:20:33', operacao:'UPDATE', tabela:'compras_solicitacoes',
+     registro_id:'10', por_email:'angelina.lima@endovascularsp.com.br',
+     dados_antes:{id:10,status:'pedido_feito',valor_final:null},
+     dados_depois:{id:10,status:'compra_realizada',valor_final:450.00}},
+    {id:3, criado_em:'2026-05-26T14:11:00', operacao:'INSERT', tabela:'compras_solicitacoes',
+     registro_id:'15', por_email:'josilene.lino@endovascularsp.com.br',
+     dados_antes:null,
+     dados_depois:{id:15,solicitante_email:'josilene.lino@endovascularsp.com.br',status:'pedido_feito'}},
+  ];
+}
+</script>
+</body>
+</html>
