@@ -127,7 +127,7 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .container{max-width:1400px;margin:0 auto;padding:24px}
 
     /* Cards de resumo */
-    .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+    .summary{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
     @media(max-width:1000px){.summary{grid-template-columns:repeat(2,1fr)}}
     .card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);
       border-radius:10px;padding:14px 18px;position:relative;overflow:hidden;transition:background .2s}
@@ -137,6 +137,7 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .card.c3::before{background:#f472b6}
     .card.c4::before{background:#7eb8f7}
     .card.c5::before{background:#6dd5a0}
+    .card.c6::before{background:#f5a623}
     .card-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(255,255,255,0.5);font-weight:600;margin-bottom:3px}
     .card-value{font-size:22px;font-weight:700;color:#fff;line-height:1.1}
     .card-sub{font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px}
@@ -188,6 +189,11 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .spinner-loading{display:inline-block;width:32px;height:32px;border:3px solid rgba(255,255,255,0.15);border-top-color:#2e6fc0;border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .row-naomapeada td{background:rgba(255,123,123,0.04)}
+    .badge.divergente{background:rgba(245,166,35,0.18);color:#f5a623;border:1px solid rgba(245,166,35,0.5)}
+    .row-divergente td{background:rgba(245,166,35,0.06)}
+    .diverg-info{font-size:9px;color:rgba(255,255,255,0.5);margin-top:3px;text-transform:none;letter-spacing:0;line-height:1.3}
+    .sel-tabela{background:#13243d;color:#fff;border:1px solid rgba(245,166,35,0.45);border-radius:6px;
+      font-size:11px;padding:5px 6px;margin-right:6px;max-width:190px;vertical-align:middle}
   </style>
 </head>
 <body>
@@ -231,6 +237,7 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       <div class="card c3"><div class="card-label">SulAmerica</div><div class="card-value" id="s-sulam">-</div><div class="card-sub" id="s-sulam-sub">—</div></div>
       <div class="card c4"><div class="card-label">Outras operadoras</div><div class="card-value" id="s-out">-</div><div class="card-sub" id="s-out-sub">—</div></div>
       <div class="card c5"><div class="card-label">Sem template</div><div class="card-value" id="s-sem">-</div><div class="card-sub">precisam revisão</div></div>
+      <div class="card c6"><div class="card-label">⚠ Convênio divergente</div><div class="card-value" id="s-diverg">-</div><div class="card-sub">escolher na linha</div></div>
     </div>
 
     <!-- Toolbar -->
@@ -482,31 +489,42 @@ function populaFiltros() {
   });
 }
 
-// Mapeia nome_operadora/tabela_preco do SVN -> tabela cadastrada no banco
+// Resolve UM texto de convênio (vindo de nome_operadora ou de tabela_preco)
+// pra uma tabela cadastrada no banco. Retorna null se não reconhecer.
+function _matchTabela(txt) {
+  const s = (txt || '').toUpperCase().trim();
+  if (!s) return null;
+  // 1) match exato pelo nome canônico
+  let m = TABELAS_CACHE.find(t => t.nome.toUpperCase() === s);
+  if (m) return m;
+  // 2) sinônimos de plano que o SVN manda "curto" em nome_operadora
+  if (s === 'EXECUTIVO') return TABELAS_CACHE.find(t => t.nome === 'SULAMÉRICA EXECUTIVO') || null;
+  if (s === 'PRESTIGE')  return TABELAS_CACHE.find(t => t.nome === 'SULAMÉRICA PRESTIGE')  || null;
+  if (s === 'PARTICULAR')return TABELAS_CACHE.find(t => t.nome === 'PARTICULAR')           || null;
+  // 3) normaliza hífen/espaços ("OMINT CORPORATE" no agendamento vs "OMINT - CORPORATE" na tabela)
+  const norm = x => x.toUpperCase().replace(/\s*-\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  m = TABELAS_CACHE.find(t => norm(t.nome) === norm(s));
+  return m || null;
+}
+
+// Decide a tabela do agendamento cruzando os DOIS campos do SVN:
+//  - nome_operadora = convênio do AGENDAMENTO (a recepção atualiza ao editar o agendamento)
+//  - tabela_preco   = tabela do ORÇAMENTO (documento à parte — costuma envelhecer)
+// Regra: concordam -> automático; só um resolve -> usa esse; divergem -> sinaliza
+// pra escolha manual (o SVN tem duas respostas contraditórias, não dá pra chutar).
 function resolverTabela(ag) {
-  const tp = (ag.tabela_preco || '').toUpperCase().trim();
-  if (tp) {
-    const m = TABELAS_CACHE.find(t => t.nome.toUpperCase() === tp);
-    if (m) return { tabela: m, fonte: 'tabela_preco' };
+  const tAgend = _matchTabela(ag.nome_operadora);
+  const tOrca  = _matchTabela(ag.tabela_preco);
+
+  if (tAgend && tOrca) {
+    if (tAgend.id === tOrca.id) return { tabela: tAgend, fonte: 'concordam', divergente: false };
+    // Os dois resolvem, mas pra tabelas diferentes -> divergência real.
+    return { tabela: null, divergente: true, fonte: 'divergente',
+             agend: tAgend, orca: tOrca };
   }
-  const op = (ag.nome_operadora || '').toUpperCase().trim();
-  if (op === 'EXECUTIVO') {
-    const m = TABELAS_CACHE.find(t => t.nome === 'SULAMÉRICA EXECUTIVO');
-    if (m) return { tabela: m, fonte: 'fallback nome_operadora' };
-  }
-  if (op === 'PRESTIGE') {
-    const m = TABELAS_CACHE.find(t => t.nome === 'SULAMÉRICA PRESTIGE');
-    if (m) return { tabela: m, fonte: 'fallback nome_operadora' };
-  }
-  if (op === 'PARTICULAR') {
-    const m = TABELAS_CACHE.find(t => t.nome === 'PARTICULAR');
-    if (m) return { tabela: m, fonte: 'fallback nome_operadora' };
-  }
-  if (op) {
-    const m = TABELAS_CACHE.find(t => t.nome.toUpperCase() === op);
-    if (m) return { tabela: m, fonte: 'fallback nome_operadora' };
-  }
-  return { tabela: null, fonte: 'NÃO MAPEADA' };
+  if (tAgend) return { tabela: tAgend, fonte: 'só agendamento', divergente: false };
+  if (tOrca)  return { tabela: tOrca,  fonte: 'só orçamento',  divergente: false };
+  return { tabela: null, fonte: 'NÃO MAPEADA', divergente: false };
 }
 
 function badgeTabela(nome) {
@@ -533,10 +551,11 @@ function render() {
   document.getElementById('s-total').textContent = filtrada.length;
   document.getElementById('s-data').textContent = formatDataPT(data);
 
-  let part=0, sulam=0, out=0, sem=0;
+  let part=0, sulam=0, out=0, sem=0, diverg=0;
   const outras = new Set();
   filtrada.forEach(a => {
     const r = resolverTabela(a);
+    if (r.divergente) { diverg++; return; }
     if (!r.tabela) sem++;
     else {
       const n = r.tabela.nome.toUpperCase();
@@ -551,6 +570,7 @@ function render() {
   document.getElementById('s-out').textContent = out;
   document.getElementById('s-out-sub').textContent = outras.size ? [...outras].join(', ') : '—';
   document.getElementById('s-sem').textContent = sem;
+  document.getElementById('s-diverg').textContent = diverg;
 
   // Renderiza tabela
   const tbody = document.getElementById('tbody');
@@ -564,16 +584,55 @@ function render() {
   tbody.innerHTML = ord.map(a => {
     const r = resolverTabela(a);
     const hora = (a.agen_dt_inicio || '').slice(11,16);
-    const naoMapeada = !r.tabela;
-    return `<tr class="${naoMapeada ? 'row-naomapeada' : ''}">
+    const comuns = `
       <td class="col-hora">${hora}</td>
       <td>${escapeHtml(a.pess_tx_nome || '—')}</td>
       <td>${escapeHtml(a.nome_profissional || '—')}</td>
-      <td>${escapeHtml(a.procedimento || '—')}</td>
-      <td>${badgeTabela(r.tabela ? r.tabela.nome : null)}</td>
-      <td>${badgeSituacao(a.siag_tx_situacao_agend)}</td>
-      <td>${escapeHtml(a.etiqueta_paciente || a.etiqueta_agendamento || '')}</td>
-      <td>${naoMapeada ? '<span style="font-size:11px;color:#ff7b7b">sem template</span>' : `<button class="btn-acao" onclick="gerarPrevia('${a.agen_id}','${r.tabela.id}')">Gerar</button>`}</td>
+      <td>${escapeHtml(a.procedimento || '—')}</td>`;
+    const sit = `<td>${badgeSituacao(a.siag_tx_situacao_agend)}</td>
+      <td>${escapeHtml(a.etiqueta_paciente || a.etiqueta_agendamento || '')}</td>`;
+
+    // Caso 1: convênio divergente — recepção escolhe entre as duas respostas do SVN.
+    if (r.divergente) {
+      const tA = TABELA_TO_TEMPLATE[r.agend.nome] ? r.agend : null;
+      const tO = TABELA_TO_TEMPLATE[r.orca.nome]  ? r.orca  : null;
+      const opts = [
+        tA ? `<option value="${r.agend.id}">${escapeHtml(r.agend.nome)} (agendamento)</option>` : '',
+        tO ? `<option value="${r.orca.id}">${escapeHtml(r.orca.nome)} (orçamento)</option>` : '',
+      ].join('');
+      const podeGerar = tA || tO;
+      const sel = `<select class="sel-tabela" id="seltab-${a.agen_id}"><option value="">Escolha o convênio…</option>${opts}</select>`;
+      const acao = podeGerar
+        ? `${sel}<button class="btn-acao" onclick="gerarPreviaSel('${a.agen_id}')">Gerar</button>`
+        : `<span style="font-size:11px;color:#ff7b7b">sem template p/ nenhum dos dois</span>`;
+      return `<tr class="row-divergente">
+        ${comuns}
+        <td>
+          <span class="badge divergente">⚠ divergente</span>
+          <div class="diverg-info">agend.: <b>${escapeHtml(r.agend.nome)}</b> · orçam.: <b>${escapeHtml(r.orca.nome)}</b></div>
+        </td>
+        ${sit}
+        <td>${acao}</td>
+      </tr>`;
+    }
+
+    // Caso 2: sem tabela reconhecida.
+    if (!r.tabela) {
+      return `<tr class="row-naomapeada">
+        ${comuns}
+        <td>${badgeTabela(null)}</td>
+        ${sit}
+        <td><span style="font-size:11px;color:#ff7b7b">sem template</span></td>
+      </tr>`;
+    }
+
+    // Caso 3: resolvido automaticamente.
+    const temTemplate = !!TABELA_TO_TEMPLATE[r.tabela.nome];
+    return `<tr>
+      ${comuns}
+      <td>${badgeTabela(r.tabela.nome)}</td>
+      ${sit}
+      <td>${temTemplate ? `<button class="btn-acao" onclick="gerarPrevia('${a.agen_id}','${r.tabela.id}')">Gerar</button>` : '<span style="font-size:11px;color:#ff7b7b">sem template</span>'}</td>
     </tr>`;
   }).join('');
 }
@@ -697,18 +756,20 @@ function aplicarFiltrosAgenda() {
 async function gerarTodasDoDia() {
   // Respeita TODOS os filtros aplicados (médico, tabela, situação) — mesma lógica da tabela exibida
   const filtrados = aplicarFiltrosAgenda();
+  const divergentes = filtrados.filter(a => resolverTabela(a).divergente).length;
   const elegiveis = filtrados.filter(a => {
     const r = resolverTabela(a);
     return r.tabela && !!TABELA_TO_TEMPLATE[r.tabela.nome];
   });
-  const semTemplate = filtrados.length - elegiveis.length;
+  const semTemplate = filtrados.length - elegiveis.length - divergentes;
   if (!elegiveis.length) {
     alert('Nenhum agendamento elegível pra geração em lote com os filtros atuais.');
     return;
   }
-  const aviso = semTemplate > 0
-    ? `\n\nObs: ${semTemplate} agendamento(s) sem template (OMINT/MEDSÊNIOR) serão pulados.`
-    : '';
+  const obs = [];
+  if (semTemplate > 0)  obs.push(`${semTemplate} sem template (OMINT/MEDSÊNIOR)`);
+  if (divergentes > 0)  obs.push(`${divergentes} com convênio divergente (resolva manualmente na linha ⚠)`);
+  const aviso = obs.length ? `\n\nObs: ${obs.join(' e ')} serão pulados.` : '';
   if (!confirm(`Gerar ${elegiveis.length} prévia(s)? Cada uma vai baixar separadamente.${aviso}`)) return;
 
   for (const ag of elegiveis) {
@@ -716,6 +777,16 @@ async function gerarTodasDoDia() {
     await gerarPrevia(ag.agen_id, r.tabela.id);
     await new Promise(r => setTimeout(r, 200));
   }
+}
+
+// Geração das linhas com convênio DIVERGENTE: lê a tabela escolhida no seletor.
+function gerarPreviaSel(agenId) {
+  const sel = document.getElementById('seltab-' + agenId);
+  if (!sel || !sel.value) {
+    alert('Escolha o convênio correto (agendamento ou orçamento) antes de gerar.');
+    return;
+  }
+  gerarPrevia(agenId, sel.value);
 }
 
 function escapeHtml(s) {
