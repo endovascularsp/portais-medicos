@@ -742,6 +742,9 @@ function renderAcoes(status) {
   // restrita a administradores (card 'gestor').
   const temAcesso = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
   const ehAdmin   = USER_CARDS.includes('gestor');
+  // Quem pode excluir um pedido de vez: administradores (gestor) e a
+  // Compradora (compras_compradora) — ela toca o Compras no dia a dia.
+  const podeExcluir = ehAdmin || USER_CARDS.includes('compras_compradora');
 
   // Em modo edição da solicitação, esconde os botões de transição —
   // mostra só Cancelar/Salvar pra não confundir.
@@ -792,9 +795,9 @@ function renderAcoes(status) {
   if (status === 'pedido_feito' && souDono) {
     html += '<button class="btn recusar" onclick="acaoCancelar()">🗑️ Cancelar minha solicitação</button>';
   }
-  // Excluir pedido — só administradores (card gestor), em qualquer etapa.
+  // Excluir pedido — administradores (gestor) e Compradora, em qualquer etapa.
   // Apaga de vez (pedido + itens + anexos + histórico via CASCADE).
-  if (ehAdmin) {
+  if (podeExcluir) {
     html += '<button class="btn recusar" onclick="acaoExcluir()">🗑️ Excluir</button>';
   }
   foot.innerHTML = html;
