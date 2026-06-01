@@ -480,6 +480,17 @@ async function checkAuth() {
     if (span) span.textContent = me.name.split(' ')[0];
   }
 
+  // BLINDAGEM: profissional puro (médico, com medico_proprio e SEM 'gestor')
+  // sempre vai direto pro Hub próprio dele — mesmo que algum card de gestão
+  // tenha sido concedido por engano (ex.: 06_card_acesso deu 'corpo_clinico'
+  // a todos). Enforça a regra "médico só enxerga os portais próprios".
+  // O guarda 'gestor' preserva admins que também sejam role='medico' (Dr. Igor).
+  // _xpa/_xname já foram gravados acima, então o auto-login do Hub individual segue.
+  if (me.role === 'medico' && me.slug && cards.includes('medico_proprio') && !cards.includes('gestor')) {
+    window.location.href = encodeURIComponent(me.slug) + '_Hub.html';
+    return;
+  }
+
   // Filtra cards: esconde o que o usuário não tem permissão.
   // Regra do guarda-chuva: quem tem 'gestor' vê automaticamente:
   //   - todos os gestor_* (sub-cards do Gestor)
