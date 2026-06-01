@@ -126,6 +126,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:10px;}
 .card-meta .tag{padding:2px 7px;border-radius:10px;font-weight:700;background:#fff;
   border:1px solid var(--borda);color:var(--texto2);}
+/* Selo de status da NF (card + modal) */
+.nf-badge{padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;
+  border:1px solid;display:inline-block;white-space:nowrap;}
+.nf-pendente{background:#FBEEE6;color:#D4621A;border-color:#E8C4A8;}
+.nf-parcial{background:#E3EEF9;color:#1A5296;border-color:#B8D4ED;}
+.nf-completa{background:#E4F1E6;color:#2D7A3C;border-color:#BBDCC0;}
 .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;
   padding-top:8px;border-top:1px solid var(--borda);font-size:10px;color:var(--texto2);}
 .card-valor{font-weight:800;color:var(--navy);}
@@ -378,6 +384,7 @@ async function carregarSolicitacoes() {
       conta_azul_em, conta_azul_por, conta_azul_ref,
       recebido_em, recebido_por,
       encerrado_em, encerrado_por,
+      nf_status,
       compras_centros_custo(nome),
       compras_departamentos(nome),
       compras_itens(id, valor_estimado, descricao)
@@ -459,6 +466,7 @@ function cardHtml(s) {
         <span class="tag">${escapeHtml(s.depto_nome || '—')}</span>
         <span class="tag">${escapeHtml(s.centro_nome || '—')}</span>
         <span class="tag">${s.itens_count} item(ns)</span>
+        <span class="nf-badge nf-${s.nf_status || 'pendente'}">NF: ${rotuloNf(s.nf_status || 'pendente')}</span>
       </div>
       <div class="card-footer">
         <span>${escapeHtml((s.solicitante_email || '').split('@')[0])} · ${dt}</span>
@@ -524,12 +532,62 @@ function renderModal() {
   const body = document.getElementById('m-body');
   body.innerHTML = `
     ${renderSecaoIdentificacao()}
+    ${renderSecaoNF()}
     ${renderSecaoJustificativa()}
     ${renderSecaoItens()}
     ${renderSecaoAnexos()}
     ${renderSecaoHistorico()}
   `;
   renderAcoes(SEL.status);
+}
+
+// Status da NF — disponível em QUALQUER etapa, editável por qualquer pessoa
+// com acesso ao Compras. Salva na hora (sem entrar em modo edição).
+const NF_ROTULOS = { pendente: 'Pendente', parcial: 'Parcial', completa: 'Completa' };
+function rotuloNf(v) { return NF_ROTULOS[v] || 'Pendente'; }
+
+function renderSecaoNF() {
+  const atual = SEL.nf_status || 'pendente';
+  const opt = (v) => `<option value="${v}"${atual===v?' selected':''}>${NF_ROTULOS[v]}</option>`;
+  const temAcesso = USER_CARDS.some(c => c.startsWith('compras_')) || USER_CARDS.includes('gestor');
+  const select = temAcesso
+    ? `<select id="nf-status-sel" onchange="salvarNfStatus(this.value)"
+              style="padding:7px 10px;border-radius:8px;border:1.5px solid var(--borda);
+                     background:#fff;color:var(--texto);font-size:13px;font-weight:600;">
+         ${opt('pendente')}${opt('parcial')}${opt('completa')}
+       </select>`
+    : `<span class="nf-badge nf-${atual}">${rotuloNf(atual)}</span>`;
+  return `
+    <div class="modal-sec">
+      <h3>Status da Nota Fiscal</h3>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        ${select}
+        <span class="nf-badge nf-${atual}">${rotuloNf(atual)}</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--texto2);line-height:1.5;margin-top:8px;">
+        <b>Pendente:</b> NF ainda não chegou (impressa ou por e-mail). ·
+        <b>Parcial:</b> chegou só parte (ex.: vários fornecedores no Mercado Livre, NFs aos poucos). ·
+        <b>Completa:</b> todas as NFs já chegaram.
+      </div>
+    </div>`;
+}
+
+async function salvarNfStatus(novo) {
+  if (!['pendente','parcial','completa'].includes(novo)) return;
+  if (novo === (SEL.nf_status || 'pendente')) return;
+  if (!SB) { SEL.nf_status = novo; renderModal(); renderKanban(); showToast('(preview) NF: ' + rotuloNf(novo), 'sucesso'); return; }
+  const { error } = await SB.from('compras_solicitacoes').update({ nf_status: novo }).eq('id', SEL.id);
+  if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
+  await SB.from('compras_historico').insert({
+    solicitacao_id: SEL.id, acao: 'status NF', por_email: USER_EMAIL,
+    comentario: 'NF marcada como ' + rotuloNf(novo)
+  });
+  SEL.nf_status = novo;
+  const idx = TODAS.findIndex(s => s.id === SEL.id);
+  if (idx >= 0) TODAS[idx].nf_status = novo;
+  renderModal();
+  renderKanban();
+  showToast('Status da NF: ' + rotuloNf(novo), 'sucesso');
 }
 
 function renderSecaoIdentificacao() {
