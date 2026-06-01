@@ -708,8 +708,9 @@ function gerarPrevia(agenId, tabelaId) {
     doc.text('Assinatura do Paciente', M, ay + 5);
     doc.text('Assinatura do Medico', W - M - 78, ay + 5);
 
-    // Rodapé
-    const fy = H - 16;
+    // Rodapé — margem inferior de ~14mm (igual às laterais) pra não cair
+    // na zona não-imprimível da impressora e cortar a última linha.
+    const fy = H - 26;
     doc.setDrawColor(...NAVY); doc.setLineWidth(0.4); doc.line(M, fy, W - M, fy);
     doc.setFont(F, 'bold'); doc.setFontSize(8.5); doc.setTextColor(...NAVY);
     doc.text('Clinica Endovascular Sao Paulo', W/2, fy + 4, { align: 'center' });
