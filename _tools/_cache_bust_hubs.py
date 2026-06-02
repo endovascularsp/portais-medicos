@@ -21,15 +21,20 @@ print(f'Cache-busting version: ?v={version}')
 # Casa links como href="../Igor.html" ou href="../oxy/Igor_Oxy_Recovery.html"
 # Com ou sem ?v=NNNN existente
 PADRAO = re.compile(r'href="(\.\./[^"?]+\.html)(\?v=\d+)?"')
+# Casa links de PASTA (sem arquivo), ex: href="../oxy/" ou href="../compras/kanban/"
+# usados pelos sub-botoes do Gestor_Hub. Disjunto do PADRAO acima (este termina em "/").
+PADRAO_DIR = re.compile(r'href="(\.\./[^"?]+/)(\?v=\d+)?"')
 
 arquivos = sorted(glob.glob(os.path.join(HUBDIR, '*_Hub.html')))
 total_links = 0
 for arq in arquivos:
     txt = open(arq, encoding='utf-8').read()
-    novo, n = PADRAO.subn(rf'href="\1?v={version}"', txt)
+    novo, n1 = PADRAO.subn(rf'href="\1?v={version}"', txt)
+    novo, n2 = PADRAO_DIR.subn(rf'href="\1?v={version}"', novo)
+    n = n1 + n2
     if n and novo != txt:
         open(arq, 'w', encoding='utf-8', newline='').write(novo)
-        print(f'  {os.path.basename(arq):50s} {n} links atualizados')
+        print(f'  {os.path.basename(arq):50s} {n} links atualizados ({n1} arquivo + {n2} pasta)')
         total_links += n
     else:
         print(f'  {os.path.basename(arq):50s} (sem mudanca)')
