@@ -593,6 +593,8 @@ async function salvarNfStatus(novo) {
 function renderSecaoIdentificacao() {
   if (EDITANDO_SOLIC) {
     const optMet = (v, lbl) => `<option value="${v}"${SEL.metodo_pagamento===v?' selected':''}>${lbl}</option>`;
+    // Valor final é dado financeiro sensível — só Admin (gestor) e Compradora corrigem.
+    const podeEditarValor = USER_CARDS.includes('gestor') || USER_CARDS.includes('compras_compradora');
     return `
       <div class="modal-sec">
         <h3>Identificação</h3>
@@ -618,6 +620,12 @@ function renderSecaoIdentificacao() {
               ${optMet('link_pagamento','Link de pagamento')}
             </select>
           </div>
+          ${(SEL.valor_final != null && podeEditarValor) ? `
+          <div class="field">
+            <label>Valor final (R$)</label>
+            <input type="number" min="0" step="0.01" id="ed-valor" value="${SEL.valor_final}" />
+            <div class="hint" style="font-size:11px;color:var(--texto2);font-style:italic;margin-top:3px;">Use ponto para os centavos (ex.: 1450.00). Corrige um valor digitado errado.</div>
+          </div>` : ''}
         </div>
       </div>`;
   }
@@ -1051,30 +1059,43 @@ async function salvarSolicitacao() {
 
   if (!justificativa) { showToast('Justificativa não pode ficar vazia', 'erro'); return; }
 
+  // Campo Valor final só existe no form pra Admin/Compradora em compras já efetivadas.
+  const elValor = document.getElementById('ed-valor');
+  const dados = { centro_custo_id, metodo_pagamento, justificativa, observacoes };
+  let valorCorrigido = false;
+  if (elValor) {
+    const v = parseFloat(elValor.value);
+    if (isNaN(v) || v <= 0) { showToast('Valor final inválido', 'erro'); return; }
+    dados.valor_final = v;
+    valorCorrigido = (v !== SEL.valor_final);
+  }
+
   if (!SB) { showToast('(preview) Edição simulada', 'sucesso'); EDITANDO_SOLIC = false; renderModal(); return; }
 
   const { error } = await SB.from('compras_solicitacoes')
-    .update({ centro_custo_id, metodo_pagamento, justificativa, observacoes })
+    .update(dados)
     .eq('id', SEL.id);
   if (error) { showToast('Erro: ' + error.message, 'erro'); return; }
 
   await SB.from('compras_historico').insert({
     solicitacao_id: SEL.id, acao: 'editada', por_email: USER_EMAIL,
-    comentario: 'Cabeçalho da solicitação editado'
+    comentario: valorCorrigido
+      ? `Valor final corrigido para R$ ${fmtBRL(dados.valor_final)} (era R$ ${fmtBRL(SEL.valor_final)})`
+      : 'Cabeçalho da solicitação editado'
   });
 
   // Atualiza objeto local + lista global
-  Object.assign(SEL, { centro_custo_id, metodo_pagamento, justificativa, observacoes });
+  Object.assign(SEL, dados);
   const idx = TODAS.findIndex(s => s.id === SEL.id);
   if (idx >= 0) {
-    TODAS[idx] = { ...TODAS[idx], centro_custo_id, metodo_pagamento, justificativa, observacoes };
+    TODAS[idx] = { ...TODAS[idx], ...dados };
     TODAS[idx].centro_nome = (CENTROS.find(c => c.id === centro_custo_id) || {}).nome || '—';
     SEL.centro_nome = TODAS[idx].centro_nome;
   }
   EDITANDO_SOLIC = false;
   await recarregarModal();
   renderKanban();
-  showToast('Solicitação atualizada', 'sucesso');
+  showToast(valorCorrigido ? 'Valor final corrigido' : 'Solicitação atualizada', 'sucesso');
 }
 
 // === Edição/exclusão de item ===
