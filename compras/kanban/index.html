@@ -250,8 +250,8 @@ html[style*="visible"] #boot{display:none;}
     <option value="aguardando_aprovacao">② Aguardando Aprovação</option>
     <option value="compras_pendentes">③ Compras Pendentes</option>
     <option value="compra_realizada">④ Compra Realizada</option>
-    <option value="inclusao_conta_azul">⑤ Conta Azul</option>
-    <option value="recebimento">⑥ Recebimento</option>
+    <option value="recebimento">⑤ Recebimento</option>
+    <option value="inclusao_conta_azul">⑥ Conta Azul</option>
     <option value="concluida">⑦ Concluída</option>
     <option value="recusada">❌ Recusada</option>
   </select>
@@ -281,13 +281,13 @@ html[style*="visible"] #boot{display:none;}
     <div class="col-header"><div class="col-title"><span class="num">4</span><span class="lbl">Compra Realizada</span></div><div class="col-count" id="c-4">0</div></div>
     <div class="col-body" id="col-compra_realizada"></div>
   </div>
-  <div class="col inclusao_conta_azul">
-    <div class="col-header"><div class="col-title"><span class="num">5</span><span class="lbl">Conta Azul</span></div><div class="col-count" id="c-5">0</div></div>
-    <div class="col-body" id="col-inclusao_conta_azul"></div>
-  </div>
   <div class="col recebimento">
-    <div class="col-header"><div class="col-title"><span class="num">6</span><span class="lbl">Recebimento</span></div><div class="col-count" id="c-6">0</div></div>
+    <div class="col-header"><div class="col-title"><span class="num">5</span><span class="lbl">Recebimento</span></div><div class="col-count" id="c-5">0</div></div>
     <div class="col-body" id="col-recebimento"></div>
+  </div>
+  <div class="col inclusao_conta_azul">
+    <div class="col-header"><div class="col-title"><span class="num">6</span><span class="lbl">Conta Azul</span></div><div class="col-count" id="c-6">0</div></div>
+    <div class="col-body" id="col-inclusao_conta_azul"></div>
   </div>
   <div class="col concluida">
     <div class="col-header"><div class="col-title"><span class="num">7</span><span class="lbl">Concluída</span></div><div class="col-count" id="c-7">0</div></div>
@@ -444,8 +444,8 @@ function renderKanban() {
   document.getElementById('c-2').textContent = cols.aguardando_aprovacao.length;
   document.getElementById('c-3').textContent = cols.compras_pendentes.length;
   document.getElementById('c-4').textContent = cols.compra_realizada.length;
-  document.getElementById('c-5').textContent = cols.inclusao_conta_azul.length;
-  document.getElementById('c-6').textContent = cols.recebimento.length;
+  document.getElementById('c-5').textContent = cols.recebimento.length;
+  document.getElementById('c-6').textContent = cols.inclusao_conta_azul.length;
   document.getElementById('c-7').textContent = cols.concluida.length;
   document.getElementById('stats').innerHTML =
     `<b>${filtrados.length}</b> solicitação(ões) · <b>R$ ${fmtBRL(filtrados.reduce((t,s)=>t+s.total_estimado,0))}</b> estimado`;
@@ -834,16 +834,16 @@ function renderAcoes(status) {
   else if (status === 'compras_pendentes' && temAcesso) {
     html += '<button class="btn cotar" onclick="acaoMarcarComprada()">💼 Marcar como Comprada</button>';
   }
-  // Etapa 4 (Compra Realizada) — lançar no Conta Azul
+  // Etapa 4 (Compra Realizada) — marcar recebimento físico
   else if (status === 'compra_realizada' && temAcesso) {
-    html += '<button class="btn pagar" onclick="acaoLancarContaAzul()">📒 Lançar no Conta Azul</button>';
-  }
-  // Etapa 5 (Conta Azul) — marcar recebimento físico
-  else if (status === 'inclusao_conta_azul' && temAcesso) {
     html += '<button class="btn cotar" onclick="acaoMarcarRecebido()">📦 Marcar como Recebido</button>';
   }
-  // Etapa 6 (Recebimento) — encerrar
+  // Etapa 5 (Recebimento) — lançar no Conta Azul
   else if (status === 'recebimento' && temAcesso) {
+    html += '<button class="btn pagar" onclick="acaoLancarContaAzul()">📒 Lançar no Conta Azul</button>';
+  }
+  // Etapa 6 (Conta Azul) — encerrar
+  else if (status === 'inclusao_conta_azul' && temAcesso) {
     html += '<button class="btn aprovar" onclick="acaoEncerrar()">✅ Encerrar</button>';
   }
   // Etapa 7 ou Recusada — apenas visualização
@@ -956,7 +956,7 @@ async function confirmarCompra() {
   }, 'comprada', `R$ ${fmtBRL(valor)} via ${metodo}` + (coment ? ' · ' + coment : ''));
 }
 
-// Etapa 4 → 5 (Financeiro lança no Conta Azul)
+// Etapa 5 → 6 (Financeiro lança no Conta Azul)
 async function acaoLancarContaAzul() {
   document.getElementById('m-foot').innerHTML = `
     <div class="modal-form" style="flex:1 1 100%;">
@@ -986,7 +986,7 @@ async function confirmarLancar() {
   }, 'lançada no Conta Azul', (ref ? 'Ref: ' + ref : '') + (coment ? (ref?' · ':'') + coment : ''));
 }
 
-// Etapa 5 → 6 (quem recebe fisicamente marca chegada)
+// Etapa 4 → 5 (quem recebe fisicamente marca chegada)
 async function acaoMarcarRecebido() {
   const coment = prompt('Comentário do recebimento (opcional — ex: chegou completo, faltou X):') || null;
   await transicionar({
