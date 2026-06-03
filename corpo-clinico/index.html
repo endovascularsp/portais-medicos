@@ -290,7 +290,8 @@ table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-t
         <option value="sim">Só atende on-line</option>
       </select>
       <div class="stat" id="stat-profs">—</div>
-      <button class="btn outline no-print" style="margin-left:8px" onclick="exportarCorpoClinicoWord()">📄 Exportar (Word)</button>
+      <button class="btn outline no-print" style="margin-left:8px" onclick="exportarCorpoClinicoWord()">📄 Exportar tabela (Word)</button>
+      <button class="btn outline no-print" style="margin-left:8px" onclick="exportarFichasWord()">📝 Exportar fichas (Word)</button>
     </div>
     <div class="grid" id="grid-profs"></div>
   </div>
@@ -552,6 +553,114 @@ function exportarCorpoClinicoWord(){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 1500);
   showToast('Word exportado','ok');
+}
+
+// Corpo Clínico → Word (fichas): gera um .doc com a FICHA COMPLETA de cada
+// profissional escrita por extenso — uma por vez, com quebra de página entre
+// elas — espelhando tudo o que aparece no card individual (abrirFicha).
+// Respeita os filtros ativos na tela.
+function exportarFichasWord(){
+  const lista = profsVisiveis();
+  if(!lista.length){ showToast('Nada para exportar com os filtros atuais','erro'); return; }
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  // linha rótulo→valor; pula quando o valor é vazio e pular!==false
+  const kv = (rot,val,pular)=>{
+    const v = (val==null||val==='') ? '—' : val;
+    if((val==null||val==='') && pular) return '';
+    return `<tr><td class=k>${escH(rot)}</td><td class=v>${val===v?escH(val):v}</td></tr>`;
+  };
+  const sec = (titulo,linhas)=> linhas ? `<h3 class=sec>${escH(titulo)}</h3>`
+    + `<table class=kv cellspacing=0 cellpadding=0><tbody>${linhas}</tbody></table>` : '';
+  const SN = v => v==null ? '—' : (v?'Sim':'Não');
+
+  const fichas = lista.map((p,i)=>{
+    const reg = [p.conselho, p.conselho_numero].filter(Boolean).join(' ');
+    const esc = ESCALA.filter(e=>e.profissional_id===p.id)
+      .sort((a,b)=>a.dia_semana-b.dia_semana || (a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+    const escalaHtml = esc.length
+      ? esc.map(e=>{
+          const s = SALAS.find(x=>x.id===e.sala_id);
+          const hr = e.hora_inicio ? e.hora_inicio.slice(0,5)+(e.hora_fim?'–'+e.hora_fim.slice(0,5):'') : 'horário a confirmar';
+          return `<div class=esc><b>${escH(DIAS[e.dia_semana])}</b> · ${escH(s?s.nome:'?')} · ${escH(hr)}</div>`;
+        }).join('')
+      : '<div class=alerta>⚠ Sem escala cadastrada — pendência pro Agendamento.</div>';
+
+    const atendimento = ''
+      + kv('Especialidade', p.especialidade||'—')
+      + kv('Empresa', p.empresa||'—')
+      + kv('Atende on-line', SN(p.atende_online))
+      + kv('Atende convênio', SN(p.atende_convenio))
+      + kv('Convênios', p.convenios, true)
+      + kv('Consulta particular', fmtBRL(p.valor_consulta))
+      + kv('Pacote c/ exames', fmtBRL(p.valor_pacote))
+      + kv('Tempo 1ª vez', p.tempo_primeira_vez||'—')
+      + kv('Tempo retorno', p.tempo_retorno||'—')
+      + kv('Dias p/ retorno', p.dias_retorno||'—')
+      + kv('Faixa de idade', p.faixa_idade||'—');
+    const registro = kv('Conselho', reg||'—') + kv('RQE', p.rqe||'—');
+    const contato = kv('Celular', p.celular||'—') + kv('E-mail', p.email||'—')
+      + kv('Instagram', p.instagram ? '@'+p.instagram.replace(/^@/,'') : '—');
+    const pessoais = kv('CPF', p.cpf||'—') + kv('RG', p.rg||'—')
+      + kv('Nascimento', p.data_nascimento||'—') + kv('Sexo', p.sexo||'—')
+      + kv('Estado civil', p.estado_civil||'—')
+      + kv('Endereço', [p.endereco,p.cidade,p.estado,p.cep].filter(Boolean).join(', ')||'—');
+    const bancarios = kv('Relação', p.relacao_clinica==='PJ'?'Pessoa jurídica':p.relacao_clinica==='PF'?'Pessoa física':'—')
+      + kv('CNPJ', p.cnpj||'—') + kv('Razão social', p.razao_social||'—')
+      + kv('Simples Nacional', SN(p.optante_simples))
+      + kv('Banco', [p.banco,p.agencia,p.conta].filter(Boolean).join(' · ')||'—')
+      + kv('Pix', p.pix||'—');
+
+    const procHtml = p.procedimentos
+      ? `<h3 class=sec>Procedimentos que realiza</h3><div class=texto>${escH(p.procedimentos)}</div>` : '';
+    const obsHtml = p.observacoes
+      ? `<h3 class=sec>Observações</h3><div class=texto>${escH(p.observacoes)}</div>` : '';
+
+    const brk = i>0 ? ' style="page-break-before:always"' : '';
+    return `<div class=ficha${brk}>`
+      + `<h2 class=nome>${escH(p.nome)}</h2>`
+      + `<div class=subnome>${escH(p.especialidade||'—')}${reg?' · '+escH(reg):''}</div>`
+      + sec('Atendimento', atendimento)
+      + `<h3 class=sec>Escala / Mapa de Sala</h3>${escalaHtml}`
+      + procHtml + obsHtml
+      + sec('Registro profissional', registro)
+      + sec('Contato', contato)
+      + sec('Dados pessoais', pessoais)
+      + sec('Empresa &amp; dados bancários', bancarios)
+      + `</div>`;
+  }).join('');
+
+  const conteudo =
+    `<h1 class=capa>Corpo Clínico — Endovascular SP</h1>`
+  + `<p class=capasub>Fichas dos profissionais · gerado em ${hoje} · `
+  + `${lista.length} de ${PROFS.length} profissionais</p>`
+  + fichas;
+  const head = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "
+    + "xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>"
+    + "<head><meta charset='utf-8'><title>Corpo Clínico — Fichas</title>"
+    + "<style>body{font-family:Calibri,Arial,sans-serif;color:#0d1e30;font-size:11pt;}"
+    + "@page WordSection1{size:595.35pt 841.95pt;mso-page-orientation:portrait;margin:1.6cm;}"
+    + "div.WordSection1{page:WordSection1;}"
+    + "h1.capa{color:#0B1F3A;font-size:22pt;margin:0 0 2pt;}"
+    + "p.capasub{color:#5a7088;font-size:9.5pt;margin:0 0 18pt;}"
+    + ".ficha{page-break-inside:auto;}"
+    + "h2.nome{color:#0B1F3A;font-size:16pt;margin:0 0 1pt;border-bottom:2pt solid #0B1F3A;padding-bottom:3pt;}"
+    + ".subnome{color:#5a7088;font-size:10pt;margin:0 0 10pt;}"
+    + "h3.sec{color:#0B1F3A;font-size:11.5pt;margin:12pt 0 4pt;}"
+    + "table.kv{width:100%;border-collapse:collapse;font-size:10.5pt;}"
+    + "table.kv td{padding:2.5pt 6pt;vertical-align:top;border-bottom:.5pt solid #e2e8f0;}"
+    + "td.k{width:38%;color:#5a7088;}td.v{color:#0d1e30;}"
+    + ".esc{font-size:10.5pt;margin:1pt 0;}"
+    + ".texto{font-size:10.5pt;line-height:1.45;}"
+    + ".alerta{color:#c0392b;font-size:10.5pt;}"
+    + "h2,h3{page-break-after:avoid;}</style></head><body><div class=WordSection1>";
+  const foot = "</div></body></html>";
+  const blob = new Blob(['﻿', head, conteudo, foot], {type:'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'Corpo_Clinico_Fichas.doc';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  showToast('Fichas exportadas (Word)','ok');
 }
 
 // resumo da escala — dia + faixa de horário (início–fim quando houver fim)
