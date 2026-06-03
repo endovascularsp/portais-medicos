@@ -158,13 +158,26 @@ table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-t
 .roteiro-bar{display:flex;justify-content:flex-end;margin-bottom:14px;}
 @media print{
   @page{margin:14mm;}
+  @page landscapeMapa{size:A4 landscape;margin:9mm;}
   html,body{background:#fff!important;color:#0d1e30!important;visibility:visible!important;}
   #boot,.toast,.tabs,.header-actions,.no-print{display:none!important;}
-  #view-profs,#view-mapa{display:none!important;}
-  #view-roteiro{display:block!important;}
+  /* Imprime só a aba visível — as inativas já estão com display:none inline. */
   .header{background:#fff!important;color:var(--navy)!important;border-bottom:2px solid var(--rosa);height:auto;padding:10px 0;}
   .header-logo h1{color:var(--navy);}.header-logo span{color:var(--texto2);}
   .main{padding:14px 0 0;}
+  /* — Mapa de Sala (grade Hora × Sala): paisagem + cores preservadas — */
+  body.print-mapa #view-mapa{page:landscapeMapa;}
+  body.print-mapa .toolbar{margin-bottom:10px;}
+  body.print-mapa .toolbar label{color:var(--texto2)!important;}
+  body.print-mapa .toolbar .stat{color:var(--texto2);}
+  body.print-mapa .toolbar .stat b{color:var(--navy);}
+  body.print-mapa .toolbar select{border:none;background:none;padding:0;
+    font-weight:800;color:var(--navy);-webkit-appearance:none;appearance:none;}
+  body.print-mapa .mapa-wrap{overflow:visible;box-shadow:none;border:none;}
+  body.print-mapa table.mapa{min-width:0;width:100%;}
+  body.print-mapa table.mapa th,
+  body.print-mapa table.mapa td{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* — Roteiro (fluxograma) — */
   .fluxo{align-items:stretch;}
   .fbox,.fbox.sm{max-width:100%;box-shadow:none!important;break-inside:avoid;
     -webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -277,6 +290,7 @@ table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-t
         <option value="sim">Só atende on-line</option>
       </select>
       <div class="stat" id="stat-profs">—</div>
+      <button class="btn outline no-print" style="margin-left:8px" onclick="exportarCorpoClinicoWord()">📄 Exportar (Word)</button>
     </div>
     <div class="grid" id="grid-profs"></div>
   </div>
@@ -292,6 +306,7 @@ table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-t
         <option value="5">Sexta-feira</option>
       </select>
       <div class="stat" id="stat-mapa">—</div>
+      <button class="btn outline no-print" style="margin-left:8px" onclick="exportarMapaPDF()">🖨️ Exportar Mapa (PDF)</button>
     </div>
     <div class="mapa-wrap"><table class="mapa" id="tbl-mapa"></table></div>
   </div>
@@ -478,6 +493,67 @@ function exportarRoteiro(){
   setTimeout(()=>window.print(), 60);
 }
 
+// Mapa de Sala → PDF: garante a aba certa e imprime em paisagem (Salvar como
+// PDF no diálogo do navegador). Mesma lógica do roteiro, mas mais largo.
+async function exportarMapaPDF(){
+  await trocarAba('mapa');
+  document.body.classList.add('print-mapa');
+  setTimeout(()=>window.print(), 80);
+}
+window.addEventListener('afterprint', ()=>document.body.classList.remove('print-mapa'));
+
+// Corpo Clínico → Word: gera um .doc (que o Word abre) com a lista de
+// profissionais em tabela editável, respeitando os filtros ativos na tela.
+function exportarCorpoClinicoWord(){
+  const lista = profsVisiveis();
+  if(!lista.length){ showToast('Nada para exportar com os filtros atuais','erro'); return; }
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const linhas = lista.map(p=>{
+    const esc    = escalaResumo(p.id) || '⚠ sem escala definida';
+    const online = p.atende_online==null ? '—' : (p.atende_online?'Sim':'Não');
+    const conv   = p.convenios || (p.atende_convenio==null?'—':(p.atende_convenio?'Sim (geral)':'Não'));
+    const reg    = [p.conselho, p.conselho_numero].filter(Boolean).join(' ');
+    return `<tr>
+      <td>${escH(p.nome)}</td>
+      <td>${escH(p.especialidade||'—')}</td>
+      <td>${escH(esc)}</td>
+      <td style="text-align:center">${online}</td>
+      <td>${escH(conv)}</td>
+      <td style="text-align:right">${escH(fmtBRL(p.valor_consulta))}</td>
+      <td>${escH(p.celular||'—')}</td>
+      <td>${escH(p.email||'—')}</td>
+      <td>${escH(reg||'—')}</td>
+    </tr>`;
+  }).join('');
+  const conteudo =
+    `<h1 style="color:#0B1F3A;font-size:20pt;margin:0 0 2pt">Corpo Clínico — Endovascular SP</h1>`
+  + `<p style="color:#5a7088;font-size:9pt;margin:0 0 12pt">Gerado em ${hoje} · `
+  + `${lista.length} de ${PROFS.length} profissionais</p>`
+  + `<table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;`
+  + `font-size:9.5pt;width:100%;border-color:#b9c6d6">`
+  + `<thead><tr><th align="left">Nome</th><th align="left">Especialidade</th>`
+  + `<th align="left">Escala (dias · horários)</th><th>On-line</th>`
+  + `<th align="left">Convênios</th><th align="right">Consulta</th>`
+  + `<th align="left">Celular</th><th align="left">E-mail</th><th align="left">Registro</th>`
+  + `</tr></thead><tbody>${linhas}</tbody></table>`;
+  const head = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "
+    + "xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>"
+    + "<head><meta charset='utf-8'><title>Corpo Clínico</title>"
+    + "<style>body{font-family:Calibri,Arial,sans-serif;color:#0d1e30;}"
+    + "@page WordSection1{size:841.95pt 595.35pt;mso-page-orientation:landscape;margin:1.2cm;}"
+    + "div.WordSection1{page:WordSection1;}"
+    + "th{background:#0B1F3A;color:#ffffff;mso-shading:#0B1F3A;}"
+    + "tr{page-break-inside:avoid;}</style></head><body><div class=WordSection1>";
+  const foot = "</div></body></html>";
+  const blob = new Blob(['﻿', head, conteudo, foot], {type:'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'Corpo_Clinico_Endovascular.doc';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  showToast('Word exportado','ok');
+}
+
 // resumo da escala — dia + faixa de horário (início–fim quando houver fim)
 const DIAS_ABR = ['','Seg','Ter','Qua','Qui','Sex','Sáb'];
 function escalaResumo(pid){
@@ -513,7 +589,9 @@ function tagsConvenio(p){
   return p.atende_convenio ? '<span class="tag on">convênio</span>' : '';
 }
 
-function renderProfs(){
+// lista de profissionais com os filtros da toolbar aplicados, já ordenada —
+// usada tanto pela renderização dos cards quanto pela exportação Word
+function profsVisiveis(){
   const q = (document.getElementById('busca').value||'').toLowerCase().trim();
   const fe = document.getElementById('f-esp').value;
   const fd = document.getElementById('f-dia').value;
@@ -530,6 +608,11 @@ function renderProfs(){
   // agrupa por especialidade (vasculares juntos, dermato juntos…), depois nome
   lista.sort((a,b)=>(a.especialidade||'zzz').localeCompare(b.especialidade||'zzz')
     || (a.nome||'').localeCompare(b.nome||''));
+  return lista;
+}
+
+function renderProfs(){
+  const lista = profsVisiveis();
   const g = document.getElementById('grid-profs');
   if(!lista.length){ g.innerHTML='<div class="vazio">Nenhum profissional encontrado.</div>'; }
   else g.innerHTML = lista.map(p=>{
