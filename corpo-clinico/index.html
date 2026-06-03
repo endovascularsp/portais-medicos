@@ -615,8 +615,10 @@ function exportarFichasWord(){
     const obsHtml = p.observacoes
       ? `<h3 class=sec>Observações</h3><div class=texto>${escH(p.observacoes)}</div>` : '';
 
-    const brk = i>0 ? ' style="page-break-before:always"' : '';
-    return `<div class=ficha${brk}>`
+    // quebra de página entre fichas — <br> dedicado (mais estável no Word do
+    // que page-break-before numa <div>, que isolava o nome numa página vazia)
+    const brk = i>0 ? "<br clear=all style='page-break-before:always'>" : '';
+    return brk + `<div class=ficha>`
       + `<h2 class=nome>${escH(p.nome)}</h2>`
       + `<div class=subnome>${escH(p.especialidade||'—')}${reg?' · '+escH(reg):''}</div>`
       + sec('Atendimento', atendimento)
@@ -643,16 +645,15 @@ function exportarFichasWord(){
     + "h1.capa{color:#0B1F3A;font-size:22pt;margin:0 0 2pt;}"
     + "p.capasub{color:#5a7088;font-size:9.5pt;margin:0 0 18pt;}"
     + ".ficha{page-break-inside:auto;}"
-    + "h2.nome{color:#0B1F3A;font-size:16pt;margin:0 0 1pt;border-bottom:2pt solid #0B1F3A;padding-bottom:3pt;}"
-    + ".subnome{color:#5a7088;font-size:10pt;margin:0 0 10pt;}"
-    + "h3.sec{color:#0B1F3A;font-size:11.5pt;margin:12pt 0 4pt;}"
+    + "h2.nome{color:#0B1F3A;font-size:16pt;margin:0 0 1pt;border-bottom:2pt solid #0B1F3A;padding-bottom:3pt;page-break-after:avoid;}"
+    + ".subnome{color:#5a7088;font-size:10pt;margin:0 0 10pt;page-break-after:avoid;}"
+    + "h3.sec{color:#0B1F3A;font-size:11.5pt;margin:12pt 0 4pt;page-break-after:avoid;}"
     + "table.kv{width:100%;border-collapse:collapse;font-size:10.5pt;}"
     + "table.kv td{padding:2.5pt 6pt;vertical-align:top;border-bottom:.5pt solid #e2e8f0;}"
     + "td.k{width:38%;color:#5a7088;}td.v{color:#0d1e30;}"
     + ".esc{font-size:10.5pt;margin:1pt 0;}"
     + ".texto{font-size:10.5pt;line-height:1.45;}"
-    + ".alerta{color:#c0392b;font-size:10.5pt;}"
-    + "h2,h3{page-break-after:avoid;}</style></head><body><div class=WordSection1>";
+    + ".alerta{color:#c0392b;font-size:10.5pt;}</style></head><body><div class=WordSection1>";
   const foot = "</div></body></html>";
   const blob = new Blob(['﻿', head, conteudo, foot], {type:'application/msword'});
   const url = URL.createObjectURL(blob);
