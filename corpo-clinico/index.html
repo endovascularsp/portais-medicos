@@ -765,7 +765,7 @@ function faixaIdx(hhmm){
 }
 function renderMapa(){
   const dia = parseInt(document.getElementById('mapa-dia').value, 10);
-  // por sala: blocos do dia com faixa de início e de fim
+  // por sala: blocos do dia com faixa de início e de fim, ordenados por início
   const porSala = {};
   SALAS.forEach(s=>{
     porSala[s.id] = ESCALA.filter(e=>e.dia_semana===dia && e.sala_id===s.id).map(e=>{
@@ -774,36 +774,62 @@ function renderMapa(){
       let fim = e.hora_fim ? faixaIdx(e.hora_fim) : ini;
       if(fim<ini || isNaN(fim)) fim = ini;
       return {ini, fim, e};
-    });
+    }).sort((a,b)=>a.ini-b.ini || a.fim-b.fim);
   });
+  // Agrupa blocos que se sobrepõem na MESMA sala (qualquer interseção de faixas)
+  // num único bloco. Grupo com 2+ blocos é CONFLITO. Assim nenhum profissional é
+  // escondido em silêncio quando há sobreposição — antes o bloco que começava
+  // dentro do intervalo de outro era pulado e sumia do mapa.
+  const cellAt = {};    // cellAt[salaId][linhaInicial] = {span, blocos}
+  const coberto = {};   // coberto[salaId] = Set de linhas consumidas por rowspan
   let conflitos = 0;
+  SALAS.forEach(s=>{
+    cellAt[s.id] = {};
+    coberto[s.id] = new Set();
+    const blocos = porSala[s.id];
+    let i = 0;
+    while(i < blocos.length){
+      const gIni = blocos[i].ini;
+      let gFim = blocos[i].fim;
+      const grupo = [blocos[i]];
+      let j = i + 1;
+      while(j < blocos.length && blocos[j].ini <= gFim){  // sobrepõe o grupo atual
+        grupo.push(blocos[j]);
+        if(blocos[j].fim > gFim) gFim = blocos[j].fim;
+        j++;
+      }
+      cellAt[s.id][gIni] = { span: gFim - gIni + 1, blocos: grupo };
+      for(let r = gIni + 1; r <= gFim; r++) coberto[s.id].add(r);
+      if(grupo.length > 1) conflitos++;
+      i = j;
+    }
+  });
+  const hrDe = e => e.hora_inicio
+    ? e.hora_inicio.slice(0,5)+(e.hora_fim?'–'+e.hora_fim.slice(0,5):'') : '';
   let h = '<thead><tr><th class="hcol">Hora</th>' +
     SALAS.map(s=>`<th>${escH(s.nome)}</th>`).join('') + '</tr></thead><tbody>';
   for(let fi=0; fi<FAIXAS.length; fi++){
     h += `<tr><td class="hcol">${FAIXAS[fi]}</td>`;
     for(const s of SALAS){
-      const blocos = porSala[s.id];
-      if(blocos.some(b=>b.ini<fi && b.fim>=fi)) continue;  // coberto por rowspan acima
-      const iniciam = blocos.filter(b=>b.ini===fi);
-      if(iniciam.length === 0){
+      if(coberto[s.id].has(fi)) continue;  // coberto por rowspan acima
+      const cell = cellAt[s.id][fi];
+      if(!cell){
         h += '<td class="vaga">·</td>';
-      } else if(iniciam.length === 1){
-        const e = iniciam[0].e;
-        const span = iniciam[0].fim - iniciam[0].ini + 1;
+      } else if(cell.blocos.length === 1){
+        const e = cell.blocos[0].e;
         const p = PROFS.find(x=>x.id===e.profissional_id);
-        const hr = e.hora_inicio
-          ? e.hora_inicio.slice(0,5)+(e.hora_fim?'–'+e.hora_fim.slice(0,5):'') : '';
-        h += `<td class="ocup" rowspan="${span}"><b>${escH(p?p.nome:'?')}</b>`
+        const hr = hrDe(e);
+        h += `<td class="ocup" rowspan="${cell.span}"><b>${escH(p?p.nome:'?')}</b>`
            + (hr?`<span class="hr">${hr}</span>`:'') + '</td>';
       } else {
-        // CONFLITO — 2+ profissionais na mesma sala e horário
-        conflitos++;
-        const span = Math.max(...iniciam.map(b=>b.fim-b.ini+1));
-        const nomes = iniciam.map(b=>{
+        // CONFLITO — 2+ profissionais com horários sobrepostos na mesma sala.
+        // Mostra nome + horário de cada um pra facilitar o acerto da escala.
+        const nomes = cell.blocos.map(b=>{
           const p = PROFS.find(x=>x.id===b.e.profissional_id);
-          return escH(p?p.nome:'?');
+          const hr = hrDe(b.e);
+          return escH(p?p.nome:'?') + (hr?` (${hr})`:'');
         }).join(' ✕ ');
-        h += `<td class="conflito" rowspan="${span}">⚠️ CONFLITO`
+        h += `<td class="conflito" rowspan="${cell.span}">⚠️ CONFLITO`
            + `<span class="cf">${nomes}</span></td>`;
       }
     }
