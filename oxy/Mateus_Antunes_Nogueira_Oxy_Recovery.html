@@ -1026,7 +1026,7 @@ document.getElementById('login-senha').focus();
   if(_cp){
     const _inp = document.getElementById('login-senha');
     if(_inp){ _inp.value = _cp; tentarLogin(); }
-  }
+  } else { window.location.replace('/login/'); }
 })();
 </script>
 <!-- UX6-HIDE-404 -->

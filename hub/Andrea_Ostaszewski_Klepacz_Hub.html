@@ -342,7 +342,7 @@ window.addEventListener('load', async () => {
     document.getElementById('login-senha').value = s;
     await tentarLogin();
   } else {
-    document.getElementById('login-senha').focus();
+    window.location.replace('/login/');
   }
 });
 </script>
