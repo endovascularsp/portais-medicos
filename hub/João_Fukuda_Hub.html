@@ -282,13 +282,13 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
 </div>
 
 <script>
-const BLOB = "3E6MvHEuhhTiAdGL1w4cBeNDn/GFV3RW3y9KtAva4znBUoy/lFQy5f6SsePPUEf7VlZQRybz9cjhz89SVOXHqTQemYzYXAvrkLb9CdDttypu4bFIWFA+Ma93AVJ9CXbZOCyFydD2X2HNuWF/332Gs1wtQ4imM5ZOFnAkC+H9ooDQIQm0b8WO8KtE24ToL1exYJ/dWYAdNibkUWvlb16ZyZW30r0rFqrf8V3d9cEWkuXN7deSGDNKJidwtwvI4a/uzpamYEoTkD4S7kWIRbse";
+const BLOB = "yQo6bqnFzOaqZW40ahEXlO54DA5Y+jmqdMb62ga1A38SObLrei/mA1MVwAx9bViPDJNNttXMfngbrN+HYOCaUjGcf3sJZwzSA+qZxC17vssL3rJPACdi/CEXgMyKAis82G/Om5CiaSVKlMoURqkhNFPmCXCGKODiOAYmwOgb7veJmrANmoxfZTFgxsUa+Ee2+sNYCVu091ODMVR5ZYOHnX9VppDWZ3I6Mkw4eFJs/1QEXguoVKJOPGjFm6he4lRwUOTpptY=";
 
 async function derivarChave(senha, salt) {
   const enc = new TextEncoder();
   const mat = await crypto.subtle.importKey("raw", enc.encode(senha), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
-    {name:"PBKDF2", salt, iterations:100000, hash:"SHA-256"},
+    {name:"PBKDF2", salt, iterations:600000, hash:"SHA-256"},
     mat, {name:"AES-GCM", length:256}, false, ["decrypt"]
   );
 }

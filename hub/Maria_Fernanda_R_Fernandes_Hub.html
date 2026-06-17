@@ -293,13 +293,13 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
 </div>
 
 <script>
-const BLOB = "qm7OWZlgFvIFFOZPRA4s+R9cbm52K01uhNgNm1buV6hEG4km0JrUPEkXsujRqxm/v/jJ9uKj03Ogwij1dBBJDh72MmelR7/r/TNHDxkNhbfV/+wUUT2jwNaSykQVO+kWPIgBpjvDy5bkbiTFb4UMccp0KUD8iaFx9Bp8fCWraWMjklLSEJeSA9defNsH/S1fypgBn1/oCo9EWYXOt7NNFtgLr4CPuw2oyeUGXEWcKzDxBptT8fSL3mgpiJKYx+OOm4ADWhoKdmgsB2CD5VYEe9rqeXecnqku3gPiVne5h92ymZn3sZ1zKrIQAR0vtLnhoEULLl1EeXjgkkE87jIRbdgj5MdBlN3++kM/rav19RNBmjcmiYmsvwwbpDLS4AISji6Ej9Zuxojy4A==";
+const BLOB = "CK+FaAoTSfft2HXpdGXBeIkgC6D7RJFCPuauVKBWTOQLonA4MD/JKBNR85CIwwkS9rb2Z5s8MhCC4bAbW2c6xRbnRupej98UwXBGJGUXeTW/wLMx722lm/kK55CgclU/17aMk2aJoaW+wMC0ZCK3TwHleNVdVlSAHLnu9XDFar4dJomOsrQ4ejJW7zpM2zxPJzLHCI0c/a9HAPdf9xF2gNApU7+T8InKP7BM7oFwg4Gi17VGAk2GVvH47/k+MlbbRUwesx2XCd6r7VrdeBeHURw6FQ0bNINubgdv7G8jo30KxLOtv+4gxnZU3y+lDnJCF5uD7j0/IoUpN+e+UJexcNclPEb3tQuzdaKaTv+qfHpXCPXnItCnUPE0wb3PG8wi";
 
 async function derivarChave(senha, salt) {
   const enc = new TextEncoder();
   const mat = await crypto.subtle.importKey("raw", enc.encode(senha), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
-    {name:"PBKDF2", salt, iterations:100000, hash:"SHA-256"},
+    {name:"PBKDF2", salt, iterations:600000, hash:"SHA-256"},
     mat, {name:"AES-GCM", length:256}, false, ["decrypt"]
   );
 }
