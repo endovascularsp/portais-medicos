@@ -380,7 +380,7 @@ tr:hover td{background:var(--azul-cl);}
 </div>
 
 <script>
-const DADOS_ENC = /*PDATA*/'UM97G1BlWcIReWpxOI+xbIDV6nU08RaL+NCoCMeH/8IeDsakPsGw4uPXfCzHrLweE62HADX+pkxNbqXFE3nD1CwsaVYt6yKPbvjsUrVW2fc/FHQQ+ckTbzBqrwx3YHPnPCR72usfVniBHBBtPCjYo1D9T0lxB3PxZKdVB0AteKx/lZ/91O6iTfUWCSHNheClUqc+gmYOiUHXo0fP2EQRUU2SfAFklP/sycfc1WPw4R5xiofwhytq+ST6XvxNK4giDSPuTBg00+Rf5wkH0F1LO90hYm/5uHrJlyQVj/9/6V+RY8JFq39vqX3lyMIyxm32EUDA9PcGLNUAZ/ONO19g+gjbpTxoGd/JmL87i2qKVPlLULRbfxvKzBMvQqNdZtY3j5xc7YVbGkExnd3saK2iPEPVUoHRJCZPoDezQjy7I01l9mHY8UBRH/ywHW1zxTkVqtvnpmjiFlk/GpE5Vzs1cnsOJNe56yFSXVo4LT12uhS2srWT3NU0lRc7hlFqNIu0i6eSHHSBcxpf31xNsgGLSMErKzNSIdca19yshCDcPa2y/VZc56QL5gZJVTGMe3EqVUPnkURdCQ/3cWvDu9+E46esU86xxMEkLnL9zr4/KuLcwUQ2caeQMCyWjuu2Z1H0myh2Mumpf8lMofrGjNLa0rf4DEwaYuXwrar6eBN/xm5zgmqCiy+0efyRiQyHM03pM3sXcpNmf3XeeY5ZDUH9LdUqkrYENMlQ5VpftXdw3lY6ix1k+O+eeh/0'/*PDATA*/;
+const DADOS_ENC = /*PDATA*/'/rK1Il6rb89VUBBXNx8EMx2O8h0M3ySBrGtlHSUMptlpkBnVaLeaO6Zqf68SFctwxVTX6wBlrHUmQttkGn59t1wGsYrf17JsEr+QJIp3EHsPMzEb3NTFW5ZeRQrEdIiTVd9HLfKfjdcRvgWfclqlm3Ao52Gr01Cd3sbhh474NEX8l6TO8+MsYJfYJDPfQgnBtLm2IRpOTSaV48H0VfBpF3g4h0WjJDDgvOBu0gZM75QdNfBYIelJ9INThHimiF6ft1LGL3fsJpfF8bfYxAL9hl1Ge7Q7JEGuuEx0AcV2xq74yxlf6Y6X1ay9TlimIAC2QvJwvvNlwwwtAvDMubxiUKBoi/U2ywb1/0aENecSZWdeEsrsk4Ba43wF/PGjzbL8kge4aUJ9LlrEJOOKYc9B4ishYF8NLzIWRmbZ1Uw6w2I9wmGArLcOgnj5piFLPJD7MyNqXCxv7AunMGbJ+c6spBePV1FGaDFVszjoNNevvkQCvid0NSC6cUVfaYq1U+XicTILJv9cxZBDsf+uf5eJ9qVQOhjeG26HsbzHu4pU0HLN8kGm2PAOPYwKfbWLyk5ZLk0dCK55quX3Aeu6Ese64eEEdvsivqKazRv4x/cfZ858YkhvIGzdLq1T4jVZPHWOgeQ8jcmGogaK2yZpIiMmuYXtjM3KEG291pIbetFwMNC15FVMpyRzwgbBR4eei3GlbJj7'/*PDATA*/;
 const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03", "2026-04"];
 
 function br(v){return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
@@ -406,7 +406,7 @@ async function tentarLogin(silent){
     const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0));
     const salt = bytes.slice(0,16), iv = bytes.slice(16,28), ct = bytes.slice(28);
     const key = await crypto.subtle.deriveKey(
-      {name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},buf,
+      {name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},buf,
       {name:'AES-GCM',length:256},false,['decrypt']);
     const plain = await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);
     DADOS = JSON.parse(new TextDecoder().decode(plain));
@@ -663,7 +663,7 @@ function renderChartPagamento(pag){
     const inp = document.getElementById('login-senha');
     if(inp){inp.value=_cp;tentarLogin(true);}
   } else {
-    document.getElementById('login-senha').focus();
+    window.location.replace('/login/');
   }
 })();
 </script>

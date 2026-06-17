@@ -291,7 +291,7 @@ async function _descriptografar(b64, senha){
     const salt = packed.slice(0,16), iv = packed.slice(16,28), ct = packed.slice(28);
     const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(senha), 'PBKDF2', false, ['deriveKey']);
     const key = await crypto.subtle.deriveKey(
-      {name:'PBKDF2', salt, iterations:100000, hash:'SHA-256'}, km,
+      {name:'PBKDF2', salt, iterations:600000, hash:'SHA-256'}, km,
       {name:'AES-GCM', length:256}, false, ['decrypt']);
     const dec = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
     return JSON.parse(new TextDecoder().decode(dec));
@@ -503,7 +503,7 @@ window.addEventListener('load', async () => {
     document.getElementById('login-senha').value = s;
     await tentarLogin();
   } else {
-    document.getElementById('login-senha').focus();
+    window.location.replace('/login/');
   }
 });
 </script>
