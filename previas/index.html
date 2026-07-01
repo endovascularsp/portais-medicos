@@ -313,6 +313,9 @@ const TABELA_TO_TEMPLATE = {
   'OMINT - CORPORATE':    'OMINT_CORPORATE',
   'OMINT - PREMIUM':      'OMINT_PREMIUM',
   'MEDSÊNIOR':            'MEDSENIOR',
+  'AMIL':                 'AMIL',
+  'BRADESCO':             'BRADESCO',
+  'OMINT - PACS':         'OMINT_PACS',
 };
 // Perfis do SVN que aparecem em nome_profissional mas não são médicos reais.
 // Match case-insensitive contra o nome completo. Manter sincronizado com
@@ -689,12 +692,16 @@ function gerarPrevia(agenId, tabelaId) {
     doc.setFont(F, 'normal'); doc.text(dataBR, M + 22, yy + 11);
 
     // Tabela de procedimentos
+    // A PARTICULAR tem muitos itens (25) com nomes longos e estoura pra 2 pág.:
+    // compacta fonte/espaçamento só nela pra caber em 1 página. As demais fichas
+    // ficam idênticas.
+    const denso = templateKey === 'PARTICULAR';
     doc.autoTable({
       startY: yy + 16,
       head: [['Referencia', 'Exame', 'Qtd.', 'Valor']],
       body: plano.rows.map(r => [r.ref, r.exame, '', brl(r.valor)]),
-      styles: { font: F, fontSize: 8.5, cellPadding: 1.5, lineColor: [200,200,200], lineWidth: 0.1, textColor: [20,20,20] },
-      headStyles: { font: F, fillColor: NAVY, textColor: [255,255,255], fontStyle: 'bold', halign: 'left', cellPadding: 2 },
+      styles: { font: F, fontSize: denso ? 7 : 8.5, cellPadding: denso ? 0.9 : 1.5, lineColor: [200,200,200], lineWidth: 0.1, textColor: [20,20,20] },
+      headStyles: { font: F, fillColor: NAVY, textColor: [255,255,255], fontStyle: 'bold', halign: 'left', cellPadding: denso ? 1.3 : 2 },
       columnStyles: { 0:{cellWidth:22,halign:'left'}, 1:{cellWidth:118}, 2:{cellWidth:14,halign:'center'}, 3:{cellWidth:28,halign:'right'} },
       alternateRowStyles: { fillColor: [247,247,247] },
       margin: { left: M, right: M },
