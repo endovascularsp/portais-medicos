@@ -591,7 +591,8 @@ function exportarFichasWord(){
       + kv('Atende on-line', SN(p.atende_online))
       + kv('Atende convênio', SN(p.atende_convenio))
       + kv('Convênios', p.convenios, true)
-      + kv('Consulta particular', fmtBRL(p.valor_consulta))
+      + kv('Consulta presencial', fmtBRL(p.valor_consulta))
+      + kv('Consulta on-line', fmtBRL(p.valor_consulta_online))
       + kv('Pacote c/ exames', fmtBRL(p.valor_pacote))
       + kv('Tempo 1ª vez', p.tempo_primeira_vez||'—')
       + kv('Tempo retorno', p.tempo_retorno||'—')
@@ -715,9 +716,8 @@ function profsVisiveis(){
     if(fo==='sim' && !p.atende_online) return false;
     return true;
   });
-  // agrupa por especialidade (vasculares juntos, dermato juntos…), depois nome
-  lista.sort((a,b)=>(a.especialidade||'zzz').localeCompare(b.especialidade||'zzz')
-    || (a.nome||'').localeCompare(b.nome||''));
+  // ordem alfabética por nome do profissional
+  lista.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt',{sensitivity:'base'}));
   return lista;
 }
 
@@ -856,7 +856,8 @@ function abrirFicha(id){
       <div class="k">Atende on-line</div><div class="v">${SEL.atende_online==null?'—':SEL.atende_online?'Sim':'Não'}</div>
       <div class="k">Atende convênio</div><div class="v">${SEL.atende_convenio==null?'—':SEL.atende_convenio?'Sim':'Não'}</div>
       ${SEL.convenios?`<div class="k">Convênios</div><div class="v">${escH(SEL.convenios)}</div>`:''}
-      <div class="k">Consulta particular</div><div class="v">${fmtBRL(SEL.valor_consulta)}</div>
+      <div class="k">Consulta presencial</div><div class="v">${fmtBRL(SEL.valor_consulta)}</div>
+      <div class="k">Consulta on-line</div><div class="v">${fmtBRL(SEL.valor_consulta_online)}</div>
       <div class="k">Pacote c/ exames</div><div class="v">${fmtBRL(SEL.valor_pacote)}</div>
       <div class="k">Tempo 1ª vez</div><div class="v">${escH(SEL.tempo_primeira_vez||'—')}</div>
       <div class="k">Tempo retorno</div><div class="v">${escH(SEL.tempo_retorno||'—')}</div>
@@ -966,7 +967,7 @@ function abrirEdicao(id){
       ${campo('e-convenios','Quais convênios atende',p.convenios)}
       ${campoDL('e-idade','Idade mínima / faixa atendida',p.faixa_idade,IDADES)}
       <div class="row3">${campoDL('e-t1','Tempo 1ª consulta',p.tempo_primeira_vez,TEMPOS)}${campoDL('e-tret','Tempo retorno',p.tempo_retorno,TEMPOS)}${campo('e-dret','Dias p/ retorno',p.dias_retorno)}</div>
-      <div class="row2">${campo('e-valor','Valor consulta (R$)',p.valor_consulta,'number')}${campo('e-pacote','Valor pacote c/ exames (R$)',p.valor_pacote,'number')}</div>
+      <div class="row3">${campo('e-valor','Valor consulta presencial (R$)',p.valor_consulta,'number')}${campo('e-valor-online','Valor consulta on-line (R$)',p.valor_consulta_online,'number')}${campo('e-pacote','Valor pacote c/ exames (R$)',p.valor_pacote,'number')}</div>
       <div class="field"><label>Principais enfoques / procedimentos</label><textarea id="e-proc">${escH(p.procedimentos||'')}</textarea></div>
     </div>
     <div class="sec"><h3>Empresa &amp; dados bancários</h3>
@@ -1007,7 +1008,7 @@ async function salvarProf(){
     convenios: g('e-convenios'),
     faixa_idade: g('e-idade'),
     tempo_primeira_vez: g('e-t1'), tempo_retorno: g('e-tret'), dias_retorno: g('e-dret'),
-    valor_consulta: gnum('e-valor'), valor_pacote: gnum('e-pacote'),
+    valor_consulta: gnum('e-valor'), valor_consulta_online: gnum('e-valor-online'), valor_pacote: gnum('e-pacote'),
     procedimentos: g('e-proc'),
     cnpj: g('e-cnpj'), razao_social: g('e-razao'),
     optante_simples: gsn('e-simples'),
