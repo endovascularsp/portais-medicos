@@ -125,6 +125,11 @@ table.mapa td.conflito{background:rgba(192,57,43,0.16);border-left:3px solid var
   vertical-align:middle;color:var(--vermelho);font-weight:800;font-size:9.5px;letter-spacing:.4px;}
 table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-top:3px;color:var(--navy);}
 .alerta-conf{color:var(--vermelho);font-weight:800;}
+/* Container da exportação completa (5 dias): oculto em tela, só aparece no PDF */
+#mapa-print-full{display:none;}
+.mapa-dia-titulo{font-size:15px;color:var(--navy);margin:0 0 6px;font-weight:800;}
+.mapa-dia-print .stat{color:var(--texto2);font-size:11px;margin-bottom:8px;}
+.mapa-dia-print .stat b{color:var(--navy);}
 
 /* === Aba Roteiro — fluxograma === */
 .roteiro-intro{background:var(--card2);border:1px solid var(--borda);border-left:4px solid var(--rosa);
@@ -177,6 +182,12 @@ table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-t
   body.print-mapa table.mapa{min-width:0;width:100%;}
   body.print-mapa table.mapa th,
   body.print-mapa table.mapa td{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* — Exportação COMPLETA (5 dias): 1 dia por página em paisagem — */
+  body.print-mapa-full .toolbar,
+  body.print-mapa-full #view-mapa > .mapa-wrap{display:none!important;}
+  body.print-mapa-full #mapa-print-full{display:block!important;}
+  body.print-mapa-full .mapa-dia-print{break-inside:avoid;}
+  body.print-mapa-full .mapa-dia-print + .mapa-dia-print{break-before:page;}
   /* — Roteiro (fluxograma) — */
   .fluxo{align-items:stretch;}
   .fbox,.fbox.sm{max-width:100%;box-shadow:none!important;break-inside:avoid;
@@ -310,6 +321,8 @@ table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-t
       <button class="btn outline no-print" style="margin-left:8px" onclick="exportarMapaPDF()">🖨️ Exportar Mapa (PDF)</button>
     </div>
     <div class="mapa-wrap"><table class="mapa" id="tbl-mapa"></table></div>
+    <!-- Container só de impressão: recebe os 5 dias na exportação completa -->
+    <div id="mapa-print-full"></div>
   </div>
   <!-- ABA ROTEIRO — fluxograma de atendimento -->
   <div id="view-roteiro" style="display:none">
@@ -494,14 +507,31 @@ function exportarRoteiro(){
   setTimeout(()=>window.print(), 60);
 }
 
-// Mapa de Sala → PDF: garante a aba certa e imprime em paisagem (Salvar como
-// PDF no diálogo do navegador). Mesma lógica do roteiro, mas mais largo.
+// Mapa de Sala → PDF: garante a aba certa, monta os 5 dias (Seg→Sex) — um por
+// página em paisagem — e abre o diálogo de impressão (Salvar como PDF).
+const MAPA_DIAS_PDF = [
+  [1,'Segunda-feira'],[2,'Terça-feira'],[3,'Quarta-feira'],
+  [4,'Quinta-feira'],[5,'Sexta-feira']
+];
 async function exportarMapaPDF(){
   await trocarAba('mapa');
-  document.body.classList.add('print-mapa');
+  const cont = document.getElementById('mapa-print-full');
+  cont.innerHTML = MAPA_DIAS_PDF.map(([dia,nome])=>{
+    const { html, stat } = buildMapa(dia);
+    return `<section class="mapa-dia-print">`
+      + `<h2 class="mapa-dia-titulo">${escH(nome)}</h2>`
+      + `<div class="stat">${stat}</div>`
+      + `<div class="mapa-wrap"><table class="mapa">${html}</table></div>`
+      + `</section>`;
+  }).join('');
+  document.body.classList.add('print-mapa','print-mapa-full');
   setTimeout(()=>window.print(), 80);
 }
-window.addEventListener('afterprint', ()=>document.body.classList.remove('print-mapa'));
+window.addEventListener('afterprint', ()=>{
+  document.body.classList.remove('print-mapa','print-mapa-full');
+  const cont = document.getElementById('mapa-print-full');
+  if(cont) cont.innerHTML = '';
+});
 
 // Corpo Clínico → Word: gera um .doc (que o Word abre) com a lista de
 // profissionais em tabela editável, respeitando os filtros ativos na tela.
@@ -763,8 +793,9 @@ function faixaIdx(hhmm){
   }
   return 0;
 }
-function renderMapa(){
-  const dia = parseInt(document.getElementById('mapa-dia').value, 10);
+// Monta a grade Hora × Sala de UM dia e devolve {html, stat}. Usado tanto pela
+// renderização em tela (renderMapa) quanto pela exportação completa (todos os dias).
+function buildMapa(dia){
   // por sala: blocos do dia com faixa de início e de fim, ordenados por início
   const porSala = {};
   SALAS.forEach(s=>{
@@ -835,11 +866,16 @@ function renderMapa(){
     }
     h += '</tr>';
   }
-  document.getElementById('tbl-mapa').innerHTML = h + '</tbody>';
   const blocosDia = ESCALA.filter(e=>e.dia_semana===dia).length;
   const salasOcup = SALAS.filter(s=>ESCALA.some(e=>e.dia_semana===dia && e.sala_id===s.id)).length;
   let stat = `<b>${blocosDia}</b> atendimentos · ${salasOcup}/${SALAS.length} salas ocupadas`;
   if(conflitos) stat += ` · <span class="alerta-conf">⚠️ ${conflitos} conflito(s) de sala</span>`;
+  return { html: h + '</tbody>', stat };
+}
+function renderMapa(){
+  const dia = parseInt(document.getElementById('mapa-dia').value, 10);
+  const { html, stat } = buildMapa(dia);
+  document.getElementById('tbl-mapa').innerHTML = html;
   document.getElementById('stat-mapa').innerHTML = stat;
 }
 
