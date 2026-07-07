@@ -183,11 +183,18 @@ table.mapa td.conflito .cf{display:block;font-weight:700;font-size:11px;margin-t
   body.print-mapa table.mapa th,
   body.print-mapa table.mapa td{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   /* — Exportação COMPLETA (5 dias): 1 dia por página em paisagem — */
+  body.print-mapa-full .header{display:none!important;}   /* sem página de rosto vazia */
+  body.print-mapa-full .main{padding-top:0;}
   body.print-mapa-full .toolbar,
   body.print-mapa-full #view-mapa > .mapa-wrap{display:none!important;}
   body.print-mapa-full #mapa-print-full{display:block!important;}
   body.print-mapa-full .mapa-dia-print{break-inside:avoid;}
   body.print-mapa-full .mapa-dia-print + .mapa-dia-print{break-before:page;}
+  /* comprime a grade pra os 21 horários (08:30–18:30) caberem numa página só */
+  body.print-mapa-full .mapa-dia-titulo{font-size:13px;margin:0 0 2px;}
+  body.print-mapa-full .mapa-dia-print .stat{margin-bottom:4px;}
+  body.print-mapa-full table.mapa th,
+  body.print-mapa-full table.mapa td{padding:2px 6px;}
   /* — Roteiro (fluxograma) — */
   .fluxo{align-items:stretch;}
   .fbox,.fbox.sm{max-width:100%;box-shadow:none!important;break-inside:avoid;
