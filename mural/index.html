@@ -96,6 +96,49 @@
     .acao-btn.del:hover{border-color:rgba(255,123,123,0.5);color:#ff7b7b}
     .acao-btn.pin.on{border-color:rgba(245,166,35,0.5);color:#f5c842}
 
+    /* Reações */
+    .reacoes-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .reacao{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:20px;
+      padding:4px 11px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;line-height:1}
+    .reacao:hover{background:rgba(255,255,255,0.1)}
+    .reacao.ativa{background:rgba(245,166,35,0.16);border-color:rgba(245,166,35,0.5)}
+    .reacao .rn{font-size:12px;font-weight:700;color:rgba(255,255,255,0.75)}
+    .reacao.ativa .rn{color:#f5c842}
+
+    /* Métricas (comentários / visualizações) */
+    .aviso-metrics{display:flex;gap:6px;margin-left:2px}
+    .metric-btn{background:none;border:1px solid rgba(255,255,255,0.13);color:rgba(255,255,255,0.5);
+      font-size:11.5px;padding:4px 10px;border-radius:8px;cursor:pointer;transition:all .15s}
+    .metric-btn:hover{background:rgba(255,255,255,0.08);color:#fff}
+
+    /* Quem viu */
+    .viewers-box{margin-top:12px;padding:12px 14px;border-radius:12px;
+      background:rgba(126,184,247,0.06);border:1px solid rgba(126,184,247,0.18)}
+    .viewers-tit{font-size:12px;font-weight:700;color:#a9cdf7;margin-bottom:8px}
+    .viewers-lista{display:flex;flex-wrap:wrap;gap:6px}
+    .viewer{font-size:12px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.75)}
+    .viewers-vazio{font-size:12.5px;color:rgba(255,255,255,0.4)}
+
+    /* Comentários */
+    .coment-box{margin-top:12px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)}
+    .coment{margin-bottom:12px}
+    .coment-cab{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+    .coment-autor{font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.8)}
+    .coment-data{font-size:11px;color:rgba(255,255,255,0.35)}
+    .coment-del{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.35);
+      font-size:17px;cursor:pointer;line-height:1;padding:0 4px}
+    .coment-del:hover{color:#ff7b7b}
+    .coment-corpo{font-size:13.5px;color:rgba(255,255,255,0.82);line-height:1.55;white-space:pre-wrap;word-break:break-word}
+    .coment-vazio{font-size:12.5px;color:rgba(255,255,255,0.4);margin-bottom:12px}
+    .coment-novo{display:flex;gap:8px;margin-top:10px}
+    .coment-input{flex:1;padding:9px 12px;border-radius:9px;border:1px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.06);color:#fff;font-size:13.5px;font-family:inherit;outline:none}
+    .coment-input:focus{border-color:rgba(245,166,35,0.6)}
+    .coment-enviar{padding:9px 16px;border-radius:9px;border:none;background:rgba(245,166,35,0.92);
+      color:#1a1206;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .coment-enviar:hover{opacity:.9}
+
     .vazio{text-align:center;color:rgba(255,255,255,0.4);font-size:14px;padding:60px 20px}
     .vazio-ic{font-size:44px;margin-bottom:12px;opacity:.5}
 
@@ -215,7 +258,11 @@ const EQUIPES = {
 
 let me = null;          // { email, nome, isAdmin }
 let avisos = [];        // cache do feed
+let reacoes = [], comentarios = [], visualizacoes = [];
 let filtroAtivo = 'todas';
+const comentAbertos = new Set();   // avisos com comentários expandidos
+const viewersAbertos = new Set();  // avisos com "quem viu" expandido
+const REACOES = ['👍','❤️','🎉','👏','✅'];
 
 /* ---------- Auth ---------- */
 async function entrarComGoogle() {
@@ -274,6 +321,27 @@ async function carregarFeed() {
     return;
   }
   avisos = data || [];
+  const ids = avisos.map(a => a.id);
+  reacoes = []; comentarios = []; visualizacoes = [];
+
+  if (ids.length) {
+    // Registra que EU vi cada aviso (menos os meus). Não sobrescreve visualização antiga.
+    const paraRegistrar = avisos
+      .filter(a => a.autor_email !== me.email)
+      .map(a => ({ aviso_id: a.id, viewer_email: me.email, viewer_nome: me.nome }));
+    if (paraRegistrar.length) {
+      await sb.from('mural_visualizacoes')
+        .upsert(paraRegistrar, { onConflict: 'aviso_id,viewer_email', ignoreDuplicates: true });
+    }
+    const [rx, cm, vw] = await Promise.all([
+      sb.from('mural_reacoes').select('*').in('aviso_id', ids),
+      sb.from('mural_comentarios').select('*').in('aviso_id', ids).order('created_at', { ascending: true }),
+      sb.from('mural_visualizacoes').select('*').in('aviso_id', ids),  // RLS: só volta linhas dos meus avisos (ou tudo, se admin)
+    ]);
+    reacoes = rx.data || [];
+    comentarios = cm.data || [];
+    visualizacoes = vw.data || [];
+  }
   renderFeed();
 }
 
@@ -293,6 +361,9 @@ function renderFeed() {
     return;
   }
   feed.innerHTML = lista.map(cardHtml).join('');
+  // Reabre comentários / "quem viu" que estavam expandidos antes do reload
+  comentAbertos.forEach(id => { const b = document.getElementById('coments-' + id); if (b) { preencherComentarios(id); b.style.display = 'block'; } });
+  viewersAbertos.forEach(id => { const b = document.getElementById('viewers-' + id); if (b) { preencherViewers(id); b.style.display = 'block'; } });
 }
 
 function cardHtml(a) {
@@ -305,15 +376,34 @@ function cardHtml(a) {
       ? '<span class="badge-eq">' + EQUIPES[e].emoji + ' ' + esc(EQUIPES[e].label) + '</span>'
       : '').join('');
   }
-  const podeMexer = me.isAdmin || a.autor_email === me.email;
+  const souAutor = a.autor_email === me.email;
+
+  // Fixar e Apagar: só admin (autor NÃO apaga mais o próprio post)
   let acoes = '';
   if (me.isAdmin) {
     acoes += '<button class="acao-btn pin ' + (a.fixado ? 'on' : '') + '" onclick="togglePin(\'' + a.id + '\',' + (!a.fixado) + ')">' +
       (a.fixado ? '📌 Fixado' : '📌 Fixar') + '</button>';
-  }
-  if (podeMexer) {
     acoes += '<button class="acao-btn del" onclick="apagar(\'' + a.id + '\')">Apagar</button>';
   }
+
+  // Barra de reações
+  const rs = reacoes.filter(r => r.aviso_id === a.id);
+  const barra = REACOES.map(em => {
+    const dessa = rs.filter(r => r.emoji === em);
+    const eu = dessa.some(r => r.autor_email === me.email);
+    const quem = dessa.map(r => r.autor_nome || r.autor_email).join(', ');
+    return '<button class="reacao' + (eu ? ' ativa' : '') + '" title="' + esc(quem) + '" onclick="toggleReacao(\'' + a.id + '\',\'' + em + '\')">' +
+      em + (dessa.length ? '<span class="rn">' + dessa.length + '</span>' : '') + '</button>';
+  }).join('');
+
+  // Métricas: comentários (todos veem) + visualizações (só autor/admin veem)
+  const nComent = comentarios.filter(c => c.aviso_id === a.id).length;
+  let metricas = '<button class="metric-btn" onclick="toggleComentarios(\'' + a.id + '\')">💬 ' + nComent + '</button>';
+  if (souAutor || me.isAdmin) {
+    const nView = visualizacoes.filter(v => v.aviso_id === a.id).length;
+    metricas += '<button class="metric-btn" onclick="toggleViewers(\'' + a.id + '\')">👁 ' + nView + '</button>';
+  }
+
   return '<div class="aviso' + (a.fixado ? ' fixado' : '') + '">' +
     '<div class="aviso-top">' +
       (a.fixado ? '<span class="pin-flag">📌</span>' : '') +
@@ -321,11 +411,15 @@ function cardHtml(a) {
     '</div>' +
     '<div class="aviso-badges">' + badges + '</div>' +
     '<div class="aviso-corpo">' + esc(a.corpo) + '</div>' +
+    '<div class="reacoes-bar">' + barra + '</div>' +
     '<div class="aviso-foot">' +
       '<span class="aviso-autor">' + esc(a.autor_nome || a.autor_email) + '</span>' +
       '<span>· ' + dataRelativa(a.created_at) + '</span>' +
+      '<span class="aviso-metrics">' + metricas + '</span>' +
       (acoes ? '<span class="aviso-acoes">' + acoes + '</span>' : '') +
     '</div>' +
+    '<div class="viewers-box" id="viewers-' + a.id + '" style="display:none"></div>' +
+    '<div class="coment-box" id="coments-' + a.id + '" style="display:none"></div>' +
   '</div>';
 }
 
@@ -416,6 +510,102 @@ async function togglePin(id, fixar) {
   const { error } = await sb.from('mural_avisos').update({ fixado: fixar }).eq('id', id);
   if (error) return alert('Erro: ' + error.message);
   await carregarFeed();
+}
+
+/* ---------- Reações ---------- */
+async function toggleReacao(avisoId, emoji) {
+  const minha = reacoes.find(r => r.aviso_id === avisoId && r.emoji === emoji && r.autor_email === me.email);
+  if (minha) {
+    const { error } = await sb.from('mural_reacoes').delete().eq('id', minha.id);
+    if (error) return alert('Erro: ' + error.message);
+  } else {
+    const { error } = await sb.from('mural_reacoes')
+      .insert({ aviso_id: avisoId, emoji, autor_email: me.email, autor_nome: me.nome });
+    if (error) return alert('Erro: ' + error.message);
+  }
+  await carregarFeed();
+}
+
+/* ---------- Comentários ---------- */
+function toggleComentarios(avisoId) {
+  const box = document.getElementById('coments-' + avisoId);
+  if (comentAbertos.has(avisoId)) {
+    comentAbertos.delete(avisoId);
+    if (box) box.style.display = 'none';
+  } else {
+    comentAbertos.add(avisoId);
+    preencherComentarios(avisoId);
+    if (box) box.style.display = 'block';
+  }
+}
+function preencherComentarios(avisoId) {
+  const box = document.getElementById('coments-' + avisoId);
+  if (!box) return;
+  const lista = comentarios.filter(c => c.aviso_id === avisoId);
+  const itens = lista.map(c => {
+    const podeApagar = c.autor_email === me.email || me.isAdmin;
+    return '<div class="coment">' +
+      '<div class="coment-cab">' +
+        '<span class="coment-autor">' + esc(c.autor_nome || c.autor_email) + '</span>' +
+        '<span class="coment-data">' + dataRelativa(c.created_at) + '</span>' +
+        (podeApagar ? '<button class="coment-del" title="Apagar" onclick="apagarComentario(\'' + c.id + '\')">×</button>' : '') +
+      '</div>' +
+      '<div class="coment-corpo">' + esc(c.corpo) + '</div>' +
+    '</div>';
+  }).join('') || '<div class="coment-vazio">Nenhum comentário ainda. Seja o primeiro.</div>';
+  box.innerHTML =
+    '<div class="coment-lista">' + itens + '</div>' +
+    '<div class="coment-novo">' +
+      '<input class="coment-input" id="ci-' + avisoId + '" maxlength="1000" placeholder="Escreva um comentário..." ' +
+        'onkeydown="if(event.key===\'Enter\')addComentario(\'' + avisoId + '\')"/>' +
+      '<button class="coment-enviar" onclick="addComentario(\'' + avisoId + '\')">Enviar</button>' +
+    '</div>';
+}
+async function addComentario(avisoId) {
+  const inp = document.getElementById('ci-' + avisoId);
+  if (!inp) return;
+  const corpo = inp.value.trim();
+  if (!corpo) return;
+  inp.disabled = true;
+  const { error } = await sb.from('mural_comentarios')
+    .insert({ aviso_id: avisoId, corpo, autor_email: me.email, autor_nome: me.nome });
+  inp.disabled = false;
+  if (error) return alert('Erro ao comentar: ' + error.message);
+  comentAbertos.add(avisoId);
+  await carregarFeed();
+}
+async function apagarComentario(id) {
+  const { error } = await sb.from('mural_comentarios').delete().eq('id', id);
+  if (error) return alert('Erro: ' + error.message);
+  await carregarFeed();
+}
+
+/* ---------- Quem viu ---------- */
+function toggleViewers(avisoId) {
+  const box = document.getElementById('viewers-' + avisoId);
+  if (viewersAbertos.has(avisoId)) {
+    viewersAbertos.delete(avisoId);
+    if (box) box.style.display = 'none';
+  } else {
+    viewersAbertos.add(avisoId);
+    preencherViewers(avisoId);
+    if (box) box.style.display = 'block';
+  }
+}
+function preencherViewers(avisoId) {
+  const box = document.getElementById('viewers-' + avisoId);
+  if (!box) return;
+  const lista = visualizacoes.filter(v => v.aviso_id === avisoId)
+    .sort((a, b) => new Date(b.viewed_at) - new Date(a.viewed_at));
+  if (!lista.length) {
+    box.innerHTML = '<div class="viewers-tit">👁 Visualizações</div>' +
+      '<div class="viewers-vazio">Ninguém visualizou ainda.</div>';
+    return;
+  }
+  box.innerHTML = '<div class="viewers-tit">👁 Visto por ' + lista.length + '</div>' +
+    '<div class="viewers-lista">' +
+    lista.map(v => '<span class="viewer">' + esc(v.viewer_nome || v.viewer_email) + '</span>').join('') +
+    '</div>';
 }
 
 /* ---------- Utils ---------- */
