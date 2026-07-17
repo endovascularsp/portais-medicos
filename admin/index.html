@@ -323,6 +323,11 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
         <label class="card-check"><input type="checkbox" value="compras_solicitante"/><span>🛒 Portal de Compras (qualquer funcionário)</span></label>
       </div>
 
+      <div class="cards-grupo-label">📣 Comunicação</div>
+      <div class="cards-checks">
+        <label class="card-check"><input type="checkbox" value="mural"/><span>📣 Mural de Avisos (não-médicos)</span></label>
+      </div>
+
       <div class="cards-grupo-label">👨‍⚕️ Médico</div>
       <div class="cards-checks">
         <label class="card-check"><input type="checkbox" value="medico_proprio"/><span>👨‍⚕️ Portal individual do médico</span></label>
@@ -444,7 +449,7 @@ function render() {
 }
 
 function cardLabel(c) {
-  return ({ gestor:'🗂️ Gestor', atendimentos:'🏥 Atendimentos', previas:'📋 Prévias', corpo_clinico:'🩺 Corpo Clínico', medico_proprio:'👨‍⚕️ Médico' })[c] || c;
+  return ({ gestor:'🗂️ Gestor', atendimentos:'🏥 Atendimentos', previas:'📋 Prévias', corpo_clinico:'🩺 Corpo Clínico', mural:'📣 Mural', medico_proprio:'👨‍⚕️ Médico' })[c] || c;
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function iniciais(nome){
