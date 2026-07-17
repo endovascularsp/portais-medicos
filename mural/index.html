@@ -139,6 +139,19 @@
       color:#1a1206;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
     .coment-enviar:hover{opacity:.9}
 
+    /* Anexo — no aviso */
+    .aviso-anexo{margin-bottom:14px}
+    .anexo-baixar{background:rgba(126,184,247,0.10);border:1px solid rgba(126,184,247,0.32);color:#a9cdf7;
+      font-size:13px;padding:9px 14px;border-radius:10px;cursor:pointer;font-weight:600;transition:all .15s;
+      display:inline-flex;align-items:center;gap:6px;max-width:100%;text-align:left;line-height:1.3;word-break:break-word}
+    .anexo-baixar:hover{background:rgba(126,184,247,0.2)}
+    /* Anexo — seletor no modal */
+    .anexo-campo{display:flex;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+    .anexo-escolher{padding:9px 14px;border-radius:9px;border:1px dashed rgba(255,255,255,0.25);
+      background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.75);font-size:13px;cursor:pointer;font-weight:600}
+    .anexo-escolher:hover{background:rgba(255,255,255,0.08)}
+    .anexo-sel{font-size:12.5px;color:rgba(255,255,255,0.6);word-break:break-word}
+
     .vazio{text-align:center;color:rgba(255,255,255,0.4);font-size:14px;padding:60px 20px}
     .vazio-ic{font-size:44px;margin-bottom:12px;opacity:.5}
 
@@ -233,6 +246,13 @@
 
       <label class="campo-label">Para quais equipes?</label>
       <div class="equipes-grid" id="f-equipes"></div>
+
+      <label class="campo-label">Anexo (opcional)</label>
+      <div class="anexo-campo">
+        <input type="file" id="f-anexo" style="display:none" onchange="onAnexoEscolhido()"/>
+        <button type="button" class="anexo-escolher" onclick="document.getElementById('f-anexo').click()">📎 Escolher arquivo</button>
+        <span class="anexo-sel" id="f-anexo-nome"></span>
+      </div>
 
       <div class="modal-acoes">
         <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
@@ -411,6 +431,7 @@ function cardHtml(a) {
     '</div>' +
     '<div class="aviso-badges">' + badges + '</div>' +
     '<div class="aviso-corpo">' + esc(a.corpo) + '</div>' +
+    (a.anexo_path ? '<div class="aviso-anexo"><button class="anexo-baixar" onclick="baixarAnexo(\'' + a.id + '\')">📎 ' + esc(a.anexo_nome || 'Anexo') + '</button></div>' : '') +
     '<div class="reacoes-bar">' + barra + '</div>' +
     '<div class="aviso-foot">' +
       '<span class="aviso-autor">' + esc(a.autor_nome || a.autor_email) + '</span>' +
@@ -462,7 +483,32 @@ function abrirModal() {
   document.getElementById('f-corpo').value = '';
   document.getElementById('modal-erro').textContent = '';
   document.querySelectorAll('#f-equipes input').forEach(i => i.checked = false);
+  limparAnexo();
   document.getElementById('modal').classList.add('aberto');
+}
+
+const MAX_ANEXO_MB = 25;
+function onAnexoEscolhido() {
+  const inp = document.getElementById('f-anexo');
+  const span = document.getElementById('f-anexo-nome');
+  if (inp.files && inp.files[0]) {
+    const f = inp.files[0];
+    if (f.size > MAX_ANEXO_MB * 1024 * 1024) {
+      alert('Arquivo muito grande (máx. ' + MAX_ANEXO_MB + ' MB).');
+      limparAnexo();
+      return;
+    }
+    span.innerHTML = '📎 ' + esc(f.name) +
+      ' <a onclick="limparAnexo()" style="cursor:pointer;color:#ff7b7b;font-weight:700">×</a>';
+  } else {
+    span.textContent = '';
+  }
+}
+function limparAnexo() {
+  const inp = document.getElementById('f-anexo');
+  if (inp) inp.value = '';
+  const span = document.getElementById('f-anexo-nome');
+  if (span) span.textContent = '';
 }
 function fecharModal() { document.getElementById('modal').classList.remove('aberto'); }
 
@@ -486,10 +532,26 @@ async function publicar() {
   const btn = document.getElementById('btn-publicar');
   btn.disabled = true; btn.textContent = 'Publicando...';
 
+  // Sobe o anexo (se houver) antes de salvar o aviso
+  let anexo_path = null, anexo_nome = null;
+  const fileInp = document.getElementById('f-anexo');
+  if (fileInp.files && fileInp.files[0]) {
+    const f = fileInp.files[0];
+    const safe = f.name.replace(/[^\w.\-]+/g, '_');
+    const path = 'mural/' + Date.now() + '_' + safe;
+    const { error: eup } = await sb.storage.from('mural-anexos').upload(path, f);
+    if (eup) {
+      btn.disabled = false; btn.textContent = 'Publicar';
+      return erro.textContent = 'Erro ao enviar o anexo: ' + eup.message;
+    }
+    anexo_path = path; anexo_nome = f.name;
+  }
+
   const { error } = await sb.from('mural_avisos').insert({
     titulo, corpo, equipes,
     autor_email: me.email,
     autor_nome: me.nome,
+    anexo_path, anexo_nome,
   });
 
   btn.disabled = false; btn.textContent = 'Publicar';
@@ -501,9 +563,21 @@ async function publicar() {
 
 async function apagar(id) {
   if (!confirm('Apagar este aviso? Esta ação não pode ser desfeita.')) return;
+  const a = avisos.find(x => x.id === id);
+  if (a && a.anexo_path) {
+    await sb.storage.from('mural-anexos').remove([a.anexo_path]);  // best-effort; não bloqueia
+  }
   const { error } = await sb.from('mural_avisos').delete().eq('id', id);
   if (error) return alert('Erro ao apagar: ' + error.message);
   await carregarFeed();
+}
+
+async function baixarAnexo(avisoId) {
+  const a = avisos.find(x => x.id === avisoId);
+  if (!a || !a.anexo_path) return;
+  const { data, error } = await sb.storage.from('mural-anexos').createSignedUrl(a.anexo_path, 120);
+  if (error) return alert('Erro ao abrir o anexo: ' + error.message);
+  window.open(data.signedUrl, '_blank');
 }
 
 async function togglePin(id, fixar) {
