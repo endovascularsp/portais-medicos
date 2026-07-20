@@ -269,7 +269,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
           <table class='repasse-table'><thead><tr>
             <th>Profissional</th>
             <th style='text-align:right'>Valor Recebido</th>
-            <th style='text-align:right'>Imposto (18%)</th>
+            <th style='text-align:right'>Encargos</th>
             <th style='text-align:right'>Taxa Cart&#227;o</th>
             <th style='text-align:right'>Custo</th>
             <th style='text-align:right'>Valor L&#237;quido</th>
@@ -632,7 +632,7 @@ function exportarCSVProf(){
     '"Relatório de Honorários — '+d.profissional+'"',
     '"Período: '+d.mes+'/'+d.ano+'"','','"RESUMO"',
     '"Valor Recebido","'+fmtBRL(r['Valor recebido'])+'"',
-    '"Imposto (18%)","'+fmtBRL(r['Imposto (18%)'])+'"',
+    '"Encargos","'+fmtBRL(r['Imposto (18%)'])+'"',
     '"Taxa Cartão (3%)","'+fmtBRL(r['Taxa cartão (3%)'])+'"',
     '"Custo","'+fmtBRL(r['Custo'])+'"',
     '"Valor Líquido","'+fmtBRL(r['Valor Líquido'])+'"',

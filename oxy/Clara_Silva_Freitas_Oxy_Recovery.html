@@ -413,7 +413,7 @@ html{overflow-x:hidden;}
           <table class='repasse-table'><thead><tr>
             <th>Profissional</th>
             <th style='text-align:right'>Valor Recebido</th>
-            <th style='text-align:right'>Imposto (18%)</th>
+            <th style='text-align:right'>Encargos</th>
             <th style='text-align:right'>Taxa Cart&#227;o</th>
             <th style='text-align:right'>Custo</th>
             <th style='text-align:right'>Valor L&#237;quido</th>
@@ -713,7 +713,7 @@ function mostrarProf(id,btnEl){
 
   document.getElementById('metrics-prof').innerHTML=
     '<div class="kpi gold"><div class="kpi-ic">💰</div><div class="kpi-label">Valor Recebido</div><div class="kpi-val">'+fmtBRL(r['Valor recebido'])+'</div><div class="kpi-foot">'+dRecP+'<span style="opacity:0.6">Bruto compensado</span></div></div>'+
-    '<div class="kpi cinza"><div class="kpi-ic">🧮</div><div class="kpi-label">Valor L&iacute;quido</div><div class="kpi-val">'+fmtBRL(liq)+'</div><div class="kpi-foot">'+dLiqP+'<span style="opacity:0.6">Após impostos e taxas</span></div></div>'+
+    '<div class="kpi cinza"><div class="kpi-ic">🧮</div><div class="kpi-label">Valor L&iacute;quido</div><div class="kpi-val">'+fmtBRL(liq)+'</div><div class="kpi-foot">'+dLiqP+'<span style="opacity:0.6">Após custos fiscais e operacionais</span></div></div>'+
     '<div class="kpi gold"><div class="kpi-ic">💸</div><div class="kpi-label">Repasse do M&ecirc;s</div><div class="kpi-val">'+fmtBRL(rep)+'</div><div class="kpi-foot">'+dRepP+'<span style="opacity:0.6">'+fmtPct(liq>0?rep/liq:0)+' do líquido</span></div></div>'+
     '<div class="kpi navy-med"><div class="kpi-ic">📋</div><div class="kpi-label">Atendimentos</div><div class="kpi-val">'+(d.atendimentos||[]).length+'</div><div class="kpi-foot">'+dAtP+'<span style="opacity:0.6">Procedimentos no período</span></div></div>';
 
@@ -807,7 +807,7 @@ function exportarCSVProf(){
     '"Relatório de Honorários — '+d.profissional+'"',
     '"Período: '+d.mes+'/'+d.ano+'"','','"RESUMO"',
     '"Valor Recebido","'+fmtBRL(r['Valor recebido'])+'"',
-    '"Imposto (18%)","'+fmtBRL(r['Imposto (18%)'])+'"',
+    '"Encargos","'+fmtBRL(r['Imposto (18%)'])+'"',
     '"Taxa Cartão (3%)","'+fmtBRL(r['Taxa cartão (3%)'])+'"',
     '"Custo","'+fmtBRL(r['Custo'])+'"',
     '"Valor Líquido","'+fmtBRL(r['Valor Líquido'])+'"',
