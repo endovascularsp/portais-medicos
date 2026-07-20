@@ -259,6 +259,16 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
               </a>
           </div>
         </div>
+        <div class="hub-card prod" id="card-prod">
+          <div class="hub-card-icon">📊</div>
+          <div class="hub-card-title">Produtividade</div>
+          <div class="hub-card-desc">Atendimentos realizados<br>e procedimentos por período</div>
+          <div class="hub-card-links">
+              <a href="../produtividade/Mateus_Antunes_Nogueira_Produtividade.html?v=20260720" onclick="navegar(this,event)" class="hub-sub-btn prod-btn">
+                🏥 Endovascular SP
+              </a>
+          </div>
+        </div>
         <div class="hub-card insights" id="card-insights">
           <div class="hub-card-icon">&#x1F4A1;</div>
           <div class="hub-card-title">Dashboard de Insights</div>
@@ -276,7 +286,7 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
 </div>
 
 <script>
-const BLOB = "GVFByARvnt+huaQKl7NZtKafWLRrVpT4iTPSEFiFav/b1YFSFRxr/cOW6f5VR8k/fzGRRbutEGaQW579KA///PrMNL8MTMFG2SHqaVNd6n4qivuTVyTib32LFBy+dyV+1iOcNLCxCZCNz22BIMXyuacYsD7U2LalXQr7IaEy62fl4nmUs9iKFzWvcdg+2Dnu9L9UyFqyiWiWGnDK8rVagqHi75CUqwzAwHEhKkCt07JjmpKGlZTQ07Tor6jZ1w==";
+const BLOB = "WtOsPZENz28IA01glqlaD6nIpunOuxX/OF+WspljmzNTn2Hw2egah4BTzXU8iJK58+5xyGLYqg374/trdwx7krkkpVV1VXow/56zDnhX2QfIdOPfNdc64vp+xBTU99TUt+e7tePOEL0KT2lSVxuW5z/aO1KjoWVC2BGC8a+7qruCIVSPt74/5SE3JCYkwf84GrXkf06aciSPMs8wqV8XgXQsa4g19gSDOlsIBrGzfZeRNfazDKueWZJtuTYK7Ndx6XKwbZfxWK90ZvInVEC1HIaILd6yLX2geTMUBZ5NwVj51Y4DncvLehlseBH2S6cdAAoy+8GJvg==";
 
 async function derivarChave(senha, salt) {
   const enc = new TextEncoder();
