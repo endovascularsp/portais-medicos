@@ -365,7 +365,12 @@ async function checkAuth() {
     await sb.auth.signOut();
     return mostrarLogin();
   }
-  if (!(meu.cards || []).includes(CARD_REQUERIDO)) {
+  // 'gestor' é guarda-chuva: quem tem enxerga o card de Prévias no Gestor Hub
+  // (função coberto() de lá) e portanto precisa entrar aqui também — senão o
+  // card aparece no Hub e a página nega o acesso. Mesmo padrão do Corpo Clínico,
+  // do Mural, do Compras e da Confirmação de Agenda.
+  const cards = meu.cards || [];
+  if (!cards.includes(CARD_REQUERIDO) && !cards.includes('gestor')) {
     document.getElementById('login-erro').textContent = `Acesso negado: seu usuário não tem permissão pra acessar Prévias.`;
     await sb.auth.signOut();
     return mostrarLogin();
