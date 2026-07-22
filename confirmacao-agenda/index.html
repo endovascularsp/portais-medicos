@@ -281,9 +281,9 @@ function primeiroNome(nomeCompleto) {
 // misturando celular e fixo: "+55 (11) 99271-6193, +55 (11) 2702-9843".
 // A Envya precisa de 5511999999999.
 //
-// Auditoria da base (15.746 pacientes, jul/2026): 91,0% celular válido, 4,4% sem
-// telefone, 2,6% celular antigo sem o 9º dígito, 1,6% número estranho/internacional,
-// 0,3% só fixo. Os 4 últimos casos NÃO entram no CSV — cada um vira pendência com
+// Auditoria da base completa (20.746 pacientes, jul/2026): 90,8% celular válido,
+// 4,9% sem telefone, 2,1% celular antigo sem o 9º dígito, 1,3% formato inválido ou
+// internacional, 0,8% só fixo. Os 4 últimos casos NÃO entram no CSV — cada um vira pendência com
 // motivo próprio, porque mandar confirmação de consulta pro número errado expõe
 // dado de paciente. Corrigir é no cadastro do Saudevianet, não aqui no chute.
 function classificaTelefone(campoTelefone) {
