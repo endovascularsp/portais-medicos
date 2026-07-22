@@ -97,6 +97,9 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .aviso{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:11px;
       padding:13px 16px;font-size:12.5px;color:#fcd34d;line-height:1.6;margin-bottom:16px}
     .aviso b{color:#fde68a}
+    .info{background:rgba(46,111,192,0.10);border:1px solid rgba(46,111,192,0.32);border-radius:11px;
+      padding:13px 16px;font-size:12.5px;color:#a8cdf5;line-height:1.6;margin-bottom:16px}
+    .info b{color:#d6e8fb}
     .erro{background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.35);border-radius:11px;
       padding:13px 16px;font-size:13px;color:#ff9b9b;margin-bottom:16px}
     .loading{text-align:center;padding:40px;color:rgba(255,255,255,0.45);font-size:13px}
@@ -187,6 +190,13 @@ const PROFISSIONAIS = {
   'joão fukuda':                   ['o Dr. João Fukuda',            'Cirurgião Vascular'],
   'gustavo carneiro resstel':      ['o Dr. Gustavo Resstel',        'Cirurgião Vascular'],
   'paulo laredo pinto':            ['o Dr. Paulo Laredo',           'Cirurgião Vascular'],
+  'alvaro machado gaudencio':      ['o Dr. Alvaro Gaudencio',       'Cirurgião Vascular'],
+  'rafael moreira de sá':          ['o Dr. Rafael de Sá',           'Cirurgião Vascular'],
+  'stephanie yuri sakashita':      ['a Dra. Stephanie Sakashita',   'Cirurgiã Vascular'],
+  'emanoela da silva gonçalves':   ['a Dra. Emanoela Gonçalves',    'Cirurgiã Vascular'],
+  'teresa cristina alves duarte':  ['a Dra. Teresa Duarte',         'Cirurgiã Vascular'],
+  'nicole tenenbaum szajubok':     ['a Dra. Nicole Szajubok',       'Endocrinologista'],
+  'simone denise david':           ['a Dra. Simone David',          'Ginecologista'],
   'jonathan batista souza':        ['o Dr. Jonathan Batista',       'Cardiologista'],
   'eduardo araujo pires':          ['o Dr. Eduardo Pires',          'Ortopedista'],
   'mateus antunes nogueira':       ['o Dr. Mateus Nogueira',        'Médico do Esporte'],
@@ -356,41 +366,61 @@ async function gerar() {
       return;
     }
 
-    // 2) Consolida: 1 linha por paciente. O SVN cria uma linha por recurso, então
-    //    quem usa sala de procedimento aparece 2x (médico + sala). Ficamos com o
-    //    horário mais cedo e aproveitamos o médico de qualquer linha do mesmo horário.
-    const porPaciente = new Map();
-    for (const a of marcados) {
+    // 2) Consolida. O SVN cria uma linha por RECURSO, então quem usa sala de
+    //    procedimento aparece 2x (médico + sala) e receberia 2 mensagens iguais.
+    //
+    //    Regra (definida com o Thiago em 22/07/2026): uma linha por profissional
+    //    de verdade. Quem tem 2 médicos no mesmo dia RECEBE 2 mensagens — é o que
+    //    a equipe já faz hoje na mão. A sala só é absorvida quando existe um médico
+    //    no mesmo horário; sala sozinha vira uma linha com o profissional em branco.
+    const reais  = marcados.filter(a => !ehSala(a.nome_profissional));
+    const salas  = marcados.filter(a =>  ehSala(a.nome_profissional));
+
+    const linhasBrutas = new Map();   // chave: paciente|profissional|horário
+    const chave = (id, prof, hora) => `${id}|${(prof || '').toLowerCase()}|${hora}`;
+
+    for (const a of reais) {
       const p = partesData(a.agen_dt_inicio);
       if (!p) continue;
       const id = String(a.pess_id || '').toUpperCase();
-      const atual = porPaciente.get(id);
-      if (!atual) {
-        porPaciente.set(id, { pess_id: id, nome: a.pess_tx_nome, ...p,
-                              profissionais: [a.nome_profissional], horarios: new Set([p.hora]) });
-      } else {
-        atual.horarios.add(p.hora);
-        atual.profissionais.push(a.nome_profissional);
-        if (p.ordem < atual.ordem) Object.assign(atual, { ...p, horarios: atual.horarios,
-                                                          profissionais: atual.profissionais });
+      const k = chave(id, a.nome_profissional, p.hora);
+      if (!linhasBrutas.has(k)) {
+        linhasBrutas.set(k, { pess_id: id, nome: a.pess_tx_nome, medico: a.nome_profissional, ...p });
       }
     }
-    const pacientes = [...porPaciente.values()].sort((a, b) => a.ordem - b.ordem);
+    // Sala sem médico no mesmo paciente+horário -> vira linha própria, sem profissional.
+    const ocupado = new Set([...linhasBrutas.values()].map(l => `${l.pess_id}|${l.hora}`));
+    for (const a of salas) {
+      const p = partesData(a.agen_dt_inicio);
+      if (!p) continue;
+      const id = String(a.pess_id || '').toUpperCase();
+      if (ocupado.has(`${id}|${p.hora}`)) continue;
+      const k = chave(id, '', p.hora);
+      if (!linhasBrutas.has(k)) {
+        linhasBrutas.set(k, { pess_id: id, nome: a.pess_tx_nome, medico: '', ...p });
+      }
+    }
+    const agendamentosConsolidados = [...linhasBrutas.values()].sort((a, b) => a.ordem - b.ordem);
+
+    // Quantos pacientes vão receber mais de uma mensagem (mais de um profissional no dia).
+    const porPessoa = new Map();
+    for (const l of agendamentosConsolidados) {
+      porPessoa.set(l.pess_id, (porPessoa.get(l.pess_id) || 0) + 1);
+    }
 
     // 3) Telefones
     const rCt = await fetch(EDGE_CONTATOS, {
       method: 'POST',
       headers: { ...auth, 'content-type': 'application/json' },
-      body: JSON.stringify({ pess_ids: pacientes.map(p => p.pess_id) }),
+      body: JSON.stringify({ pess_ids: [...new Set(agendamentosConsolidados.map(p => p.pess_id))] }),
     });
     if (!rCt.ok) throw new Error(`Contatos: ${rCt.status} — ${(await rCt.text()).slice(0, 180)}`);
     const contatos = (await rCt.json()).contatos || {};
 
     // 4) Monta as linhas
     const prontos = [], pendencias = [], multiplos = [];
-    for (const p of pacientes) {
-      // Profissional: ignora sala/serviço e fica com o primeiro médico de verdade.
-      const nomeMedico = p.profissionais.find(n => n && !ehSala(n)) || '';
+    for (const p of agendamentosConsolidados) {
+      const nomeMedico = p.medico || '';
       const mapa = nomeMedico ? mapearProfissional(nomeMedico) : null;
       const celular = extrairCelular(contatos[p.pess_id]);
 
@@ -407,7 +437,7 @@ async function gerar() {
         _telefoneBruto: contatos[p.pess_id] || '',
       };
 
-      if (p.horarios.size > 1) multiplos.push({ ...linha, _horarios: [...p.horarios].sort().join(', ') });
+      if (porPessoa.get(p.pess_id) > 1) multiplos.push(linha);
 
       if (!celular) {
         const cls = classificaTelefone(linha._telefoneBruto);
@@ -445,7 +475,7 @@ function render({ agendamentos, marcados, prontos, pendencias, multiplos }) {
     <div class="kpi"><div class="kpi-label">A confirmar</div>
       <div class="kpi-val">${marcados.length}</div><div class="kpi-foot">situação "Marcado"</div></div>
     <div class="kpi ok"><div class="kpi-label">Vão no CSV</div>
-      <div class="kpi-val">${prontos.length}</div><div class="kpi-foot">pacientes únicos com celular</div></div>
+      <div class="kpi-val">${prontos.length}</div><div class="kpi-foot">mensagens a disparar</div></div>
     <div class="kpi ${semTelefone ? 'alerta' : ''}"><div class="kpi-label">Ficam de fora</div>
       <div class="kpi-val">${semTelefone}</div><div class="kpi-foot">sem celular no cadastro</div></div>
   </div>`;
@@ -458,9 +488,14 @@ function render({ agendamentos, marcados, prontos, pendencias, multiplos }) {
   }
 
   if (multiplos.length) {
-    h += `<div class="aviso"><b>Atenção:</b> ${multiplos.length} paciente(s) têm mais de um horário
-      nesse dia. O CSV leva só o mais cedo — confira se a mensagem faz sentido:
-      ${multiplos.map(m => `${esc(m._nomeCompleto)} (${esc(m._horarios)})`).join(' · ')}</div>`;
+    const porNome = new Map();
+    for (const m of multiplos) {
+      if (!porNome.has(m._nomeCompleto)) porNome.set(m._nomeCompleto, []);
+      porNome.get(m._nomeCompleto).push(m['Horário']);
+    }
+    h += `<div class="info">${porNome.size} paciente(s) têm mais de um profissional nesse dia e
+      <b>recebem uma mensagem por consulta</b> — igual ao que a equipe já faz hoje:
+      ${[...porNome].map(([n, hs]) => `${esc(n)} (${esc(hs.sort().join(', '))})`).join(' · ')}</div>`;
   }
 
   h += `<div class="secao">
