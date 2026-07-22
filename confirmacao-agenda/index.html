@@ -243,7 +243,12 @@ async function checkAuth() {
     document.getElementById('login-erro').textContent = `Email ${email} não está cadastrado. Contate um administrador.`;
     await sb.auth.signOut(); return mostrarLogin();
   }
-  if (!(meu.cards || []).includes(CARD_REQUERIDO)) {
+  // 'gestor' é guarda-chuva: quem tem enxerga o card no Gestor Hub (função
+  // coberto() de lá) e portanto precisa entrar aqui também — senão o card
+  // aparece no Hub e a página nega o acesso. Mesmo padrão do Corpo Clínico,
+  // do Mural e do Compras.
+  const cards = meu.cards || [];
+  if (!cards.includes(CARD_REQUERIDO) && !cards.includes('gestor')) {
     document.getElementById('login-erro').textContent = `Acesso negado: seu usuário não tem permissão pra acessar a Confirmação de Agenda.`;
     await sb.auth.signOut(); return mostrarLogin();
   }
