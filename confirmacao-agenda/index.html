@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Confirmação de Agenda — Endovascular SP</title>
+  <style>
+/* fix-mobile-overflow-v7 */
+html,body{overflow-x:hidden!important;max-width:100vw;}
+@media(max-width:600px){
+  body{padding:0!important;margin:0!important;}
+  header{flex-wrap:wrap!important;height:auto!important;padding:14px!important;gap:8px!important;}
+  .header-logo img{width:44px!important;height:44px!important;flex-shrink:0!important;}
+  .login-box{width:auto!important;max-width:calc(100vw - 24px)!important;}
+  .main{padding-left:14px!important;padding-right:14px!important;box-sizing:border-box;}
+  .toolbar{flex-direction:column!important;align-items:stretch!important;gap:10px!important;}
+  .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;}
+  .table-scroll{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%;}
+  img:not(.header-logo img){max-width:100%!important;height:auto;}
+}
+@media(max-width:380px){ .kpi-row{grid-template-columns:1fr!important;} }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2e;min-height:100vh;color:#fff;font-size:14px}
+
+    /* Login */
+    #login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2e 0%,#162d50 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .login-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;backdrop-filter:blur(10px);}
+    .login-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:22px}
+    .login-btn{width:100%;padding:13px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#1e4d8c,#2e6fc0);color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px}
+    .login-erro{color:#ff7b7b;font-size:13px;margin-top:10px;min-height:18px}
+
+    #main{display:none;min-height:100vh}
+    header{background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);
+      padding:20px 32px;display:flex;align-items:center;gap:16px;}
+    .header-logo img{width:44px;height:44px;flex-shrink:0;}
+    .header-info h1{font-size:16px;font-weight:700;color:#fff}
+    .header-info p{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+    .header-back{margin-left:auto;padding:7px 14px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;
+      background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);color:rgba(255,255,255,0.8);}
+    .header-back:hover{background:rgba(255,255,255,0.13)}
+    .header-badge{padding:4px 14px;border-radius:20px;
+      background:rgba(46,111,192,0.18);border:1px solid rgba(46,111,192,0.5);
+      color:#7fb3ee;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+    .header-user{font-size:12px;color:rgba(255,255,255,0.6);padding-left:14px;border-left:1px solid rgba(255,255,255,0.1);}
+    .header-user a{color:#7fb3ee;text-decoration:none}
+
+    .main{padding:26px 32px 60px;max-width:1240px;margin:0 auto}
+
+    .intro{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:20px;max-width:760px}
+    .intro b{color:rgba(255,255,255,0.8);font-weight:600}
+
+    .toolbar{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;
+      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+      border-radius:14px;padding:18px 20px;margin-bottom:22px}
+    .f-grp{display:flex;flex-direction:column;gap:6px}
+    .f-grp label{font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:rgba(255,255,255,0.42)}
+    .f-grp input[type=date]{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);
+      border-radius:9px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;color-scheme:dark;}
+    .btn{padding:11px 20px;border-radius:9px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+    .btn-primary{background:linear-gradient(135deg,#1e4d8c,#2e6fc0);color:#fff}
+    .btn-primary:hover{filter:brightness(1.12)}
+    .btn-csv{background:linear-gradient(135deg,#1a7a4a,#25a862);color:#fff;margin-left:auto}
+    .btn-csv:hover{filter:brightness(1.12)}
+    .btn:disabled{opacity:0.4;cursor:not-allowed;filter:none}
+
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .kpi{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:13px;padding:16px 18px;position:relative}
+    .kpi-label{font-size:10.5px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:rgba(255,255,255,0.4)}
+    .kpi-val{font-size:26px;font-weight:800;margin-top:7px;line-height:1}
+    .kpi-foot{font-size:11px;color:rgba(255,255,255,0.35);margin-top:6px}
+    .kpi.ok .kpi-val{color:#4ade80}
+    .kpi.alerta .kpi-val{color:#fbbf24}
+
+    .secao{margin-bottom:26px}
+    .secao-titulo{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+    .secao-sub{font-size:12px;color:rgba(255,255,255,0.42);margin-bottom:13px;line-height:1.5}
+    .pill{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.3px}
+    .pill-ok{background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.35)}
+    .pill-alerta{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.35)}
+
+    .table-scroll{overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.08)}
+    table{width:100%;border-collapse:collapse;font-size:13px;background:rgba(255,255,255,0.025)}
+    thead th{background:rgba(255,255,255,0.06);padding:11px 13px;text-align:left;font-size:10.5px;
+      font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:rgba(255,255,255,0.5);white-space:nowrap}
+    tbody td{padding:10px 13px;border-top:1px solid rgba(255,255,255,0.06);white-space:nowrap}
+    tbody tr:hover{background:rgba(255,255,255,0.03)}
+    td.mono{font-family:'Consolas','Courier New',monospace;font-size:12.5px;color:#9fd3ff}
+    td.falta{color:#fbbf24;font-style:italic}
+    .empty{text-align:center;padding:32px;color:rgba(255,255,255,0.35);font-size:13px}
+    .aviso{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:11px;
+      padding:13px 16px;font-size:12.5px;color:#fcd34d;line-height:1.6;margin-bottom:16px}
+    .aviso b{color:#fde68a}
+    .erro{background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.35);border-radius:11px;
+      padding:13px 16px;font-size:13px;color:#ff9b9b;margin-bottom:16px}
+    .loading{text-align:center;padding:40px;color:rgba(255,255,255,0.45);font-size:13px}
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-title">Confirmação de Agenda</div>
+    <div class="login-sub">Endovascular SP</div>
+    <button class="login-btn" onclick="entrarComGoogle()">Entrar com Google</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<div id="main">
+  <header>
+    <div class="header-logo"><img src="../assets/logo.png" alt="Endovascular SP" /></div>
+    <div class="header-info">
+      <h1>Confirmação de Agenda</h1>
+      <p>Lista para envio em massa via Envya</p>
+    </div>
+    <a href="../hub/Gestor_Hub.html" class="header-back" title="Voltar ao Hub do Gestor">🏠 Home</a>
+    <div class="header-badge">Agendamento</div>
+    <span class="header-user" id="header-info">—</span>
+  </header>
+
+  <div class="main">
+    <p class="intro">
+      Escolhe o dia que a equipe vai confirmar e o portal monta a planilha no formato que a
+      <b>Envya</b> espera. Entram só os agendamentos com situação <b>Marcado</b> — quem já está
+      <b>Confirmado</b>, <b>Remarcado</b> ou <b>Desmarcado</b> fica de fora. Os dados vêm direto do
+      Saudevianet (agenda + cadastro), sem exportar relatório na mão.
+    </p>
+
+    <div class="toolbar">
+      <div class="f-grp">
+        <label for="f-data">Dia a confirmar</label>
+        <input type="date" id="f-data"/>
+      </div>
+      <button class="btn btn-primary" id="btn-gerar" onclick="gerar()">Gerar lista</button>
+      <button class="btn btn-csv" id="btn-csv" onclick="baixarCSV()" disabled>⬇ Baixar CSV</button>
+    </div>
+
+    <div id="saida"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================================================
+// Confirmação de Agenda — gera o CSV de disparo em massa da Envya.
+//
+// Fluxo: agenda-svn (relatório #7 do SVN, agendamentos do dia)
+//        -> filtra situação "Marcado"
+//        -> consolida 1 linha por paciente
+//        -> contatos-svn (relatório #12) pra buscar o telefone
+//        -> CSV UTF-8 com BOM, separador ";", quebra CRLF (formato da Envya).
+// ============================================================================
+
+const CARD_REQUERIDO = 'confirmacao_agenda';
+
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+const EDGE_AGENDA   = `${SUPABASE_URL}/functions/v1/agenda-svn`;
+const EDGE_CONTATOS = `${SUPABASE_URL}/functions/v1/contatos-svn`;
+
+// Situação do SVN que significa "ainda não confirmou" — é o alvo do disparo.
+const SITUACAO_ALVO = 'marcado';
+
+// Perfis que aparecem em nome_profissional mas não são médico de verdade
+// (salas e serviços). Mesma ideia do PERFIS_NAO_MEDICOS das Prévias, ampliada
+// pras salas — aqui elas importam porque viram coluna no CSV.
+const NAO_E_PROFISSIONAL = [
+  /^sala\b/i,
+  /^agendamento cir[úu]rgico/i,
+  /^enfermagem$/i,
+];
+const ehSala = (nome) => NAO_E_PROFISSIONAL.some(re => re.test((nome || '').trim()));
+
+// De-para: nome do profissional no SVN -> como ele é citado na mensagem + especialidade.
+// Base: portal Corpo Clínico. O texto vai direto pro corpo da mensagem da Envya,
+// por isso leva o artigo ("o Dr." / "a Dra.") igual ao modelo aprovado.
+const PROFISSIONAIS = {
+  'igor rafael sincos':            ['o Dr. Igor Sincos',            'Cirurgião Vascular'],
+  'manoel augusto lobato':         ['o Dr. Manoel Lobato',          'Cirurgião Vascular'],
+  'joão fukuda':                   ['o Dr. João Fukuda',            'Cirurgião Vascular'],
+  'gustavo carneiro resstel':      ['o Dr. Gustavo Resstel',        'Cirurgião Vascular'],
+  'paulo laredo pinto':            ['o Dr. Paulo Laredo',           'Cirurgião Vascular'],
+  'jonathan batista souza':        ['o Dr. Jonathan Batista',       'Cardiologista'],
+  'eduardo araujo pires':          ['o Dr. Eduardo Pires',          'Ortopedista'],
+  'mateus antunes nogueira':       ['o Dr. Mateus Nogueira',        'Médico do Esporte'],
+  'augusto ferreira de carvalho caparica': ['o Dr. Augusto Caparica', 'Urologista'],
+  'andrea ostaszewski klepacz':    ['a Dra. Andrea Klepacz',        'Cirurgiã Vascular'],
+  'carolina mardegan':             ['a Dra. Carolina Mardegan',     'Cirurgiã Vascular'],
+  'clara silva freitas':           ['a Dra. Clara Freitas',         'Cirurgiã Vascular'],
+  'daniela viese roth':            ['a Dra. Daniela Viese',         'Cirurgiã Vascular'],
+  'christiane sayuri lopes inoue': ['a Dra. Christiane Inoue',      'Dermatologista'],
+  'simone matsuda torricelli':     ['a Dra. Simone Matsuda',        'Endocrinologista'],
+  'fernanda liporaci villela zuchi': ['a Fisioterapeuta Fernanda Liporaci', 'Fisioterapeuta'],
+  'maria fernanda r fernandes':    ['a Nutricionista Maria Fernanda', 'Nutricionista'],
+  'julia do valle bargieri':       ['a Nutricionista Julia Bargieri', 'Nutricionista'],
+};
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let CURRENT_USER = null;
+let LINHAS = [];      // linhas prontas do CSV
+let DATA_SEL = '';
+
+// ===== AUTH =====
+async function entrarComGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href.split('#')[0].split('?')[0] },
+  });
+  if (error) document.getElementById('login-erro').textContent = 'Erro: ' + error.message;
+}
+
+async function checkAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  const user = session ? session.user : null;
+  if (!user) return mostrarLogin();
+  const email = (user.email || '').toLowerCase();
+
+  const { data: meu, error } = await sb.from('users')
+    .select('email,name,role,cards').eq('email', email).maybeSingle();
+
+  if (error) {
+    document.getElementById('login-erro').textContent = `Erro ao verificar acesso: ${error.message}`;
+    await sb.auth.signOut(); return mostrarLogin();
+  }
+  if (!meu) {
+    document.getElementById('login-erro').textContent = `Email ${email} não está cadastrado. Contate um administrador.`;
+    await sb.auth.signOut(); return mostrarLogin();
+  }
+  if (!(meu.cards || []).includes(CARD_REQUERIDO)) {
+    document.getElementById('login-erro').textContent = `Acesso negado: seu usuário não tem permissão pra acessar a Confirmação de Agenda.`;
+    await sb.auth.signOut(); return mostrarLogin();
+  }
+  CURRENT_USER = { ...user, ...meu };
+  mostrarApp();
+}
+
+function mostrarLogin() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('main').style.display = 'none';
+}
+function mostrarApp() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  document.getElementById('header-info').innerHTML =
+    `${CURRENT_USER.email} <a href="#" onclick="sair();return false;">[sair]</a>`;
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  document.getElementById('f-data').value = amanha.toISOString().slice(0, 10);
+  gerar();
+}
+async function sair() { await sb.auth.signOut(); location.reload(); }
+
+// ===== NORMALIZAÇÕES =====
+
+// "MÉLANIE ISABELLE SMUGA" / "mélanie isabelle smuga" -> "Mélanie"
+// A Envya usa esse campo na saudação, então vai só o primeiro nome.
+function primeiroNome(nomeCompleto) {
+  const bruto = (nomeCompleto || '').trim().split(/\s+/)[0] || '';
+  if (!bruto) return '';
+  return bruto.charAt(0).toLocaleUpperCase('pt-BR') + bruto.slice(1).toLocaleLowerCase('pt-BR');
+}
+
+// O cadastro do SVN guarda os telefones num campo texto só, separados por vírgula,
+// misturando celular e fixo: "+55 (11) 99271-6193, +55 (11) 2702-9843".
+// A Envya precisa de 5511999999999.
+//
+// Auditoria da base (15.746 pacientes, jul/2026): 91,0% celular válido, 4,4% sem
+// telefone, 2,6% celular antigo sem o 9º dígito, 1,6% número estranho/internacional,
+// 0,3% só fixo. Os 4 últimos casos NÃO entram no CSV — cada um vira pendência com
+// motivo próprio, porque mandar confirmação de consulta pro número errado expõe
+// dado de paciente. Corrigir é no cadastro do Saudevianet, não aqui no chute.
+function classificaTelefone(campoTelefone) {
+  const candidatos = String(campoTelefone || '').split(',').map(t => t.replace(/\D/g, '')).filter(Boolean);
+  if (!candidatos.length) return { numero: '', tipo: 'vazio' };
+  let melhor = { numero: '', tipo: 'estranho' };
+  const rank = { celular: 4, celular_antigo: 3, internacional: 2, fixo: 1, estranho: 0 };
+  for (const bruto of candidatos) {
+    let n = bruto.replace(/^0+/, '');
+    let tipo = 'estranho';
+    if (n.length === 11) n = '55' + n;                          // DDD + 9 dígitos, sem país
+    else if (n.length === 10) n = '55' + n;                     // DDD + 8 dígitos, sem país
+    if (n.length === 13 && n.startsWith('55')) {
+      tipo = n[4] === '9' ? 'celular' : 'estranho';             // 55 + DDD + 9 + 8
+    } else if (n.length === 12 && n.startsWith('55')) {
+      // 55 + DDD + 8 dígitos: no plano antigo, celular começava com 6-9 e fixo com 2-5.
+      tipo = '6789'.includes(n[4]) ? 'celular_antigo' : 'fixo';
+    } else if (!n.startsWith('55') && n.length >= 10 && n.length <= 15) {
+      tipo = 'internacional';
+    }
+    if (rank[tipo] > rank[melhor.tipo]) melhor = { numero: n, tipo };
+  }
+  return melhor;
+}
+// Só o celular brasileiro completo é aproveitável pro disparo.
+function extrairCelular(campoTelefone) {
+  const c = classificaTelefone(campoTelefone);
+  return c.tipo === 'celular' ? c.numero : '';
+}
+const MOTIVO_TELEFONE = {
+  vazio:          'Sem telefone no cadastro',
+  fixo:           'Cadastro só tem telefone fixo',
+  celular_antigo: 'Celular antigo, sem o 9º dígito — atualizar no Saudevianet',
+  internacional:  'Número internacional — confirmar manualmente',
+  estranho:       'Telefone com formato inválido no cadastro',
+};
+
+const DIAS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+
+// "23/07/2026 18:30:00" -> { data:"23/07/2026", hora:"18:30", diaSemana:"Quinta-feira", ordem:... }
+function partesData(dtInicio) {
+  const m = String(dtInicio || '').match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+  if (!m) return null;
+  const [, dd, mm, aaaa, hh, mi] = m;
+  const d = new Date(+aaaa, +mm - 1, +dd, +hh, +mi);
+  return { data: `${dd}/${mm}/${aaaa}`, hora: `${hh}:${mi}`, diaSemana: DIAS[d.getDay()], ordem: d.getTime() };
+}
+
+function mapearProfissional(nome) {
+  const achado = PROFISSIONAIS[(nome || '').trim().toLowerCase()];
+  return achado ? { tratamento: achado[0], especialidade: achado[1] } : null;
+}
+
+// ===== GERAÇÃO =====
+async function gerar() {
+  DATA_SEL = document.getElementById('f-data').value;
+  if (!DATA_SEL) return;
+  LINHAS = [];
+  document.getElementById('btn-csv').disabled = true;
+  document.getElementById('btn-gerar').disabled = true;
+  document.getElementById('saida').innerHTML = '<div class="loading">Consultando o Saudevianet…</div>';
+
+  try {
+    const session = (await sb.auth.getSession()).data.session;
+    const auth = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${session?.access_token || SUPABASE_KEY}`,
+    };
+
+    // 1) Agenda do dia
+    const rAg = await fetch(`${EDGE_AGENDA}?data=${DATA_SEL}`, { headers: auth });
+    if (!rAg.ok) throw new Error(`Agenda: ${rAg.status} — ${(await rAg.text()).slice(0, 180)}`);
+    const agendamentos = (await rAg.json()).agendamentos || [];
+
+    const marcados = agendamentos.filter(
+      a => (a.siag_tx_situacao_agend || '').trim().toLowerCase() === SITUACAO_ALVO);
+
+    if (!marcados.length) {
+      render({ agendamentos, marcados: [], prontos: [], pendencias: [], multiplos: [] });
+      return;
+    }
+
+    // 2) Consolida: 1 linha por paciente. O SVN cria uma linha por recurso, então
+    //    quem usa sala de procedimento aparece 2x (médico + sala). Ficamos com o
+    //    horário mais cedo e aproveitamos o médico de qualquer linha do mesmo horário.
+    const porPaciente = new Map();
+    for (const a of marcados) {
+      const p = partesData(a.agen_dt_inicio);
+      if (!p) continue;
+      const id = String(a.pess_id || '').toUpperCase();
+      const atual = porPaciente.get(id);
+      if (!atual) {
+        porPaciente.set(id, { pess_id: id, nome: a.pess_tx_nome, ...p,
+                              profissionais: [a.nome_profissional], horarios: new Set([p.hora]) });
+      } else {
+        atual.horarios.add(p.hora);
+        atual.profissionais.push(a.nome_profissional);
+        if (p.ordem < atual.ordem) Object.assign(atual, { ...p, horarios: atual.horarios,
+                                                          profissionais: atual.profissionais });
+      }
+    }
+    const pacientes = [...porPaciente.values()].sort((a, b) => a.ordem - b.ordem);
+
+    // 3) Telefones
+    const rCt = await fetch(EDGE_CONTATOS, {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ pess_ids: pacientes.map(p => p.pess_id) }),
+    });
+    if (!rCt.ok) throw new Error(`Contatos: ${rCt.status} — ${(await rCt.text()).slice(0, 180)}`);
+    const contatos = (await rCt.json()).contatos || {};
+
+    // 4) Monta as linhas
+    const prontos = [], pendencias = [], multiplos = [];
+    for (const p of pacientes) {
+      // Profissional: ignora sala/serviço e fica com o primeiro médico de verdade.
+      const nomeMedico = p.profissionais.find(n => n && !ehSala(n)) || '';
+      const mapa = nomeMedico ? mapearProfissional(nomeMedico) : null;
+      const celular = extrairCelular(contatos[p.pess_id]);
+
+      const linha = {
+        Nome: primeiroNome(p.nome),
+        'WhatsApp Business': celular,
+        Data: p.data,
+        'Dia da semana': p.diaSemana,
+        'Horário': p.hora,
+        Profissional: mapa ? mapa.tratamento : '',
+        Especialidade: mapa ? mapa.especialidade : '',
+        _nomeCompleto: p.nome,
+        _medicoSVN: nomeMedico,
+        _telefoneBruto: contatos[p.pess_id] || '',
+      };
+
+      if (p.horarios.size > 1) multiplos.push({ ...linha, _horarios: [...p.horarios].sort().join(', ') });
+
+      if (!celular) {
+        const cls = classificaTelefone(linha._telefoneBruto);
+        pendencias.push({ ...linha, _motivo: MOTIVO_TELEFONE[cls.tipo] || MOTIVO_TELEFONE.estranho });
+      } else if (!mapa) {
+        pendencias.push({ ...linha, _motivo: nomeMedico
+          ? `Profissional "${nomeMedico}" não está no de-para`
+          : 'Agendamento sem médico (só sala/serviço)' });
+        prontos.push(linha);   // vai no CSV mesmo assim, com as 2 colunas vazias
+      } else {
+        prontos.push(linha);
+      }
+    }
+
+    LINHAS = prontos;
+    render({ agendamentos, marcados, prontos, pendencias, multiplos });
+    document.getElementById('btn-csv').disabled = !prontos.length;
+  } catch (e) {
+    document.getElementById('saida').innerHTML = `<div class="erro">Erro: ${e.message}</div>`;
+  } finally {
+    document.getElementById('btn-gerar').disabled = false;
+  }
+}
+
+// ===== RENDER =====
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render({ agendamentos, marcados, prontos, pendencias, multiplos }) {
+  const semTelefone = pendencias.filter(p => !p['WhatsApp Business']).length;
+  let h = '';
+
+  h += `<div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Agendamentos no dia</div>
+      <div class="kpi-val">${agendamentos.length}</div><div class="kpi-foot">todas as situações</div></div>
+    <div class="kpi"><div class="kpi-label">A confirmar</div>
+      <div class="kpi-val">${marcados.length}</div><div class="kpi-foot">situação "Marcado"</div></div>
+    <div class="kpi ok"><div class="kpi-label">Vão no CSV</div>
+      <div class="kpi-val">${prontos.length}</div><div class="kpi-foot">pacientes únicos com celular</div></div>
+    <div class="kpi ${semTelefone ? 'alerta' : ''}"><div class="kpi-label">Ficam de fora</div>
+      <div class="kpi-val">${semTelefone}</div><div class="kpi-foot">sem celular no cadastro</div></div>
+  </div>`;
+
+  if (!marcados.length) {
+    h += `<div class="empty">Nenhum agendamento com situação "Marcado" nesse dia —
+          ou já está tudo confirmado, ou a agenda ainda não foi montada.</div>`;
+    document.getElementById('saida').innerHTML = h;
+    return;
+  }
+
+  if (multiplos.length) {
+    h += `<div class="aviso"><b>Atenção:</b> ${multiplos.length} paciente(s) têm mais de um horário
+      nesse dia. O CSV leva só o mais cedo — confira se a mensagem faz sentido:
+      ${multiplos.map(m => `${esc(m._nomeCompleto)} (${esc(m._horarios)})`).join(' · ')}</div>`;
+  }
+
+  h += `<div class="secao">
+    <div class="secao-titulo">Prévia do CSV <span class="pill pill-ok">${prontos.length} linha(s)</span></div>
+    <div class="secao-sub">Exatamente o que vai no arquivo, na ordem do horário.</div>
+    <div class="table-scroll"><table><thead><tr>
+      <th>Nome</th><th>WhatsApp Business</th><th>Data</th><th>Dia da semana</th>
+      <th>Horário</th><th>Profissional</th><th>Especialidade</th></tr></thead><tbody>`;
+  if (!prontos.length) {
+    h += `<tr><td colspan="7" class="empty">Nenhuma linha pronta.</td></tr>`;
+  } else {
+    for (const l of prontos) {
+      h += `<tr>
+        <td>${esc(l.Nome)}</td>
+        <td class="mono">${esc(l['WhatsApp Business'])}</td>
+        <td>${esc(l.Data)}</td>
+        <td>${esc(l['Dia da semana'])}</td>
+        <td>${esc(l['Horário'])}</td>
+        <td class="${l.Profissional ? '' : 'falta'}">${esc(l.Profissional || '— em branco —')}</td>
+        <td class="${l.Especialidade ? '' : 'falta'}">${esc(l.Especialidade || '— em branco —')}</td>
+      </tr>`;
+    }
+  }
+  h += `</tbody></table></div></div>`;
+
+  if (pendencias.length) {
+    h += `<div class="secao">
+      <div class="secao-titulo">Pendências <span class="pill pill-alerta">${pendencias.length}</span></div>
+      <div class="secao-sub">Quem está sem celular <b>não entra no CSV</b> — precisa de confirmação manual
+        ou de atualizar o cadastro no Saudevianet. Quem só está sem o de-para do profissional entra
+        no arquivo, mas com as colunas Profissional e Especialidade vazias.</div>
+      <div class="table-scroll"><table><thead><tr>
+        <th>Paciente</th><th>Horário</th><th>Profissional no SVN</th>
+        <th>Telefone no cadastro</th><th>Motivo</th></tr></thead><tbody>`;
+    for (const p of pendencias) {
+      h += `<tr>
+        <td>${esc(p._nomeCompleto)}</td>
+        <td>${esc(p['Horário'])}</td>
+        <td>${esc(p._medicoSVN || '—')}</td>
+        <td class="mono">${esc(p._telefoneBruto || '—')}</td>
+        <td class="falta">${esc(p._motivo)}</td>
+      </tr>`;
+    }
+    h += `</tbody></table></div></div>`;
+  }
+
+  document.getElementById('saida').innerHTML = h;
+}
+
+// ===== CSV =====
+// Formato da Envya (validado contra o modelo): UTF-8 com BOM, separador ";",
+// quebra de linha CRLF. Sem aspas — os campos não têm ";" por construção.
+const COLUNAS = ['Nome','WhatsApp Business','Data','Dia da semana','Horário','Profissional','Especialidade'];
+
+function baixarCSV() {
+  if (!LINHAS.length) return;
+  const limpa = (v) => String(v ?? '').replace(/[;\r\n]/g, ' ').trim();
+  const linhas = [COLUNAS.join(';')];
+  for (const l of LINHAS) linhas.push(COLUNAS.map(c => limpa(l[c])).join(';'));
+  const texto = '﻿' + linhas.join('\r\n') + '\r\n';
+
+  const [aaaa, mm, dd] = DATA_SEL.split('-');
+  const blob = new Blob([texto], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Confirmação de agenda - ${dd}-${mm}-${aaaa}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+// ===== INIT =====
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') checkAuth();
+});
+checkAuth();
+</script>
+</body>
+</html>

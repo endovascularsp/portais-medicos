@@ -173,6 +173,8 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .hub-card.hospitalar:hover{border-color:rgba(79,209,197,0.60);background:rgba(79,209,197,0.06)}
     .hub-card.previas{border-color:rgba(192,132,252,0.30)}
     .hub-card.previas:hover{border-color:rgba(192,132,252,0.60);background:rgba(192,132,252,0.06)}
+    .hub-card.confirmacao{border-color:rgba(45,212,191,0.30)}
+    .hub-card.confirmacao:hover{border-color:rgba(45,212,191,0.60);background:rgba(45,212,191,0.06)}
     .hub-card.acessos{border-color:rgba(251,191,36,0.30)}
     .hub-card.acessos:hover{border-color:rgba(251,191,36,0.60);background:rgba(251,191,36,0.06)}
     .hub-card.auditoria{border-color:rgba(167,139,250,0.30)}
@@ -221,6 +223,8 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .hub-sub-btn.hospitalar:hover{background:rgba(79,209,197,0.20);border-color:#4fd1c5}
     .hub-sub-btn.previas{color:#c084fc;border-color:rgba(192,132,252,0.40);background:rgba(192,132,252,0.08);}
     .hub-sub-btn.previas:hover{background:rgba(192,132,252,0.20);border-color:#c084fc}
+    .hub-sub-btn.confirmacao-btn{color:#2dd4bf;border-color:rgba(45,212,191,0.40);background:rgba(45,212,191,0.08);}
+    .hub-sub-btn.confirmacao-btn:hover{background:rgba(45,212,191,0.20);border-color:#2dd4bf}
     .hub-sub-btn.acessos{color:#fbbf24;border-color:rgba(251,191,36,0.40);background:rgba(251,191,36,0.08);}
     .hub-sub-btn.acessos:hover{background:rgba(251,191,36,0.20);border-color:#fbbf24}
     .hub-sub-btn.auditoria{color:#a78bfa;border-color:rgba(167,139,250,0.40);background:rgba(167,139,250,0.08);}
@@ -394,6 +398,17 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
         </div>
       </div>
 
+      <div class="hub-card confirmacao" data-card="confirmacao_agenda">
+        <div class="hub-card-icon">✅</div>
+        <div class="hub-card-title">Confirmação de Agenda</div>
+        <div class="hub-card-desc">Monta a planilha de confirmação em massa da Envya a partir da agenda do dia no Saudevianet</div>
+        <div class="hub-card-links">
+          <a href="../confirmacao-agenda/?v=20260722" class="hub-sub-btn confirmacao-btn">
+            ✅ Gerar Lista
+          </a>
+        </div>
+      </div>
+
       <div class="hub-card compras" data-card="compras_solicitante">
         <div class="hub-card-icon">🛒</div>
         <div class="hub-card-title">Compras</div>
@@ -520,6 +535,7 @@ async function checkAuth() {
     if (reqCard.startsWith('gestor_')) return true;
     if (reqCard.startsWith('compras_')) return true;
     if (reqCard === 'previas' || reqCard === 'corpo_clinico') return true;
+    if (reqCard === 'confirmacao_agenda') return true;
     if (reqCard === 'mural') return true;
     return false;
   }
