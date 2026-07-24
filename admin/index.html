@@ -153,6 +153,10 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .badge.role-recepcao{background:rgba(192,132,252,0.15);color:#c084fc;border:1px solid rgba(192,132,252,0.35)}
     .badge.card{background:rgba(109,213,160,0.10);color:#6dd5a0;border:1px solid rgba(109,213,160,0.30)}
     .badge.card-vazio{background:rgba(160,160,160,0.10);color:#888;border:1px solid rgba(160,160,160,0.30)}
+    .badge.equipe{background:rgba(126,184,247,0.12);color:#a9cdf7;border:1px solid rgba(126,184,247,0.32);
+      text-transform:none;letter-spacing:0;font-size:11px}
+    .badge.equipe-vazia{background:rgba(160,160,160,0.10);color:#888;border:1px solid rgba(160,160,160,0.30);
+      text-transform:none;letter-spacing:0;font-size:11px;cursor:help}
 
     .empty{padding:60px;text-align:center;color:rgba(255,255,255,0.4)}
 
@@ -247,11 +251,12 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
           <tr>
             <th>Usuário</th>
             <th>Função</th>
+            <th>Equipe</th>
             <th>Portais liberados</th>
             <th class="col-acoes"></th>
           </tr>
         </thead>
-        <tbody id="tbody"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody>
+        <tbody id="tbody"><tr><td colspan="5" class="empty">Carregando...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -286,11 +291,11 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       <input type="text" id="f-senha" placeholder="ex: jul2026b — senha que abre o Hub do médico" autocomplete="off" />
       <div class="form-info">Só pra médico. É a senha que decripta o portal dele — o sistema injeta sozinho no login Google (o médico nunca digita). Ao <strong>editar</strong>, deixe em branco para manter a atual.</div>
 
-      <label>Departamento</label>
+      <label>Equipe</label>
       <select id="f-departamento">
-        <option value="">— Sem departamento —</option>
+        <option value="">— Sem equipe —</option>
       </select>
-      <div class="form-info">Define quem aprova as solicitações de compra desse funcionário (gestor do departamento). Opcional pra médicos e admins; <strong>obrigatório</strong> pra funcionários que vão usar o Portal Compras.</div>
+      <div class="form-info">A equipe de que a pessoa faz parte. Serve pra <strong>duas coisas</strong>: define quem aprova as solicitações dela no Portal Compras, e define <strong>quais avisos do Mural ela recebe</strong> — quem fica sem equipe só enxerga os avisos marcados como "Todos".</div>
 
       </div>
       <div>
@@ -326,7 +331,7 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
 
       <div class="cards-grupo-label">📣 Comunicação</div>
       <div class="cards-checks">
-        <label class="card-check"><input type="checkbox" value="mural"/><span>📣 Mural de Avisos (não-médicos)</span></label>
+        <label class="card-check"><input type="checkbox" value="mural"/><span>📣 Mural de Avisos</span></label>
       </div>
 
       <div class="cards-grupo-label">👨‍⚕️ Médico</div>
@@ -402,14 +407,22 @@ function mostrarApp() {
 }
 async function sair() { await sb.auth.signOut(); location.reload(); }
 
+// Carrega TODAS as equipes (inclusive inativas) pra conseguir rotular quem ainda
+// aponta pra uma equipe aposentada; o select só oferece as ativas.
 async function carregarDepartamentos() {
   const { data, error } = await sb.from('compras_departamentos')
-    .select('id, nome').eq('ativo', true).order('nome');
-  if (error) { console.warn('Falha ao carregar departamentos:', error.message); return; }
+    .select('id, nome, ativo').order('nome');
+  if (error) { console.warn('Falha ao carregar equipes:', error.message); return; }
   DEPARTAMENTOS = data || [];
   const sel = $('f-departamento');
-  sel.innerHTML = '<option value="">— Sem departamento —</option>' +
-    DEPARTAMENTOS.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+  sel.innerHTML = '<option value="">— Sem equipe —</option>' +
+    DEPARTAMENTOS.filter(d => d.ativo).map(d => `<option value="${d.id}">${esc(d.nome)}</option>`).join('');
+}
+
+function equipeNome(id) {
+  const d = DEPARTAMENTOS.find(x => x.id === id);
+  if (!d) return null;
+  return d.ativo ? d.nome : d.nome + ' (inativa)';
 }
 
 async function carregar() {
@@ -429,12 +442,19 @@ function render() {
     ? USUARIOS.filter(u => (u.name||'').toLowerCase().includes(filtro) || (u.email||'').toLowerCase().includes(filtro))
     : USUARIOS;
   if (!filtrados.length) {
-    $('tbody').innerHTML = '<tr><td colspan="4" class="empty">Nenhum usuário.</td></tr>';
+    $('tbody').innerHTML = '<tr><td colspan="5" class="empty">Nenhum usuário.</td></tr>';
     return;
   }
   $('tbody').innerHTML = filtrados.map(u => {
     const cards = (u.cards || []).map(c => `<span class="badge card">${cardLabel(c)}</span>`).join('') || '<span class="badge card-vazio">nenhum</span>';
     const role = esc(u.role||'');
+    // Sem equipe + card do Mural = a pessoa entra no Mural mas só vê os avisos "Todos".
+    const eq = equipeNome(u.departamento_id);
+    const equipe = eq
+      ? `<span class="badge equipe">${esc(eq)}</span>`
+      : `<span class="badge equipe-vazia" title="${(u.cards||[]).includes('mural')
+          ? 'Sem equipe: essa pessoa só vai ver os avisos marcados como Todos.'
+          : 'Sem equipe definida.'}">sem equipe${(u.cards||[]).includes('mural') ? ' ⚠️' : ''}</span>`;
     return `<tr>
       <td><div class="quem">
         <div class="av r-${role}">${esc(iniciais(u.name))}</div>
@@ -443,6 +463,7 @@ function render() {
           ${u.slug ? `<div class="sl">${esc(u.slug)}</div>` : ''}</div>
       </div></td>
       <td><span class="badge role-${role}">${role}</span></td>
+      <td>${equipe}</td>
       <td>${cards}</td>
       <td class="col-acoes"><button class="btn outline" onclick="editar('${esc(u.email)}')">Editar</button></td>
     </tr>`;
@@ -548,9 +569,14 @@ async function salvar() {
     if (!MODAL_EDIT_EMAIL && !senha) { $('form-erro').textContent = 'Médico precisa da Senha legada do Hub (a que abre o portal dele). Sem ela o acesso via Google ainda vai pedir senha.'; return; }
   }
 
-  // Aviso de UX: solicitante de Compras sem departamento não terá aprovador
+  // Aviso de UX: solicitante de Compras sem equipe não terá aprovador
   if (cards.includes('compras_solicitante') && !departamento_id) {
-    if (!confirm('Esse usuário tem o card Compras-Solicitante mas sem Departamento. As solicitações dele não terão aprovador automático. Salvar mesmo assim?')) return;
+    if (!confirm('Esse usuário tem o card Compras-Solicitante mas sem Equipe. As solicitações dele não terão aprovador automático. Salvar mesmo assim?')) return;
+  }
+
+  // Aviso de UX: no Mural a equipe é o que define o que a pessoa enxerga
+  if (cards.includes('mural') && !departamento_id && role !== 'admin') {
+    if (!confirm('Esse usuário tem o card Mural mas está sem Equipe. Ele só vai enxergar os avisos marcados como "Todos" — nenhum aviso direcionado. Salvar mesmo assim?')) return;
   }
 
   const payload = { email, name, role, slug, cards, departamento_id };

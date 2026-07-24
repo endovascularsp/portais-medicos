@@ -47,6 +47,13 @@
     .btn-voltar{color:rgba(255,255,255,0.6);font-size:13px;text-decoration:none;padding:6px 12px;
       border-radius:8px;border:1px solid rgba(255,255,255,0.12)}
     .btn-voltar:hover{background:rgba(255,255,255,0.06)}
+    /* Equipe do usuário — é ela que define quais avisos ele recebe */
+    .equipe-badge{padding:4px 13px;border-radius:20px;font-size:11.5px;font-weight:600;
+      background:rgba(126,184,247,0.14);border:1px solid rgba(126,184,247,0.35);color:#a9cdf7}
+    .equipe-badge:empty{display:none}
+    .equipe-badge.admin{background:rgba(245,166,35,0.14);border-color:rgba(245,166,35,0.40);color:#f5c842}
+    .equipe-badge.alerta{background:rgba(255,123,123,0.12);border-color:rgba(255,123,123,0.40);
+      color:#ff9d9d;cursor:help}
 
     .wrap{max-width:820px;margin:0 auto;padding:40px 20px 70px}
     .titulo-linha{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap}
@@ -165,6 +172,7 @@
     }
     .modal-titulo{font-size:19px;font-weight:700;margin-bottom:20px}
     .campo-label{font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.6);margin-bottom:7px;display:block}
+    .campo-ajuda{font-size:11.5px;color:rgba(255,255,255,0.42);margin:-3px 0 9px;line-height:1.45}
     .inp{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
       background:rgba(255,255,255,0.06);color:#fff;font-size:14.5px;font-family:inherit;outline:none;
       margin-bottom:18px;transition:border-color .2s}
@@ -212,6 +220,7 @@
         <p>Endovascular SP</p>
       </div>
       <div class="header-right">
+        <span class="equipe-badge" id="minha-equipe"></span>
         <a class="btn-voltar" href="../hub/Gestor_Hub.html">← Hub</a>
         <span class="header-badge">Interno</span>
       </div>
@@ -224,7 +233,7 @@
         </div>
         <button class="btn-novo" onclick="abrirModal()">＋ Novo aviso</button>
       </div>
-      <div class="sub-mural">Avisos internos da clínica. Publique e marque as equipes a que se aplica.</div>
+      <div class="sub-mural">Avisos internos da clínica. Cada aviso vai só para as equipes marcadas — você recebe os da sua equipe e os marcados como "Todos".</div>
 
       <div class="filtros" id="filtros"></div>
 
@@ -245,6 +254,7 @@
       <textarea class="inp" id="f-corpo" maxlength="4000" placeholder="Escreva o aviso..."></textarea>
 
       <label class="campo-label">Para quais equipes?</label>
+      <div class="campo-ajuda">Só quem é dessas equipes vai receber o aviso. Os demais nem chegam a ver que ele existe.</div>
       <div class="equipes-grid" id="f-equipes"></div>
 
       <label class="campo-label">Anexo (opcional)</label>
@@ -267,16 +277,33 @@ const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Equipes disponíveis (slug -> rótulo). 'todos' é tratado à parte.
-const EQUIPES = {
-  recepcao:       { label: 'Recepção',       emoji: '🛎️' },
-  atendimento:    { label: 'Atendimento',    emoji: '💬' },
-  enfermagem:     { label: 'Enfermagem',     emoji: '💉' },
-  concierge:      { label: 'Concierge',      emoji: '🎩' },
-  administrativo: { label: 'Administrativo', emoji: '🗂️' },
+// Equipes vêm do CADASTRO (tabela compras_departamentos = tabela única de equipes,
+// a mesma que o Gestão de Acessos usa). Pra criar uma equipe nova basta inserir lá —
+// não precisa mexer neste arquivo. 'todos' é tratado à parte.
+let EQUIPES = {};        // slug -> { label, emoji }
+let EQUIPE_POR_ID = {};  // users.departamento_id -> slug
+const EQUIPE_EMOJI = {
+  recepcao:'🛎️', agendamento:'📅', concierge:'🎩', enfermagem:'💉',
+  cirurgias:'🏥', administrativo:'🗂️', financeiro:'💰', faturamento:'🧾',
+  marketing:'🎯', medicos:'👨‍⚕️',
 };
 
-let me = null;          // { email, nome, isAdmin }
+async function carregarEquipes() {
+  const { data, error } = await sb.from('compras_departamentos')
+    .select('id,nome,slug').eq('ativo', true).not('slug', 'is', null).order('nome');
+  if (error) { console.warn('Falha ao carregar equipes:', error.message); return; }
+  EQUIPES = {}; EQUIPE_POR_ID = {};
+  (data || []).forEach(d => {
+    EQUIPES[d.slug] = { label: d.nome, emoji: EQUIPE_EMOJI[d.slug] || '🏷️' };
+    EQUIPE_POR_ID[d.id] = d.slug;
+  });
+}
+
+function rotuloEquipe(slug) {
+  return EQUIPES[slug] || { label: slug, emoji: '🏷️' };
+}
+
+let me = null;          // { email, nome, isAdmin, equipe }
 let avisos = [];        // cache do feed
 let reacoes = [], comentarios = [], visualizacoes = [];
 let filtroAtivo = 'todas';
@@ -306,7 +333,7 @@ async function checkAuth() {
   const email = (user.email || '').toLowerCase();
 
   const { data, error } = await sb.from('users')
-    .select('email,name,role,cards').eq('email', email).maybeSingle();
+    .select('email,name,role,cards,departamento_id').eq('email', email).maybeSingle();
 
   if (error || !data) {
     await sb.auth.signOut();
@@ -320,13 +347,39 @@ async function checkAuth() {
     return mostrarLogin('Você não tem acesso ao Mural de Avisos.<br/>Contate um administrador.');
   }
 
-  me = { email, nome: data.name || email.split('@')[0], isAdmin: data.role === 'admin' };
+  await carregarEquipes();
+  me = {
+    email,
+    nome: data.name || email.split('@')[0],
+    isAdmin: data.role === 'admin',
+    equipe: EQUIPE_POR_ID[data.departamento_id] || null,   // slug da equipe dele no cadastro
+  };
   document.getElementById('saudacao').textContent = (me.nome || 'time').split(' ')[0];
+  mostrarMinhaEquipe();
   document.getElementById('login-overlay').style.display = 'none';
   document.getElementById('main').style.display = 'block';
   montarFiltros();
   montarCheckboxesEquipes();
   await carregarFeed();
+}
+
+// Mostra a equipe do usuário no header — é ela que define o que ele enxerga.
+// Sem equipe no cadastro, a pessoa só recebe os avisos marcados como "Todos".
+function mostrarMinhaEquipe() {
+  const el = document.getElementById('minha-equipe');
+  if (!el) return;
+  if (me.isAdmin) {
+    el.textContent = '🗝️ Admin · vê todos os avisos';
+    el.className = 'equipe-badge admin';
+  } else if (me.equipe) {
+    const eq = rotuloEquipe(me.equipe);
+    el.textContent = eq.emoji + ' ' + eq.label;
+    el.className = 'equipe-badge';
+  } else {
+    el.textContent = '⚠️ Sem equipe';
+    el.title = 'Você não está em nenhuma equipe no cadastro, então só recebe os avisos marcados como "Todos". Peça a um administrador para definir sua equipe.';
+    el.className = 'equipe-badge alerta';
+  }
 }
 
 /* ---------- Feed ---------- */
@@ -392,9 +445,12 @@ function cardHtml(a) {
   if (eqs.includes('todos')) {
     badges = '<span class="badge-eq todos">📢 Todos</span>';
   } else {
-    badges = eqs.map(e => EQUIPES[e]
-      ? '<span class="badge-eq">' + EQUIPES[e].emoji + ' ' + esc(EQUIPES[e].label) + '</span>'
-      : '').join('');
+    // rotuloEquipe() dá fallback: equipe removida do cadastro ainda aparece
+    // pelo slug em vez de sumir sem deixar rastro.
+    badges = eqs.map(e => {
+      const eq = rotuloEquipe(e);
+      return '<span class="badge-eq">' + eq.emoji + ' ' + esc(eq.label) + '</span>';
+    }).join('');
   }
   const souAutor = a.autor_email === me.email;
 
