@@ -150,7 +150,7 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       text-transform:uppercase;letter-spacing:0.5px;margin:1px 2px}
     .badge.role-admin{background:rgba(245,166,35,0.15);color:#f5c842;border:1px solid rgba(245,166,35,0.35)}
     .badge.role-medico{background:rgba(126,184,247,0.15);color:#7eb8f7;border:1px solid rgba(126,184,247,0.35)}
-    .badge.role-recepcao{background:rgba(192,132,252,0.15);color:#c084fc;border:1px solid rgba(192,132,252,0.35)}
+    .badge.role-funcionario{background:rgba(192,132,252,0.15);color:#c084fc;border:1px solid rgba(192,132,252,0.35)}
     .badge.card{background:rgba(109,213,160,0.10);color:#6dd5a0;border:1px solid rgba(109,213,160,0.30)}
     .badge.card-vazio{background:rgba(160,160,160,0.10);color:#888;border:1px solid rgba(160,160,160,0.30)}
     .badge.equipe{background:rgba(126,184,247,0.12);color:#a9cdf7;border:1px solid rgba(126,184,247,0.32);
@@ -193,7 +193,7 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       justify-content:center;font-weight:800;font-size:13px;color:#fff}
     .av.r-admin{background:linear-gradient(140deg,#f5a623,#c4801a)}
     .av.r-medico{background:linear-gradient(140deg,#7eb8f7,#2e6fc0)}
-    .av.r-recepcao{background:linear-gradient(140deg,#c084fc,#9333ea)}
+    .av.r-funcionario{background:linear-gradient(140deg,#c084fc,#9333ea)}
     .quem{display:flex;align-items:center;gap:11px}
     .quem .nm{font-weight:700;color:#fff}
     .quem .em{font-size:11.5px;color:#8da2ba}
@@ -276,12 +276,13 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       <label>Nome *</label>
       <input type="text" id="f-name" placeholder="Nome completo" />
 
-      <label>Role *</label>
+      <label>Função *</label>
       <select id="f-role">
         <option value="admin">admin</option>
-        <option value="medico">medico</option>
-        <option value="recepcao">recepcao</option>
+        <option value="medico">médico</option>
+        <option value="funcionario">funcionário</option>
       </select>
+      <div class="form-info">O <strong>nível de acesso</strong> da pessoa, não o setor dela — o setor é o campo Equipe abaixo. <code>admin</code> enxerga e edita tudo; <code>médico</code> vai direto pro portal próprio; <code>funcionário</code> é o padrão de quem só acessa os cards liberados.</div>
 
       <label>Slug do médico <span id="slug-obrig" style="display:none;color:#f5a623">*</span></label>
       <input type="text" id="f-slug" placeholder="Igor_Rafael_Sincos (só pra médicos)" />
@@ -509,7 +510,7 @@ function abrirNovo() {
   $('modal-title').textContent = 'Novo usuário';
   $('f-email').value = ''; $('f-email').disabled = false;
   $('f-name').value = '';
-  $('f-role').value = 'recepcao';
+  $('f-role').value = 'funcionario';
   $('f-slug').value = '';
   $('f-senha').value = '';
   $('f-departamento').value = '';
@@ -527,7 +528,7 @@ function editar(email) {
   $('modal-title').textContent = 'Editar: ' + u.name;
   $('f-email').value = u.email; $('f-email').disabled = true;
   $('f-name').value = u.name || '';
-  $('f-role').value = u.role || 'recepcao';
+  $('f-role').value = u.role || 'funcionario';
   $('f-slug').value = u.slug || '';
   $('f-senha').value = '';
   $('f-departamento').value = u.departamento_id || '';

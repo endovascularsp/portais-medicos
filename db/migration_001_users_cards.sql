@@ -3,11 +3,13 @@
 -- Compatível com a tabela public.users existente (email, name, role, slug, created_at).
 
 -- ============================================================
--- 0. Atualiza constraint de role: aceita 'admin', 'medico' e 'recepcao'
+-- 0. Atualiza constraint de role: aceita 'admin', 'medico' e 'funcionario'
+--    ('funcionario' se chamava 'recepcao' até a migration_006 — o literal foi
+--     atualizado aqui pra este script continuar rodável hoje.)
 -- ============================================================
 ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;
 ALTER TABLE public.users ADD CONSTRAINT users_role_check
-  CHECK (role IN ('admin', 'medico', 'recepcao'));
+  CHECK (role IN ('admin', 'medico', 'funcionario'));
 
 -- ============================================================
 -- 1. Adiciona coluna cards (lista de cards/portais permitidos)
@@ -33,10 +35,10 @@ WHERE role = 'medico' AND (cards IS NULL OR cardinality(cards) = 0);
 -- 4. Cadastra usuários novos: Sol (Atendimentos) + Recepção (Prévias)
 -- ============================================================
 INSERT INTO public.users (email, name, role, cards) VALUES
-  ('solange.lucindo@endovascularsp.com.br',    'Solange Lucindo',    'recepcao', ARRAY['atendimentos']),
-  ('camily.nascimento@endovascularsp.com.br',  'Camily Nascimento',  'recepcao', ARRAY['previas']),
-  ('samanta.neves@endovascularsp.com.br',      'Samanta Neves',      'recepcao', ARRAY['previas']),
-  ('julia.beserra@endovascularsp.com.br',      'Julia Beserra',      'recepcao', ARRAY['previas'])
+  ('solange.lucindo@endovascularsp.com.br',    'Solange Lucindo',    'funcionario', ARRAY['atendimentos']),
+  ('camily.nascimento@endovascularsp.com.br',  'Camily Nascimento',  'funcionario', ARRAY['previas']),
+  ('samanta.neves@endovascularsp.com.br',      'Samanta Neves',      'funcionario', ARRAY['previas']),
+  ('julia.beserra@endovascularsp.com.br',      'Julia Beserra',      'funcionario', ARRAY['previas'])
 ON CONFLICT (email) DO UPDATE SET
   name = EXCLUDED.name,
   role = EXCLUDED.role,

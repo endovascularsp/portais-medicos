@@ -6,7 +6,7 @@ Lê User_Download_*.xlsx e gera:
 
 Regras:
   - Departamento 'Gestão'  → role=admin,    cards=['gestor']
-  - Demais departamentos   → role=recepcao, cards=['compras_solicitante']
+  - Demais departamentos   → role=funcionario, cards=['compras_solicitante']
   - 'Adminstrativo' (typo no Excel) corrigido pra 'Administrativo'
   - departamento_id resolvido via subquery (não hardcoda id)
   - ON CONFLICT (email) DO NOTHING → não sobrescreve quem já existe
@@ -67,7 +67,7 @@ for fn, ln, email, dep, st in rows:
     if dep == 'Gestão':
         role, cards = 'admin', ['gestor']
     else:
-        role, cards = 'recepcao', ['compras_solicitante']
+        role, cards = 'funcionario', ['compras_solicitante']
     dep_sub = f"(SELECT id FROM compras_departamentos WHERE nome='{esc(dep)}')"
     vals.append(f"  ('{email_l}', '{nome}', '{role}', {fmt_cards(cards)}, {dep_sub})")
 
@@ -84,4 +84,4 @@ print(f"SQL gerado: {OUT}")
 print(f"  Formato cards: {CARDS_FORMAT}")
 print(f"  Departamentos: {len(deptos)} ({', '.join(sorted(deptos))})")
 gestao = sum(1 for r in rows if DEPT_FIX.get((r[3] or '').strip(),(r[3] or '').strip())=='Gestão')
-print(f"  Funcionários: {len(rows)} ({gestao} Gestão=admin, {len(rows)-gestao} demais=recepcao)")
+print(f"  Funcionários: {len(rows)} ({gestao} Gestão=admin, {len(rows)-gestao} demais=funcionario)")

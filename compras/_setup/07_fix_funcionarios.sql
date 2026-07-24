@@ -38,7 +38,11 @@ UPDATE users SET
                ELSE cards || ARRAY['compras_solicitante'] END
 WHERE email = 'solange.lucindo@endovascularsp.com.br';
 
--- Heloisa — só corrige o departamento (Concierge → Gestão). Cards intactos.
+-- Heloisa — só corrige a equipe. Cards intactos.
+-- Era 'Gestão', mas a migration_005 aposentou essa equipe (ativo=false) e
+-- moveu as 4 pessoas dela pra Administrativo. Se este script rodasse de novo
+-- com 'Gestão', a Heloisa voltaria pra uma equipe inativa e sumiria dos
+-- avisos direcionados do Mural.
 UPDATE users SET
-  departamento_id = (SELECT id FROM compras_departamentos WHERE nome='Gestão')
+  departamento_id = (SELECT id FROM compras_departamentos WHERE nome='Administrativo')
 WHERE email = 'heloisa.incontri@endovascularsp.com.br';
