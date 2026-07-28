@@ -15,6 +15,8 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
   .login-box{width:auto!important;max-width:calc(100vw - 24px)!important;}
   .main{padding-left:14px!important;padding-right:14px!important;box-sizing:border-box;}
   .toolbar{flex-direction:column!important;align-items:stretch!important;gap:10px!important;}
+  .dd,.dd-btn{width:100%!important;min-width:0!important;}
+  .btn-csv{margin-left:0!important;}
   .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;}
   .table-scroll{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%;}
   img:not(.header-logo img){max-width:100%!important;height:auto;}
@@ -70,28 +72,42 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .btn-csv:hover{filter:brightness(1.12)}
     .btn:disabled{opacity:0.4;cursor:not-allowed;filter:none}
 
-    /* Filtro de profissionais */
-    .filtro{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-      border-radius:14px;padding:16px 20px;margin-bottom:22px}
-    .filtro-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:13px}
-    .filtro-titulo{font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:rgba(255,255,255,0.42)}
-    .filtro-acoes{margin-left:auto;display:flex;gap:8px}
-    .btn-mini{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);
-      color:rgba(255,255,255,0.75);font-size:11px;font-weight:700;padding:6px 12px;
-      border-radius:7px;cursor:pointer;font-family:inherit}
-    .btn-mini:hover{background:rgba(255,255,255,0.14)}
-    .chips{display:flex;flex-wrap:wrap;gap:9px}
-    .chip{display:flex;align-items:center;gap:9px;padding:8px 13px;border-radius:10px;cursor:pointer;
-      user-select:none;font-size:12.5px;line-height:1.2;
-      background:rgba(46,111,192,0.14);border:1px solid rgba(46,111,192,0.45);color:#cfe4fb}
-    .chip:hover{background:rgba(46,111,192,0.22)}
-    .chip.off{background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.34)}
-    .chip.off .chip-nome{text-decoration:line-through}
-    .chip:hover.off{background:rgba(255,255,255,0.06)}
-    .chip input{accent-color:#2e6fc0;width:15px;height:15px;cursor:pointer;flex-shrink:0}
-    .chip .cnt{font-size:11px;font-weight:700;opacity:0.6}
-    .filtro-nota{font-size:11.5px;color:rgba(255,255,255,0.35);margin-top:12px;line-height:1.55}
-    .filtro-nota b{color:rgba(255,255,255,0.55);font-weight:600}
+    /* Filtro de profissionais — menu suspenso multi-seleção */
+    .dd{position:relative}
+    .dd-btn{display:flex;align-items:center;gap:10px;min-width:250px;
+      background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);
+      border-radius:9px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;
+      cursor:pointer;text-align:left}
+    .dd-btn:hover{background:rgba(255,255,255,0.12)}
+    .dd.aberto .dd-btn{border-color:rgba(46,111,192,0.75);background:rgba(46,111,192,0.16)}
+    .dd-btn .dd-val{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dd-btn .dd-seta{font-size:11px;opacity:0.6;transition:transform .15s}
+    .dd.aberto .dd-btn .dd-seta{transform:rotate(180deg)}
+    .dd-menu{display:none;position:absolute;z-index:60;top:calc(100% + 6px);left:0;
+      min-width:100%;width:max-content;max-width:min(430px,calc(100vw - 40px));
+      max-height:340px;overflow-y:auto;
+      background:#162d50;border:1px solid rgba(255,255,255,0.16);border-radius:10px;
+      box-shadow:0 14px 34px rgba(0,0,0,0.5);padding:5px}
+    .dd.aberto .dd-menu{display:block}
+    .dd-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:7px;
+      cursor:pointer;user-select:none;font-size:13px;color:rgba(255,255,255,0.9);line-height:1.25}
+    .dd-item:hover{background:rgba(46,111,192,0.45)}
+    .dd-item input{accent-color:#2e6fc0;width:15px;height:15px;cursor:pointer;flex-shrink:0}
+    .dd-item .dd-nome{flex:1}
+    .dd-item .dd-esp{font-size:11px;color:rgba(255,255,255,0.45);display:block;margin-top:1px}
+    .dd-item:hover .dd-esp{color:rgba(255,255,255,0.65)}
+    .dd-item.off .dd-nome{color:rgba(255,255,255,0.4)}
+    .dd-item .cnt{font-size:11px;font-weight:700;opacity:0.55;flex-shrink:0}
+    .dd-todos{border-bottom:1px solid rgba(255,255,255,0.12);margin-bottom:4px;padding-bottom:9px;
+      border-radius:7px 7px 0 0;font-weight:700}
+    .dd-nota{font-size:11px;color:rgba(255,255,255,0.4);line-height:1.5;padding:9px 11px 4px;
+      border-top:1px solid rgba(255,255,255,0.1);margin-top:4px}
+
+    .filtro-resumo{font-size:12.5px;color:#fcd34d;background:rgba(251,191,36,0.08);
+      border:1px solid rgba(251,191,36,0.3);border-radius:11px;padding:11px 15px;
+      margin-bottom:18px;line-height:1.55}
+    .filtro-resumo b{color:#fde68a}
+    .filtro-resumo .rlink{color:#fcd34d;text-decoration:underline;cursor:pointer;font-weight:600}
 
     .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
     .kpi{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:13px;padding:16px 18px;position:relative}
@@ -157,13 +173,22 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       <b>Envya</b> espera. Entram só os agendamentos com situação <b>Marcado</b> — quem já está
       <b>Confirmado</b>, <b>Remarcado</b> ou <b>Desmarcado</b> fica de fora. Os dados vêm direto do
       Saudevianet (agenda + cadastro), sem exportar relatório na mão. Se algum profissional não entra
-      na confirmação, é só <b>desmarcar</b> ele no filtro abaixo.
+      na confirmação, é só <b>desmarcar</b> ele no filtro <b>Profissionais</b>.
     </p>
 
     <div class="toolbar">
       <div class="f-grp">
         <label for="f-data">Dia a confirmar</label>
         <input type="date" id="f-data"/>
+      </div>
+      <div class="f-grp">
+        <label>Profissionais</label>
+        <div class="dd" id="dd-profs">
+          <button type="button" class="dd-btn" onclick="abrirFiltroProfs(event)">
+            <span class="dd-val" id="dd-val">Todos</span><span class="dd-seta">▼</span>
+          </button>
+          <div class="dd-menu" id="dd-menu" onclick="event.stopPropagation()"></div>
+        </div>
       </div>
       <button class="btn btn-primary" id="btn-gerar" onclick="gerar()">Gerar lista</button>
       <button class="btn btn-csv" id="btn-csv" onclick="baixarCSV()" disabled>⬇ Baixar CSV</button>
@@ -386,19 +411,36 @@ function mapearProfissional(nome) {
 const SEM_PROF = '__sem_profissional__';
 const chaveProf = (nomeSVN) => (nomeSVN || '').trim().toLowerCase() || SEM_PROF;
 
-// Rótulo do chip. Usa o nome do de-para (sem o artigo "o/a", que só serve pra
-// mensagem da Envya) + especialidade — importante porque a agenda tem duas
-// Simones e dois nomes parecidos se confundem na hora de desmarcar.
-function rotuloProf(nomeSVN) {
-  if (!(nomeSVN || '').trim()) return 'Sem profissional (só sala/serviço)';
+// Nome + especialidade do item do menu. Usa o de-para sem o artigo "o/a" (que
+// só serve pra mensagem da Envya). A especialidade importa porque a agenda tem
+// duas Simones — só o primeiro nome faria desmarcar a errada.
+function dadosProf(nomeSVN) {
+  if (!(nomeSVN || '').trim()) return { nome: 'Sem profissional', esp: 'só sala ou serviço' };
   const mapa = mapearProfissional(nomeSVN);
-  if (mapa) return `${mapa.tratamento.replace(/^[oa]\s+/i, '')} — ${mapa.especialidade}`;
-  return nomeSVN.trim().toLowerCase().replace(/(^|\s)\S/g, c => c.toLocaleUpperCase('pt-BR'));
+  if (mapa) return { nome: mapa.tratamento.replace(/^[oa]\s+/i, ''), esp: mapa.especialidade };
+  return { nome: nomeSVN.trim().toLowerCase().replace(/(^|\s)\S/g, c => c.toLocaleUpperCase('pt-BR')),
+           esp: 'fora do de-para' };
+}
+
+function abrirFiltroProfs(ev) {
+  ev.stopPropagation();
+  document.getElementById('dd-profs').classList.toggle('aberto');
+}
+function fecharFiltroProfs() {
+  document.getElementById('dd-profs').classList.remove('aberto');
 }
 
 function renderFiltro() {
-  const box = document.getElementById('filtro-profs');
-  if (!RESULTADO || !RESULTADO.marcados.length) { box.innerHTML = ''; PROFS = []; return; }
+  const menu   = document.getElementById('dd-menu');
+  const val    = document.getElementById('dd-val');
+  const resumo = document.getElementById('filtro-profs');
+  const scroll = menu.scrollTop;   // não pular o scroll ao remarcar um item
+
+  if (!RESULTADO || !RESULTADO.marcados.length) {
+    PROFS = []; resumo.innerHTML = ''; val.textContent = 'Todos';
+    menu.innerHTML = `<div class="dd-nota">Gere a lista de um dia pra escolher os profissionais.</div>`;
+    return;
+  }
 
   // Universo = 1 entrada por agendamento consolidado (quem está sem de-para do
   // profissional aparece em prontos E em pendências; contar só uma vez).
@@ -407,39 +449,51 @@ function renderFiltro() {
   const mapa = new Map();
   for (const l of universo) {
     if (!mapa.has(l._profKey)) {
-      mapa.set(l._profKey, { key: l._profKey, label: rotuloProf(l._medicoSVN), total: 0 });
+      mapa.set(l._profKey, { key: l._profKey, ...dadosProf(l._medicoSVN), total: 0 });
     }
     mapa.get(l._profKey).total++;
   }
   PROFS = [...mapa.values()].sort((a, b) =>
-    (a.key === SEM_PROF) - (b.key === SEM_PROF) || a.label.localeCompare(b.label, 'pt-BR'));
+    (a.key === SEM_PROF) - (b.key === SEM_PROF) || a.nome.localeCompare(b.nome, 'pt-BR'));
 
-  const fora = PROFS.filter(p => EXCLUIDOS.has(p.key));
+  const fora      = PROFS.filter(p => EXCLUIDOS.has(p.key));
+  const dentro    = PROFS.length - fora.length;
   const removidos = fora.reduce((s, p) => s + p.total, 0);
 
-  let h = `<div class="filtro">
-    <div class="filtro-head">
-      <span class="filtro-titulo">Profissionais na agenda do dia (${PROFS.length})</span>
-      <div class="filtro-acoes">
-        <button class="btn-mini" onclick="marcarTodosProfs(true)">Marcar todos</button>
-        <button class="btn-mini" onclick="marcarTodosProfs(false)">Desmarcar todos</button>
-      </div>
-    </div>
-    <div class="chips">`;
+  // Texto do botão fechado
+  if (!fora.length)            val.textContent = `Todos (${PROFS.length})`;
+  else if (!dentro)            val.textContent = 'Nenhum profissional';
+  else if (fora.length === 1)  val.textContent = `Todos, menos ${fora[0].nome}`;
+  else                         val.textContent = `${dentro} de ${PROFS.length} profissionais`;
+
+  let h = `<label class="dd-item dd-todos">
+    <input type="checkbox" id="dd-todos" ${fora.length ? '' : 'checked'}
+           onchange="marcarTodosProfs(this.checked)"/>
+    <span class="dd-nome">Todos os profissionais</span>
+    <span class="cnt">${PROFS.length}</span></label>`;
   PROFS.forEach((p, i) => {
     const off = EXCLUIDOS.has(p.key);
-    h += `<label class="chip ${off ? 'off' : ''}">
+    h += `<label class="dd-item ${off ? 'off' : ''}">
       <input type="checkbox" ${off ? '' : 'checked'} onchange="alternarProf(${i}, this.checked)"/>
-      <span class="chip-nome">${esc(p.label)}</span>
-      <span class="cnt">${p.total}</span>
-    </label>`;
+      <span class="dd-nome">${esc(p.nome)}<span class="dd-esp">${esc(p.esp)}</span></span>
+      <span class="cnt">${p.total}</span></label>`;
   });
-  h += `</div>`;
-  h += `<div class="filtro-nota">Todos entram por padrão. Quem estiver desmarcado sai da prévia e do
-    CSV${removidos ? ` — <b>${removidos} agendamento(s) removido(s)</b> agora` : ''}.
-    A escolha fica guardada neste navegador e vale pros próximos dias; profissional novo
-    na agenda sempre chega marcado.</div></div>`;
-  box.innerHTML = h;
+  h += `<div class="dd-nota">Todos entram por padrão. Quem for desmarcado sai da prévia e do CSV.
+    A escolha fica guardada neste navegador e vale pros próximos dias — profissional novo na
+    agenda sempre chega marcado.</div>`;
+  menu.innerHTML = h;
+  menu.scrollTop = scroll;
+  // Meio-termo: alguns marcados, outros não.
+  document.getElementById('dd-todos').indeterminate = fora.length > 0 && dentro > 0;
+
+  // Fora do menu, um lembrete visível — senão o filtro some da tela e alguém
+  // dispara achando que mandou pra agenda inteira.
+  resumo.innerHTML = fora.length
+    ? `<div class="filtro-resumo">🚫 Fora da confirmação:
+        <b>${fora.map(p => esc(p.nome)).join(' · ')}</b> —
+        ${removidos} agendamento(s) não entram no CSV.
+        <span class="rlink" onclick="marcarTodosProfs(true)">incluir todos</span></div>`
+    : '';
 }
 
 function alternarProf(i, marcado) {
@@ -457,6 +511,13 @@ function marcarTodosProfs(marcar) {
   renderFiltro();
   aplicarFiltro();
 }
+
+// Fecha o menu ao clicar fora ou apertar Esc.
+document.addEventListener('click', (ev) => {
+  const dd = document.getElementById('dd-profs');
+  if (dd && !dd.contains(ev.target)) dd.classList.remove('aberto');
+});
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') fecharFiltroProfs(); });
 
 // Aplica o filtro sobre o resultado bruto do dia e redesenha tudo (KPIs, prévia,
 // pendências e o conteúdo do CSV).
@@ -600,8 +661,8 @@ async function gerar() {
     renderFiltro();
     aplicarFiltro();
   } catch (e) {
-    RESULTADO = null; PROFS = [];
-    document.getElementById('filtro-profs').innerHTML = '';
+    RESULTADO = null;
+    renderFiltro();
     document.getElementById('saida').innerHTML = `<div class="erro">Erro: ${e.message}</div>`;
   } finally {
     document.getElementById('btn-gerar').disabled = false;
