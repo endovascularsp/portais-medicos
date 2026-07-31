@@ -126,6 +126,14 @@
     .viewer{font-size:12px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.06);
       border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.75)}
     .viewers-vazio{font-size:12.5px;color:rgba(255,255,255,0.4)}
+    /* Cobrança de quem não leu — só o autor do aviso (ou admin) enxerga */
+    .viewers-acao{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;
+      padding-top:11px;border-top:1px solid rgba(126,184,247,0.16)}
+    .viewers-falta{font-size:12px;color:rgba(255,255,255,0.55)}
+    .btn-cobrar{background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.42);color:#f5c842;
+      font-size:12px;font-weight:700;padding:6px 13px;border-radius:8px;cursor:pointer;transition:all .15s}
+    .btn-cobrar:hover{background:rgba(245,166,35,0.22)}
+    .btn-cobrar:disabled{opacity:.5;cursor:default}
 
     /* Comentários */
     .coment-box{margin-top:12px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)}
@@ -184,6 +192,10 @@
     .eq-check:hover{background:rgba(255,255,255,0.09)}
     .eq-check input{width:16px;height:16px;accent-color:#f5a623;cursor:pointer}
     .eq-check.todos{grid-column:1/-1;background:rgba(245,166,35,0.08);border-color:rgba(245,166,35,0.3)}
+    /* Avisar por e-mail — vem marcado; o contador ao lado mostra quantas pessoas
+       seriam notificadas com as equipes marcadas naquele instante. */
+    .eq-check.notif{margin-bottom:22px;background:rgba(126,184,247,0.07);border-color:rgba(126,184,247,0.30)}
+    .notif-cont{margin-left:auto;font-size:12px;font-weight:600;color:#a9cdf7;text-align:right}
     .modal-acoes{display:flex;gap:10px;justify-content:flex-end}
     .btn-cancel{padding:11px 20px;border-radius:10px;background:none;border:1px solid rgba(255,255,255,0.18);
       color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;font-weight:600}
@@ -257,6 +269,12 @@
       <div class="campo-ajuda">Só quem é dessas equipes vai receber o aviso. Os demais nem chegam a ver que ele existe.</div>
       <div class="equipes-grid" id="f-equipes"></div>
 
+      <label class="eq-check notif">
+        <input type="checkbox" id="f-notificar" checked/>
+        📧 <b>Avisar por e-mail</b>
+        <span class="notif-cont" id="notif-cont"></span>
+      </label>
+
       <label class="campo-label">Anexo (opcional)</label>
       <div class="anexo-campo">
         <input type="file" id="f-anexo" style="display:none" onchange="onAnexoEscolhido()"/>
@@ -305,7 +323,7 @@ function rotuloEquipe(slug) {
 
 let me = null;          // { email, nome, isAdmin, equipe }
 let avisos = [];        // cache do feed
-let reacoes = [], comentarios = [], visualizacoes = [];
+let reacoes = [], comentarios = [], visualizacoes = [], emails = [];
 let filtroAtivo = 'todas';
 const comentAbertos = new Set();   // avisos com comentários expandidos
 const viewersAbertos = new Set();  // avisos com "quem viu" expandido
@@ -395,7 +413,7 @@ async function carregarFeed() {
   }
   avisos = data || [];
   const ids = avisos.map(a => a.id);
-  reacoes = []; comentarios = []; visualizacoes = [];
+  reacoes = []; comentarios = []; visualizacoes = []; emails = [];
 
   if (ids.length) {
     // Registra que EU vi cada aviso (menos os meus). Não sobrescreve visualização antiga.
@@ -406,14 +424,16 @@ async function carregarFeed() {
       await sb.from('mural_visualizacoes')
         .upsert(paraRegistrar, { onConflict: 'aviso_id,viewer_email', ignoreDuplicates: true });
     }
-    const [rx, cm, vw] = await Promise.all([
+    const [rx, cm, vw, em] = await Promise.all([
       sb.from('mural_reacoes').select('*').in('aviso_id', ids),
       sb.from('mural_comentarios').select('*').in('aviso_id', ids).order('created_at', { ascending: true }),
       sb.from('mural_visualizacoes').select('*').in('aviso_id', ids),  // RLS: só volta linhas dos meus avisos (ou tudo, se admin)
+      sb.from('mural_emails').select('*').in('aviso_id', ids),         // idem — só autor/admin leem o log de envio
     ]);
     reacoes = rx.data || [];
     comentarios = cm.data || [];
     visualizacoes = vw.data || [];
+    emails = em.data || [];
   }
   renderFeed();
 }
@@ -478,6 +498,10 @@ function cardHtml(a) {
   if (souAutor || me.isAdmin) {
     const nView = visualizacoes.filter(v => v.aviso_id === a.id).length;
     metricas += '<button class="metric-btn" onclick="toggleViewers(\'' + a.id + '\')">👁 ' + nView + '</button>';
+    // Quantos e-mails de "aviso novo" saíram. Só aparece se algum saiu.
+    const nMail = emails.filter(e => e.aviso_id === a.id && e.tipo === 'novo_aviso' && e.status === 'enviado').length;
+    if (nMail) metricas += '<span class="metric-btn" style="cursor:default" ' +
+      'title="Aviso enviado por e-mail para ' + nMail + ' pessoa(s)">📧 ' + nMail + '</span>';
   }
 
   return '<div class="aviso' + (a.fixado ? ' fixado' : '') + '">' +
@@ -528,10 +552,38 @@ function onTodos() {
   if (document.getElementById('eq-todos').checked) {
     document.querySelectorAll('.eq-item').forEach(i => i.checked = false);
   }
+  atualizarContagemNotif();
 }
 function onEquipe() {
   const algum = [...document.querySelectorAll('.eq-item')].some(i => i.checked);
   if (algum) document.getElementById('eq-todos').checked = false;
+  atualizarContagemNotif();
+}
+
+// Equipes marcadas no modal, no formato que vai pro banco.
+function equipesSelecionadas() {
+  if (document.getElementById('eq-todos').checked) return ['todos'];
+  return [...document.querySelectorAll('.eq-item:checked')].map(i => i.value);
+}
+
+// Mostra ao lado do checkbox quantas pessoas receberiam o e-mail com as equipes
+// marcadas agora. O banco devolve só o NÚMERO — a lista de quem é de cada equipe
+// não sai do servidor. Quem escreve não é contado (não se notifica sozinho).
+let _seqNotif = 0;
+async function atualizarContagemNotif() {
+  const el = document.getElementById('notif-cont');
+  if (!el) return;
+  const eqs = equipesSelecionadas();
+  if (!eqs.length) { el.textContent = ''; return; }
+  const seq = ++_seqNotif;
+  el.textContent = 'contando...';
+  const { data, error } = await sb.rpc('mural_contar_destinatarios', { p_equipes: eqs });
+  if (seq !== _seqNotif) return;   // chegou fora de ordem: já tem clique mais novo
+  if (error) { el.textContent = ''; return; }
+  const n = data || 0;
+  el.textContent = n === 0 ? 'ninguém para notificar'
+                 : n === 1 ? '1 pessoa'
+                 : n + ' pessoas';
 }
 
 function abrirModal() {
@@ -539,6 +591,8 @@ function abrirModal() {
   document.getElementById('f-corpo').value = '';
   document.getElementById('modal-erro').textContent = '';
   document.querySelectorAll('#f-equipes input').forEach(i => i.checked = false);
+  document.getElementById('f-notificar').checked = true;   // avisar por e-mail é o padrão
+  document.getElementById('notif-cont').textContent = '';
   limparAnexo();
   document.getElementById('modal').classList.add('aberto');
 }
@@ -574,12 +628,8 @@ async function publicar() {
   const erro = document.getElementById('modal-erro');
   erro.textContent = '';
 
-  let equipes;
-  if (document.getElementById('eq-todos').checked) {
-    equipes = ['todos'];
-  } else {
-    equipes = [...document.querySelectorAll('.eq-item:checked')].map(i => i.value);
-  }
+  const equipes = equipesSelecionadas();
+  const notificar = document.getElementById('f-notificar').checked;
 
   if (!titulo) return erro.textContent = 'Dê um título ao aviso.';
   if (!corpo) return erro.textContent = 'Escreva a mensagem do aviso.';
@@ -603,18 +653,55 @@ async function publicar() {
     anexo_path = path; anexo_nome = f.name;
   }
 
-  const { error } = await sb.from('mural_avisos').insert({
+  const { data: novo, error } = await sb.from('mural_avisos').insert({
     titulo, corpo, equipes,
     autor_email: me.email,
     autor_nome: me.nome,
     anexo_path, anexo_nome,
-  });
+    notificar_email: notificar,
+  }).select('id').single();
 
   btn.disabled = false; btn.textContent = 'Publicar';
   if (error) return erro.textContent = 'Erro ao publicar: ' + error.message;
 
   fecharModal();
+
+  // O aviso JÁ está publicado. O e-mail é um passo separado: se falhar, avisa
+  // quem publicou (pra ele mandar recado por fora), mas nunca desfaz o aviso.
+  let alertaEmail = '';
+  if (notificar && novo) {
+    btn.textContent = 'Publicar';
+    const r = await notificar_mural(novo.id, 'novo_aviso');
+    if (r.erro) alertaEmail = 'O aviso foi publicado, mas os e-mails NÃO saíram:\n' + r.erro +
+      '\n\nEle está no Mural normalmente. Avise a equipe por outro canal se for urgente.';
+    else if (r.enviados === 0) alertaEmail = 'Aviso publicado. Nenhum e-mail foi enviado — ' +
+      'não há ninguém cadastrado nessas equipes além de você.';
+  }
+
   await carregarFeed();
+  if (alertaEmail) alert(alertaEmail);
+}
+
+// Chama a Edge Function que dispara os e-mails. Devolve sempre um objeto,
+// nunca joga exceção — notificação que falha não pode derrubar a tela.
+async function notificar_mural(avisoId, tipo) {
+  try {
+    const { data, error } = await sb.functions.invoke('mural-notificar', {
+      body: { aviso_id: avisoId, tipo },
+    });
+    if (error) {
+      // O corpo da resposta traz o motivo real; o objeto de erro só diz "non-2xx".
+      let det = error.message || 'falha desconhecida';
+      try {
+        const c = await error.context?.json?.();
+        if (c && (c.detalhe || c.error)) det = c.detalhe || c.error;
+      } catch (_) {}
+      return { erro: det, enviados: 0 };
+    }
+    return { enviados: (data && data.enviados) || 0, motivo: data && data.motivo };
+  } catch (e) {
+    return { erro: e.message || String(e), enviados: 0 };
+  }
 }
 
 async function apagar(id) {
@@ -702,6 +789,11 @@ async function addComentario(avisoId) {
   inp.disabled = false;
   if (error) return alert('Erro ao comentar: ' + error.message);
   comentAbertos.add(avisoId);
+  // Avisa o autor do aviso por e-mail. Sem await: comentar não pode esperar
+  // o e-mail, e a função já engole os próprios erros. O servidor ignora o
+  // pedido se quem comentou for o próprio autor.
+  const av = avisos.find(x => x.id === avisoId);
+  if (av && av.autor_email !== me.email) notificar_mural(avisoId, 'comentario');
   await carregarFeed();
 }
 async function apagarComentario(id) {
@@ -727,15 +819,54 @@ function preencherViewers(avisoId) {
   if (!box) return;
   const lista = visualizacoes.filter(v => v.aviso_id === avisoId)
     .sort((a, b) => new Date(b.viewed_at) - new Date(a.viewed_at));
-  if (!lista.length) {
-    box.innerHTML = '<div class="viewers-tit">👁 Visualizações</div>' +
+  const corpo = lista.length
+    ? '<div class="viewers-tit">👁 Visto por ' + lista.length + '</div>' +
+      '<div class="viewers-lista">' +
+      lista.map(v => '<span class="viewer">' + esc(v.viewer_nome || v.viewer_email) + '</span>').join('') +
+      '</div>'
+    : '<div class="viewers-tit">👁 Visualizações</div>' +
       '<div class="viewers-vazio">Ninguém visualizou ainda.</div>';
+  box.innerHTML = corpo + '<div class="viewers-acao" id="cobrar-' + avisoId + '"></div>';
+  contarNaoLeram(avisoId);
+}
+
+// Quantos deviam ter lido e ainda não abriram. O banco devolve só o número
+// (a lista de nomes fica no servidor), e só responde pro autor ou admin.
+async function contarNaoLeram(avisoId) {
+  const row = document.getElementById('cobrar-' + avisoId);
+  if (!row) return;
+  row.innerHTML = '<span class="viewers-falta">verificando quem falta...</span>';
+  const { data, error } = await sb.rpc('mural_contar_nao_leram', { p_aviso_id: avisoId });
+  if (!document.getElementById('cobrar-' + avisoId)) return;   // fechou nesse meio-tempo
+  if (error) { row.innerHTML = ''; return; }
+  const n = data || 0;
+  if (n === 0) {
+    row.innerHTML = '<span class="viewers-falta">✅ Todos os destinatários já leram.</span>';
     return;
   }
-  box.innerHTML = '<div class="viewers-tit">👁 Visto por ' + lista.length + '</div>' +
-    '<div class="viewers-lista">' +
-    lista.map(v => '<span class="viewer">' + esc(v.viewer_nome || v.viewer_email) + '</span>').join('') +
-    '</div>';
+  row.innerHTML = '<span class="viewers-falta">' +
+      (n === 1 ? '1 pessoa ainda não leu' : n + ' pessoas ainda não leram') + '</span>' +
+    '<button class="btn-cobrar" onclick="cobrarNaoLeram(\'' + avisoId + '\')">🔔 Cobrar quem não leu</button>';
+}
+
+async function cobrarNaoLeram(avisoId) {
+  const row = document.getElementById('cobrar-' + avisoId);
+  const btn = row ? row.querySelector('.btn-cobrar') : null;
+  if (!confirm('Enviar um lembrete por e-mail só para quem ainda não leu este aviso?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+  const r = await notificar_mural(avisoId, 'cobranca');
+  if (r.erro) {
+    if (btn) { btn.disabled = false; btn.textContent = '🔔 Cobrar quem não leu'; }
+    return alert('Não deu para enviar o lembrete:\n' + r.erro);
+  }
+  if (r.motivo === 'cobrado_nas_ultimas_24h') {
+    if (row) row.innerHTML = '<span class="viewers-falta">🔔 Já houve uma cobrança nas últimas 24h. ' +
+      'Tente de novo amanhã.</span>';
+    return;
+  }
+  if (row) row.innerHTML = '<span class="viewers-falta">🔔 Lembrete enviado para ' +
+    r.enviados + (r.enviados === 1 ? ' pessoa.' : ' pessoas.') + '</span>';
+  await carregarFeed();
 }
 
 /* ---------- Utils ---------- */
