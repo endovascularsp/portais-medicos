@@ -68,6 +68,23 @@
     }
     .btn-novo:hover{opacity:.9}
 
+    /* ===== Busca ===== */
+    .barra-busca{display:flex;align-items:center;gap:10px;margin-bottom:14px;
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);
+      border-radius:12px;padding:0 14px;transition:border-color .2s}
+    .barra-busca:focus-within{border-color:rgba(245,166,35,0.55)}
+    .busca-ic{font-size:15px;opacity:.55;flex-shrink:0}
+    #busca{flex:1;min-width:0;background:none;border:none;outline:none;color:#fff;
+      font-size:14.5px;font-family:inherit;padding:13px 0}
+    #busca::placeholder{color:rgba(255,255,255,0.38)}
+    .busca-x{display:none;background:none;border:none;color:rgba(255,255,255,0.45);
+      font-size:22px;line-height:1;cursor:pointer;padding:0 2px;flex-shrink:0}
+    .busca-x:hover{color:#fff}
+    .busca-x.on{display:block}
+    .resultado-info{font-size:12.5px;color:rgba(255,255,255,0.45);margin-bottom:18px}
+    .resultado-info:empty{display:none}
+    mark{background:rgba(245,166,35,0.30);color:#ffe9b8;border-radius:3px;padding:0 2px}
+
     /* ===== Filtro por equipe ===== */
     .filtros{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
     .chip{
@@ -247,7 +264,16 @@
       </div>
       <div class="sub-mural">Avisos internos da clínica. Cada aviso vai só para as equipes marcadas — você recebe os da sua equipe e os marcados como "Todos".</div>
 
+      <div class="barra-busca">
+        <span class="busca-ic">🔍</span>
+        <input id="busca" type="text" autocomplete="off"
+               placeholder="Pesquisar por título, mensagem, autor ou anexo..."
+               oninput="setBusca(this.value)" onkeydown="if(event.key==='Escape')limparBusca()"/>
+        <button class="busca-x" id="busca-x" onclick="limparBusca()" title="Limpar busca">×</button>
+      </div>
+
       <div class="filtros" id="filtros"></div>
+      <div class="resultado-info" id="resultado-info"></div>
 
       <div id="feed"></div>
     </div>
@@ -325,6 +351,7 @@ let me = null;          // { email, nome, isAdmin, equipe }
 let avisos = [];        // cache do feed
 let reacoes = [], comentarios = [], visualizacoes = [], emails = [];
 let filtroAtivo = 'todas';
+let termoBusca = '';    // texto digitado na busca; combina com o filtro de equipe (E, não OU)
 const comentAbertos = new Set();   // avisos com comentários expandidos
 const viewersAbertos = new Set();  // avisos com "quem viu" expandido
 const REACOES = ['👍','❤️','🎉','👏','✅'];
@@ -442,15 +469,32 @@ function renderFeed() {
   const feed = document.getElementById('feed');
   let lista = avisos;
   if (filtroAtivo !== 'todas') {
-    lista = avisos.filter(a => {
+    lista = lista.filter(a => {
       const eqs = a.equipes || [];
       return eqs.includes('todos') || eqs.includes(filtroAtivo);
     });
   }
+  const buscando = !!termoBusca.trim();
+  if (buscando) lista = lista.filter(casaBusca);
+
+  // Quantos apareceram, e de quantos. Só faz sentido quando algo está filtrando.
+  const info = document.getElementById('resultado-info');
+  if (info) {
+    info.textContent = (buscando || filtroAtivo !== 'todas')
+      ? (lista.length === 0 ? 'Nenhum aviso encontrado'
+        : lista.length === 1 ? '1 aviso encontrado (de ' + avisos.length + ')'
+        : lista.length + ' avisos encontrados (de ' + avisos.length + ')')
+      : '';
+  }
+
   if (!lista.length) {
-    feed.innerHTML = '<div class="vazio"><div class="vazio-ic">📭</div>' +
-      (avisos.length ? 'Nenhum aviso para este filtro.' : 'Nenhum aviso publicado ainda.<br/>Seja o primeiro a publicar!') +
-      '</div>';
+    let msg;
+    if (!avisos.length) msg = 'Nenhum aviso publicado ainda.<br/>Seja o primeiro a publicar!';
+    else if (buscando) msg = 'Nada encontrado para <strong>' + esc(termoBusca.trim()) + '</strong>.' +
+      '<br/>A busca olha título, mensagem, autor e nome do anexo.';
+    else msg = 'Nenhum aviso para este filtro.';
+    feed.innerHTML = '<div class="vazio"><div class="vazio-ic">' +
+      (buscando ? '🔍' : '📭') + '</div>' + msg + '</div>';
     return;
   }
   feed.innerHTML = lista.map(cardHtml).join('');
@@ -507,10 +551,10 @@ function cardHtml(a) {
   return '<div class="aviso' + (a.fixado ? ' fixado' : '') + '">' +
     '<div class="aviso-top">' +
       (a.fixado ? '<span class="pin-flag">📌</span>' : '') +
-      '<div class="aviso-titulo">' + esc(a.titulo) + '</div>' +
+      '<div class="aviso-titulo">' + destacar(a.titulo) + '</div>' +
     '</div>' +
     '<div class="aviso-badges">' + badges + '</div>' +
-    '<div class="aviso-corpo">' + esc(a.corpo) + '</div>' +
+    '<div class="aviso-corpo">' + destacar(a.corpo) + '</div>' +
     (a.anexo_path ? '<div class="aviso-anexo"><button class="anexo-baixar" onclick="baixarAnexo(\'' + a.id + '\')">📎 ' + esc(a.anexo_nome || 'Anexo') + '</button></div>' : '') +
     '<div class="reacoes-bar">' + barra + '</div>' +
     '<div class="aviso-foot">' +
@@ -522,6 +566,52 @@ function cardHtml(a) {
     '<div class="viewers-box" id="viewers-' + a.id + '" style="display:none"></div>' +
     '<div class="coment-box" id="coments-' + a.id + '" style="display:none"></div>' +
   '</div>';
+}
+
+/* ---------- Busca ---------- */
+function setBusca(v) {
+  termoBusca = v || '';
+  document.getElementById('busca-x').classList.toggle('on', !!termoBusca);
+  renderFeed();
+}
+function limparBusca() {
+  const inp = document.getElementById('busca');
+  if (inp) { inp.value = ''; inp.focus(); }
+  setBusca('');
+}
+
+// Minúsculo e SEM acento, pra quem digita "reuniao" achar "Reunião".
+// A remoção do acento não muda o tamanho do texto (cada letra acentuada volta a
+// ser uma letra só), o que deixa destacar() casar posição com o texto original.
+function normalizar(s) {
+  return String(s == null ? '' : s).toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function casaBusca(a) {
+  if (!termoBusca.trim()) return true;
+  const alvo = [a.titulo, a.corpo, a.autor_nome, a.autor_email, a.anexo_nome].join(' ');
+  return normalizar(alvo).includes(normalizar(termoBusca.trim()));
+}
+
+// Marca o trecho encontrado. Marca ANTES de escapar o HTML (com dois caracteres
+// de controle que não aparecem em texto digitado) e troca por <mark> depois —
+// se marcasse depois, o escape comeria as tags.
+const _M1 = '', _M2 = '';
+function destacar(texto) {
+  const src = String(texto == null ? '' : texto);
+  const t = normalizar(termoBusca.trim());
+  if (!t) return esc(src);
+  const n = normalizar(src);
+  if (n.length !== src.length) return esc(src);   // desalinhou: melhor não destacar
+  let out = '', i = 0;
+  for (;;) {
+    const j = n.indexOf(t, i);
+    if (j < 0) { out += src.slice(i); break; }
+    out += src.slice(i, j) + _M1 + src.slice(j, j + t.length) + _M2;
+    i = j + t.length;
+  }
+  return esc(out).split(_M1).join('<mark>').split(_M2).join('</mark>');
 }
 
 /* ---------- Filtros ---------- */
