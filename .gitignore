@@ -1,3 +1,19 @@
 # Arquivos de trabalho da CLI do Supabase (guarda o project-ref linkado localmente).
 # Nao entra no repo: e estado da maquina, nao do projeto.
 supabase/.temp/
+
+# Credenciais. NUNCA no repo — o repositorio e privado, mas chave de servico do
+# Supabase ignora RLS e da acesso total ao banco.
+.env
+.env.*
+!.env.example
+*.key
+*_secret*
+
+# Cargas geradas do fechamento: sao dados de honorario (paciente, valor, repasse)
+# e podem ser regeradas a qualquer momento por _tools/_honorarios_motor.py.
+db/carga_*_honorarios.sql
+db/seed_009_honorarios_historico_*.sql
+
+__pycache__/
+*.pyc
