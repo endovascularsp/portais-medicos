@@ -314,6 +314,26 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
   max-width:220px;font-family:inherit;outline:none;transition:border 0.15s;}
 .prof-select:focus{border-color:var(--gold);}
 
+/* Os 6 filtros numa linha só.
+   O que quebrava a linha antes: o <select> de Profissional tem largura natural
+   do nome mais longo da lista (uns 350px), e é a largura NATURAL que o flexbox
+   usa para decidir a quebra — ele quebrava antes de encolher. A correção é dar
+   a cada grupo uma BASE pequena e fixa (flex-basis), que passa a ser o número
+   usado na conta da quebra; o espaço que sobra é distribuído depois.
+   O flex-wrap segue ligado: em tela estreita quebra em vez de transbordar. */
+@media (min-width:1250px){
+  .periodo-bloco{gap:8px;padding:12px 16px;align-items:center;}
+  .periodo-bloco > .f-grp{min-width:0;flex:1 1 140px;}
+  .periodo-bloco > .f-grp.grp-intervalo{flex:2 1 360px;}
+  .periodo-bloco .prof-select{max-width:none;min-width:0;width:100%;flex:1 1 0;}
+  .periodo-bloco .range-filter{min-width:0;flex:1 1 auto;flex-wrap:nowrap;gap:5px;}
+  .periodo-bloco .range-filter select{min-width:0;flex:1 1 0;padding:4px 6px;}
+  .periodo-bloco .periodo-label-novo{white-space:nowrap;flex:none;}
+  .periodo-bloco .range-ate{flex:none;}
+  .periodo-bloco .range-btn{padding:5px 9px;white-space:nowrap;flex:none;}
+  .periodo-bloco .range-sep{flex:none;}
+}
+
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
   gap:16px;margin-bottom:22px;}
 .kpi{background:linear-gradient(180deg,var(--navy) 0%,#13315b 100%);border-radius:12px;
@@ -406,10 +426,10 @@ html[style*="visible"] #boot{display:none;}
     <div class='periodo-bloco'>
       <div class='f-grp'>
         <span class='periodo-label-novo'>Mês:</span>
-        <div id='periodo-tabs' class='tabs-flex'></div>
+        <select id='periodo-select' class='prof-select' onchange='mudarPeriodo(this.value)'></select>
       </div>
       <div class='range-sep'></div>
-      <div class='f-grp'>
+      <div class='f-grp grp-intervalo'>
         <span class='periodo-label-novo'>Intervalo: <span style="cursor:help;opacity:0.55;font-size:0.85em;font-weight:400;" title="Soma os valores de varios meses de uma vez. Ex: escolher Janeiro ate Abril mostra o total acumulado dos 4 meses.">&#9432;</span></span>
         <div class='range-filter'>
           <select id='range-de'></select>
@@ -424,6 +444,20 @@ html[style*="visible"] #boot{display:none;}
         <span class='periodo-label-novo'>Profissional:</span>
         <select id='prof-filtro' class='prof-select' onchange='filtrarPorProf(this.value)'>
           <option value=''>— Visão Geral —</option>
+        </select>
+      </div>
+      <div class='range-sep'></div>
+      <div class='f-grp'>
+        <span class='periodo-label-novo'>Categoria:</span>
+        <select id='cat-filtro' class='prof-select' onchange='filtrarPorCategoria(this.value)'>
+          <option value=''>— Todas —</option>
+        </select>
+      </div>
+      <div class='range-sep'></div>
+      <div class='f-grp'>
+        <span class='periodo-label-novo'>Tabela:</span>
+        <select id='tab-filtro' class='prof-select' onchange='filtrarPorTabela(this.value)'>
+          <option value=''>— Todas —</option>
         </select>
       </div>
     </div>
@@ -646,6 +680,122 @@ function filtrarPorProf(profKey){
   }
   if(DADOS_PROFS[profKey]) mostrarProf(profKey);
 }
+// ── Filtros de Categoria e Tabela de preço ──────────────────────────────────
+// Quando um deles está ativo, o `resumo` que veio pronto no PDATA não serve mais:
+// ele soma o mês inteiro. Então os totais são RECALCULADOS a partir da lista de
+// atendimentos filtrada, e as quebras (categoria/pagamento/tabela) junto.
+let FILTRO_CATEGORIA = '';
+let FILTRO_TABELA    = '';
+
+function _somaAtend(ats, campo){
+  return ats.reduce((a,x)=>a+(x[campo]||0),0);
+}
+
+function _quebra(ats, chave, campos){
+  const m = {};
+  ats.forEach(x => {
+    const k = x[chave] || '—';
+    if(!m[k]) m[k] = {};
+    campos.forEach(c => m[k][c] = (m[k][c]||0) + (x[c]||0));
+  });
+  return m;
+}
+
+// Reconstrói um profissional a partir de um subconjunto dos atendimentos dele.
+function _recalcularProf(p, ats){
+  const out = Object.assign({}, p);
+  out.atendimentos = ats;
+  out.resumo = Object.assign({}, p.resumo, {
+    'Valor recebido':            _somaAtend(ats,'Valor recebido'),
+    'Imposto (18%)':             _somaAtend(ats,'Imposto (18%)'),
+    'Taxa cartão (3%)':          _somaAtend(ats,'Taxa cartão (3%)'),
+    'Custo':                     _somaAtend(ats,'Custo'),
+    'Valor Líquido':             _somaAtend(ats,'Valor Líquido'),
+    'Repasse Profissional (R$)': _somaAtend(ats,'Repasse Profissional (R$)'),
+    'Repasse Clínica (R$)':      _somaAtend(ats,'Repasse Clínica (R$)'),
+    'Repasse Indicador (R$)':    _somaAtend(ats,'Repasse Indicador (R$)')
+  });
+  const qc = _quebra(ats,'Categoria',['Valor recebido','Valor Líquido','Repasse Profissional (R$)']);
+  out.por_categoria = Object.keys(qc).sort().map(c => Object.assign(
+    {Profissional:p.profissional, Categoria:c}, qc[c]));
+  const qp = _quebra(ats,'Tipo de pagamento',['Valor recebido']);
+  out.por_pagamento = Object.keys(qp).sort().map(t => ({
+    Profissional:p.profissional, 'Tipo de pagamento':t, 'Valor recebido':qp[t]['Valor recebido']}));
+  const qt = _quebra(ats,'Tabela',['Valor recebido']);
+  out.por_tabela = Object.keys(qt).sort().map(t => ({
+    Profissional:p.profissional, Tabela:t,
+    Origem:(ats.find(x=>x.Tabela===t)||{}).Origem || '',
+    'Valor recebido':qt[t]['Valor recebido']}));
+  return out;
+}
+
+// Aplica empresa + categoria + tabela sobre um mapa de profissionais.
+function _filtrarProfs(origem){
+  const out = {};
+  Object.entries(origem||{}).forEach(([k,v]) => {
+    // 'todos' existe no admin de Cirurgias, que pode mostrar as duas empresas
+    if(FILTRO_EMPRESA !== 'todos' && (v.empresa || 'Endovascular SP') !== FILTRO_EMPRESA) return;
+    if(!FILTRO_CATEGORIA && !FILTRO_TABELA){ out[k] = v; return; }
+    const ats = (v.atendimentos||[]).filter(a =>
+      (!FILTRO_CATEGORIA || a.Categoria === FILTRO_CATEGORIA) &&
+      (!FILTRO_TABELA    || a.Tabela    === FILTRO_TABELA));
+    if(ats.length) out[k] = _recalcularProf(v, ats);
+  });
+  return out;
+}
+
+function _aplicarFiltros(){
+  const novo = _filtrarProfs(_DADOS_PROFS_PERIODO);
+  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
+  Object.entries(novo).forEach(([k,v]) => DADOS_PROFS[k] = v);
+}
+
+// Opções de Categoria e Tabela vêm dos atendimentos do período e da empresa ativa,
+// para não oferecer filtro que não existe no que está na tela.
+function _atualizarSelectsFiltros(){
+  const daEmpresa = Object.values(_DADOS_PROFS_PERIODO||{})
+    .filter(v => FILTRO_EMPRESA === 'todos'
+              || (v.empresa || 'Endovascular SP') === FILTRO_EMPRESA);
+  const cats = new Set(), tabs = new Set();
+  daEmpresa.forEach(v => (v.atendimentos||[]).forEach(a => {
+    if(a.Categoria) cats.add(a.Categoria);
+    if(a.Tabela)    tabs.add(a.Tabela);
+  }));
+  const preencher = (id, valores, rotulo, atual) => {
+    const sel = document.getElementById(id);
+    if(!sel) return '';
+    const lista = Array.from(valores).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    sel.innerHTML = '<option value="">'+rotulo+'</option>' +
+      lista.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">'+v+'</option>').join('');
+    const manter = lista.includes(atual) ? atual : '';
+    sel.value = manter;
+    return manter;
+  };
+  FILTRO_CATEGORIA = preencher('cat-filtro', cats, '— Todas —', FILTRO_CATEGORIA);
+  FILTRO_TABELA    = preencher('tab-filtro', tabs, '— Todas —', FILTRO_TABELA);
+}
+
+function filtrarPorCategoria(v){
+  FILTRO_CATEGORIA = v || '';
+  _reaplicar();
+}
+
+function filtrarPorTabela(v){
+  FILTRO_TABELA = v || '';
+  _reaplicar();
+}
+
+// Refaz a tela mantendo o modo atual (mês único ou intervalo).
+function _reaplicar(){
+  if(RANGE_ATIVO){ _renderRangeGeral(); return; }
+  _aplicarFiltros();
+  Object.keys(CHARTS).forEach(k => { if(CHARTS[k]){ CHARTS[k].destroy(); delete CHARTS[k]; }});
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const gv = document.getElementById('view-geral'); if(gv) gv.classList.add('active');
+  _atualizarSelectProfs();
+  renderGeral();
+}
+
 function _atualizarSelectProfs(){
   const sel = document.getElementById('prof-filtro');
   if(!sel) return;
@@ -1111,14 +1261,11 @@ function inicializarPortalPermanente(){
   if(!periodos.length) return;
   PERIODO_ATUAL = periodos[periodos.length-1];
 
-  const tabsEl = document.getElementById('periodo-tabs');
-  if(tabsEl){
-    tabsEl.style.display = 'flex';
-    tabsEl.innerHTML = periodos.slice().reverse().map(pid => {
-      const lbl = TODOS_PERIODOS[pid].label;
-      return '<button class="tab-novo'+(pid===PERIODO_ATUAL?' active':'')+
-             '" data-pid="'+pid+'" onclick="mudarPeriodo(\''+pid+'\')">'+ lbl +'</button>';
-    }).join('');
+  const selPer = document.getElementById('periodo-select');
+  if(selPer){
+    selPer.innerHTML = periodos.slice().reverse().map(pid =>
+      '<option value="'+pid+'">'+TODOS_PERIODOS[pid].label+'</option>').join('');
+    selPer.value = PERIODO_ATUAL;
   }
 
   // Popular range-de / range-ate
@@ -1138,7 +1285,8 @@ function aplicarRange(){
   if(de > ate){ alert('O mês "de" deve ser anterior ou igual ao mês "até".'); return; }
   RANGE_ATIVO = {de, ate};
   PERIODO_ATUAL = ate;
-  document.querySelectorAll('#periodo-tabs .tab-novo').forEach(t => t.classList.remove('active'));
+  const selPer = document.getElementById('periodo-select');
+  if(selPer) selPer.value = ate;
   _renderRangeGeral();
 }
 
@@ -1201,6 +1349,16 @@ function _renderRangeGeral(){
     delete a._cat; delete a._pag; delete a._tab;
   });
 
+  if(FILTRO_CATEGORIA || FILTRO_TABELA){
+    Object.keys(agg).forEach(slug => {
+      const ats = (agg[slug].atendimentos||[]).filter(x =>
+        (!FILTRO_CATEGORIA || x.Categoria === FILTRO_CATEGORIA) &&
+        (!FILTRO_TABELA    || x.Tabela    === FILTRO_TABELA));
+      if(ats.length) agg[slug] = _recalcularProf(agg[slug], ats);
+      else delete agg[slug];
+    });
+  }
+
   Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
   Object.assign(DADOS_PROFS, agg);
 
@@ -1223,23 +1381,14 @@ function mudarPeriodo(id, updateTabs){
   if(!pdata) return;
 
   _DADOS_PROFS_PERIODO = Object.assign({}, pdata.profs);
-  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  if(FILTRO_EMPRESA === 'todos'){
-    Object.assign(DADOS_PROFS, _DADOS_PROFS_PERIODO);
-  } else {
-    Object.entries(_DADOS_PROFS_PERIODO).forEach(([k,v]) => {
-      if((v.empresa || 'Endovascular SP') === FILTRO_EMPRESA) DADOS_PROFS[k] = v;
-    });
-  }
+  _atualizarSelectsFiltros();
+  _aplicarFiltros();
 
   PERIODO_LABEL = pdata.label;
   PERIODO_ID = id;
 
-  if(updateTabs !== false){
-    document.querySelectorAll('#periodo-tabs .tab-novo').forEach(t => {
-      t.classList.toggle('active', t.dataset.pid === id);
-    });
-  }
+  const selPer = document.getElementById('periodo-select');
+  if(selPer && selPer.value !== id) selPer.value = id;
 
   const hp = document.getElementById('header-periodo');
   if(hp) hp.textContent = pdata.label;
@@ -1257,10 +1406,8 @@ function mudarPeriodo(id, updateTabs){
 
 function filtrarEmpresas(emp){
   FILTRO_EMPRESA = emp;
-  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  Object.entries(_DADOS_PROFS_PERIODO).forEach(([k,v]) => {
-    if((v.empresa || 'Endovascular SP') === FILTRO_EMPRESA) DADOS_PROFS[k] = v;
-  });
+  _atualizarSelectsFiltros();
+  _aplicarFiltros();
   Object.keys(CHARTS).forEach(k => { if(CHARTS[k]){ CHARTS[k].destroy(); delete CHARTS[k]; }});
   _atualizarSelectProfs();
   renderGeral();

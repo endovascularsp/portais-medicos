@@ -1241,7 +1241,8 @@ function _recalcularProf(p, ats){
 function _filtrarProfs(origem){
   const out = {};
   Object.entries(origem||{}).forEach(([k,v]) => {
-    if((v.empresa || 'Endovascular SP') !== FILTRO_EMPRESA) return;
+    // 'todos' existe no admin de Cirurgias, que pode mostrar as duas empresas
+    if(FILTRO_EMPRESA !== 'todos' && (v.empresa || 'Endovascular SP') !== FILTRO_EMPRESA) return;
     if(!FILTRO_CATEGORIA && !FILTRO_TABELA){ out[k] = v; return; }
     const ats = (v.atendimentos||[]).filter(a =>
       (!FILTRO_CATEGORIA || a.Categoria === FILTRO_CATEGORIA) &&
@@ -1261,7 +1262,8 @@ function _aplicarFiltros(){
 // para não oferecer filtro que não existe no que está na tela.
 function _atualizarSelectsFiltros(){
   const daEmpresa = Object.values(_DADOS_PROFS_PERIODO||{})
-    .filter(v => (v.empresa || 'Endovascular SP') === FILTRO_EMPRESA);
+    .filter(v => FILTRO_EMPRESA === 'todos'
+              || (v.empresa || 'Endovascular SP') === FILTRO_EMPRESA);
   const cats = new Set(), tabs = new Set();
   daEmpresa.forEach(v => (v.atendimentos||[]).forEach(a => {
     if(a.Categoria) cats.add(a.Categoria);
