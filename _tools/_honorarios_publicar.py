@@ -248,13 +248,19 @@ def validar(periodo_id: str, chaves: dict) -> int:
             print(f"  [{path.name}] não decriptou: {type(e).__name__}")
             difs += 1
             continue
-        # Os campos novos (Regra aplicada, % Aplicado, ISS, Taxa comercial) não
-        # existem no que está publicado — tirá-los é o que torna a comparação justa.
+        # Os campos novos (Regra aplicada, % Aplicado, ISS, Taxa comercial) só
+        # existem em período publicado por este gerador. Comparando contra um
+        # período antigo, é preciso tirá-los do lado esperado — senão a
+        # diferença aparece em toda linha e esconde as de verdade. Já num
+        # período novo eles TÊM que estar lá, e aí a comparação é completa.
+        atual_inner = list(atual.values())[0]
+        ja_tem_novos = bool((atual_inner.get("atendimentos") or [{}])[0].get("Regra aplicada"))
         esperado = interno_individual(inner)
-        esperado["atendimentos"] = [
-            {k: v for k, v in at.items() if k not in G.CAMPOS_NOVOS}
-            for at in esperado["atendimentos"]]
-        ruins = comparar(list(atual.values())[0], esperado)
+        if not ja_tem_novos:
+            esperado["atendimentos"] = [
+                {k: v for k, v in at.items() if k not in G.CAMPOS_NOVOS}
+                for at in esperado["atendimentos"]]
+        ruins = comparar(atual_inner, esperado)
         if not ruins:
             iguais += 1
         else:
