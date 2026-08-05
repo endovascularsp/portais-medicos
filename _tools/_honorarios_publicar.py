@@ -126,32 +126,73 @@ def _pdata_individual(path: Path):
 def carregar_chaves() -> dict:
     """Chave por profissional, VALIDADA decriptando o último período que já está
     publicado no portal dele. Quem não validar fica de fora — cifrar com chave
-    errada tranca o médico fora do próprio portal."""
+    errada tranca o médico fora do próprio portal.
+
+    A fonte é a tabela `user_secrets` do Supabase, que é onde o cadastro vive
+    hoje. Antes eu lia de `_fase_b_user_secrets.sql`, um arquivo de rotação de
+    junho — e por isso quem entrou depois (Gustavo, cadastrado em 20/07)
+    aparecia como "sem chave" mesmo já tendo uma. O SQL e o dicionário EMAIL
+    ficam só como reserva, para o caso de o banco estar fora do ar."""
     cand = dict(CHAVES_EXTRAS)
+    try:
+        import _honorarios_db as DB
+        users = {u["email"]: u.get("name") for u in DB.buscar("users", "email,name")}
+        for s in DB.buscar("user_secrets", "email,legacy_password"):
+            nome = users.get(s["email"])
+            if nome and s.get("legacy_password"):
+                cand[nome] = s["legacy_password"]
+    except SystemExit as e:
+        print(f"  [CHAVES] Supabase indisponível ({e}); usando o SQL de reserva")
     if SQL_CHAVES.exists():
         sql = SQL_CHAVES.read_text(encoding="utf-8")
         e2k = {e: k for k, e in re.findall(
             r"set legacy_password = '([^']+)' where email = '([^']+)'", sql)}
         for nome, em in EMAIL.items():
             if em in e2k:
-                cand[nome] = e2k[em]
+                cand.setdefault(nome, e2k[em])
 
-    ok, falhas = {}, []
+    # Duas situações MUITO diferentes:
+    #   - existe portal e a chave não abre  -> PULA (cifrar com ela trancaria o médico fora)
+    #   - não existe portal nenhum          -> aceita (não há o que quebrar; é o caso
+    #                                          de quem está sendo criado agora)
+    ok, erradas, sem_portal = {}, [], []
     for nome, chave in cand.items():
-        validou = False
-        for emp in ("Endovascular SP", "Cirurgias", "Oxy Recovery"):
-            data = _pdata_individual(alvo_individual(nome, emp))
-            if not data:
+        slug = G.slugify(nome)
+        candidatos = [alvo_individual(nome, e) for e in ("Endovascular SP", "Cirurgias", "Oxy Recovery")]
+        candidatos += [REPO / "produtividade" / f"{slug}_Produtividade.html",
+                       REPO / "oxy-produtividade" / f"{slug}_Oxy_Produtividade.html"]
+        existentes, validou = 0, False
+        for p in candidatos:
+            if not p.exists():
                 continue
-            try:
-                decifrar(data[sorted(data)[-1]]["blob"], chave)
-                validou = True
+            existentes += 1
+            data = _pdata_individual(p)
+            blobs = ([v["blob"] for v in data.values() if isinstance(v, dict) and v.get("blob")]
+                     if data else [])
+            if not blobs:                       # produtividade guarda o blob solto
+                m = re.search(r"/\*PDATA\*/'([A-Za-z0-9+/=]+)'/\*PDATA\*/", p.read_text(encoding="utf-8"))
+                blobs = [m.group(1)] if m else []
+            for b in blobs[-1:]:
+                try:
+                    decifrar(b, chave)
+                    validou = True
+                    break
+                except Exception:
+                    pass
+            if validou:
                 break
-            except Exception:
-                pass
-        (ok.__setitem__(nome, chave) if validou else falhas.append(nome))
-    print(f"  [CHAVES] validadas contra o portal: {len(ok)} · não validaram: {len(falhas)}")
-    for n in falhas:
+        if validou:
+            ok[nome] = chave
+        elif existentes:
+            erradas.append(nome)
+        else:
+            ok[nome] = chave
+            sem_portal.append(nome)
+    print(f"  [CHAVES] validadas: {len(ok) - len(sem_portal)} · sem portal ainda: {len(sem_portal)}"
+          f" · não abrem o portal: {len(erradas)}")
+    for n in sem_portal:
+        print(f"     [NOVO]   {n}: ainda não tem portal — chave aceita")
+    for n in erradas:
         print(f"     [PULADO] {n}: a chave não abre o portal atual")
     return ok
 
