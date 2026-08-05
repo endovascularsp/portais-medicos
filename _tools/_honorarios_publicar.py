@@ -329,6 +329,8 @@ def main():
     ap.add_argument("--periodo", required=True)
     ap.add_argument("--validar", action="store_true")
     ap.add_argument("--piloto", help="só o portal individual de quem casar com este texto")
+    ap.add_argument("--somente-admins", action="store_true",
+                    help="atualiza só os 3 admins; não toca em portal de médico")
     ap.add_argument("--escrever", action="store_true", help="sem isto, nada é gravado")
     a = ap.parse_args()
 
@@ -345,8 +347,10 @@ def main():
     label = obj["label"]
     print(f"\n=== {a.periodo} ({label}) · escrever={a.escrever} ===")
 
-    print("\n--- Portais individuais (criptografados) ---")
-    for slug, inner in sorted(obj["profs"].items()):
+    if a.somente_admins:
+        print("\n(--somente-admins: nenhum portal de médico será tocado)")
+    print("\n--- Portais individuais (criptografados) ---" if not a.somente_admins else "")
+    for slug, inner in sorted(obj["profs"].items() if not a.somente_admins else []):
         prof, emp = inner["profissional"], inner["empresa"]
         if a.piloto and a.piloto.lower() not in prof.lower():
             continue
