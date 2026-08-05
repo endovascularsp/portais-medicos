@@ -432,7 +432,7 @@ html[style*="visible"] #boot{display:none;}
     <div class='periodo-bloco'>
       <div class='f-grp'>
         <span class='periodo-label-novo'>Mês:</span>
-        <div id='periodo-tabs' class='tabs-flex'></div>
+        <select id='periodo-select' class='prof-select' onchange='mudarPeriodo(this.value)'></select>
       </div>
       <div class='range-sep'></div>
       <div class='f-grp'>
@@ -450,6 +450,20 @@ html[style*="visible"] #boot{display:none;}
         <span class='periodo-label-novo'>Profissional:</span>
         <select id='prof-filtro' class='prof-select' onchange='filtrarPorProf(this.value)'>
           <option value=''>— Visão Geral —</option>
+        </select>
+      </div>
+      <div class='range-sep'></div>
+      <div class='f-grp'>
+        <span class='periodo-label-novo'>Categoria:</span>
+        <select id='cat-filtro' class='prof-select' onchange='filtrarPorCategoria(this.value)'>
+          <option value=''>— Todas —</option>
+        </select>
+      </div>
+      <div class='range-sep'></div>
+      <div class='f-grp'>
+        <span class='periodo-label-novo'>Tabela:</span>
+        <select id='tab-filtro' class='prof-select' onchange='filtrarPorTabela(this.value)'>
+          <option value=''>— Todas —</option>
         </select>
       </div>
     </div>
@@ -1108,15 +1122,13 @@ function inicializarPortalPermanente(){
   if(!periodos.length) return;
   PERIODO_ATUAL = periodos[periodos.length-1]; // mais recente
 
-  // Monta abas de período (sempre exibe, mesmo com 1 só, pra manter o layout consistente)
-  const tabsEl = document.getElementById('periodo-tabs');
-  if(tabsEl){
-    tabsEl.style.display = 'flex';
-    tabsEl.innerHTML = periodos.slice().reverse().map(pid => {
-      const lbl = TODOS_PERIODOS[pid].label;
-      return '<button class="tab-novo'+(pid===PERIODO_ATUAL?' active':'')+
-             '" data-pid="'+pid+'" onclick="mudarPeriodo(\''+pid+'\')">'+ lbl +'</button>';
-    }).join('');
+  // Menu suspenso de mês (antes eram botões lado a lado; com muitos meses a linha
+  // estourava). Mais recente primeiro, como as abas mostravam.
+  const selPer = document.getElementById('periodo-select');
+  if(selPer){
+    selPer.innerHTML = periodos.slice().reverse().map(pid =>
+      '<option value="'+pid+'">'+TODOS_PERIODOS[pid].label+'</option>').join('');
+    selPer.value = PERIODO_ATUAL;
   }
 
   // Popular range-de / range-ate
@@ -1156,6 +1168,120 @@ function inicializarPortalPermanente(){
   mudarPeriodo(PERIODO_ATUAL, false);
 }
 
+// ── Filtros de Categoria e Tabela de preço ──────────────────────────────────
+// Quando um deles está ativo, o `resumo` que veio pronto no PDATA não serve mais:
+// ele soma o mês inteiro. Então os totais são RECALCULADOS a partir da lista de
+// atendimentos filtrada, e as quebras (categoria/pagamento/tabela) junto.
+let FILTRO_CATEGORIA = '';
+let FILTRO_TABELA    = '';
+
+function _somaAtend(ats, campo){
+  return ats.reduce((a,x)=>a+(x[campo]||0),0);
+}
+
+function _quebra(ats, chave, campos){
+  const m = {};
+  ats.forEach(x => {
+    const k = x[chave] || '—';
+    if(!m[k]) m[k] = {};
+    campos.forEach(c => m[k][c] = (m[k][c]||0) + (x[c]||0));
+  });
+  return m;
+}
+
+// Reconstrói um profissional a partir de um subconjunto dos atendimentos dele.
+function _recalcularProf(p, ats){
+  const out = Object.assign({}, p);
+  out.atendimentos = ats;
+  out.resumo = Object.assign({}, p.resumo, {
+    'Valor recebido':            _somaAtend(ats,'Valor recebido'),
+    'Imposto (18%)':             _somaAtend(ats,'Imposto (18%)'),
+    'Taxa cartão (3%)':          _somaAtend(ats,'Taxa cartão (3%)'),
+    'Custo':                     _somaAtend(ats,'Custo'),
+    'Valor Líquido':             _somaAtend(ats,'Valor Líquido'),
+    'Repasse Profissional (R$)': _somaAtend(ats,'Repasse Profissional (R$)'),
+    'Repasse Clínica (R$)':      _somaAtend(ats,'Repasse Clínica (R$)'),
+    'Repasse Indicador (R$)':    _somaAtend(ats,'Repasse Indicador (R$)')
+  });
+  const qc = _quebra(ats,'Categoria',['Valor recebido','Valor Líquido','Repasse Profissional (R$)']);
+  out.por_categoria = Object.keys(qc).sort().map(c => Object.assign(
+    {Profissional:p.profissional, Categoria:c}, qc[c]));
+  const qp = _quebra(ats,'Tipo de pagamento',['Valor recebido']);
+  out.por_pagamento = Object.keys(qp).sort().map(t => ({
+    Profissional:p.profissional, 'Tipo de pagamento':t, 'Valor recebido':qp[t]['Valor recebido']}));
+  const qt = _quebra(ats,'Tabela',['Valor recebido']);
+  out.por_tabela = Object.keys(qt).sort().map(t => ({
+    Profissional:p.profissional, Tabela:t,
+    Origem:(ats.find(x=>x.Tabela===t)||{}).Origem || '',
+    'Valor recebido':qt[t]['Valor recebido']}));
+  return out;
+}
+
+// Aplica empresa + categoria + tabela sobre um mapa de profissionais.
+function _filtrarProfs(origem){
+  const out = {};
+  Object.entries(origem||{}).forEach(([k,v]) => {
+    if((v.empresa || 'Endovascular SP') !== FILTRO_EMPRESA) return;
+    if(!FILTRO_CATEGORIA && !FILTRO_TABELA){ out[k] = v; return; }
+    const ats = (v.atendimentos||[]).filter(a =>
+      (!FILTRO_CATEGORIA || a.Categoria === FILTRO_CATEGORIA) &&
+      (!FILTRO_TABELA    || a.Tabela    === FILTRO_TABELA));
+    if(ats.length) out[k] = _recalcularProf(v, ats);
+  });
+  return out;
+}
+
+function _aplicarFiltros(){
+  const novo = _filtrarProfs(_DADOS_PROFS_PERIODO);
+  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
+  Object.entries(novo).forEach(([k,v]) => DADOS_PROFS[k] = v);
+}
+
+// Opções de Categoria e Tabela vêm dos atendimentos do período e da empresa ativa,
+// para não oferecer filtro que não existe no que está na tela.
+function _atualizarSelectsFiltros(){
+  const daEmpresa = Object.values(_DADOS_PROFS_PERIODO||{})
+    .filter(v => (v.empresa || 'Endovascular SP') === FILTRO_EMPRESA);
+  const cats = new Set(), tabs = new Set();
+  daEmpresa.forEach(v => (v.atendimentos||[]).forEach(a => {
+    if(a.Categoria) cats.add(a.Categoria);
+    if(a.Tabela)    tabs.add(a.Tabela);
+  }));
+  const preencher = (id, valores, rotulo, atual) => {
+    const sel = document.getElementById(id);
+    if(!sel) return '';
+    const lista = Array.from(valores).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    sel.innerHTML = '<option value="">'+rotulo+'</option>' +
+      lista.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">'+v+'</option>').join('');
+    const manter = lista.includes(atual) ? atual : '';
+    sel.value = manter;
+    return manter;
+  };
+  FILTRO_CATEGORIA = preencher('cat-filtro', cats, '— Todas —', FILTRO_CATEGORIA);
+  FILTRO_TABELA    = preencher('tab-filtro', tabs, '— Todas —', FILTRO_TABELA);
+}
+
+function filtrarPorCategoria(v){
+  FILTRO_CATEGORIA = v || '';
+  _reaplicar();
+}
+
+function filtrarPorTabela(v){
+  FILTRO_TABELA = v || '';
+  _reaplicar();
+}
+
+// Refaz a tela mantendo o modo atual (mês único ou intervalo).
+function _reaplicar(){
+  if(RANGE_ATIVO){ _renderRangeGeral(); return; }
+  _aplicarFiltros();
+  Object.keys(CHARTS).forEach(k => { if(CHARTS[k]){ CHARTS[k].destroy(); delete CHARTS[k]; }});
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const gv = document.getElementById('view-geral'); if(gv) gv.classList.add('active');
+  _atualizarSelectProfs();
+  renderGeral();
+}
+
 // Repopula o <select id='prof-filtro'> com os profissionais do período/empresa atuais
 function _atualizarSelectProfs(){
   const sel = document.getElementById('prof-filtro');
@@ -1179,7 +1305,8 @@ function aplicarRange(){
   if(de > ate){ alert('O mês "de" deve ser anterior ou igual ao mês "até".'); return; }
   RANGE_ATIVO = {de, ate};
   PERIODO_ATUAL = ate;
-  document.querySelectorAll('#periodo-tabs .tab-novo').forEach(t => t.classList.remove('active'));
+  const selPer = document.getElementById('periodo-select');
+  if(selPer) selPer.value = ate;
   _renderRangeGeral();
 }
 
@@ -1245,6 +1372,18 @@ function _renderRangeGeral(){
     delete a._cat; delete a._pag; delete a._tab;
   });
 
+  // Categoria/Tabela também valem no intervalo: aqui o resumo somado dos meses
+  // não serve, então cada profissional é refeito a partir dos atendimentos.
+  if(FILTRO_CATEGORIA || FILTRO_TABELA){
+    Object.keys(agg).forEach(slug => {
+      const ats = (agg[slug].atendimentos||[]).filter(x =>
+        (!FILTRO_CATEGORIA || x.Categoria === FILTRO_CATEGORIA) &&
+        (!FILTRO_TABELA    || x.Tabela    === FILTRO_TABELA));
+      if(ats.length) agg[slug] = _recalcularProf(agg[slug], ats);
+      else delete agg[slug];
+    });
+  }
+
   // Substitui DADOS_PROFS pelos agregados e renderiza
   Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
   Object.assign(DADOS_PROFS, agg);
@@ -1270,20 +1409,16 @@ function mudarPeriodo(id, updateTabs){
   // Cache completo do período (sem filtro)
   _DADOS_PROFS_PERIODO = Object.assign({}, pdata.profs);
 
-  // Aplica filtro de empresa ao DADOS_PROFS
-  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  Object.entries(_DADOS_PROFS_PERIODO).forEach(([k,v]) => {
-    if((v.empresa || 'Endovascular SP') === FILTRO_EMPRESA) DADOS_PROFS[k] = v;
-  });
+  // Categorias e tabelas mudam de mês para mês — repopula antes de filtrar,
+  // e a seleção só é mantida se ainda existir no período novo.
+  _atualizarSelectsFiltros();
+  _aplicarFiltros();
 
   PERIODO_LABEL = pdata.label;
   PERIODO_ID = id;
 
-  if(updateTabs !== false){
-    document.querySelectorAll('#periodo-tabs .tab-novo').forEach(t => {
-      t.classList.toggle('active', t.dataset.pid === id);
-    });
-  }
+  const selPer = document.getElementById('periodo-select');
+  if(selPer && selPer.value !== id) selPer.value = id;
 
   const hp = document.getElementById('header-periodo');
   if(hp) hp.textContent = pdata.label;
@@ -1304,10 +1439,9 @@ function filtrarEmpresas(emp){
   document.querySelectorAll('#empresa-filtro .tab-novo').forEach(t => {
     t.classList.toggle('active', t.dataset.emp === emp);
   });
-  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  Object.entries(_DADOS_PROFS_PERIODO).forEach(([k,v]) => {
-    if((v.empresa || 'Endovascular SP') === FILTRO_EMPRESA) DADOS_PROFS[k] = v;
-  });
+  // Trocar de empresa muda as categorias e tabelas disponíveis.
+  _atualizarSelectsFiltros();
+  _aplicarFiltros();
   Object.keys(CHARTS).forEach(k => { if(CHARTS[k]){ CHARTS[k].destroy(); delete CHARTS[k]; }});
   // Empresa mudou → reset do select de profs e volta pra Visão Geral
   _atualizarSelectProfs();
