@@ -88,6 +88,27 @@ def atualizar(tabela: str, registro_id: str, campos: dict) -> dict:
     return volta[0]
 
 
+def inserir(tabela: str, registro: dict) -> dict:
+    """INSERT de UM registro. Devolve o que ficou gravado.
+    Escrita com a service_role ignora RLS — por isso um de cada vez, e o chamador
+    tem que ter conferido antes que o registro ainda não existe."""
+    url, key = _cred()
+    req = urllib.request.Request(
+        f"{url}/rest/v1/{tabela}",
+        data=json.dumps(registro).encode("utf-8"), method="POST",
+        headers={"apikey": key, "Authorization": f"Bearer {key}",
+                 "Content-Type": "application/json", "Prefer": "return=representation"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            volta = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"ABORTADO: HTTP {e.code} ao inserir em '{tabela}': "
+                         f"{e.read().decode('utf-8', 'replace')[:300]}")
+    if len(volta) != 1:
+        raise SystemExit(f"ABORTADO: o INSERT criou {len(volta)} registros, esperava 1.")
+    return volta[0]
+
+
 def testar() -> None:
     url, _ = _cred()
     print(f"Projeto: {url}")

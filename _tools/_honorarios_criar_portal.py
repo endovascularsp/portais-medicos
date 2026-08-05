@@ -149,8 +149,17 @@ def main(prof: str, empresa: str, modelo: str | None, dry_run: bool):
             # o card inteiro é criado antes do card de Produtividade.
             prod = re.search(r'(\s*)<div class="hub-card prod" id="card-prod">', ht)
             if not prod:
-                raise SystemExit("ABORTADO: Hub não tem card-prod para me orientar; "
-                                 "não sei onde colocar o card de Recebimento.")
+                # Hub recém-criado, ainda sem card nenhum: entra como o primeiro,
+                # logo depois da abertura do contêiner de cards.
+                cont = re.search(r'<div class="hub-cards">', ht)
+                if not cont:
+                    raise SystemExit("ABORTADO: Hub não tem <div class='hub-cards'>; "
+                                     "não sei onde colocar o card de Recebimento.")
+                class _Fake:
+                    def __init__(self, pos): self._p = pos
+                    def start(self): return self._p
+                    def group(self, _): return "\n        "
+                prod = _Fake(cont.end())
             card = (f'{prod.group(1)}<div class="hub-card rec" id="card-rec">'
                     f'{prod.group(1)}  <div class="hub-card-icon">💰</div>'
                     f'{prod.group(1)}  <div class="hub-card-title">Recebimento</div>'
