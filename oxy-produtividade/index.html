@@ -448,7 +448,7 @@ html[style*="visible"] #boot{display:none;}
   <div class='periodo-bloco'>
     <div class='f-grp'>
       <span class='periodo-label'>Mês:</span>
-      <div class='periodo-tabs' id='periodo-tabs'></div>
+      <select id='periodo-select' class='prof-select' onchange='selecionarMes(this.value)'></select>
     </div>
     <div class='range-sep'></div>
     <div class='f-grp'>
@@ -567,16 +567,14 @@ function labelOf(pid){
 
 function inicializar(){
   const pids = pidsDisponiveis();
-  const tabs = document.getElementById('periodo-tabs');
-  tabs.innerHTML = '';
-  pids.forEach((pid,i)=>{
-    const t = document.createElement('button');
-    t.className = 'tab' + (i===pids.length-1?' active':'');
-    t.textContent = labelOf(pid);
-    t.dataset.pid = pid;
-    t.onclick = ()=>selecionarMes(pid);
-    tabs.appendChild(t);
-  });
+  // Menu suspenso de mês (antes eram botões lado a lado, que estouravam a linha
+  // conforme os meses se acumulavam). Mais recente no topo.
+  const selPer = document.getElementById('periodo-select');
+  if(selPer){
+    selPer.innerHTML = pids.slice().reverse()
+      .map(pid=>'<option value="'+pid+'">'+labelOf(pid)+'</option>').join('');
+    selPer.value = pids[pids.length-1];
+  }
   const deSel = document.getElementById('range-de');
   const ateSel = document.getElementById('range-ate');
   deSel.innerHTML = ''; ateSel.innerHTML = '';
@@ -599,10 +597,8 @@ function inicializar(){
 
 function selecionarMes(pid){
   filtroAtual = {tipo:'mes', pid};
-  document.querySelectorAll('.tab').forEach(t=>{
-    t.classList.toggle('active', t.dataset.pid===pid);
-    t.classList.remove('desativa');
-  });
+  const selPer = document.getElementById('periodo-select');
+  if(selPer && selPer.value !== pid) selPer.value = pid;
   render();
 }
 
@@ -614,10 +610,8 @@ function aplicarRange(){
   if(iDe<0 || iAte<0 || iDe>iAte){ alert('Intervalo inválido. Verifique os meses selecionados.'); return; }
   const selPids = pids.slice(iDe, iAte+1);
   filtroAtual = {tipo:'range', pids:selPids};
-  document.querySelectorAll('.tab').forEach(t=>{
-    t.classList.remove('active');
-    t.classList.add('desativa');
-  });
+  const selPer = document.getElementById('periodo-select');
+  if(selPer) selPer.value = ate;
   render();
 }
 
