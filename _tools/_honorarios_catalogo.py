@@ -32,6 +32,32 @@ EXTRAS = {
     "Hybrius EVO - Sessão individual (1 área)":                               "Laser (clínica)",
     "Exérese e sutura simples de pequenas lesões (por grupo de até 5 lesões)": "Procedimentos",
     "Taxa compacta de sala de pequenas cirurgias":                            "Cirurgia - Clínica",
+
+    # Classificados em 05/08/2026, ao migrar a Produtividade para o relatório #560.
+    # A maioria já existia no catálogo com o nome levemente diferente — o SVN tem
+    # o mesmo procedimento cadastrado com e sem o prefixo "Cirurgia -", ou com
+    # variação de grafia.
+    "Cirurgia - Aneurisma de axilar, femoral, poplítea":                      "Cirurgia - Hospital",
+    "Varizes - tratamento cirúrgico por radiofrequência de dois membros":     "Cirurgia - Hospital",
+    "Cirurgia - Restauração venosa com pontes nos membros":                   "Cirurgia - Hospital",
+    "Embolização de malformação vascular - por vaso":                         "Cirurgia - Hospital",
+    "Retirada cirúrgica de cateter de longa permanência para NPP, QT ou para Hemodepuração": "Cirurgia - Hospital",
+    "Fotona Dores e Inflamações - ConfortLase":                               "Fotona",
+    "Onicomicoses":                                                           "Fotona",
+    "Noripurum (2 Ampolas)":                                                  "Medicação injetável",
+    "Vitamina D 50.000UI":                                                    "Medicação injetável",
+    "T-SCULPTOR - 8 Sessões (4 áreas)":                                       "T-Sculptor",
+    "Consulta Nutricionista":                                                 "Consultas",
+    "Consulta Pós-Operatória":                                                "Consultas",
+    "Doppler colorido de veia cava superior ou inferior (Cardio)":            "Exames de imagem",
+    # Mesmo exame que "Avaliação da composição corporal por bioimpedanciometria",
+    # cadastrado com nome curto. Aparece nas duas empresas.
+    "Bioimpedância":                                                          "Exames gerais",
+    "Bioimpedanciometria (ambulatorial) exame":                               "Exames gerais",
+    # Sem equivalente no catálogo; classificados pelo tipo de procedimento.
+    "Revascularização de Aorta Bi-Femoral (Convencional)":                    "Cirurgia - Hospital",
+    "Colocação de stent renal":                                               "Cirurgia - Hospital",
+    "Drenagem Linfática Manual":                                              "Fisioterapia",
 }
 
 # ---------------------------------------------------------------------------
@@ -52,14 +78,37 @@ AMBIGUOS = {"laser", "laser - pacote"}
 # ---------------------------------------------------------------------------
 # É o que a fila de exceções produz quando o nome do procedimento não basta.
 # Decidido pelo Thiago em 03/08/2026, a partir do cruzamento por OS.
+#
+# Resolvidos em 05/08/2026 cruzando com `honorarios_lancamentos`: a mesma OS já
+# aparece no fechamento com o procedimento de nome completo e categoria atribuída.
+# Essa fonte resolveu 20 de 20 OS, contra 3 de 20 do cruzamento por vizinhança —
+# é o caminho a tentar primeiro nos próximos casos.
 OVERRIDES_POR_OS = {
-    # Josefa Hortencia / Manoel — a mesma OS tem 30 lançamentos de "Laser Transdérmico"
-    ("13858952", "laser"):          "Laser (clínica)",
-    # Convivem com "Endolaser Cirúrgico" na mesma OS -> é a fibra de laser
+    # Onde a mesma OS traz "Endolaser Cirúrgico" (+ varizes) -> é a fibra de laser
     ("13055855", "laser"):          "Cirurgia - Hospital",  # Karina Geraldini / Igor
     ("13647510", "laser"):          "Cirurgia - Hospital",  # Cristiane de Araújo / Igor
+    ("13750002", "laser"):          "Cirurgia - Hospital",  # Paulo Emilio / Manoel
     ("13892404", "laser"):          "Cirurgia - Hospital",  # Laurinda Yamanishi / Manoel
     ("13225365", "laser - pacote"): "Cirurgia - Hospital",  # Débora de Mattos / Igor
+
+    # Onde a mesma OS traz "Laser Transdérmico" -> é laser de clínica
+    ("13694521", "laser"): "Laser (clínica)",  # Mélanie Isabelle Smuga / Igor
+    ("13735169", "laser"): "Laser (clínica)",  # Tatiana Armonas Seide
+    ("13748605", "laser"): "Laser (clínica)",  # Sandra Regina Leite / Manoel
+    ("13760719", "laser"): "Laser (clínica)",  # Débora Dutra / Igor
+    ("13760729", "laser"): "Laser (clínica)",  # Débora Dutra / Igor
+    ("13790902", "laser"): "Laser (clínica)",  # Ana Maria de Jesus Frade / Manoel
+    ("13820187", "laser"): "Laser (clínica)",  # Terezinha de Freitas / Manoel
+    ("13820636", "laser"): "Laser (clínica)",  # Simone de Souza Silva / Manoel
+    ("13834547", "laser"): "Laser (clínica)",  # Maria Aguida de Lima / Andrea
+    ("13834861", "laser"): "Laser (clínica)",  # Mariana Bonavita / Andrea
+    ("13858952", "laser"): "Laser (clínica)",  # Josefa Hortencia / Manoel
+    ("13887021", "laser"): "Laser (clínica)",  # Luciana Steiner / João Fukuda
+    ("13887077", "laser"): "Laser (clínica)",  # Marcia Weiser / João Fukuda
+    ("13903804", "laser"): "Laser (clínica)",  # Juliana Pancev Danez / Clara
+    ("13904566", "laser"): "Laser (clínica)",  # Mélanie Isabelle Smuga / Igor
+    ("13937525", "laser"): "Laser (clínica)",  # Arturania Diniz / Andrea
+    ("13938040", "laser"): "Laser (clínica)",  # Juliane Gomes de Paula / Clara
 }
 
 

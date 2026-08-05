@@ -39,10 +39,15 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 JANELA = 5   # dias por requisição
 
 
-def token() -> str:
-    m = re.search(r"SVN_TOKEN\s*=\s*(.+)", ENV.read_text(encoding="utf-8", errors="replace"))
+VAR = {"endo": "SVN_TOKEN", "oxy": "SVN_TOKEN_OXY"}
+
+
+def token(instituicao: str) -> str:
+    nome = VAR[instituicao]
+    txt = ENV.read_text(encoding="utf-8", errors="replace")
+    m = re.search(rf"^\s*{nome}\s*=\s*(.+)$", txt, re.M)
     if not m:
-        raise SystemExit("ABORTADO: SVN_TOKEN não encontrado no .env")
+        raise SystemExit(f"ABORTADO: {nome} não encontrado no .env")
     return m.group(1).strip().strip("\"'")
 
 
@@ -74,11 +79,11 @@ def meses(de: str, ate: str):
         a = prox
 
 
-def main(de: str, ate: str, filtro_data: str):
-    tok = token()
+def main(de: str, ate: str, filtro_data: str, instituicao: str):
+    tok = token(instituicao)
     SAIDA.mkdir(exist_ok=True)
     for pid, ini, fim in meses(de, ate):
-        alvo = SAIDA / f"560_{pid}_{filtro_data}.json"
+        alvo = SAIDA / f"560_{instituicao}_{pid}_{filtro_data}.json"
         if alvo.exists():
             n = len(json.loads(alvo.read_text(encoding="utf-8")))
             print(f"  {pid}  já em cache ({n} registros)")
@@ -98,6 +103,7 @@ if __name__ == "__main__":
     ap.add_argument("--de", required=True)
     ap.add_argument("--ate", required=True)
     ap.add_argument("--filtro-data", default="baix_dt_pagamento")
+    ap.add_argument("--instituicao", default="endo", choices=list(VAR))
     a = ap.parse_args()
-    print(f"Relatório #560 · {a.de} a {a.ate} · filtro_data={a.filtro_data}")
-    main(a.de, a.ate, a.filtro_data)
+    print(f"Relatório #560 · {a.instituicao} · {a.de} a {a.ate} · filtro_data={a.filtro_data}")
+    main(a.de, a.ate, a.filtro_data, a.instituicao)
