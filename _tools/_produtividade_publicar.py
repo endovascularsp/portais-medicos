@@ -62,7 +62,7 @@ def interno(prof: str, empresa: str, pers: dict) -> dict:
 
 def injetar_admin(path: Path, dados: dict, escrever: bool) -> str:
     html = path.read_text(encoding="utf-8")
-    md = re.search(r"(const DADOS\s*=\s*)(\{.*?\});", html, re.S)
+    md = re.search(r"(const DADOS(?:_RAW)?\s*=\s*)(\{.*?\});", html, re.S)
     mp = re.search(r"(const PORDER\s*=\s*)(\[.*?\]);", html, re.S)
     if not md or not mp:
         return "MARCADOR NÃO ENCONTRADO"
