@@ -338,6 +338,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--cinza-bg);colo
   max-width:220px;font-family:inherit;outline:none;transition:border 0.15s;}
 .prof-select:focus{border-color:var(--gold);}
 
+/* Os 6 filtros numa linha só. Em vez de largura fixa (que somava mais que a tela
+   e empurrava "Tabela" pra segunda linha), cada campo divide o espaço e encolhe
+   junto. O flex-wrap continua ligado de propósito: se em alguma largura for
+   impossível caber, quebra linha — nunca transborda na horizontal. */
+@media (min-width:1100px){
+  .periodo-bloco{gap:8px;padding:12px 16px;}
+  .periodo-bloco > .f-grp{min-width:0;flex:1 1 auto;}
+  .periodo-bloco > .f-grp:first-child{flex:0 1 auto;}
+  .periodo-bloco .prof-select{max-width:none;min-width:84px;flex:1 1 0;}
+  .periodo-bloco .range-filter{min-width:0;flex:1 1 auto;flex-wrap:nowrap;gap:5px;}
+  .periodo-bloco .range-filter select{min-width:84px;flex:1 1 0;padding:4px 6px;}
+  .periodo-bloco .periodo-label-novo{white-space:nowrap;flex:none;}
+  .periodo-bloco .range-ate{flex:none;}
+  .periodo-bloco .range-btn{padding:5px 9px;white-space:nowrap;flex:none;}
+  .periodo-bloco .range-sep{flex:none;}
+}
+
 /* KPIs novos (kpi-row substitui metrics-grid) */
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
   gap:16px;margin-bottom:22px;}
