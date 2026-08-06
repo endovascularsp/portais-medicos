@@ -1209,68 +1209,6 @@ function _download(conteudo,nome){
 // ── Portais Permanentes: seletor de período ──────────────
 let PERIODO_ATUAL = null;
 
-function inicializarPortalPermanente(){
-  const periodos = Object.keys(TODOS_PERIODOS).sort(); // crescente cronológico
-  if(!periodos.length) return;
-  PERIODO_ATUAL = periodos[periodos.length-1]; // mais recente
-
-  // Monta abas de período (só exibe se >1)
-  const tabsEl = document.getElementById('periodo-tabs');
-  if(tabsEl && periodos.length > 1){
-    tabsEl.style.display = 'flex';
-    tabsEl.innerHTML = periodos.slice().reverse().map(pid => {
-      const lbl = TODOS_PERIODOS[pid].label;
-      return '<button class="periodo-tab'+(pid===PERIODO_ATUAL?' active':'')+
-             '" onclick="mudarPeriodo(\''+pid+'\')">'+ lbl +'</button>';
-    }).join('');
-  }
-
-  mudarPeriodo(PERIODO_ATUAL, false);
-}
-
-function mudarPeriodo(id, updateTabs){
-  PERIODO_ATUAL = id;
-  const pdata = TODOS_PERIODOS[id];
-  if(!pdata) return;
-
-  // Atualiza DADOS_PROFS com dados do período selecionado
-  Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  Object.assign(DADOS_PROFS, pdata.profs);
-
-  // Atualiza variáveis globais de período
-  PERIODO_LABEL = pdata.label;
-  PERIODO_ID = id;
-
-  // Atualiza aba ativa
-  if(updateTabs !== false){
-    document.querySelectorAll('.periodo-tab').forEach(t => {
-      t.classList.toggle('active', t.textContent === pdata.label);
-    });
-  }
-
-  // Atualiza UI
-  const hp = document.getElementById('header-periodo');
-  if(hp) hp.textContent = pdata.label;
-  const pl = document.getElementById('periodo-label');
-  if(pl) pl.textContent = 'Período: ' + pdata.label;
-
-  // Destrói gráficos existentes antes de recriar
-  Object.keys(CHARTS).forEach(k => { if(CHARTS[k]){ CHARTS[k].destroy(); delete CHARTS[k]; }});
-
-  // Re-renderiza o painel correto
-  if(typeof MODO_MEDICO!=='undefined' && MODO_MEDICO &&
-     typeof PROF_FIXO!=='undefined' && PROF_FIXO && DADOS_PROFS[PROF_FIXO]){
-    mostrarProf(PROF_FIXO);
-  } else {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const gv = document.getElementById('view-geral');
-    if(gv) gv.classList.add('active');
-    document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
-    const sb = document.querySelector('.sidebar-item');
-    if(sb) sb.classList.add('active');
-    renderGeral();
-  }
-}
 
 // ── Filtro de Empresa (admin multi-empresa) ──────────────
 // Fixo em Oxy Recovery — este arquivo é o admin Oxy. Navegação cruzada vai pelo admin-nav.
