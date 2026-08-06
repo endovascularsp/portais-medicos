@@ -285,6 +285,56 @@ tr:hover td{background:var(--azul-cl);}
   .admin-nav-btn,.portais-nav-btn{flex-shrink:0;}
 }
 </style>
+<style id="layout-unificado-recebimento">
+/* ============================================================================
+   Layout unificado com o card de Recebimento — 05/08/2026.
+
+   Este portal estava em tema escuro (fundo navy, cartões de gráfico em
+   gradiente). Passa a usar o mesmo desenho do Recebimento: página clara,
+   cartões brancos, mesma tipografia de título.
+
+   OS CARDS DE INDICADOR (.card) FICAM ESCUROS — são os "flutuantes", iguais
+   aos do admin. Só o conteúdo dos cartões de gráfico é que clareia.
+
+   Vem depois do CSS original de propósito: sobrescreve por ordem, sem precisar
+   editar dezenas de regras espalhadas.
+   ============================================================================ */
+:root{
+  --cinza-bg:#F2F5F9; --cinza-borda:#DDE4ED;
+  --bg:#F2F5F9;   /* era #0B1F3A — é o que clareia a página */
+}
+body{background:var(--cinza-bg);}
+
+/* Cartão de gráfico: branco, como o .card do Recebimento */
+.pag-section{background:#fff;border:1px solid var(--cinza-borda);}
+.pag-section .section-title{color:var(--texto);}
+.pag-card{background:var(--cinza-cl);border:1px solid var(--cinza-borda);}
+.pag-tipo{color:var(--texto2);}
+.pag-val{color:var(--texto);}
+.pag-qtd{color:var(--texto2);}
+
+/* Títulos de seção: do Recebimento (sai o maiúsculo espaçado) */
+.section-title{font-size:16px;font-weight:700;color:var(--texto);
+  letter-spacing:normal;text-transform:none;}
+
+/* Barra de filtros: os campos numa linha só, como no Recebimento */
+.prof-select{padding:6px 12px;border:1.5px solid var(--borda);border-radius:20px;
+  font-size:12px;font-weight:600;color:var(--navy);background:#fff;
+  cursor:pointer;font-family:inherit;outline:none;transition:border 0.15s;}
+.prof-select:focus{border-color:var(--gold);}
+@media (min-width:1100px){
+  .periodo-bloco{gap:8px;padding:12px 16px;align-items:center;}
+  .periodo-bloco > .f-grp{min-width:0;flex:1 1 150px;}
+  .periodo-bloco > .f-grp.grp-intervalo{flex:2 1 340px;}
+  .periodo-bloco .prof-select{max-width:none;min-width:0;width:100%;flex:1 1 0;}
+  .periodo-bloco .range-filter{min-width:0;flex:1 1 auto;flex-wrap:nowrap;gap:5px;}
+  .periodo-bloco .range-filter select{min-width:0;flex:1 1 0;padding:4px 6px;}
+  .periodo-bloco .periodo-label{white-space:nowrap;flex:none;}
+  .periodo-bloco .range-ate{flex:none;}
+  .periodo-bloco .range-btn{padding:5px 9px;white-space:nowrap;flex:none;}
+  .periodo-bloco .range-sep{flex:none;}
+}
+</style>
 </head>
 <body>
 
@@ -330,7 +380,7 @@ tr:hover td{background:var(--azul-cl);}
         <select id='periodo-select' class='prof-select' onchange='selecionarMes(this.value)'></select>
       </div>
       <div class='range-sep'></div>
-      <div class='f-grp'>
+      <div class='f-grp grp-intervalo'>
         <span class='periodo-label'>Intervalo:</span>
         <div class='range-filter'>
           <select id='range-de'></select>
@@ -340,6 +390,14 @@ tr:hover td{background:var(--azul-cl);}
           <button class='range-btn clear' onclick='limparRange()'>Limpar</button>
         </div>
       </div>
+    <div class='f-grp'>
+      <span class='periodo-label'>Categoria:</span>
+      <select id='cat-filtro' class='prof-select' onchange='setFiltroCategoria(this.value)'></select>
+    </div>
+    <div class='f-grp'>
+      <span class='periodo-label'>Tabela:</span>
+      <select id='tab-filtro' class='prof-select' onchange='setFiltroTabela(this.value)'></select>
+    </div>
     </div>
     <div class='cards' id='cards'></div>
     <div class='grid-pag'>
@@ -397,6 +455,67 @@ function badgePag(tipo){
 let DADOS = null;
 let filtroAtual = {tipo:'mes', pid:null};
 let chartPag = null;
+
+// ---------------------------------------------------------------------------
+// Paleta dos gráficos — a mesma do card de Recebimento (05/08/2026)
+// ---------------------------------------------------------------------------
+const CORES = ['#A18960','#23476f','#c7ad82','#3a5e80','#7c6948','#1a3654',
+               '#d4bd8e','#4a6e95','#9c8458','#2d4f70','#bda079','#5a7da3'];
+const EIXO_TICK  = '#4A6278';   // texto dos eixos, legível no branco
+const EIXO_GRADE = '#eee';      // linhas de grade discretas, como no Recebimento
+
+function semDados(ctx, msg){
+  const c = ctx.getContext('2d');
+  c.clearRect(0, 0, ctx.width, ctx.height);
+  c.font = '13px Segoe UI'; c.fillStyle = EIXO_TICK; c.textAlign = 'center';
+  c.fillText(msg, ctx.width/2, ctx.height/2);
+}
+
+// ---------------------------------------------------------------------------
+// Filtros de Categoria e Tabela de preço — 05/08/2026
+// ---------------------------------------------------------------------------
+// Filtrar não esconde linhas: RECALCULA o período a partir dos atendimentos.
+// Faturamento, nº de atendimentos, pacientes, o gráfico, a lista e o export
+// passam todos a mostrar só o que sobrou do filtro.
+let FILTRO_CATEGORIA = 'todas';
+let FILTRO_TABELA    = 'todas';
+
+function _passa(p, a){
+  const cat = p.categoria || '';
+  const tab = p.tabela || a.tabela || '';
+  return (FILTRO_CATEGORIA === 'todas' || cat === FILTRO_CATEGORIA)
+      && (FILTRO_TABELA    === 'todas' || tab === FILTRO_TABELA);
+}
+
+// Devolve o atendimento só com os procedimentos que passaram, ou null.
+function _filtrarAtend(a){
+  const procs = (a.procedimentos || []).filter(p=>_passa(p, a));
+  if(!procs.length) return null;
+  const v = procs.reduce((s,p)=>s+(p.valor||0), 0);
+  return Object.assign({}, a, {procedimentos:procs, valor:Math.round(v*100)/100});
+}
+
+function _preencherSelectsFiltros(){
+  const prof = Object.keys(DADOS)[0];
+  const per  = (DADOS[prof] || {}).periodos || {};
+  const cats = new Set(), tabs = new Set();
+  Object.values(per).forEach(p=>{
+    const r = p.resumo || {};
+    Object.keys(r.por_categoria || {}).forEach(c=>cats.add(c));
+    Object.keys(r.por_tabela    || {}).forEach(t=>tabs.add(t));
+  });
+  const opts = (rot, vals)=> `<option value='todas'>${rot}</option>` +
+    [...vals].sort((a,b)=>a.localeCompare(b,'pt'))
+      .map(v=>`<option value="${v.replace(/"/g,'&quot;')}">${v}</option>`).join('');
+  const sc = document.getElementById('cat-filtro');
+  const st = document.getElementById('tab-filtro');
+  if(sc){ sc.innerHTML = opts('Todas as categorias', cats); sc.value = FILTRO_CATEGORIA; }
+  if(st){ st.innerHTML = opts('Todas as tabelas', tabs);    st.value = FILTRO_TABELA; }
+}
+
+function setFiltroCategoria(v){ FILTRO_CATEGORIA = v || 'todas'; render(); }
+function setFiltroTabela(v){    FILTRO_TABELA    = v || 'todas'; render(); }
+
 
 async function tentarLogin(silent){
   const inp = document.getElementById('login-senha');
@@ -458,6 +577,7 @@ function inicializar(){
   });
   deSel.value = pids[0];
   ateSel.value = pids[pids.length-1];
+  _preencherSelectsFiltros();
   filtroAtual = {tipo:'mes', pid:pids[pids.length-1]};
   render();
 }
@@ -490,24 +610,42 @@ function limparRange(){
 function agregar(pids){
   const prof = Object.keys(DADOS)[0];
   const info = DADOS[prof];
+  const semFiltro = FILTRO_CATEGORIA === 'todas' && FILTRO_TABELA === 'todas';
   let total=0, atend=0, pacientes=0;
-  const pag = {};
+  const pag = {}, pacs = new Set();
   const atendimentos = [];
   pids.forEach(pid=>{
     const p = info.periodos[pid];
     if(!p) return;
-    const r = p.resumo;
-    total += r.total;
-    atend += r.n_atend;
-    pacientes += r.n_pacientes;
-    Object.entries(r.por_pagamento).forEach(([tipo, d])=>{
-      if(!pag[tipo]) pag[tipo] = {valor:0, qtd:0};
-      pag[tipo].valor += d.valor;
-      pag[tipo].qtd += d.qtd;
-    });
-    (p.atendimentos||[]).forEach(a=>atendimentos.push(a));
+    if(semFiltro){
+      // Caminho sem filtro: usa os totais já calculados na publicação.
+      const r = p.resumo;
+      total += r.total;
+      atend += r.n_atend;
+      pacientes += r.n_pacientes;
+      Object.entries(r.por_pagamento).forEach(([tipo, d])=>{
+        if(!pag[tipo]) pag[tipo] = {valor:0, qtd:0};
+        pag[tipo].valor += d.valor;
+        pag[tipo].qtd += d.qtd;
+      });
+      (p.atendimentos||[]).forEach(a=>atendimentos.push(a));
+    } else {
+      (p.atendimentos||[]).forEach(a0=>{
+        const a = _filtrarAtend(a0);
+        if(!a) return;
+        total += a.valor;
+        atend += 1;
+        if(a.paciente) pacs.add(a.paciente);
+        const tp = a.pagamento || '—';
+        if(!pag[tp]) pag[tp] = {valor:0, qtd:0};
+        pag[tp].valor += a.valor;
+        pag[tp].qtd += 1;
+        atendimentos.push(a);
+      });
+    }
   });
-  return {total, atend, pacientes, pag, atendimentos};
+  if(!semFiltro) pacientes = pacs.size;
+  return {total:Math.round(total*100)/100, atend, pacientes, pag, atendimentos};
 }
 
 function labelDe(pid){
@@ -623,32 +761,24 @@ function renderChartPagamento(pag){
   const entries = Object.entries(pag).sort((a,b)=>b[1].valor-a[1].valor);
   const labels = entries.map(([t])=>t);
   const vals = entries.map(([,d])=>d.valor);
-  const cores = {'Cartão de crédito':'#E07B28','Cartão de débito':'#2980B9','Transferência bancária':'#2D7A3C','Dinheiro':'#8E44AD','Convênio':'#C0392B','PIX':'#16A085'};
-  const bg = labels.map(l=>cores[l]||'#7f8c8d');
   const ctx = document.getElementById('chart-pag');
   if(chartPag) chartPag.destroy();
-  if(!labels.length){
-    const c = ctx.getContext('2d');
-    c.clearRect(0,0,ctx.width,ctx.height);
-    c.font='13px Segoe UI'; c.fillStyle='#9FB2CC'; c.textAlign='center';
-    c.fillText('Sem dados de pagamento', ctx.width/2, ctx.height/2);
-    return;
-  }
+  if(!labels.length){ semDados(ctx, 'Sem dados de pagamento'); return; }
+  // Rosca com legenda à direita — igual ao "Por Tipo de Pagamento" do Recebimento.
   chartPag = new Chart(ctx, {
-    type:'bar',
-    data:{labels, datasets:[{data:vals, backgroundColor:bg, borderRadius:5, maxBarThickness:30}]},
+    type:'doughnut',
+    data:{labels, datasets:[{data:vals, backgroundColor:CORES,
+                             borderColor:'#fff', borderWidth:2}]},
     options:{
-      indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false},
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'right', labels:{font:{size:11}, boxWidth:14, padding:10,
+                                          color:'#0D1E30'}},
         tooltip:{callbacks:{label:c=>{
           const tot=c.dataset.data.reduce((a,b)=>a+b,0);
-          const v=c.parsed.x, pct=tot>0?((v/tot)*100).toFixed(1):'0';
+          const v=c.parsed, pct=tot>0?((v/tot)*100).toFixed(1):'0';
           return ' '+br(v)+' ('+pct+'%)';
-        }}}},
-      scales:{
-        x:{ticks:{callback:v=>br(v), font:{size:10}, color:'#A9BBD4'}, grid:{color:'rgba(255,255,255,0.10)'}},
-        y:{ticks:{font:{size:11,weight:'600'}, color:'#E6EDF6'}, grid:{display:false}}
-      }
+        }}}}
     }
   });
 }
