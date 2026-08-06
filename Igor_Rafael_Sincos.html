@@ -826,18 +826,6 @@ function inicializarPortal(){
   }
 }
 
-function exportarCSVGeral(){
-  const BOM='\uFEFF';
-  let linhas=['Profissional,Valor Recebido,Imposto,Taxa Cartao,Custo,Valor Liquido,Repasse Prof,Repasse Clinica'];
-  Object.values(DADOS_PROFS).forEach(d=>{
-    const r=d.resumo||{};
-    linhas.push(['"'+d.profissional+'"',(r['Valor recebido']||0).toFixed(2),(r['Imposto (18%)']||0).toFixed(2),
-      (r['Taxa cartão (3%)']||0).toFixed(2),(r['Custo']||0).toFixed(2),(r['Valor Líquido']||0).toFixed(2),
-      (r['Repasse Profissional (R$)']||0).toFixed(2),(r['Repasse Clínica (R$)']||0).toFixed(2)].join(','));
-  });
-  _download(BOM+linhas.join('\n'),'honorarios_'+PERIODO_ID+'.csv');
-}
-
 /* ══ XLSX-EXPORT-BLOCO-INICIO (v1 — 27/07/2026) ══════════════════
    Exporta os honorários do período como planilha Excel (.xlsx) real:
    tabela plana, uma linha por atendimento, no mesmo layout de colunas
@@ -1045,12 +1033,6 @@ function _downloadBin(bytes,nome){
   a.download=nome;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
 }
 /* ══ XLSX-EXPORT-BLOCO-FIM ═══════════════════════════════════════ */
-
-function _download(conteudo,nome){
-  const blob=new Blob([conteudo],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=nome;a.click();URL.revokeObjectURL(a.href);
-}
 
 
 // ── Portais Permanentes: seletor de período ──────────────
