@@ -397,6 +397,49 @@ html[style*="visible"] #boot{display:none;}
 #boot .tx{color:rgba(255,255,255,0.65);font-family:'Segoe UI',system-ui,sans-serif;
   font-size:13px;letter-spacing:.3px;}
 </style>
+<style id="paleta-unificada">
+/* ============================================================================
+   Paleta unificada — 06/08/2026, a pedido do Thiago.
+
+   Mesmo visual do admin de Produtividade da Oxy, que ele aprovou:
+     1. a barra de filtros vira navy escura, com os campos claros e o botão
+        Aplicar em dourado — ela passa a ser a faixa de comando da página;
+     2. dos cartões de indicador, só o PRIMEIRO fica escuro. Os demais ficam
+        brancos, o que faz o número principal saltar em vez de ter quatro
+        blocos escuros competindo.
+
+   Este bloco vem depois de todo o CSS original de propósito: em CSS, entre
+   regras de mesmo peso, vence a última. Inserido antes, não faria efeito.
+
+   Só cor. Nenhuma conta, valor, filtro ou regra foi tocada.
+   ============================================================================ */
+body{background:#EEF2F6;}
+
+/* Indicadores: só o primeiro continua escuro (é o número principal) */
+.kpi-row .kpi:not(:first-child){background:#fff;border-color:#D5DEE8;}
+.kpi-row .kpi:not(:first-child) .kpi-label{color:#4A6278;}
+.kpi-row .kpi:not(:first-child) .kpi-val{color:#0B1F3A;}
+.kpi-row .kpi:not(:first-child) .kpi-foot{color:#4A6278;}
+.kpi-row .kpi:not(:first-child) .kpi-ic{background:rgba(11,31,58,0.08);}
+.kpi-row .kpi:not(:first-child) .delta-pos{color:#2D7A3C;}
+.kpi-row .kpi:not(:first-child) .delta-neg{color:#C0392B;}
+
+/* Barra de filtros escura */
+.periodo-bloco{background:#0B1F3A;border-color:#0B1F3A;}
+.periodo-label,.periodo-label-novo{color:rgba(255,255,255,0.65);}
+.range-filter select{background:rgba(255,255,255,0.10);color:#fff;
+  border-color:rgba(255,255,255,0.28);}
+.range-filter select option{background:#0B1F3A;color:#fff;}
+.range-btn.clear{background:rgba(255,255,255,0.10);color:#fff;
+  border-color:rgba(255,255,255,0.28);}
+.range-btn.clear:hover{background:rgba(255,255,255,0.20);}
+.range-btn.apply{background:#A18960;border-color:#A18960;color:#0B1F3A;}
+.range-ate{color:rgba(255,255,255,0.6);}
+.range-sep{background:rgba(255,255,255,0.25);}
+.tab{background:transparent;color:rgba(255,255,255,0.85);border-color:rgba(255,255,255,0.28);}
+.tab:hover:not(.active){border-color:#A18960;color:#fff;}
+.tab.active{background:#A18960;border-color:#A18960;color:#0B1F3A;}
+</style>
 </head>
 <body>
 <!--boot-spinner-v1--><div id="boot"><div class="sp"></div><div class="tx">Carregando dados…</div></div>
@@ -1003,7 +1046,16 @@ const _XLSX_COLS = [
   {h:'Data compensação',  t:'d', w:17, get:a=>a['Data compensação']},
   {h:'Tipo de pagamento', t:'s', w:20, get:a=>a['Tipo de pagamento']},
   {h:'Valor recebido',    t:'m', w:15, get:a=>a['Valor recebido']},
-  {h:'Imposto (18%)',     t:'m', w:15, get:a=>a['Imposto (18%)']},
+    // Ate Maio/2026 a taxa comercial nao existia e o total era so ISS; por
+  // isso, quando o detalhe nao vem gravado, o total inteiro cai em ISS e a
+  // taxa fica zerada. As duas colunas sempre somam o antigo 'Imposto (18%)'.
+{h:'ISS (18%)',         t:'m', w:14,
+   // Derivado do total, nao do ISS gravado: cada parte foi arredondada
+   // separadamente, entao em 26 linhas do semestre a soma das duas dava
+   // 1 centavo a mais ou a menos que o total que gerou o Valor Liquido.
+   // Assim as colunas sempre fecham com o liquido, sem centavo fantasma.
+   get:a=>Math.round(((a['Imposto (18%)']||0)-(a['Taxa comercial (2%)']||0))*100)/100},
+{h:'Taxa comercial (2%)', t:'m', w:19, get:a=>a['Taxa comercial (2%)']||0},
   {h:'Taxa cartão (3%)',  t:'m', w:15, get:a=>a['Taxa cartão (3%)']},
   {h:'Custo',             t:'m', w:13, get:a=>a['Custo']},
   {h:'Valor Líquido',     t:'m', w:15, get:a=>a['Valor Líquido']},

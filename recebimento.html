@@ -1056,8 +1056,13 @@ function abrirBase(i){
     // ficaria "(−) ISS 18%  R$ -360,00", com o sinal dito duas vezes.
     html += '<table class="bc-conta">' + _linha('Valor recebido', recebido);
     if(iss !== undefined && iss !== null){
-      // detalhe completo: cada dedução na sua linha
-      html += _linha('(&minus;) ISS 18%', _num(iss), 'desc');
+      // detalhe completo: cada dedução na sua linha.
+      // O ISS sai do TOTAL menos a taxa, não do ISS gravado: cada parte foi
+      // arredondada por conta própria, e em 26 linhas do semestre a soma das
+      // duas dava 1 centavo a mais ou a menos que o total que gerou o líquido.
+      // Assim a subtração na tela sempre fecha, sem centavo fantasma.
+      html += _linha('(&minus;) ISS 18%',
+                     Math.round((total - _num(com))*100)/100, 'desc');
       if(_num(com) > 0) html += _linha('(&minus;) Taxa comercial 2%', _num(com), 'desc');
     } else if(total > 0){
       // meses anteriores a Junho/2026: só existe o total
@@ -1181,7 +1186,16 @@ const _XLSX_COLS = [
   {h:'Data compensação',  t:'d', w:17, get:a=>a['Data compensação']},
   {h:'Tipo de pagamento', t:'s', w:20, get:a=>a['Tipo de pagamento']},
   {h:'Valor recebido',    t:'m', w:15, get:a=>a['Valor recebido']},
-  {h:'Imposto (18%)',     t:'m', w:15, get:a=>a['Imposto (18%)']},
+    // Ate Maio/2026 a taxa comercial nao existia e o total era so ISS; por
+  // isso, quando o detalhe nao vem gravado, o total inteiro cai em ISS e a
+  // taxa fica zerada. As duas colunas sempre somam o antigo 'Imposto (18%)'.
+{h:'ISS (18%)',         t:'m', w:14,
+   // Derivado do total, nao do ISS gravado: cada parte foi arredondada
+   // separadamente, entao em 26 linhas do semestre a soma das duas dava
+   // 1 centavo a mais ou a menos que o total que gerou o Valor Liquido.
+   // Assim as colunas sempre fecham com o liquido, sem centavo fantasma.
+   get:a=>Math.round(((a['Imposto (18%)']||0)-(a['Taxa comercial (2%)']||0))*100)/100},
+{h:'Taxa comercial (2%)', t:'m', w:19, get:a=>a['Taxa comercial (2%)']||0},
   {h:'Taxa cartão (3%)',  t:'m', w:15, get:a=>a['Taxa cartão (3%)']},
   {h:'Custo',             t:'m', w:13, get:a=>a['Custo']},
   {h:'Valor Líquido',     t:'m', w:15, get:a=>a['Valor Líquido']},

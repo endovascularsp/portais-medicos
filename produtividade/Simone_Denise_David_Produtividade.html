@@ -335,6 +335,49 @@ body{background:var(--cinza-bg);}
   .periodo-bloco .range-sep{flex:none;}
 }
 </style>
+<style id="paleta-unificada">
+/* ============================================================================
+   Paleta unificada — 06/08/2026, a pedido do Thiago.
+
+   Mesmo visual do admin de Produtividade da Oxy, que ele aprovou:
+     1. a barra de filtros vira navy escura, com os campos claros e o botão
+        Aplicar em dourado — ela passa a ser a faixa de comando da página;
+     2. dos cartões de indicador, só o PRIMEIRO fica escuro. Os demais ficam
+        brancos, o que faz o número principal saltar em vez de ter quatro
+        blocos escuros competindo.
+
+   Este bloco vem depois de todo o CSS original de propósito: em CSS, entre
+   regras de mesmo peso, vence a última. Inserido antes, não faria efeito.
+
+   Só cor. Nenhuma conta, valor, filtro ou regra foi tocada.
+   ============================================================================ */
+body{background:#EEF2F6;}
+
+/* Indicadores: só o primeiro continua escuro (é o número principal) */
+.cards .card:not(:first-child){background:#fff;border-color:#D5DEE8;}
+.cards .card:not(:first-child) .card-label{color:#4A6278;}
+.cards .card:not(:first-child) .card-value{color:#0B1F3A;}
+.cards .card:not(:first-child) .card-foot{color:#4A6278;}
+.cards .card:not(:first-child) .card-ic{background:rgba(11,31,58,0.08);}
+.cards .card:not(:first-child) .delta-pos{color:#2D7A3C;}
+.cards .card:not(:first-child) .delta-neg{color:#C0392B;}
+
+/* Barra de filtros escura */
+.periodo-bloco{background:#0B1F3A;border-color:#0B1F3A;}
+.periodo-label,.periodo-label-novo{color:rgba(255,255,255,0.65);}
+.range-filter select{background:rgba(255,255,255,0.10);color:#fff;
+  border-color:rgba(255,255,255,0.28);}
+.range-filter select option{background:#0B1F3A;color:#fff;}
+.range-btn.clear{background:rgba(255,255,255,0.10);color:#fff;
+  border-color:rgba(255,255,255,0.28);}
+.range-btn.clear:hover{background:rgba(255,255,255,0.20);}
+.range-btn.apply{background:#A18960;border-color:#A18960;color:#0B1F3A;}
+.range-ate{color:rgba(255,255,255,0.6);}
+.range-sep{background:rgba(255,255,255,0.25);}
+.tab{background:transparent;color:rgba(255,255,255,0.85);border-color:rgba(255,255,255,0.28);}
+.tab:hover:not(.active){border-color:#A18960;color:#fff;}
+.tab.active{background:#A18960;border-color:#A18960;color:#0B1F3A;}
+</style>
 </head>
 <body>
 
