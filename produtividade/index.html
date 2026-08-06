@@ -459,6 +459,49 @@ body{background:var(--cinza-bg);color:var(--texto-primario);}
   .periodo-bloco .range-btn{padding:5px 9px;white-space:nowrap;flex:none;}
   .periodo-bloco .range-sep{flex:none;}
 }
+
+/* ============================================================================
+   Paleta unificada — 06/08/2026, a pedido do Thiago.
+
+   O Thiago aprovou o visual do admin de Produtividade da Oxy e pediu para
+   levá-lo a todos os ambientes. Duas mudanças em relação ao que estava aqui:
+
+     1. A barra de filtros passa a ser navy escura, com os campos claros e o
+        botão Aplicar em dourado. Ela vira a "faixa de comando" da página.
+     2. Dos cartões de indicador, só o PRIMEIRO fica escuro (é o número que
+        importa). Os demais ficam brancos, o que tira o peso visual e faz o
+        primeiro saltar.
+
+   Só cor. Nenhuma conta, valor ou regra foi tocada.
+   ============================================================================ */
+body{background:#EEF2F6;color:#0D1E30;}
+.main{background:transparent;}
+
+/* Indicadores: o primeiro (.kpi-accent) continua escuro; os outros clareiam */
+.kpi:not(.kpi-accent){background:#fff;border-color:#D5DEE8;}
+.kpi:not(.kpi-accent) .kpi-label{color:#4A6278;}
+.kpi:not(.kpi-accent) .kpi-val{color:#0B1F3A;}
+.kpi:not(.kpi-accent) .kpi-foot{color:#4A6278;}
+.kpi:not(.kpi-accent) .kpi-ic{background:rgba(11,31,58,0.08);}
+.kpi:not(.kpi-accent) .delta-pos{color:#2D7A3C;}
+.kpi:not(.kpi-accent) .delta-neg{color:#C0392B;}
+
+/* Barra de filtros escura */
+.periodo-bloco{background:#0B1F3A;border-color:#0B1F3A;}
+.periodo-label{color:rgba(255,255,255,0.65);}
+.tab{background:transparent;color:rgba(255,255,255,0.85);border-color:rgba(255,255,255,0.28);}
+.tab:hover:not(.active){border-color:#A18960;color:#fff;}
+.tab.active{background:#A18960;border-color:#A18960;color:#0B1F3A;}
+.range-filter select{background:rgba(255,255,255,0.10);color:#fff;border-color:rgba(255,255,255,0.28);}
+.range-btn.clear{background:rgba(255,255,255,0.10);color:#fff;border-color:rgba(255,255,255,0.28);}
+.range-btn.apply{background:#A18960;border-color:#A18960;color:#0B1F3A;}
+.range-ate{color:rgba(255,255,255,0.6);}
+.range-sep{background:rgba(255,255,255,0.25);}
+
+/* Cartões e destaques */
+.chart-card{background:#fff;border-color:#D5DEE8;}
+.chip{background:#fff;border-color:#D5DEE8;color:#4A6278;}
+.chip b{color:#0B1F3A;}
 </style>
 <style id="boot-spinner-v1">
 #boot{visibility:visible;position:fixed;inset:0;background:#0B1F3A;z-index:99999;
