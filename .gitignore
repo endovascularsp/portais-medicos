@@ -10,6 +10,12 @@ supabase/.temp/
 *.key
 *_secret*
 
+# Configuracao local do Claude Code. E estado da maquina (permissoes ja
+# aprovadas), nao do projeto — e guarda o TEXTO dos comandos aprovados, o que
+# inclui tokens digitados na linha de comando. Em 06/08/2026 esse arquivo fez o
+# GitHub barrar um push por conter um PAT. Fica fora do repo.
+.claude/settings.local.json
+
 # Cargas geradas do fechamento: sao dados de honorario (paciente, valor, repasse)
 # e podem ser regeradas a qualquer momento por _tools/_honorarios_motor.py.
 db/carga_*_honorarios.sql
