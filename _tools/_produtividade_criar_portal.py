@@ -90,7 +90,9 @@ def main(prof: str, empresa: str, dry_run: bool):
 
     # --- dados, do admin ---
     at = (dir_alvo / "index.html").read_text(encoding="utf-8")
-    m = re.search(r"const DADOS\s*=\s*(\{)", at)
+    # O admin passou a chamar a variável de DADOS_RAW quando ganhou os filtros
+    # de Categoria/Tabela (05/08/2026) — aceita os dois nomes.
+    m = re.search(r"const DADOS(?:_RAW)?\s*=\s*(\{)", at)
     dados = json.loads(json_apos(at, m.start(1)))
     if prof not in dados:
         raise SystemExit(f"ABORTADO: {prof} não está no admin de {pasta}.")
@@ -102,9 +104,13 @@ def main(prof: str, empresa: str, dry_run: bool):
         v = periodos[pid]
         interno["periodos"][pid] = {
             "label": v.get("label"),
+            # por_categoria e por_tabela alimentam os menus dos filtros novos.
+            # Sem eles o portal nasce com "Categoria" e "Tabela" vazios.
             "resumo": {"total": v.get("total", 0), "n_atend": v.get("n_atend", 0),
                        "n_pacientes": v.get("n_pacientes", 0),
-                       "por_pagamento": v.get("por_pagamento", {})},
+                       "por_pagamento": v.get("por_pagamento", {}),
+                       "por_categoria": v.get("por_categoria", {}),
+                       "por_tabela": v.get("por_tabela", {})},
             "atendimentos": v.get("atendimentos", []),
         }
         print(f"  {pid} {v.get('label'):16s} {v.get('n_atend'):3d} atend · "
