@@ -16,6 +16,7 @@ Uso:
 from __future__ import annotations
 import argparse
 import io
+import json
 import sys
 import unicodedata
 from collections import Counter
@@ -28,7 +29,10 @@ import _honorarios_regras as R      # noqa: E402
 import _honorarios_catalogo as _cat  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
-PLANILHA = r"G:\Drives compartilhados\Endovascular SP\2. Financeiro\4. Honorários médicos\Fechamento - Endovascular SP.xlsx"
+# Onde `_svn_puxar_560.py` grava o que baixa da API do SVN.
+CACHE_SVN = Path.home() / "Documents" / "Endovascular_Farmer" / "svn_560_cache"
+# A constante da planilha saiu em 07/08/2026: o motor não abre mais o Excel.
+# O catálogo vem do Supabase (ver _honorarios_catalogo.carregar).
 
 CHAVE_NATURAL = ["empresa", "os_numero", "procedimento", "data_compensacao",
                  "valor_recebido", "profissional"]
@@ -87,11 +91,83 @@ def ler_csv(caminho: str, empresa: str) -> pd.DataFrame:
 
 
 # --------------------------------------------------------------------------
+# Mesma leitura, direto da API do SVN — sem CSV exportado à mão
+# --------------------------------------------------------------------------
+# O mapa abaixo NÃO foi deduzido pelos nomes. Foi provado em 07/08/2026 casando
+# o CSV de Julho/2026 exportado à mão (722 linhas) com o retorno da API do mesmo
+# período e filtro, e comparando campo a campo. Nas 329 linhas em que o par
+# (OS, procedimento) é único — e portanto o casamento é certo — os 14 campos
+# bateram em 329/329. Ver o registro em `reference_svn_api_mapa_560`.
+API_PARA_CSV = {
+    "os_numero":        "orca_id",
+    "profissional":     "nome_profissional",
+    "solicitante":      "nome_profissional_solicitante",
+    "paciente":         "nome_cliente",
+    "indicacao":        "pein_tx_indicado_por",
+    "tabela":           "tpre_tx_descricao",
+    "procedimento":     "proc_tx_nome",
+    "conta_pagamento":  "cofi_tx_descricao",
+    "data_emissao":     "cont_dt_emissao",
+    "data_compensacao": "baix_dt_recebimento",
+    "tipo_pagamento":   "tipa_tx_descricao",
+    "valor_recebido":   "valor_recebido_prop",
+    "custo_svn":        "custo_prop",
+    "situacao":         "siag_id_label",
+}
+
+# ATENÇÃO ao nome do filtro: os rótulos da API são o OPOSTO dos da tela.
+# Honorário é o que a clínica REALMENTE recebeu — a tela chama de "Compensação",
+# e na API isso é `baix_dt_recebimento`.
+FILTRO_COMPENSACAO = "baix_dt_recebimento"
+
+
+def _data_iso(v):
+    """A API devolve '2026-07-02 00:00:00'; o resto do motor espera date."""
+    s = str(v or "").strip()
+    if not s or s.lower() in ("none", "nan"):
+        return pd.NaT
+    return pd.to_datetime(s[:10], errors="coerce")
+
+
+def ler_api(instituicao: str, periodo: str, empresa: str) -> pd.DataFrame:
+    """Mesmo DataFrame que `ler_csv`, montado a partir do cache da API.
+
+    O cache é gravado por `_svn_puxar_560.py`. Se o arquivo do período não
+    existir, aborta dizendo o comando — nunca busca sozinho, para não disparar
+    dezenas de requisições ao SVN sem o operador saber.
+    """
+    arq = CACHE_SVN / f"560_{instituicao}_{periodo}_{FILTRO_COMPENSACAO}.json"
+    if not arq.exists():
+        raise SystemExit(
+            f"ABORTADO: {arq.name} não existe.\n"
+            f"  Baixe antes:  python _tools/_svn_puxar_560.py --instituicao {instituicao} "
+            f"--de {periodo} --ate {periodo} --filtro-data {FILTRO_COMPENSACAO}")
+    dados = json.loads(arq.read_text(encoding="utf-8"))
+    if not dados:
+        raise SystemExit(f"ABORTADO: {arq.name} está vazio.")
+    bruto = pd.DataFrame(dados)
+    faltam = [c for c in API_PARA_CSV.values() if c not in bruto.columns]
+    if faltam:
+        raise SystemExit(f"ABORTADO: a API não trouxe {faltam} — o relatório #560 mudou de forma.")
+    out = pd.DataFrame({destino: bruto[origem] for destino, origem in API_PARA_CSV.items()})
+    out["empresa"] = empresa
+    out["os_numero"] = out["os_numero"].astype(str).str.strip()
+    out["data_emissao"] = out["data_emissao"].map(_data_iso)
+    out["data_compensacao"] = out["data_compensacao"].map(_data_iso)
+    for c in ("valor_recebido", "custo_svn"):
+        out[c] = pd.to_numeric(out[c], errors="coerce").fillna(0.0)
+    out["custo"] = 0.0        # mesma decisão do ler_csv: custo não entra na conta
+    return out
+
+
+# --------------------------------------------------------------------------
 # Catálogo de procedimentos (mesma fonte que alimentou o banco)
 # --------------------------------------------------------------------------
 def carregar_catalogo() -> dict:
-    """Apoio do Excel + as classificações feitas ao resolver a fila.
-    Fonte única em `_honorarios_catalogo.py`, compartilhada com o gerador do seed."""
+    """Catálogo procedimento -> categoria, lido do Supabase.
+    Fonte única em `_honorarios_catalogo.py`, compartilhada com o gerador do seed.
+    Até 07/08/2026 isto abria a aba "Apoio" do Excel de fechamento — era o
+    último ponto do motor que dependia da planilha."""
     return _cat.carregar()
 
 
@@ -248,16 +324,27 @@ COLS_EXC = ["periodo_id", "tipo", "empresa", "os_numero", "profissional", "pacie
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--periodo", required=True)
-    ap.add_argument("--endo", required=True)
-    ap.add_argument("--oxy", required=True)
+    ap.add_argument("--da-api", action="store_true",
+                    help="lê do cache da API do SVN em vez dos CSVs exportados à mão")
+    ap.add_argument("--endo", help="CSV do Endovascular (dispensável com --da-api)")
+    ap.add_argument("--oxy", help="CSV da Oxy Recovery (dispensável com --da-api)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
     catalogo = carregar_catalogo()
-    df = pd.concat([ler_csv(a.endo, R.ENDO), ler_csv(a.oxy, R.OXY)], ignore_index=True)
+    if a.da_api:
+        df = pd.concat([ler_api("endo", a.periodo, R.ENDO),
+                        ler_api("oxy",  a.periodo, R.OXY)], ignore_index=True)
+        fonte = "API do SVN"
+    else:
+        if not a.endo or not a.oxy:
+            raise SystemExit("ABORTADO: informe --endo e --oxy, ou use --da-api.")
+        df = pd.concat([ler_csv(a.endo, R.ENDO), ler_csv(a.oxy, R.OXY)], ignore_index=True)
+        fonte = "CSVs exportados à mão"
     print(f"=== MOTOR DE REPASSE — {a.periodo} ===")
-    print(f"Catálogo ..........: {len(catalogo)} procedimentos")
-    print(f"Linhas nos CSVs ...: {len(df)}  (Endo {sum(df.empresa == R.ENDO)} / Oxy {sum(df.empresa == R.OXY)})")
+    print(f"Catálogo ..........: {len(catalogo)} procedimentos (do Supabase)")
+    print(f"Fonte .............: {fonte}")
+    print(f"Linhas lidas ......: {len(df)}  (Endo {sum(df.empresa == R.ENDO)} / Oxy {sum(df.empresa == R.OXY)})")
 
     df = resolver_dono(df)
     n_herdadas = int(df["via_solicitante"].sum())

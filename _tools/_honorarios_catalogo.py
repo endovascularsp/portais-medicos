@@ -117,8 +117,34 @@ def chave(s) -> str:
     return " ".join(s.lower().split())
 
 
-def carregar(planilha: str = PLANILHA) -> dict:
-    """{chave_normalizada: categoria} — Apoio do Excel + EXTRAS."""
+def carregar() -> dict:
+    """{chave_normalizada: categoria} — lido do Supabase.
+
+    Desde 07/08/2026 o catálogo vive na tabela `honorarios_procedimentos`, não
+    mais na aba "Apoio" do Excel. Foi o último fio que prendia o fechamento à
+    planilha: sem isto, apagar o arquivo do Drive quebrava a geração do mês.
+
+    EXTRAS continua no código como fila de espera: procedimentos classificados
+    aqui e ainda não semeados no banco. O seed (`--gravar`) os leva para lá; a
+    partir daí eles voltam por esta função e a lista pode ser esvaziada.
+    """
+    import _honorarios_db as DB
+    cat = {r["chave"]: r["categoria"]
+           for r in DB.buscar("honorarios_procedimentos", "chave,categoria")}
+    if not cat:
+        raise SystemExit("ABORTADO: honorarios_procedimentos está vazia. "
+                         "Rode _tools/_honorarios_seed_procedimentos.py --gravar")
+    # EXTRAS ainda não semeados entram por cima, para o mês não travar por causa
+    # de um seed esquecido. O seed é que faz isso virar permanente.
+    for proc, c in EXTRAS.items():
+        cat.setdefault(chave(proc), CANONICA.get(chave(c), c))
+    return cat
+
+
+def carregar_do_excel(planilha: str = PLANILHA) -> dict:
+    """A versão antiga, lendo a aba "Apoio". Só o seed usa — é a ponte que leva
+    o catálogo da planilha para o banco. Nenhum caminho do fechamento passa
+    mais por aqui."""
     import openpyxl
     cat = {}
     wb = openpyxl.load_workbook(planilha, data_only=True, read_only=True)

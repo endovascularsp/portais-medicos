@@ -109,6 +109,37 @@ def inserir(tabela: str, registro: dict) -> dict:
     return volta[0]
 
 
+def upsert(tabela: str, registros: list, conflito: str) -> int:
+    """INSERT ... ON CONFLICT DO UPDATE, em lote.
+
+    Diferente de `inserir`, aqui o lote é permitido — mas só para tabelas de
+    CATÁLOGO (procedimento -> categoria), nunca para lançamento de dinheiro.
+    O chamador informa a coluna de conflito, que precisa ter índice único.
+
+    Devolve quantos registros voltaram gravados.
+    """
+    if not registros:
+        return 0
+    if tabela not in ("honorarios_procedimentos",):
+        raise SystemExit(f"ABORTADO: upsert em lote não é permitido em '{tabela}'.")
+    url, key = _cred()
+    req = urllib.request.Request(
+        f"{url}/rest/v1/{tabela}?on_conflict={urllib.parse.quote(conflito)}",
+        data=json.dumps(registros, ensure_ascii=False).encode("utf-8"), method="POST",
+        headers={"apikey": key, "Authorization": f"Bearer {key}",
+                 "Content-Type": "application/json",
+                 "Prefer": "resolution=merge-duplicates,return=representation"})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            volta = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"ABORTADO: HTTP {e.code} no upsert em '{tabela}': "
+                         f"{e.read().decode('utf-8', 'replace')[:300]}")
+    if len(volta) != len(registros):
+        raise SystemExit(f"ABORTADO: o upsert devolveu {len(volta)} de {len(registros)}.")
+    return len(volta)
+
+
 def testar() -> None:
     url, _ = _cred()
     print(f"Projeto: {url}")
