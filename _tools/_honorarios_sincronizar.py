@@ -150,13 +150,47 @@ def main(periodo: str, escrever: bool) -> int:
 
     inserir = [novo[k] for k in novo.keys() - velho.keys()]
     remover = [velho[k] for k in velho.keys() - novo.keys()]
-    iguais = len(novo.keys() & velho.keys())
+
+    # Linha que existe dos dois lados mas com número diferente. Acontece quando
+    # uma REGRA muda, não o dado: a chave natural (OS, procedimento, data, valor,
+    # profissional) continua a mesma e só o cálculo muda. Sem isto, mudar uma
+    # regra de repasse não teria efeito nenhum sobre o que já está gravado — que
+    # foi exatamente o que aconteceu ao zerar o repasse da Juliana.
+    CALCULADOS = ["categoria", "imposto", "taxa_comercial", "taxa_cartao", "valor_liquido",
+                  "repasse_profissional", "repasse_indicador", "repasse_clinica",
+                  "pct_aplicado", "regra_aplicada", "papel"]
+    atualizar = []
+    for k in novo.keys() & velho.keys():
+        n, v = novo[k], velho[k]
+        mudou = {}
+        for c in CALCULADOS:
+            a, b = n.get(c), v.get(c)
+            if isinstance(a, (int, float)) and a is not None and b is not None:
+                if abs(float(a) - float(b)) > 0.005:
+                    mudou[c] = (b, a)
+            elif str(a or "") != str(b or ""):
+                mudou[c] = (b, a)
+        if mudou:
+            atualizar.append((v["id"], n, mudou))
+    iguais = len(novo.keys() & velho.keys()) - len(atualizar)
 
     print(f"  no banco hoje .....: {len(atual)}")
     print(f"  o SVN diz .........: {len(ok)}")
     print(f"  iguais (intocados) : {iguais}")
     print(f"  a INSERIR .........: {len(inserir)}")
+    print(f"  a ATUALIZAR .......: {len(atualizar)}  (regra mudou, dado não)")
     print(f"  a REMOVER .........: {len(remover)}\n")
+
+    if atualizar:
+        print("  --- linhas recalculadas por mudança de regra ---")
+        for _id, n, mudou in atualizar[:12]:
+            print(f"    OS {str(n['os_numero']):10s} {str(n['paciente'])[:24]:26s} "
+                  f"{str(n['profissional'])[:22]:24s}")
+            for c, (b, a) in mudou.items():
+                fmt = (lambda x: f"{float(x):,.2f}") if isinstance(a, (int, float)) else (lambda x: str(x)[:40])
+                print(f"        {c:22s} {fmt(b):>22s} -> {fmt(a)}")
+        if len(atualizar) > 12:
+            print(f"    ... e mais {len(atualizar)-12}")
 
     if remover:
         print("  --- linhas obsoletas (o SVN alterou depois) ---")
@@ -171,13 +205,17 @@ def main(periodo: str, escrever: bool) -> int:
             d[(r["empresa"], r["profissional"])] += r["repasse_profissional"]
         for r in remover:
             d[(r["empresa"], r["profissional"])] -= float(r["repasse_profissional"] or 0)
+        for _id, n, mudou in atualizar:
+            if "repasse_profissional" in mudou:
+                antes, depois = mudou["repasse_profissional"]
+                d[(n["empresa"], n["profissional"])] += float(depois) - float(antes)
         for k, v in sorted(d.items(), key=lambda x: -x[1]):
             if abs(v) < 0.005:
                 continue
             print(f"    {k[0][:14]:16s} {k[1][:28]:30s} {v:>+11,.2f}")
         print(f"    {'TOTAL':46s} {sum(d.values()):>+11,.2f}")
 
-    if not inserir and not remover:
+    if not inserir and not remover and not atualizar:
         print("  Nada a fazer — o banco já reflete o SVN.")
         return 0
     if not escrever:
@@ -190,6 +228,17 @@ def main(periodo: str, escrever: bool) -> int:
     print(f"\n  {len(remover)} linha(s) removida(s).")
     n = DB.inserir_lote("honorarios_lancamentos", [_para_json(r, periodo) for r in inserir])
     print(f"  {n} linha(s) inserida(s).")
+
+    # Linhas cujo NÚMERO mudou porque a REGRA mudou (a chave natural é a mesma).
+    # Sem este passo, alterar uma regra não teria efeito no que já está gravado.
+    for _id, reg, _mudou in atualizar:
+        pronto = _para_json(reg, periodo)
+        DB.atualizar("honorarios_lancamentos", _id,
+                     {c: pronto[c] for c in
+                      ("categoria", "imposto", "taxa_comercial", "taxa_cartao",
+                       "valor_liquido", "repasse_profissional", "repasse_indicador",
+                       "repasse_clinica", "pct_aplicado", "regra_aplicada", "papel")})
+    print(f"  {len(atualizar)} linha(s) recalculada(s).")
 
     # --- confere o resultado ----------------------------------------------
     depois = DB.buscar("honorarios_lancamentos", "repasse_profissional,valor_recebido",

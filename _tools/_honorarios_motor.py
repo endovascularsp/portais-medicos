@@ -204,8 +204,20 @@ def resolver_dono(df) -> pd.DataFrame:
     mesma OS, mesmo procedimento, mesma data, mesmo valor. O banco então descarta
     uma de cada par no ON CONFLICT. Foi o que tirou 12 lançamentos de Julho."""
     vazio = df["profissional"].isna() | (df["profissional"].astype(str).str.strip().isin(["", "nan"]))
-    tem_sol = df["solicitante"].notna() & (df["solicitante"].astype(str).str.strip() != "")
-    df["via_solicitante"] = vazio & tem_sol
+
+    # "Enfermagem" e "Agendamento Cirúrgico" não são gente: são rótulos que o SVN
+    # põe no lugar do executante. Quando a OS tem um solicitante de verdade, foi
+    # ele quem fez, e a linha é dele (Thiago, 07/08/2026). Antes essas linhas
+    # saíam inteiras do fechamento — R$ 58.963,82 só em Julho.
+    rotulo = df["profissional"].map(
+        lambda v: R.chave(v) in R.REDIRECIONA_PARA_SOLICITANTE if not pd.isna(v) else False)
+
+    sol_k = df["solicitante"].map(lambda v: R.chave(v) if not pd.isna(v) else "")
+    tem_sol = sol_k != ""
+    # o solicitante não pode ser o próprio rótulo, nem outro nome fora do corpo clínico
+    sol_valido = tem_sol & ~sol_k.isin(R.IGNORAR_PROFISSIONAL)
+
+    df["via_solicitante"] = (vazio | rotulo) & sol_valido
     df.loc[df["via_solicitante"], "profissional"] = df.loc[df["via_solicitante"], "solicitante"]
     return df
 
@@ -253,6 +265,23 @@ def calcular(row, periodo_id, catalogo, nomes_prof=()):
     ctx["categoria"] = categoria
     por_os = origem_cat == "categoria definida por OS"
     cat_k = R.chave(categoria)
+
+    # --- Quem é da casa: 0%, sempre ---
+    # Vem ANTES da regra da NF própria de propósito. A NF própria produz repasse
+    # NEGATIVO (a comissão que a clínica retém), e para quem é assalariado isso
+    # não faz sentido: ela não recebe repasse, logo também não devolve comissão.
+    # Se a checagem ficasse depois, uma linha na conta dela deixaria a Juliana
+    # negativa. A regra é 0%, e zero em qualquer caminho (Thiago, 07/08/2026).
+    if prof_k in R.SEM_REPASSE_PROPRIO:
+        iss0 = R.ISS * bruto
+        tcom0 = R.TAXA_COMERCIAL * bruto if R.tem_taxa_comercial(categoria, periodo_id) else 0.0
+        tcar0 = R.TAXA_CARTAO * bruto if R.chave(row["tipo_pagamento"]) in R.TIPOS_COM_TAXA_CARTAO else 0.0
+        liq0 = bruto - iss0 - tcom0 - tcar0 - custo
+        ctx.update(imposto=iss0, taxa_comercial=tcom0, taxa_cartao=tcar0, valor_liquido=liq0,
+                   repasse_profissional=0.0, repasse_indicador=0.0, repasse_clinica=liq0,
+                   pct_aplicado=0.0, papel="executor", nf_propria=False,
+                   regra_aplicada="R0 profissional da casa — salário, sem repasse")
+        return ctx, None
 
     # --- Regra 3A: NF na conta do profissional ---
     if nf_propria(prof, row["conta_pagamento"]):

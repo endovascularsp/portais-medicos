@@ -142,11 +142,33 @@ EXCECOES = {
     (OXY, "laser (locacao)", "christiane"): .20,
 }
 
-# Fora do corpo clínico — não geram repasse pelo motor.
+# Fora do corpo clínico — a linha sai do fechamento inteira, sem virar repasse
+# nem receita da clínica.
 IGNORAR_PROFISSIONAL = {
     "paulo laredo pinto", "paulo laredo",     # esporádico, apurado em aba própria
     "agendamento cirurgico e visita hospitalar", "enfermagem", "sala spa",
     "oxy recovery", "endovascular sp",        # linhas com a empresa no lugar do nome
+}
+
+# Rótulos operacionais que aparecem no lugar do executante. Não são gente: são
+# a fila do agendamento cirúrgico e o posto de enfermagem. Quando a OS tem um
+# SOLICITANTE de verdade, é ele quem fez o trabalho, e a linha passa a ser dele.
+# Só quando não há solicitante é que a linha sai do fechamento (fica na lista
+# acima). Decidido pelo Thiago em 07/08/2026 — é a mesma regra que a
+# Produtividade já usava, agora valendo também para o Recebimento.
+REDIRECIONA_PARA_SOLICITANTE = {
+    "enfermagem",
+    "agendamento cirurgico e visita hospitalar",
+}
+
+# Executa procedimento e gera receita, mas é da casa: recebe salário, não
+# repasse. A linha CONTINUA no fechamento — o valor inteiro vira receita da
+# clínica. Diferente de IGNORAR_PROFISSIONAL, que faz a receita sumir do painel.
+# Decidido pelo Thiago em 07/08/2026: "Juliana Olimpio não recebe repasse por
+# procedimentos executados."
+SEM_REPASSE_PROPRIO = {
+    "juliana olimpio",
+    "juliana olimpio de paula",
 }
 
 
