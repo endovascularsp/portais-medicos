@@ -126,14 +126,20 @@ def main(periodo: str, escrever: bool) -> int:
         raise SystemExit(f"ABORTADO: {periodo} está congelado. Descongelar é decisão do Thiago.")
 
     atual = DB.buscar("honorarios_lancamentos", "*", filtros={"periodo_id": f"eq.{periodo}"})
+
+    # Linhas resolvidas à mão ficam INTOCADAS — não são recalculadas, removidas
+    # nem duplicadas. Alguém olhou o caso e decidiu; a anotação é a memória
+    # disso, e o motor recalculando por cima apagaria a memória mesmo quando
+    # chegasse ao mesmo número. Saem dos dois lados da comparação.
+    # Decidido com o Thiago em 07/08/2026, sobre as 3 linhas de Junho.
     manuais = [r for r in atual if r.get("revisado_em") or r.get("revisado_por")
-               or r.get("observacao") or r.get("congelado")]
+               or r.get("observacao")]
     if manuais:
-        print(f"ABORTADO: {len(manuais)} linha(s) com revisão manual — a sincronização "
-              f"as apagaria. Resolver uma a uma:")
-        for r in manuais[:10]:
-            print(f"   OS {r['os_numero']} {str(r['paciente'])[:30]} — {r.get('observacao')}")
-        return 1
+        print(f"  preservadas (revisão manual): {len(manuais)}")
+        for r in manuais:
+            print(f"     OS {str(r['os_numero']):10s} {str(r['paciente'])[:26]:28s} "
+                  f"R$ {float(r['repasse_profissional'] or 0):>10,.2f} — {str(r.get('observacao'))[:58]}")
+        atual = [r for r in atual if r not in manuais]
 
     ok, exc = calcular_do_svn(periodo)
     if exc:
@@ -143,6 +149,10 @@ def main(periodo: str, escrever: bool) -> int:
         return 1
 
     # --- diferença ---------------------------------------------------------
+    # As chaves das preservadas saem também do lado novo: senão a linha voltaria
+    # como "a inserir" e o período ficaria com a versão à mão E a recalculada.
+    guardadas = {k_db(r) for r in manuais}
+    ok = [r for r in ok if k_api(r) not in guardadas]
     novo = {k_api(r): r for r in ok}
     velho = {k_db(r): r for r in atual}
     if len(novo) != len(ok) or len(velho) != len(atual):
@@ -243,17 +253,20 @@ def main(periodo: str, escrever: bool) -> int:
     # --- confere o resultado ----------------------------------------------
     depois = DB.buscar("honorarios_lancamentos", "repasse_profissional,valor_recebido",
                        filtros={"periodo_id": f"eq.{periodo}"})
-    esperado_rep = round(sum(r["repasse_profissional"] for r in ok), 2)
+    esperado_rep = round(sum(r["repasse_profissional"] for r in ok)
+                         + sum(float(r["repasse_profissional"] or 0) for r in manuais), 2)
     obtido_rep = round(sum(float(r["repasse_profissional"] or 0) for r in depois), 2)
-    print(f"\n  linhas no banco ...: {len(depois)}  (esperado {len(ok)})")
+    # o esperado inclui as preservadas, que não passaram pelo recálculo
+    esperado_n = len(ok) + len(manuais)
+    print(f"\n  linhas no banco ...: {len(depois)}  (esperado {esperado_n})")
     print(f"  repasse no banco ..: R$ {obtido_rep:,.2f}  (esperado R$ {esperado_rep:,.2f})")
     # A contagem de linhas é exata; o valor tem folga de 1 centavo por linha.
     # O motor soma em ponto flutuante e o banco guarda numeric(14,4): num mês de
     # mil linhas os dois divergem alguns centavos, e não é erro. Exigir 2
     # centavos fazia o teste falhar depois de uma gravação correta — pior do que
     # não ter teste, porque assusta à toa.
-    folga = max(0.10, 0.01 * len(ok))
-    if len(depois) != len(ok) or abs(obtido_rep - esperado_rep) > folga:
+    folga = max(0.10, 0.01 * esperado_n)
+    if len(depois) != esperado_n or abs(obtido_rep - esperado_rep) > folga:
         raise SystemExit(f"ABORTADO: o banco não ficou igual ao esperado "
                          f"(folga aceita: R$ {folga:,.2f}) — CONFERIR À MÃO.")
     print("  Banco em dia com o SVN.")

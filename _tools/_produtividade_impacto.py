@@ -37,8 +37,17 @@ PASTA = {"endo": "produtividade", "oxy": "oxy-produtividade"}
 # Executante que na verdade é um registro operacional: o trabalho é do SOLICITANTE.
 REDIRECIONA = {"agendamento cirurgico e visita hospitalar", "enfermagem"}
 
-# Salas cadastradas como se fossem profissionais no SVN. Não são pessoas e o
-# Thiago decidiu desconsiderar em vez de redirecionar.
+# Fora da produtividade. Duas naturezas diferentes na mesma lista:
+#
+#  - SALAS e NOMES DE EMPRESA cadastrados como se fossem profissionais no SVN.
+#    Não são pessoas; o Thiago decidiu desconsiderar em vez de redirecionar.
+#
+#  - PAULO LAREDO PINTO — reconfirmado em 07/08/2026, depois de eu levantar que
+#    ele responde por R$ 1,33 milhão de produção fora do painel e sugerir
+#    incluí-lo. O Thiago manteve fora, e o motivo é o que importa: ele recebe
+#    direto na MAQUININHA DELE e repassa uma parte para a clínica. O dinheiro
+#    não entra pelo caixa, então nem a produção nem o repasse da clínica se
+#    apuram como nos demais — é apurado em aba própria. Não reabrir.
 EXCLUIR = {"sala fotona", "sala spa",
            "paulo laredo pinto", "paulo laredo",
            "alvaro", "alvaro machado gaudencio",

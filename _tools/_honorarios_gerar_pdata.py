@@ -39,8 +39,13 @@ MESES = {"01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
 # Quem NÃO tem portal. Diferente de quem não gera repasse: a base registra todo
 # lançamento, mas o portal é do corpo clínico. Confere com o que o gerador antigo
 # excluía — por isso Junho publicou 25 chaves e o banco tem 28.
+# A Juliana SAIU desta lista em 07/08/2026. Ela executa e gera receita de
+# verdade; o que ela não tem é repasse (é da casa, recebe salário — ver
+# R.SEM_REPASSE_PROPRIO). Mantê-la aqui escondia R$ 58.164,76 de receita do
+# painel só de Julho. Agora aparece com repasse zero e o líquido inteiro como
+# receita da clínica — que é o fato.
 SEM_PORTAL = {
-    "juliana olimpio", "juliana olimpio de paula", "paulo laredo", "paulo laredo pinto",
+    "paulo laredo", "paulo laredo pinto",
     "alvaro", "agendamento cirurgico e visita hospitalar", "enfermagem", "sala spa",
     "oxy recovery", "endovascular sp",
 }

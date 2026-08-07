@@ -65,6 +65,9 @@ EXTRAS = {
     # "Medicação injetável", e os 4 lançamentos anteriores desse procedimento
     # (IM e EV) usam essa categoria. Classificado sem consultar por isso.
     "Infusão de Medicação - IM (1 ativo)":                                    "Medicação injetável",
+    # Mesmo caso, ao reprocessar Junho: o SVN passou a sufixar a quantidade de
+    # ativos. A base do nome já é "Medicação injetável" no catálogo.
+    "Infusão de Medicação - EV (a partir de 2 ativos)":                       "Medicação injetável",
 }
 
 # ---------------------------------------------------------------------------

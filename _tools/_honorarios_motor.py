@@ -219,6 +219,13 @@ def resolver_dono(df) -> pd.DataFrame:
 
     df["via_solicitante"] = (vazio | rotulo) & sol_valido
     df.loc[df["via_solicitante"], "profissional"] = df.loc[df["via_solicitante"], "solicitante"]
+
+    # Executante em branco e solicitante que está FORA do fechamento (Paulo
+    # Laredo, por exemplo): o dono é ele, e a linha tem de ser descartada pela
+    # regra — não virar "profissional em branco" na fila. Sem isto, a fila
+    # travava o mês por causa de uma linha que já se sabia que não entra.
+    fora = vazio & tem_sol & sol_k.isin(R.IGNORAR_PROFISSIONAL)
+    df.loc[fora, "profissional"] = df.loc[fora, "solicitante"]
     return df
 
 
