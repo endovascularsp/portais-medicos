@@ -109,6 +109,58 @@ def inserir(tabela: str, registro: dict) -> dict:
     return volta[0]
 
 
+def remover(tabela: str, registro_id: str) -> dict:
+    """DELETE de UM registro, sempre por id, e devolve o que foi apagado.
+
+    Nunca aceita filtro aberto: com a service_role o RLS é ignorado, e um
+    `DELETE` com filtro errado apagaria o período inteiro sem avisar. O
+    chamador tem que ter mostrado antes exatamente o que sai.
+    """
+    url, key = _cred()
+    req = urllib.request.Request(
+        f"{url}/rest/v1/{tabela}?id=eq.{urllib.parse.quote(str(registro_id))}",
+        method="DELETE",
+        headers={"apikey": key, "Authorization": f"Bearer {key}",
+                 "Prefer": "return=representation"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            volta = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"ABORTADO: HTTP {e.code} ao remover de '{tabela}': "
+                         f"{e.read().decode('utf-8', 'replace')[:300]}")
+    if len(volta) != 1:
+        raise SystemExit(f"ABORTADO: o DELETE afetou {len(volta)} registros, esperava 1.")
+    return volta[0]
+
+
+def inserir_lote(tabela: str, registros: list) -> int:
+    """INSERT em lote, sem upsert — falha se alguma linha já existir.
+
+    É o que carrega o fechamento sem SQL colado à mão. Falhar no conflito é
+    proposital: se a linha já existe, alguém tem que olhar antes, não deixar o
+    banco decidir sozinho o que fazer com dinheiro.
+    """
+    if not registros:
+        return 0
+    url, key = _cred()
+    req = urllib.request.Request(
+        f"{url}/rest/v1/{tabela}",
+        data=json.dumps(registros, ensure_ascii=False, default=str).encode("utf-8"),
+        method="POST",
+        headers={"apikey": key, "Authorization": f"Bearer {key}",
+                 "Content-Type": "application/json",
+                 "Prefer": "return=representation"})
+    try:
+        with urllib.request.urlopen(req, timeout=180) as r:
+            volta = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"ABORTADO: HTTP {e.code} ao inserir em '{tabela}': "
+                         f"{e.read().decode('utf-8', 'replace')[:400]}")
+    if len(volta) != len(registros):
+        raise SystemExit(f"ABORTADO: o INSERT gravou {len(volta)} de {len(registros)}.")
+    return len(volta)
+
+
 def upsert(tabela: str, registros: list, conflito: str) -> int:
     """INSERT ... ON CONFLICT DO UPDATE, em lote.
 

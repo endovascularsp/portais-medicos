@@ -122,11 +122,22 @@ FILTRO_COMPENSACAO = "baix_dt_recebimento"
 
 
 def _data_iso(v):
-    """A API devolve '2026-07-02 00:00:00'; o resto do motor espera date."""
+    """Data da API -> datetime.
+
+    A API mistura dois formatos: a maioria dos campos vem em DD/MM/AAAA, mas
+    alguns (orca_dt_orcamento) vêm em AAAA-MM-DD. Ler tudo com o padrão do
+    pandas trocava dia por mês: '07/06/2026' (7 de junho) virava 6 de julho.
+    Isso corrompia a data de compensação, que além de aparecer para o médico
+    faz parte da chave que identifica a linha no banco — 390 linhas de Julho
+    deixaram de casar com as já gravadas por causa disso.
+    """
     s = str(v or "").strip()
     if not s or s.lower() in ("none", "nan"):
         return pd.NaT
-    return pd.to_datetime(s[:10], errors="coerce")
+    s = s[:10]
+    if len(s) == 10 and s[4] == "-" and s[7] == "-":
+        return pd.to_datetime(s, errors="coerce")           # já é ISO
+    return pd.to_datetime(s, format="%d/%m/%Y", errors="coerce")
 
 
 def ler_api(instituicao: str, periodo: str, empresa: str) -> pd.DataFrame:

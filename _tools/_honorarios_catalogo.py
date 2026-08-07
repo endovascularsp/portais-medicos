@@ -58,6 +58,13 @@ EXTRAS = {
     "Revascularização de Aorta Bi-Femoral (Convencional)":                    "Cirurgia - Hospital",
     "Colocação de stent renal":                                               "Cirurgia - Hospital",
     "Drenagem Linfática Manual":                                              "Fisioterapia",
+
+    # 07/08/2026, ao reprocessar Julho pela API. O SVN passou a mandar o mesmo
+    # procedimento com um sufixo novo: "Infusão de Medicação - IM (1 ativo)".
+    # Não é caso ambíguo — a base do nome já está no catálogo como
+    # "Medicação injetável", e os 4 lançamentos anteriores desse procedimento
+    # (IM e EV) usam essa categoria. Classificado sem consultar por isso.
+    "Infusão de Medicação - IM (1 ativo)":                                    "Medicação injetável",
 }
 
 # ---------------------------------------------------------------------------
