@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Fechamento de Honorários — Endovascular SP</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{overflow-x:hidden;max-width:100vw}
+    :root{
+      --navy:#0B1F3A; --navy-2:#13315b; --gold:#A18960;
+      --bg:#EEF2F6; --branco:#fff; --borda:#D5DEE8; --borda-fr:#C4D4E8;
+      --texto:#0D1E30; --texto2:#4A6278; --texto3:#7E93A8;
+      --verde:#2D7A3C; --verde-bg:#E4F1E7;
+      --ambar:#B4622A; --ambar-bg:#F8ECE3;
+      --vermelho:#C0392B; --vermelho-bg:#FBEAE8;
+      --sombra:0 1px 2px rgba(11,31,58,.05), 0 6px 20px rgba(11,31,58,.07);
+    }
+    body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);
+         min-height:100vh;color:var(--texto);line-height:1.55}
+
+    /* ===== Login ===== */
+    #login-overlay{position:fixed;inset:0;
+      background:linear-gradient(135deg,var(--navy) 0%,#162d50 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000}
+    .login-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px;padding:40px 36px;width:100%;max-width:390px;text-align:center;
+      margin:0 12px;color:#fff}
+    .login-logo{font-size:38px;margin-bottom:10px}
+    .login-title{font-size:19px;font-weight:700;margin-bottom:4px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:22px}
+    .login-btn{width:100%;padding:13px;border-radius:10px;border:none;
+      background:var(--gold);color:var(--navy);font-size:15px;font-weight:700;cursor:pointer}
+    .login-btn:hover{filter:brightness(1.08)}
+    .login-erro{color:#ff9d9d;font-size:13px;margin-top:14px;min-height:18px;line-height:1.5}
+
+    /* ===== Estrutura ===== */
+    #main{display:none}
+    header{background:var(--navy);color:#fff;padding:16px 28px;display:flex;
+      align-items:center;gap:14px;flex-wrap:wrap}
+    .h-logo{font-size:26px}
+    .h-info h1{font-size:16px;font-weight:700}
+    .h-info p{font-size:12px;color:rgba(255,255,255,0.5);margin-top:1px}
+    .h-dir{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .h-user{font-size:12px;color:rgba(255,255,255,0.6)}
+    .btn-voltar{color:rgba(255,255,255,0.75);font-size:12.5px;text-decoration:none;
+      padding:6px 13px;border-radius:8px;border:1px solid rgba(255,255,255,0.2)}
+    .btn-voltar:hover{background:rgba(255,255,255,0.08)}
+    .wrap{max-width:1000px;margin:0 auto;padding:28px 20px 70px;
+      display:flex;flex-direction:column;gap:26px}
+
+    /* ===== Barra de período ===== */
+    .barra{background:var(--navy);border-radius:12px;padding:14px 18px;
+      display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--sombra)}
+    .barra label{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+      color:rgba(255,255,255,0.6)}
+    .barra select{padding:7px 13px;border-radius:20px;border:1.5px solid var(--borda);
+      background:#fff;font-size:13px;font-weight:600;color:var(--navy);
+      cursor:pointer;font-family:inherit}
+    .selo{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.5px;
+      text-transform:uppercase;padding:5px 13px;border-radius:20px}
+    .selo.aberto{background:var(--ambar-bg);color:var(--ambar)}
+    .selo.publicado{background:var(--verde-bg);color:var(--verde)}
+    .selo.congelado{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85)}
+
+    /* ===== Painel de números ===== */
+    .placar{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+    .kpi{background:var(--branco);border:1px solid var(--borda);border-radius:12px;
+      padding:16px 18px;box-shadow:var(--sombra)}
+    .kpi.destaque{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+      border-color:var(--navy);color:#fff}
+    .kpi .rot{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+      color:var(--texto2)}
+    .kpi.destaque .rot{color:rgba(255,255,255,0.65)}
+    .kpi .val{font-size:22px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums;
+      letter-spacing:-.02em}
+    .kpi .pe{font-size:11.5px;color:var(--texto2);margin-top:3px}
+    .kpi.destaque .pe{color:rgba(255,255,255,0.7)}
+
+    /* ===== Blocos ===== */
+    .bloco{background:var(--branco);border:1px solid var(--borda);border-radius:12px;
+      padding:22px;box-shadow:var(--sombra)}
+    .bloco h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:9px}
+    .bloco .sub{font-size:13px;color:var(--texto2);margin-top:5px}
+    .conta-fila{background:var(--ambar);color:#fff;font-size:12px;font-weight:800;
+      min-width:24px;height:24px;border-radius:20px;display:inline-flex;
+      align-items:center;justify-content:center;padding:0 8px}
+    .conta-fila.zero{background:var(--verde)}
+
+    /* ===== Divergência ===== */
+    .div-lista{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+    .div-item{border:1px solid var(--borda);border-left:4px solid var(--ambar);
+      border-radius:10px;padding:16px 18px;background:#FCFDFE}
+    .div-item.aviso{border-left-color:var(--vermelho)}
+    .div-tipo{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+      color:var(--ambar)}
+    .div-item.aviso .div-tipo{color:var(--vermelho)}
+    .div-pac{font-weight:700;font-size:14.5px;margin-top:3px}
+    .div-proc{font-size:13px;color:var(--texto);margin-top:1px}
+    .div-meta{font-size:11.5px;color:var(--texto2);margin-top:6px;
+      display:flex;gap:14px;flex-wrap:wrap}
+    .div-desc{font-size:13px;color:var(--texto2);margin-top:10px;padding-top:10px;
+      border-top:1px solid var(--borda)}
+    .div-acao{margin-top:14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+    .div-acao select,.div-acao input{padding:8px 12px;border-radius:8px;
+      border:1.5px solid var(--borda);font-size:13px;font-family:inherit;
+      color:var(--texto);background:#fff;min-width:190px}
+    .div-acao input{flex:1;min-width:200px}
+    .btn{padding:8px 17px;border-radius:20px;border:1.5px solid var(--gold);
+      background:var(--gold);color:var(--navy);font-size:12.5px;font-weight:800;
+      cursor:pointer;font-family:inherit;white-space:nowrap}
+    .btn:hover:not(:disabled){filter:brightness(1.08)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn.claro{background:#fff;color:var(--texto2);border-color:var(--borda)}
+    .btn.claro:hover:not(:disabled){background:var(--bg)}
+    .aviso-caixa{background:var(--vermelho-bg);border:1px solid #F0C4BE;border-radius:8px;
+      padding:11px 14px;font-size:12.5px;color:#8B2C20;margin-top:12px;line-height:1.55}
+    .vazio{text-align:center;padding:36px 20px;color:var(--texto2);font-size:14px}
+    .vazio .ic{font-size:34px;display:block;margin-bottom:10px}
+
+    /* ===== Passos ===== */
+    .passos{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+    .passo{display:grid;grid-template-columns:26px 1fr auto;gap:14px;align-items:start;
+      padding:13px 0;border-bottom:1px solid var(--borda)}
+    .passo:last-child{border-bottom:none}
+    .passo .n{font-size:12px;font-weight:800;color:var(--texto3);
+      font-variant-numeric:tabular-nums;padding-top:2px}
+    .passo h3{font-size:14px;font-weight:650}
+    .passo p{font-size:12.5px;color:var(--texto2);margin-top:2px}
+    .passo code{font-family:Consolas,monospace;font-size:11.5px;background:var(--bg);
+      padding:2px 7px;border-radius:5px;color:var(--texto);display:inline-block;margin-top:5px}
+    .estado{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+      padding:4px 10px;border-radius:20px;white-space:nowrap}
+    .estado.ok{background:var(--verde-bg);color:var(--verde)}
+    .estado.espera{background:var(--ambar-bg);color:var(--ambar)}
+    .estado.pc{background:var(--bg);color:var(--texto2)}
+
+    /* ===== Resolvidas ===== */
+    .hist{margin-top:16px;font-size:12.5px}
+    .hist-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--borda);
+      color:var(--texto2);flex-wrap:wrap}
+    .hist-item:last-child{border-bottom:none}
+    .hist-item b{color:var(--texto)}
+    details>summary{cursor:pointer;font-size:13px;color:var(--texto2);
+      font-weight:600;list-style:none;padding:6px 0}
+    details>summary::-webkit-details-marker{display:none}
+    details>summary::before{content:'▸ ';color:var(--gold)}
+    details[open]>summary::before{content:'▾ '}
+
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(90px);
+      background:var(--navy);color:#fff;padding:13px 24px;border-radius:10px;
+      font-size:13.5px;font-weight:600;box-shadow:0 8px 26px rgba(11,31,58,.3);
+      transition:transform .25s ease;z-index:900;max-width:90vw;text-align:center}
+    .toast.ver{transform:translateX(-50%) translateY(0)}
+    .toast.erro{background:var(--vermelho)}
+
+    @media(max-width:640px){
+      header{padding:14px 16px} .wrap{padding:20px 14px 60px}
+      .bloco{padding:18px 15px} .div-acao select,.div-acao input{min-width:100%}
+      .barra{flex-direction:column;align-items:stretch} .selo{margin-left:0;text-align:center}
+    }
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">🧮</div>
+    <div class="login-title">Fechamento de Honorários</div>
+    <div class="login-sub">Endovascular SP</div>
+    <button class="login-btn" onclick="entrar()">Entrar com Google</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<div id="main">
+  <header>
+    <div class="h-logo">🧮</div>
+    <div class="h-info">
+      <h1>Fechamento de Honorários</h1>
+      <p>Divergências, conferência e publicação do mês</p>
+    </div>
+    <div class="h-dir">
+      <span class="h-user" id="h-user"></span>
+      <a class="btn-voltar" href="../hub/Gestor_Hub.html">← Gestor</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <div class="barra">
+      <label for="sel-periodo">Mês</label>
+      <select id="sel-periodo" onchange="trocarPeriodo(this.value)"></select>
+      <span class="selo" id="selo-status">—</span>
+    </div>
+
+    <div class="placar" id="placar"></div>
+
+    <!-- ---------- Divergências ---------- -->
+    <div class="bloco">
+      <h2>⚖️ Divergências a decidir <span class="conta-fila" id="conta-fila">0</span></h2>
+      <div class="sub">O motor não decide sozinho o que muda o valor do repasse.
+        Cada decisão aqui fica gravada com o seu nome e a data.</div>
+      <div class="div-lista" id="div-lista"></div>
+    </div>
+
+    <!-- ---------- Já decididas ---------- -->
+    <div class="bloco">
+      <details>
+        <summary>Decisões já tomadas neste mês (<span id="conta-resolvidas">0</span>)</summary>
+        <div class="hist" id="hist-lista"></div>
+      </details>
+    </div>
+
+    <!-- ---------- Como fechar ---------- -->
+    <div class="bloco">
+      <h2>🔁 Como o mês fecha</h2>
+      <div class="sub">Só o passo 3 exige julgamento — é o que se faz nesta tela.
+        O resto é mecânico e roda por comando.</div>
+      <div class="passos" id="passos"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let me = null;
+let PERIODO = null;
+let PERIODOS = [];
+let CATEGORIAS = [];   // do catálogo, para o menu de classificação
+let PROFISSIONAIS = [];
+
+// Tipos que se resolvem por clique. Os demais aparecem como aviso: não são
+// dúvida de classificação, são falta de cadastro de regra — e mandar alguém
+// "escolher" ali só produziria um palpite gravado com nome e data.
+const RESOLVIVEIS = ['procedimento_sem_categoria', 'cirurgia_sem_origem_lead',
+                     'profissional_invalido'];
+
+const ROTULO_TIPO = {
+  procedimento_sem_categoria: 'Procedimento sem categoria',
+  cirurgia_sem_origem_lead:   'Cirurgia: de quem é o lead?',
+  profissional_invalido:      'Atendimento sem profissional',
+  sem_regra:                  'Categoria sem regra de repasse',
+  divergencia_valor:          'Valor não fecha',
+};
+
+function brl(v){
+  return 'R$ ' + Number(v || 0).toLocaleString('pt-BR',
+    {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function aviso(msg, erro){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ver' + (erro ? ' erro' : '');
+  setTimeout(() => { t.className = 'toast' + (erro ? ' erro' : ''); }, 3200);
+}
+
+/* ===================== Autenticação ===================== */
+async function entrar(){
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href.split('#')[0].split('?')[0] }
+  });
+  if (error) document.getElementById('login-erro').textContent = 'Erro: ' + error.message;
+}
+function mostrarLogin(msg){
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('main').style.display = 'none';
+  if (msg) document.getElementById('login-erro').innerHTML = msg;
+}
+
+async function checkAuth(){
+  const { data: { session } } = await sb.auth.getSession();
+  const user = session ? session.user : null;
+  if (!user) return mostrarLogin();
+  const email = (user.email || '').toLowerCase();
+
+  const { data, error } = await sb.from('users')
+    .select('email,name,role,cards').eq('email', email).maybeSingle();
+  if (error || !data){
+    await sb.auth.signOut();
+    return mostrarLogin('Email <strong>' + esc(email) + '</strong> não está cadastrado.<br/>Contate um administrador.');
+  }
+  const cards = data.cards || [];
+  // Mesma regra dos demais cards do Gestor: o card próprio OU o guarda-chuva.
+  // 'gestor_fechamento' é o nome do card na Gestão de Acessos; quem tem o
+  // guarda-chuva 'gestor' entra também, como nos demais cards do Gestor.
+  const pode = data.role === 'admin'
+            || cards.includes('gestor_fechamento') || cards.includes('gestor');
+  if (!pode){
+    await sb.auth.signOut();
+    return mostrarLogin('Você não tem acesso ao Fechamento de Honorários.<br/>Contate um administrador.');
+  }
+
+  me = { email, nome: data.name || email.split('@')[0], isAdmin: data.role === 'admin' };
+  document.getElementById('h-user').textContent = me.nome;
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  await iniciar();
+}
+
+/* ===================== Carga ===================== */
+async function iniciar(){
+  const [per, cat, lanc] = await Promise.all([
+    sb.from('honorarios_periodos').select('periodo_id,label,status,congelado').order('periodo_id'),
+    sb.from('honorarios_procedimentos').select('categoria'),
+    sb.from('honorarios_lancamentos').select('profissional').limit(2000),
+  ]);
+  if (per.error){ aviso('Não consegui ler os períodos: ' + per.error.message, true); return; }
+
+  PERIODOS = per.data || [];
+  CATEGORIAS = [...new Set((cat.data || []).map(c => c.categoria).filter(Boolean))].sort(
+    (a,b) => a.localeCompare(b,'pt'));
+  PROFISSIONAIS = [...new Set((lanc.data || []).map(l => l.profissional).filter(Boolean))].sort(
+    (a,b) => a.localeCompare(b,'pt'));
+
+  const sel = document.getElementById('sel-periodo');
+  sel.innerHTML = PERIODOS.slice().reverse()
+    .map(p => `<option value="${esc(p.periodo_id)}">${esc(p.label)}</option>`).join('');
+  const aberto = PERIODOS.filter(p => !p.congelado).slice(-1)[0];
+  PERIODO = (aberto || PERIODOS[PERIODOS.length - 1] || {}).periodo_id;
+  if (PERIODO) sel.value = PERIODO;
+  await trocarPeriodo(PERIODO);
+}
+
+async function trocarPeriodo(pid){
+  PERIODO = pid;
+  const p = PERIODOS.find(x => x.periodo_id === pid) || {};
+  const selo = document.getElementById('selo-status');
+  const estado = p.congelado ? 'congelado' : (p.status || 'aberto');
+  selo.className = 'selo ' + (p.congelado ? 'congelado' : (p.status === 'publicado' ? 'publicado' : 'aberto'));
+  selo.textContent = p.congelado ? 'Fechado — não aceita alteração' : estado;
+  await Promise.all([carregarPlacar(), carregarFila(), carregarResolvidas()]);
+  montarPassos();
+}
+
+async function carregarPlacar(){
+  const { data, error } = await sb.from('honorarios_lancamentos')
+    .select('valor_recebido,repasse_profissional,repasse_clinica,profissional')
+    .eq('periodo_id', PERIODO);
+  const el = document.getElementById('placar');
+  if (error){ el.innerHTML = ''; return; }
+  const l = data || [];
+  const soma = c => l.reduce((s, r) => s + Number(r[c] || 0), 0);
+  const profs = new Set(l.map(r => r.profissional).filter(Boolean));
+  el.innerHTML = `
+    <div class="kpi destaque"><div class="rot">Repasse aos médicos</div>
+      <div class="val">${brl(soma('repasse_profissional'))}</div>
+      <div class="pe">${profs.size} profissionais</div></div>
+    <div class="kpi"><div class="rot">Recebido</div>
+      <div class="val">${brl(soma('valor_recebido'))}</div>
+      <div class="pe">${l.length} lançamentos</div></div>
+    <div class="kpi"><div class="rot">Receita da clínica</div>
+      <div class="val">${brl(soma('repasse_clinica'))}</div>
+      <div class="pe">depois dos repasses</div></div>`;
+}
+
+/* ===================== Fila ===================== */
+async function carregarFila(){
+  const { data, error } = await sb.from('honorarios_excecoes')
+    .select('*').eq('periodo_id', PERIODO).eq('status', 'aberta')
+    .order('valor_recebido', { ascending: false });
+  const lista = document.getElementById('div-lista');
+  const conta = document.getElementById('conta-fila');
+  if (error){
+    lista.innerHTML = `<div class="aviso-caixa">Não consegui ler a fila: ${esc(error.message)}</div>`;
+    return;
+  }
+  const fila = data || [];
+  conta.textContent = fila.length;
+  conta.className = 'conta-fila' + (fila.length ? '' : ' zero');
+  if (!fila.length){
+    lista.innerHTML = `<div class="vazio"><span class="ic">✓</span>
+      Nenhuma divergência aberta neste mês.<br/>O fechamento pode seguir.</div>`;
+    return;
+  }
+  lista.innerHTML = fila.map(cartaoDivergencia).join('');
+}
+
+function cartaoDivergencia(e){
+  const resolvivel = RESOLVIVEIS.includes(e.tipo);
+  const meta = [
+    e.os_numero ? 'OS ' + esc(e.os_numero) : '',
+    e.empresa ? esc(e.empresa) : '',
+    e.tabela ? esc(e.tabela) : '',
+    e.profissional ? esc(e.profissional) : '',
+    e.data_compensacao ? 'compensado em ' + esc(e.data_compensacao.split('-').reverse().join('/')) : '',
+    e.valor_recebido != null ? brl(e.valor_recebido) : '',
+  ].filter(Boolean).map(x => `<span>${x}</span>`).join('');
+
+  return `<div class="div-item ${resolvivel ? '' : 'aviso'}" id="div-${e.id}">
+    <div class="div-tipo">${esc(ROTULO_TIPO[e.tipo] || e.tipo)}</div>
+    <div class="div-pac">${esc(e.paciente || '—')}</div>
+    <div class="div-proc">${esc(e.procedimento || '—')}</div>
+    <div class="div-meta">${meta}</div>
+    <div class="div-desc">${esc(e.descricao)}</div>
+    ${resolvivel ? controles(e) : `<div class="aviso-caixa">
+      Esta não se resolve por aqui: falta cadastrar a regra de repasse.
+      Fale com quem cuida das regras antes de fechar o mês.</div>`}
+  </div>`;
+}
+
+function controles(e){
+  if (e.tipo === 'procedimento_sem_categoria'){
+    return `<div class="div-acao">
+      <select id="op-${e.id}">
+        <option value="">Classificar como…</option>
+        ${CATEGORIAS.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+      </select>
+      <button class="btn" onclick="decidirCategoria('${e.id}')">Salvar classificação</button>
+    </div>
+    <div class="div-meta"><span>Vale para sempre: o procedimento entra no catálogo
+      e não volta a ser perguntado.</span></div>`;
+  }
+  if (e.tipo === 'cirurgia_sem_origem_lead'){
+    return `<div class="div-acao">
+      <select id="op-${e.id}">
+        <option value="">De quem veio o paciente?</option>
+        <option value="0.80">Da clínica — repasse 80%</option>
+        <option value="0.90">Do médico — repasse 90%</option>
+      </select>
+      <input id="mot-${e.id}" placeholder="Por quê? (fica registrado)" maxlength="120"/>
+      <button class="btn" onclick="decidirLead('${e.id}')">Salvar decisão</button>
+    </div>
+    <div class="div-meta"><span>Vale só para este atendimento.</span></div>`;
+  }
+  // profissional_invalido
+  return `<div class="div-acao">
+    <select id="op-${e.id}">
+      <option value="">De quem é este atendimento?</option>
+      ${PROFISSIONAIS.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('')}
+      <option value="__excluir__">Não é do corpo clínico — deixar fora</option>
+    </select>
+    <button class="btn" onclick="decidirDono('${e.id}')">Salvar decisão</button>
+  </div>`;
+}
+
+/* ===================== Decisões ===================== */
+async function gravarResolucao(id, resolucao, msg){
+  const { error } = await sb.from('honorarios_excecoes').update({
+    status: 'resolvida',
+    resolucao,
+    resolvido_por: me.email,
+    resolvido_em: new Date().toISOString(),
+  }).eq('id', id).select();     // .select() força retorno: sem ele, bloqueio de
+                                // permissão passa silencioso e parece ter salvo
+  if (error){ aviso('Não salvou: ' + error.message, true); return false; }
+  aviso(msg);
+  await Promise.all([carregarFila(), carregarResolvidas()]);
+  return true;
+}
+
+async function decidirCategoria(id){
+  const cat = document.getElementById('op-' + id).value;
+  if (!cat) return aviso('Escolha a categoria primeiro.', true);
+  const item = await pegar(id);
+  if (!item) return;
+
+  // A categoria vale para sempre: entra no catálogo, e o motor passa a resolver
+  // sozinho nas próximas vezes.
+  const chave = normalizar(item.procedimento);
+  const { error } = await sb.from('honorarios_procedimentos')
+    .upsert({ chave, procedimento: item.procedimento, categoria: cat, origem: 'fila' },
+            { onConflict: 'chave' }).select();
+  if (error){ aviso('Não consegui gravar no catálogo: ' + error.message, true); return; }
+
+  if (await gravarResolucao(id, { categoria: cat, via: 'catalogo' },
+                            'Classificado como ' + cat)){
+    if (!CATEGORIAS.includes(cat)) CATEGORIAS.push(cat);
+  }
+}
+
+async function decidirLead(id){
+  const pct = document.getElementById('op-' + id).value;
+  if (!pct) return aviso('Escolha de quem veio o paciente.', true);
+  const motivo = (document.getElementById('mot-' + id).value || '').trim();
+  await gravarResolucao(id, { pct: Number(pct), motivo },
+                        'Lead definido em ' + Math.round(Number(pct) * 100) + '%');
+}
+
+async function decidirDono(id){
+  const v = document.getElementById('op-' + id).value;
+  if (!v) return aviso('Escolha o profissional.', true);
+  if (v === '__excluir__'){
+    await gravarResolucao(id, { excluir: true }, 'Atendimento deixado fora do fechamento');
+  } else {
+    await gravarResolucao(id, { profissional: v }, 'Atribuído a ' + v);
+  }
+}
+
+async function pegar(id){
+  const { data, error } = await sb.from('honorarios_excecoes')
+    .select('*').eq('id', id).maybeSingle();
+  if (error || !data){ aviso('Não achei a divergência.', true); return null; }
+  return data;
+}
+
+// Mesma normalização do Python (_honorarios_catalogo.chave): sem acento, minúscula,
+// espaços colapsados. Se divergir, o catálogo ganha entrada duplicada e o
+// procedimento continua caindo na fila.
+function normalizar(s){
+  return String(s || '').normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')   // tira os acentos separados pelo NFKD
+    .replace(/[^\x00-\x7F]/g, '')      // e o que não virou ASCII (ç, §…)
+    .toLowerCase().split(/\s+/).filter(Boolean).join(' ');
+}
+
+/* ===================== Resolvidas ===================== */
+async function carregarResolvidas(){
+  const { data } = await sb.from('honorarios_excecoes')
+    .select('*').eq('periodo_id', PERIODO).neq('status', 'aberta')
+    .order('resolvido_em', { ascending: false });
+  const l = data || [];
+  document.getElementById('conta-resolvidas').textContent = l.length;
+  const el = document.getElementById('hist-lista');
+  if (!l.length){ el.innerHTML = '<div class="vazio">Nada decidido ainda neste mês.</div>'; return; }
+  el.innerHTML = l.map(e => {
+    const r = e.resolucao || {};
+    let oque = '—';
+    if (r.categoria) oque = 'classificado como <b>' + esc(r.categoria) + '</b>';
+    else if (r.pct != null) oque = 'lead em <b>' + Math.round(r.pct * 100) + '%</b>' +
+      (r.motivo ? ' — ' + esc(r.motivo) : '');
+    else if (r.profissional) oque = 'atribuído a <b>' + esc(r.profissional) + '</b>';
+    else if (r.excluir) oque = '<b>deixado fora</b> do fechamento';
+    else if (r.motivo) oque = esc(r.motivo);
+    const quando = e.resolvido_em
+      ? new Date(e.resolvido_em).toLocaleDateString('pt-BR') : '';
+    return `<div class="hist-item">
+      <span><b>${esc(e.procedimento || e.paciente || '—')}</b></span>
+      <span>${oque}</span>
+      <span>${esc(e.resolvido_por || 'sistema')}${quando ? ' · ' + quando : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ===================== Passos ===================== */
+function montarPassos(){
+  const fila = Number(document.getElementById('conta-fila').textContent || 0);
+  const p = PERIODOS.find(x => x.periodo_id === PERIODO) || {};
+  const passos = [
+    ['Buscar o movimento no Saudevianet',
+     'Puxa o relatório de comissões direto pela API, sem exportar planilha.',
+     `python _tools/_svn_puxar_560.py --instituicao endo --de ${PERIODO} --ate ${PERIODO} --filtro-data baix_dt_recebimento`,
+     'ok', 'No computador'],
+    ['Calcular o repasse',
+     'Aplica imposto, taxas e o percentual de cada regra. O que não souber resolver vem parar nesta tela.',
+     '', 'ok', 'No computador'],
+    ['Decidir as divergências',
+     fila ? `${fila} esperando decisão logo acima.` : 'Nada pendente.',
+     '', fila ? 'espera' : 'ok', 'Aqui nesta tela'],
+    ['Gravar e publicar',
+     'Grava o mês no banco e escreve nos portais dos médicos, conferindo cada um.',
+     `python _tools/_honorarios_fechar.py --periodo ${PERIODO} --escrever`,
+     fila ? 'pc' : 'ok', 'No computador'],
+  ];
+  document.getElementById('passos').innerHTML = passos.map(([t, d, cmd, estado, onde], i) => `
+    <div class="passo">
+      <div class="n">${String(i + 1).padStart(2, '0')}</div>
+      <div>
+        <h3>${esc(t)}</h3>
+        <p>${esc(d)}</p>
+        ${cmd ? `<code>${esc(cmd)}</code>` : ''}
+      </div>
+      <span class="estado ${estado}">${esc(onde)}</span>
+    </div>`).join('') +
+    (p.congelado ? `<div class="aviso-caixa">Este mês está fechado e não aceita alteração.
+      Para reabrir, fale com a Gestão Administrativa.</div>` : '');
+}
+
+/* ===================== Boot ===================== */
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') checkAuth();
+  else if (event === 'SIGNED_OUT') mostrarLogin();
+});
+checkAuth();
+</script>
+</body>
+</html>

@@ -241,12 +241,26 @@ def nomes_profissionais(df) -> set:
     return out
 
 
-def calcular(row, periodo_id, catalogo, nomes_prof=()):
-    """Devolve (valores, excecao). `excecao` = None quando o motor resolveu."""
+def calcular(row, periodo_id, catalogo, nomes_prof=(), decisoes=None):
+    """Devolve (valores, excecao). `excecao` = None quando o motor resolveu.
+
+    `decisoes` é o que foi decidido no portal de Fechamento, vindo de
+    `_honorarios_fila.decisoes()`. Substitui a antiga necessidade de editar
+    código para registrar uma classificação.
+    """
     ctx = dict(row)
     prof, empresa = row["profissional"], row["empresa"]
     bruto = float(row["valor_recebido"] or 0)
     custo = float(row["custo"] or 0)
+
+    # Decisão tomada no portal para ESTA linha. Vem antes de tudo: se alguém
+    # olhou o caso e decidiu, o motor não discute.
+    dec = (decisoes or {}).get((str(row.get("os_numero") or "").strip(),
+                                R.chave(row.get("procedimento")))) or {}
+    if dec.get("excluir"):
+        return None, ("__ignorar__", "excluída no portal de Fechamento", None)
+    if dec.get("profissional"):
+        prof = row["profissional"] = dec["profissional"]
 
     # pd.isna, não `not prof`: o campo vem como NaN quando está vazio no SVN, e
     # bool(NaN) é True — 40 linhas de Julho passavam direto e recebiam repasse
@@ -316,6 +330,14 @@ def calcular(row, periodo_id, catalogo, nomes_prof=()):
         papel = "executor"
         if R.eh_plano(row["tabela"]):
             pct, regra = R.CIRURGIA_PLANO, "R1 cirurgia por plano de saúde"
+        elif dec.get("pct") is not None:
+            # Alguém olhou a indicação e decidiu de quem é o lead, no portal.
+            # Vale só para esta linha: a origem de uma cirurgia não diz nada
+            # sobre a próxima.
+            pct = float(dec["pct"])
+            regra = f"R3 lead decidido no portal ({pct*100:.0f}%)"
+            if dec.get("motivo"):
+                regra += f" — {dec['motivo']}"
         else:
             pct, regra = R.origem_lead(row["indicacao"], nomes_prof)
     else:
@@ -379,6 +401,9 @@ def main():
     a = ap.parse_args()
 
     catalogo = carregar_catalogo()
+    # O que já foi decidido no portal de Fechamento para este período.
+    import _honorarios_fila as _fila
+    DECISOES = _fila.decisoes(a.periodo)
     if a.da_api:
         df = pd.concat([ler_api("endo", a.periodo, R.ENDO),
                         ler_api("oxy",  a.periodo, R.OXY)], ignore_index=True)
@@ -411,7 +436,7 @@ def main():
     nomes_prof = nomes_profissionais(df)
     ok, exc, ignorados = [], [], Counter()
     for _, row in df.iterrows():
-        val, e = calcular(row, a.periodo, catalogo, nomes_prof)
+        val, e = calcular(row, a.periodo, catalogo, nomes_prof, DECISOES)
         if e:
             tipo, desc, sug = e
             if tipo == "__ignorar__":

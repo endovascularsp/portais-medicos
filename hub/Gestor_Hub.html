@@ -161,6 +161,8 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .hub-card.prod:hover{border-color:rgba(192,132,252,0.5);background:rgba(192,132,252,0.06)}
     .hub-card.rec{border-color:rgba(126,184,247,0.25)}
     .hub-card.rec:hover{border-color:rgba(126,184,247,0.5);background:rgba(126,184,247,0.06)}
+    .hub-card.fechamento{border-color:rgba(245,166,35,0.25)}
+    .hub-card.fechamento:hover{border-color:rgba(245,166,35,0.5);background:rgba(245,166,35,0.06)}
     .hub-card.insights{border-color:rgba(244,114,182,0.25)}
     .hub-card.insights:hover{border-color:rgba(244,114,182,0.5);background:rgba(244,114,182,0.06)}
     .hub-card.operacional{border-color:rgba(109,213,160,0.25)}
@@ -207,6 +209,8 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
     .hub-sub-btn.oxy:hover{background:rgba(109,213,160,0.20);border-color:#6dd5a0}
     .hub-sub-btn.cir{color:#f5a623;border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.08);}
     .hub-sub-btn.cir:hover{background:rgba(245,166,35,0.20);border-color:#f5a623}
+    .hub-sub-btn.fech{color:#f5c842;border-color:rgba(245,200,66,0.35);background:rgba(245,200,66,0.08);}
+    .hub-sub-btn.fech:hover{background:rgba(245,200,66,0.20);border-color:#f5c842}
     .hub-sub-btn.prod-endo{color:#c084fc;border-color:rgba(192,132,252,0.35);background:rgba(192,132,252,0.08);}
     .hub-sub-btn.prod-endo:hover{background:rgba(192,132,252,0.20);border-color:#c084fc}
     .hub-sub-btn.prod-oxy{color:#6dd5a0;border-color:rgba(109,213,160,0.35);background:rgba(109,213,160,0.08);}
@@ -287,6 +291,17 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
           </a>
           <a href="../cirurgias/?v=20260807" onclick="navegar(this,event)" class="hub-sub-btn cir">
             🔬 Cirurgias
+          </a>
+        </div>
+      </div>
+
+      <div class="hub-card fechamento" data-card="gestor_fechamento">
+        <div class="hub-card-icon">🧮</div>
+        <div class="hub-card-title">Fechamento</div>
+        <div class="hub-card-desc">Decida as divergências do mês e acompanhe o fechamento dos honorários</div>
+        <div class="hub-card-links">
+          <a href="../fechamento/?v=20260807" onclick="navegar(this,event)" class="hub-sub-btn fech">
+            🧮 Abrir Fechamento
           </a>
         </div>
       </div>

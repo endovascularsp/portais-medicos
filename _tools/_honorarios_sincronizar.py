@@ -33,6 +33,7 @@ import pandas as pd                      # noqa: E402
 import _honorarios_motor as M            # noqa: E402
 import _honorarios_regras as R           # noqa: E402
 import _honorarios_db as DB              # noqa: E402
+import _honorarios_fila as FILA          # noqa: E402
 
 # a mesma chave que identifica a linha no banco (índice único)
 CHAVE = ["empresa", "os_numero", "procedimento", "data_compensacao",
@@ -90,6 +91,11 @@ def _para_json(r: dict, periodo: str) -> dict:
 def calcular_do_svn(periodo: str) -> list:
     """Roda a leitura + o cálculo, em memória, sem gravar nada."""
     catalogo = M.carregar_catalogo()
+    # O que foi decidido no portal de Fechamento. Antes isso exigia editar
+    # código; agora vem do banco, com autor e data de quem decidiu.
+    decisoes = FILA.decisoes(periodo)
+    if decisoes:
+        print(f"  decisões vindas do portal: {len(decisoes)}")
     df = pd.concat([M.ler_api("endo", periodo, R.ENDO),
                     M.ler_api("oxy", periodo, R.OXY)], ignore_index=True)
     df = M.resolver_dono(df)
@@ -98,7 +104,7 @@ def calcular_do_svn(periodo: str) -> list:
     nomes = M.nomes_profissionais(df)
     ok, exc, ignorados = [], [], 0
     for row in df.to_dict("records"):
-        val, e = M.calcular(row, periodo, catalogo, nomes)
+        val, e = M.calcular(row, periodo, catalogo, nomes, decisoes)
         if e:
             tipo, desc, _sug = e
             # "__ignorar__" não é dúvida: é quem não é corpo clínico (Enfermagem,
@@ -142,11 +148,19 @@ def main(periodo: str, escrever: bool) -> int:
         atual = [r for r in atual if r not in manuais]
 
     ok, exc = calcular_do_svn(periodo)
-    if exc:
-        print(f"ABORTADO: {len(exc)} exceção(ões) na fila. Classificar antes de sincronizar:")
-        for e in exc[:10]:
-            print(f"   [{e['tipo']}] {e['descricao']}")
+    # A fila vai para o banco SEMPRE — é ela que o portal de Fechamento mostra.
+    # Antes as divergências só existiam no texto do terminal, e quem quisesse
+    # decidir precisava do computador de quem programa.
+    resumo = FILA.subir(periodo, exc, escrever=True)
+    if resumo["abertas"]:
+        print(f"\n  PARADO: {resumo['abertas']} divergência(s) esperando decisão "
+              f"({resumo['novas']} nova(s)).")
+        print("  Decida no portal:  https://portalendovascularsp.com.br/fechamento/")
+        for e in exc[:8]:
+            print(f"   · [{e['tipo']}] {e['descricao']}")
         return 1
+    if resumo["fechadas"]:
+        print(f"  divergências encerradas (não apareceram mais): {resumo['fechadas']}")
 
     # --- diferença ---------------------------------------------------------
     # As chaves das preservadas saem também do lado novo: senão a linha voltaria
