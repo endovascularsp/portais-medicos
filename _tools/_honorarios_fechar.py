@@ -123,7 +123,12 @@ def main(periodo: str, escrever: bool, pular_download: bool) -> int:
         print("\nABORTADO na publicação. O banco já está atualizado; os portais não.")
         return 1
 
-    passo(5, "Atualizar os links dos Hubs")
+    passo(5, "Atualizar a aba de Regras e os links dos Hubs")
+    # A aba de Regras mostra percentuais e impostos lidos do banco, mas as regras
+    # de cirurgia, NF do médico e exclusões moram no código. Reinjetar aqui evita
+    # que a tela mostre número velho depois de alguém mudar uma regra — e é
+    # justamente essa tela que o Dr. Igor vai abrir para conferir.
+    rodar(["_tools/_honorarios_publicar_regras.py", "--escrever"])
     rodar(["_tools/_cache_bust_hubs.py"])
 
     # ---- resumo -------------------------------------------------------------

@@ -51,6 +51,76 @@
     .wrap{max-width:1000px;margin:0 auto;padding:28px 20px 70px;
       display:flex;flex-direction:column;gap:26px}
 
+    /* ===== Abas ===== */
+    .abas{display:flex;gap:6px;border-bottom:2px solid var(--borda);flex-wrap:wrap}
+    .aba{background:none;border:none;border-bottom:3px solid transparent;
+      margin-bottom:-2px;padding:11px 18px;font-family:inherit;font-size:14px;
+      font-weight:650;color:var(--texto2);cursor:pointer;white-space:nowrap}
+    .aba:hover{color:var(--texto)}
+    .aba.ativa{color:var(--navy);border-bottom-color:var(--gold)}
+
+    /* ===== Regras ===== */
+    #painel-regras{display:flex;flex-direction:column;gap:26px}
+    .rolagem{overflow-x:auto;margin-top:16px}
+    table.dados{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+    table.dados th{text-align:left;font-size:10.5px;letter-spacing:.5px;
+      text-transform:uppercase;color:var(--texto2);font-weight:700;padding:11px 14px;
+      background:var(--bg);border-bottom:1px solid var(--borda)}
+    table.dados td{padding:11px 14px;border-bottom:1px solid var(--borda);
+      color:var(--texto2);vertical-align:top}
+    table.dados tr:last-child td{border-bottom:none}
+    table.dados td b{color:var(--texto)}
+    table.dados td.pct{text-align:right;font-variant-numeric:tabular-nums;
+      font-weight:800;color:var(--navy);white-space:nowrap}
+    table.dados tr.excecao td{background:#FFFCF5}
+    .etiqueta{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.4px;
+      text-transform:uppercase;padding:2px 8px;border-radius:20px;
+      background:var(--ambar-bg);color:var(--ambar);margin-left:8px}
+    .etiqueta.geral{background:var(--bg);color:var(--texto2)}
+
+    .ficha{margin-top:18px;display:flex;flex-direction:column;gap:12px}
+    .ficha-cab{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+      color:#fff;border-radius:10px;padding:16px 20px}
+    .ficha-cab .nome{font-size:17px;font-weight:800}
+    .ficha-cab .onde{font-size:12.5px;color:rgba(255,255,255,0.65);margin-top:2px}
+    .linha-regra{display:flex;justify-content:space-between;align-items:baseline;
+      gap:14px;padding:11px 0;border-bottom:1px solid var(--borda);flex-wrap:wrap}
+    .linha-regra:last-child{border-bottom:none}
+    .linha-regra .cat{font-weight:650;color:var(--texto)}
+    .linha-regra .obs{font-size:12px;color:var(--texto2);flex-basis:100%}
+    .linha-regra .v{font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;
+      white-space:nowrap}
+    .linha-regra.esp .v{color:var(--ambar)}
+
+    /* ===== Fluxograma ===== */
+    .fluxo{display:flex;flex-direction:column;gap:0;margin-top:16px}
+    .no{display:grid;grid-template-columns:28px 1fr;gap:14px;align-items:start;
+      padding:14px 0;position:relative}
+    .no:not(:last-child)::after{content:'';position:absolute;left:13px;top:38px;
+      bottom:-6px;width:2px;background:var(--borda)}
+    .no .bola{width:28px;height:28px;border-radius:50%;background:var(--bg);
+      border:2px solid var(--borda);display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:800;color:var(--texto2);z-index:1}
+    .no.decide .bola{border-color:var(--gold);color:var(--gold)}
+    .no.fim .bola{background:var(--verde-bg);border-color:var(--verde);color:var(--verde)}
+    .no h4{font-size:14px;font-weight:700;margin-bottom:3px}
+    .no p{font-size:12.5px;color:var(--texto2)}
+    .no .saidas{margin-top:9px;display:flex;flex-direction:column;gap:5px}
+    .no .saida{font-size:12.5px;color:var(--texto2);padding-left:15px;position:relative}
+    .no .saida::before{content:'→';position:absolute;left:0;color:var(--gold)}
+    .no .saida b{color:var(--texto)}
+
+    .gente{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .gente span{font-size:12.5px;padding:6px 13px;border-radius:20px;
+      background:var(--bg);border:1px solid var(--borda);color:var(--texto2)}
+    .grupo-gente{margin-top:18px}
+    .grupo-gente h4{font-size:13px;font-weight:700}
+    .grupo-gente p{font-size:12.5px;color:var(--texto2);margin-top:3px}
+    .nota-info{background:var(--bg);border-left:3px solid var(--gold);
+      border-radius:0 8px 8px 0;padding:13px 16px;font-size:13px;
+      color:var(--texto2);margin-top:16px;line-height:1.6}
+    .nota-info b{color:var(--texto)}
+
     /* ===== Barra de período ===== */
     .barra{background:var(--navy);border-radius:12px;padding:14px 18px;
       display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--sombra)}
@@ -191,6 +261,65 @@
 
   <div class="wrap">
 
+    <div class="abas">
+      <button class="aba ativa" id="aba-fechar" onclick="trocarAba('fechar')">Fechamento do mês</button>
+      <button class="aba" id="aba-regras" onclick="trocarAba('regras')">Regras de repasse</button>
+    </div>
+
+    <!-- ================= ABA: REGRAS ================= -->
+    <div id="painel-regras" style="display:none">
+
+      <div class="bloco">
+        <h2>🔎 O que vale para cada profissional</h2>
+        <div class="sub">Escolha o nome e veja tudo o que se aplica a ele — o que é
+          exceção aparece em destaque, com o motivo.</div>
+        <div class="div-acao" style="margin-top:16px">
+          <select id="sel-prof" onchange="verProfissional(this.value)">
+            <option value="">Escolha o profissional…</option>
+          </select>
+        </div>
+        <div id="ficha-prof"></div>
+      </div>
+
+      <div class="bloco">
+        <h2>🧭 Como o valor é calculado</h2>
+        <div class="sub">O caminho que o sistema percorre em cada atendimento,
+          na ordem. A primeira condição que bate decide.</div>
+        <div id="fluxo"></div>
+      </div>
+
+      <div class="bloco">
+        <h2>📋 Percentuais por categoria</h2>
+        <div class="sub">A regra geral de cada categoria, e as exceções por profissional.</div>
+        <div class="rolagem"><table id="tab-regras"></table></div>
+      </div>
+
+      <div class="bloco">
+        <h2>🏥 Cirurgias</h2>
+        <div class="sub">Cirurgia não segue percentual de categoria. Depende de onde
+          foi feita, de quem paga e de quem trouxe o paciente.</div>
+        <div class="rolagem"><table id="tab-cirurgia"></table></div>
+        <div id="nf-propria"></div>
+      </div>
+
+      <div class="bloco">
+        <h2>💸 Impostos e taxas</h2>
+        <div class="sub">Descontados do valor recebido antes de repartir. O que sobra
+          é o <b>valor líquido</b>, que é a base do percentual.</div>
+        <div class="rolagem"><table id="tab-taxas"></table></div>
+      </div>
+
+      <div class="bloco">
+        <h2>🚫 Quem fica fora do repasse</h2>
+        <div class="sub">Nem todo nome que aparece no Saudevianet é do corpo clínico.</div>
+        <div id="excecoes-gente"></div>
+      </div>
+
+    </div>
+
+    <!-- ================= ABA: FECHAMENTO ================= -->
+    <div id="painel-fechar">
+
     <div class="barra">
       <label for="sel-periodo">Mês</label>
       <select id="sel-periodo" onchange="trocarPeriodo(this.value)"></select>
@@ -222,6 +351,8 @@
         O resto é mecânico e roda por comando.</div>
       <div class="passos" id="passos"></div>
     </div>
+
+    </div><!-- /painel-fechar -->
 
   </div>
 </div>
@@ -578,6 +709,261 @@ function montarPassos(){
     </div>`).join('') +
     (p.congelado ? `<div class="aviso-caixa">Este mês está fechado e não aceita alteração.
       Para reabrir, fale com a Gestão Administrativa.</div>` : '');
+}
+
+/* ===================== Abas ===================== */
+function trocarAba(qual){
+  document.getElementById('painel-fechar').style.display = qual === 'fechar' ? '' : 'none';
+  document.getElementById('painel-regras').style.display = qual === 'regras' ? 'flex' : 'none';
+  document.getElementById('aba-fechar').classList.toggle('ativa', qual === 'fechar');
+  document.getElementById('aba-regras').classList.toggle('ativa', qual === 'regras');
+  if (qual === 'regras' && !REGRAS.length) carregarRegras();
+}
+
+/* ===================== Regras ===================== */
+// Percentuais e impostos vêm do banco, sempre atuais. O que não é percentual por
+// categoria (cirurgia, NF do médico, quem fica fora) mora no código e é injetado
+// aqui por _honorarios_publicar_regras.py a cada fechamento — assim a página não
+// mostra número velho depois de alguém mudar uma regra.
+const CODIGO = /*REGRAS_CODIGO*/{
+  "impostos": [
+    {
+      "rotulo": "ISS",
+      "valor": 0.18,
+      "quando": "Sempre, sobre o valor recebido."
+    },
+    {
+      "rotulo": "Taxa de cartão",
+      "valor": 0.03,
+      "quando": "Só quando o pagamento foi em cartão de crédito."
+    },
+    {
+      "rotulo": "Taxa comercial",
+      "valor": 0.02,
+      "quando": "Nas categorias e a partir das datas definidas na tabela de taxas."
+    }
+  ],
+  "cirurgia": [
+    {
+      "situacao": "Cirurgia feita na clínica",
+      "pct": 0.8,
+      "porque": "Estrutura da clínica, equipe da clínica."
+    },
+    {
+      "situacao": "Cirurgia por plano de saúde",
+      "pct": 0.85,
+      "porque": "O plano paga menos; a clínica fica com a diferença menor."
+    },
+    {
+      "situacao": "Cirurgia em hospital — paciente veio da clínica",
+      "pct": 0.8,
+      "porque": "A clínica trouxe o paciente."
+    },
+    {
+      "situacao": "Cirurgia em hospital — paciente veio do médico",
+      "pct": 0.9,
+      "porque": "O médico trouxe o paciente. É também o que vale quando a origem não está preenchida — na dúvida não se penaliza o médico."
+    }
+  ],
+  "nf_propria": {
+    "pct": 0.1,
+    "texto": "Quando a cirurgia é faturada na nota fiscal do próprio médico, o dinheiro não passa pela clínica. Não há valor líquido a repartir: a clínica apenas retém a comissão sobre o procedimento, e por isso o repasse aparece negativo no relatório."
+  },
+  "fora": [
+    "agendamento cirurgico e visita hospitalar",
+    "endovascular sp",
+    "enfermagem",
+    "oxy recovery",
+    "paulo laredo",
+    "paulo laredo pinto",
+    "sala spa"
+  ],
+  "sem_repasse": [
+    "juliana olimpio",
+    "juliana olimpio de paula"
+  ],
+  "redireciona": [
+    "agendamento cirurgico e visita hospitalar",
+    "enfermagem"
+  ]
+}/*REGRAS_CODIGO*/;
+
+let REGRAS = [];
+let TAXAS = [];
+
+function pct(v){ return (Number(v) * 100).toFixed(0).replace('.', ',') + '%'; }
+
+async function carregarRegras(){
+  const [r, t] = await Promise.all([
+    sb.from('honorarios_regras')
+      .select('empresa,categoria,profissional,papel,percentual,observacao,ativo')
+      .eq('ativo', true).order('empresa').order('categoria'),
+    sb.from('honorarios_taxas').select('*').order('categoria'),
+  ]);
+  if (r.error){ aviso('Não consegui ler as regras: ' + r.error.message, true); return; }
+  REGRAS = r.data || [];
+  TAXAS = t.data || [];
+
+  montarSelectProf();
+  montarFluxo();
+  montarTabelaRegras();
+  montarCirurgias();
+  montarTaxas();
+  montarGente();
+}
+
+function montarSelectProf(){
+  const nomes = [...new Set(REGRAS.filter(x => x.profissional).map(x => x.profissional))]
+    .concat(PROFISSIONAIS)
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .sort((a, b) => a.localeCompare(b, 'pt'));
+  document.getElementById('sel-prof').innerHTML =
+    '<option value="">Escolha o profissional…</option>' +
+    nomes.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+}
+
+function verProfissional(nome){
+  const el = document.getElementById('ficha-prof');
+  if (!nome){ el.innerHTML = ''; return; }
+
+  // Onde ele atende: as empresas em que tem regra própria, ou todas.
+  const dele = REGRAS.filter(x => x.profissional === nome);
+  const empresas = [...new Set(REGRAS.map(x => x.empresa))].sort();
+
+  const blocos = empresas.map(emp => {
+    const esp = dele.filter(x => x.empresa === emp);
+    const gerais = REGRAS.filter(x => x.empresa === emp && !x.profissional);
+    // A exceção do profissional substitui a geral da mesma categoria.
+    const catsEsp = new Set(esp.map(x => x.categoria));
+    const linhas = esp.map(x => ({...x, especial: true}))
+      .concat(gerais.filter(g => !catsEsp.has(g.categoria)).map(g => ({...g, especial: false})))
+      .sort((a, b) => String(a.categoria).localeCompare(String(b.categoria), 'pt'));
+    if (!linhas.length) return '';
+    return `<div class="ficha-cab"><div class="nome">${esc(nome)}</div>
+        <div class="onde">${esc(emp)} · ${esp.length} regra(s) própria(s)</div></div>
+      <div>${linhas.map(x => `
+        <div class="linha-regra ${x.especial ? 'esp' : ''}">
+          <span class="cat">${esc(x.categoria)}${x.especial
+            ? '<span class="etiqueta">exceção</span>'
+            : '<span class="etiqueta geral">regra geral</span>'}</span>
+          <span class="v">${pct(x.percentual)}</span>
+          ${x.observacao ? `<span class="obs">${esc(x.observacao)}</span>` : ''}
+        </div>`).join('')}</div>`;
+  }).filter(Boolean).join('');
+
+  el.innerHTML = `<div class="ficha">${blocos}</div>
+    <div class="nota-info">Cirurgia não entra nesta lista: ela não segue percentual
+      de categoria. Veja o bloco <b>Cirurgias</b> abaixo.</div>`;
+}
+
+function montarFluxo(){
+  const c = CODIGO;
+  const cir = Object.fromEntries((c.cirurgia || []).map(x => [x.situacao, x.pct]));
+  const nos = [
+    ['1', 'Quem executou o atendimento?', 'decide',
+     'O sistema procura o profissional executante no Saudevianet.',
+     ['Se estiver vazio e houver solicitante, o dono passa a ser <b>o solicitante</b>',
+      'Se for "Enfermagem" ou "Agendamento Cirúrgico", também vai para <b>o solicitante</b> — são rótulos, não pessoas',
+      'Se for alguém fora do corpo clínico, a linha <b>sai do fechamento</b>']],
+    ['2', 'Qual a categoria do procedimento?', 'decide',
+     'Traduzida pelo catálogo de procedimentos.',
+     ['Procedimento que o catálogo não conhece <b>vira divergência</b> e espera decisão nesta tela']],
+    ['3', 'Descontar impostos e taxas', '',
+     'Do valor recebido saem o ISS, a taxa comercial quando se aplica, e a taxa de cartão quando o pagamento foi em crédito.',
+     ['O que sobra é o <b>valor líquido</b> — é sobre ele que o percentual incide, nunca sobre o valor cheio']],
+    ['4', 'É cirurgia?', 'decide', 'Cirurgia tem regra própria.',
+     [`Na clínica: <b>${pct(cir['Cirurgia feita na clínica'] || 0)}</b>`,
+      `Por plano de saúde: <b>${pct(cir['Cirurgia por plano de saúde'] || 0)}</b>`,
+      `Em hospital, paciente da clínica: <b>${pct(cir['Cirurgia em hospital — paciente veio da clínica'] || 0)}</b>`,
+      `Em hospital, paciente do médico: <b>${pct(cir['Cirurgia em hospital — paciente veio do médico'] || 0)}</b>`]],
+    ['5', 'Não sendo cirurgia: o percentual da categoria', '',
+     'Procura primeiro uma regra específica daquele profissional; se não houver, usa a geral da categoria.',
+     ['Categoria sem percentual cadastrado <b>vira divergência</b>']],
+    ['✓', 'Repasse calculado', 'fim',
+     'Valor líquido × percentual. O que sobra é a receita da clínica.', []],
+  ];
+  document.getElementById('fluxo').innerHTML = '<div class="fluxo">' + nos.map(
+    ([n, t, cls, d, saidas]) => `<div class="no ${cls}">
+      <div class="bola">${n}</div>
+      <div><h4>${t}</h4><p>${d}</p>
+        ${saidas.length ? `<div class="saidas">${saidas.map(s =>
+          `<div class="saida">${s}</div>`).join('')}</div>` : ''}
+      </div></div>`).join('') + '</div>';
+}
+
+function montarTabelaRegras(){
+  const linhas = REGRAS.slice().sort((a, b) =>
+    String(a.empresa).localeCompare(String(b.empresa)) ||
+    String(a.categoria).localeCompare(String(b.categoria), 'pt') ||
+    String(a.profissional || '').localeCompare(String(b.profissional || ''), 'pt'));
+  document.getElementById('tab-regras').className = 'dados';
+  document.getElementById('tab-regras').innerHTML =
+    `<thead><tr><th>Empresa</th><th>Categoria</th><th>Vale para</th>
+       <th style="text-align:right">Repasse</th></tr></thead><tbody>` +
+    linhas.map(x => `<tr class="${x.profissional ? 'excecao' : ''}">
+      <td>${esc(x.empresa)}</td>
+      <td><b>${esc(x.categoria)}</b></td>
+      <td>${x.profissional
+        ? `<b>${esc(x.profissional)}</b>${x.observacao ? '<br/>' + esc(x.observacao) : ''}`
+        : 'todos'}</td>
+      <td class="pct">${pct(x.percentual)}</td></tr>`).join('') + '</tbody>';
+}
+
+function montarCirurgias(){
+  const c = CODIGO;
+  document.getElementById('tab-cirurgia').className = 'dados';
+  document.getElementById('tab-cirurgia').innerHTML =
+    `<thead><tr><th>Situação</th><th>Por quê</th>
+       <th style="text-align:right">Repasse</th></tr></thead><tbody>` +
+    (c.cirurgia || []).map(x => `<tr>
+      <td><b>${esc(x.situacao)}</b></td><td>${esc(x.porque)}</td>
+      <td class="pct">${pct(x.pct)}</td></tr>`).join('') + '</tbody>';
+  const nf = c.nf_propria || {};
+  document.getElementById('nf-propria').innerHTML = `<div class="nota-info">
+    <b>Cirurgia faturada na nota fiscal do médico — comissão de ${pct(nf.pct || 0)}.</b><br/>
+    ${esc(nf.texto || '')}</div>`;
+}
+
+function montarTaxas(){
+  const c = CODIGO;
+  const porCat = TAXAS.map(t => `<tr>
+      <td><b>${esc(t.categoria)}</b></td>
+      <td>ISS ${pct(t.iss)}${Number(t.taxa_comercial) ? ' + taxa comercial ' + pct(t.taxa_comercial) : ''}</td>
+      <td>${t.vigencia_inicio
+        ? 'a partir de ' + esc(String(t.vigencia_inicio).split('-').reverse().join('/'))
+        : '—'}${t.observacao ? '<br/>' + esc(t.observacao) : ''}</td></tr>`).join('');
+  document.getElementById('tab-taxas').className = 'dados';
+  document.getElementById('tab-taxas').innerHTML =
+    `<thead><tr><th>O quê</th><th>Quanto</th><th>Quando</th></tr></thead><tbody>` +
+    (c.impostos || []).map(i => `<tr>
+      <td><b>${esc(i.rotulo)}</b></td><td class="pct" style="text-align:left">${pct(i.valor)}</td>
+      <td>${esc(i.quando)}</td></tr>`).join('') +
+    (porCat ? `<tr><td colspan="3" style="padding-top:16px"><b>Taxa comercial, por categoria</b></td></tr>` + porCat : '') +
+    '</tbody>';
+}
+
+function montarGente(){
+  const c = CODIGO;
+  const bonito = s => String(s).replace(/\b\w/g, m => m.toUpperCase());
+  document.getElementById('excecoes-gente').innerHTML = `
+    <div class="grupo-gente">
+      <h4>Fora do fechamento</h4>
+      <p>A linha sai inteira: não vira repasse nem receita da clínica. São salas,
+        nomes de empresa e quem é apurado por fora.</p>
+      <div class="gente">${(c.fora || []).map(n => `<span>${esc(bonito(n))}</span>`).join('')}</div>
+    </div>
+    <div class="grupo-gente">
+      <h4>Executa, mas não recebe repasse</h4>
+      <p>É da casa e recebe salário. A linha <b>continua</b> no fechamento e o valor
+        líquido inteiro vira receita da clínica.</p>
+      <div class="gente">${(c.sem_repasse || []).map(n => `<span>${esc(bonito(n))}</span>`).join('')}</div>
+    </div>
+    <div class="grupo-gente">
+      <h4>Rótulos que viram o solicitante</h4>
+      <p>Não são pessoas: são etapas do processo lançadas no lugar do executante.
+        Quando a ordem tem um solicitante de verdade, o atendimento é dele.</p>
+      <div class="gente">${(c.redireciona || []).map(n => `<span>${esc(bonito(n))}</span>`).join('')}</div>
+    </div>`;
 }
 
 /* ===================== Boot ===================== */
