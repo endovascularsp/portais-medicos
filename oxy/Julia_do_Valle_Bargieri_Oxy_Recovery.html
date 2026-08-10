@@ -158,6 +158,56 @@ html{overflow-x:hidden;}
 .atend-table tr:nth-child(even) td{background:var(--cinza-bg);}
 .atend-table .r{text-align:right;}
 .atend-table .cat-badge{background:var(--azul-claro);color:var(--azul-escuro);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.atend-table .c{text-align:center;}
+/* ── Base de cálculo ─────────────────────────────────────────────────────────
+   Um botão por linha que abre a conta do repasse passo a passo. Existe para
+   responder "de onde saiu esse valor?" sem ninguém precisar abrir planilha.
+   ────────────────────────────────────────────────────────────────────────── */
+.bc-btn{border:1.5px solid var(--gold);background:transparent;color:var(--gold);
+  border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;
+  font-family:inherit;white-space:nowrap;transition:all .15s;}
+.bc-btn:hover{background:var(--gold);color:#fff;}
+.bc-fundo{position:fixed;inset:0;background:rgba(11,31,58,0.55);z-index:9000;
+  display:none;align-items:center;justify-content:center;padding:20px;}
+.bc-fundo.aberto{display:flex;}
+.bc-caixa{background:#fff;border-radius:14px;max-width:560px;width:100%;
+  max-height:90vh;display:flex;flex-direction:column;
+  box-shadow:0 18px 50px rgba(11,31,58,0.35);}
+.bc-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding:18px 22px 12px;border-bottom:1px solid var(--cinza-borda);}
+.bc-titulo{font-size:16px;font-weight:700;color:var(--texto-primario);}
+.bc-sub{font-size:12px;color:var(--texto-secundario);margin-top:3px;line-height:1.5;}
+.bc-fechar{border:none;background:transparent;font-size:26px;line-height:1;
+  color:var(--texto-secundario);cursor:pointer;padding:0 4px;}
+.bc-fechar:hover{color:var(--texto-primario);}
+.bc-corpo{padding:16px 22px 22px;overflow-y:auto;}
+.bc-id{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12px;
+  margin-bottom:16px;}
+.bc-id dt{color:var(--texto-secundario);white-space:nowrap;}
+.bc-id dd{color:var(--texto-primario);font-weight:600;}
+.bc-conta{width:100%;border-collapse:collapse;font-size:13px;}
+.bc-conta td{padding:7px 0;border-bottom:1px solid var(--cinza-borda);}
+.bc-conta td:last-child{text-align:right;font-variant-numeric:tabular-nums;
+  white-space:nowrap;padding-left:14px;}
+.bc-conta .desc td{color:var(--vermelho);}
+.bc-conta .base td{border-top:2px solid var(--texto-primario);border-bottom:none;
+  font-weight:800;font-size:14px;padding-top:10px;}
+.bc-conta .rep td{font-weight:800;font-size:15px;color:var(--gold);
+  border-bottom:none;padding-top:10px;}
+.bc-conta .resto td{color:var(--texto-secundario);border-bottom:none;padding-top:2px;}
+.bc-rapida{margin-top:16px;background:var(--cinza-bg);border-radius:8px;
+  padding:11px 14px;font-size:13px;color:var(--texto-primario);text-align:center;
+  font-variant-numeric:tabular-nums;}
+.bc-regra{margin-top:12px;font-size:11px;color:var(--texto-secundario);}
+.bc-regra code{font-family:Consolas,Menlo,monospace;background:var(--cinza-bg);
+  padding:2px 6px;border-radius:4px;color:var(--texto-primario);}
+.bc-aviso{background:#FFF8E6;border:1px solid #F0D48A;border-radius:8px;
+  padding:11px 14px;font-size:12.5px;color:#6B5310;line-height:1.55;margin-bottom:16px;}
+@media(max-width:600px){
+  .bc-caixa{max-height:94vh;}
+  .bc-id{grid-template-columns:1fr;gap:0 0;}
+  .bc-id dd{margin:0 0 7px;}
+}
 .prof-header{background:linear-gradient(135deg,var(--azul-escuro) 0%,var(--azul-medio) 100%);color:white;border-radius:var(--radius);padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .prof-header h2{font-size:14px;font-weight:700;display:inline;margin-right:8px;}
 .prof-header > div:first-child{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
@@ -495,11 +545,25 @@ body{background:#EEF2F6;}
             <th>Paciente</th><th>Procedimento</th><th>Categoria</th>
             <th>Pagamento</th><th>Data</th>
             <th class='r'>Vr. Recebido</th><th class='r'>Vr. L&#237;quido</th><th class='r'>Repasse</th>
+            <th class='c'>Conta</th>
           </tr></thead><tbody id='body-atend'></tbody></table>
         </div>
       </div>
     </div>
   </main>
+</div>
+<!-- ── Base de cálculo: abre a conta de uma linha, passo a passo ──────────── -->
+<div class='bc-fundo' id='bc-fundo' onclick='if(event.target===this)fecharBase()'>
+  <div class='bc-caixa' role='dialog' aria-modal='true' aria-labelledby='bc-titulo'>
+    <div class='bc-topo'>
+      <div>
+        <div class='bc-titulo' id='bc-titulo'>Base de cálculo</div>
+        <div class='bc-sub' id='bc-sub'></div>
+      </div>
+      <button class='bc-fechar' onclick='fecharBase()' aria-label='Fechar'>&times;</button>
+    </div>
+    <div class='bc-corpo' id='bc-corpo'></div>
+  </div>
 </div>
 <script>
 const MODO_MEDICO = true;
@@ -772,15 +836,17 @@ function mostrarProf(id,btnEl){
   }
 
   const atends=d.atendimentos||[];
+  _ATEND_NA_TELA = atends;   // o botão "Ver conta" indexa nesta lista
   document.getElementById('body-atend').innerHTML=atends.length===0
-    ?'<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--texto-secundario)">Sem atendimentos</td></tr>'
-    :atends.map(a=>'<tr>'+
+    ?'<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--texto-secundario)">Sem atendimentos</td></tr>'
+    : atends.map((a,i)=>'<tr>'+
         '<td>'+(a.Paciente||'—')+'</td><td>'+(a.Procedimento||'—')+'</td>'+
         '<td><span class="cat-badge">'+(a.Categoria||'—')+'</span></td>'+
         '<td>'+(a['Tipo de pagamento']||'—')+'</td><td>'+(a['Data agendamento']||'—')+'</td>'+
         '<td class="r">'+fmtBRL(a['Valor recebido'])+'</td>'+
         '<td class="r">'+fmtBRL(a['Valor Líquido'])+'</td>'+
         '<td class="r" style="color:var(--verde);font-weight:600">'+fmtBRL(a['Repasse Profissional (R$)'])+'</td>'+
+        '<td class="c"><button class="bc-btn" onclick="abrirBase('+i+')">Ver conta</button></td>'+
       '</tr>').join('');
 }
 
@@ -1249,6 +1315,128 @@ document.getElementById('login-senha').focus();
     } catch (e) { /* network err: deixa visivel */ }
   });
 })();
+
+// ── Base de cálculo ─────────────────────────────────────────────────────────
+// Abre, para uma linha, como se chegou ao valor do repasse. A regra é mostrar
+// cada dedução como uma subtração explícita, destacar o líquido como base e
+// nomear a regra que o motor usou — quem lê consegue refazer na calculadora.
+//
+// Nem todo mês tem o mesmo detalhe. De Junho/2026 em diante o motor grava ISS e
+// taxa comercial separados; antes disso só existe o total "Imposto (18%)". Onde
+// falta o detalhe, as duas deduções aparecem somadas em vez de inventadas.
+let _ATEND_NA_TELA = [];
+
+function _num(v){ return (v===null||v===undefined||isNaN(v)) ? 0 : Number(v); }
+
+function _linha(rot, valor, cls){
+  return '<tr class="'+(cls||'')+'"><td>'+rot+'</td><td>'+fmtBRL(valor)+'</td></tr>';
+}
+
+function _idItem(rot, valor){
+  return valor ? '<dt>'+rot+'</dt><dd>'+valor+'</dd>' : '';
+}
+
+function abrirBase(i){
+  const a = _ATEND_NA_TELA[i];
+  if(!a) return;
+  const recebido = _num(a['Valor recebido']);
+  const liquido  = _num(a['Valor Líquido']);
+  const repasse  = _num(a['Repasse Profissional (R$)']);
+  const clinica  = _num(a['Repasse Clínica (R$)']);
+  const indic    = _num(a['Repasse Indicador (R$)']);
+  const regra    = a['Regra aplicada'];
+
+  document.getElementById('bc-sub').innerHTML =
+    (a.Paciente||'—') + ' &middot; ' + (a.Procedimento||'—');
+
+  let html = '<dl class="bc-id">' +
+    _idItem('Nº OS',      a['Nº OS']) +
+    _idItem('Categoria',  a.Categoria) +
+    _idItem('Tabela',     a.Tabela) +
+    _idItem('Pagamento',  a['Tipo de pagamento']) +
+    _idItem('Compensado', a['Data compensação']) +
+    _idItem('Nota fiscal', a.NF) +
+    _idItem('Indicação',  a['Indicação']) +
+    '</dl>';
+
+  // ── Caso 1: faturado na nota fiscal do próprio profissional ──────────────
+  // A clínica não recebeu o dinheiro. O valor negativo na coluna Repasse é a
+  // comissão que ela retém — o oposto de um pagamento ao médico. Contar isso
+  // como "60% do líquido" seria mentira.
+  //
+  // O sinal é o repasse NEGATIVO, não o líquido zerado: até Maio/2026 essas
+  // linhas ainda vinham com o líquido preenchido, e uma regra baseada no
+  // líquido deixava passar os casos de Abril.
+  if(repasse < 0){
+    const pct = recebido ? Math.abs(repasse)/recebido : 0;
+    html += '<div class="bc-aviso"><strong>Recebido na nota fiscal do profissional.</strong> ' +
+      'A clínica não recebeu este valor, por isso não há valor líquido a repartir. ' +
+      'O que aparece como repasse negativo é a comissão que a clínica retém sobre o procedimento.</div>' +
+      '<table class="bc-conta">' +
+      _linha('Valor na nota do profissional', recebido) +
+      _linha('Comissão da clínica &mdash; ' + (pct*100).toFixed(0) + '%', repasse, 'desc') +
+      _linha('Fica com o profissional', recebido + repasse, 'base') +
+      '</table>' +
+      '<div class="bc-rapida">' + fmtBRL(recebido) + ' &times; ' +
+        (pct*100).toFixed(0) + '% = ' + fmtBRL(Math.abs(repasse)) + ' de comissão</div>';
+  }
+  // ── Caso 2: a conta normal ───────────────────────────────────────────────
+  else {
+    const iss   = a['ISS (18%)'];
+    const com   = a['Taxa comercial (2%)'];
+    const cartao= _num(a['Taxa cartão (3%)']);
+    const custo = _num(a['Custo']);
+    const total = _num(a['Imposto (18%)']);
+
+    // O rótulo já carrega o "(−)", então o valor vai positivo — senão a linha
+    // ficaria "(−) ISS 18%  R$ -360,00", com o sinal dito duas vezes.
+    html += '<table class="bc-conta">' + _linha('Valor recebido', recebido);
+    if(iss !== undefined && iss !== null){
+      // detalhe completo: cada dedução na sua linha.
+      // O ISS sai do TOTAL menos a taxa, não do ISS gravado: cada parte foi
+      // arredondada por conta própria, e em 26 linhas do semestre a soma das
+      // duas dava 1 centavo a mais ou a menos que o total que gerou o líquido.
+      // Assim a subtração na tela sempre fecha, sem centavo fantasma.
+      html += _linha('(&minus;) ISS 18%',
+                     Math.round((total - _num(com))*100)/100, 'desc');
+      if(_num(com) > 0) html += _linha('(&minus;) Taxa comercial 2%', _num(com), 'desc');
+    } else if(total > 0){
+      // meses anteriores a Junho/2026: só existe o total
+      html += _linha('(&minus;) Impostos e taxas', total, 'desc');
+    }
+    if(cartao > 0) html += _linha('(&minus;) Taxa de cartão 3%', cartao, 'desc');
+    if(custo  > 0) html += _linha('(&minus;) Custo', custo, 'desc');
+
+    html += _linha('= Valor líquido <span style="font-weight:400;font-size:12px;color:var(--texto-secundario)">(base de cálculo)</span>',
+                   liquido, 'base');
+
+    const pct = liquido ? repasse/liquido : 0;
+    html += _linha('Repasse &mdash; ' + (pct*100).toFixed(0) + '%', repasse, 'rep');
+    if(indic > 0) html += _linha('Repasse ao indicador', indic, 'resto');
+    // Até Maio/2026 a parte da clínica não vinha gravada na linha; nesse caso é
+    // o que sobra do líquido depois do profissional e do indicador.
+    const fica = (a['Repasse Clínica (R$)'] !== undefined && a['Repasse Clínica (R$)'] !== null)
+                 ? clinica : (liquido - repasse - indic);
+    if(Math.abs(fica) > 0.005) html += _linha('Fica com a clínica', fica, 'resto');
+    html += '</table>' +
+      '<div class="bc-rapida">' + fmtBRL(liquido) + ' &times; ' +
+        (pct*100).toFixed(0) + '% = ' + fmtBRL(repasse) + '</div>';
+  }
+
+  html += '<div class="bc-regra">Regra aplicada: ' +
+    (regra ? '<code>' + regra + '</code>'
+           : '<em>não registrada neste mês &mdash; o detalhe da regra passou a ser '
+             + 'gravado a partir de Junho/2026</em>') + '</div>';
+
+  document.getElementById('bc-corpo').innerHTML = html;
+  document.getElementById('bc-fundo').classList.add('aberto');
+}
+
+function fecharBase(){
+  document.getElementById('bc-fundo').classList.remove('aberto');
+}
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape') fecharBase(); });
+
 </script>
 
 </body>
