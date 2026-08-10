@@ -369,6 +369,74 @@ let PERIODO = null;
 let PERIODOS = [];
 let CATEGORIAS = [];   // do catálogo, para o menu de classificação
 let PROFISSIONAIS = [];
+let EMPRESAS_DO_PROF = {};   // nome -> Set das empresas em que ele de fato atende
+
+// Percentuais e impostos vêm do banco, sempre atuais. O que não é percentual por
+// categoria (cirurgia, NF do médico, quem fica fora) mora no código e é injetado
+// aqui por _honorarios_publicar_regras.py a cada fechamento — assim a página não
+// mostra número velho depois de alguém mudar uma regra.
+const CODIGO = /*REGRAS_CODIGO*/{
+  "impostos": [
+    {
+      "rotulo": "ISS",
+      "valor": 0.18,
+      "quando": "Sempre, sobre o valor recebido."
+    },
+    {
+      "rotulo": "Taxa de cartão",
+      "valor": 0.03,
+      "quando": "Só quando o pagamento foi em cartão de crédito."
+    },
+    {
+      "rotulo": "Taxa comercial",
+      "valor": 0.02,
+      "quando": "Nas categorias e a partir das datas definidas na tabela de taxas."
+    }
+  ],
+  "cirurgia": [
+    {
+      "situacao": "Cirurgia feita na clínica",
+      "pct": 0.8,
+      "porque": "Estrutura da clínica, equipe da clínica."
+    },
+    {
+      "situacao": "Cirurgia por plano de saúde",
+      "pct": 0.85,
+      "porque": "O plano paga menos; a clínica fica com a diferença menor."
+    },
+    {
+      "situacao": "Cirurgia em hospital — paciente veio da clínica",
+      "pct": 0.8,
+      "porque": "A clínica trouxe o paciente."
+    },
+    {
+      "situacao": "Cirurgia em hospital — paciente veio do médico",
+      "pct": 0.9,
+      "porque": "O médico trouxe o paciente. É também o que vale quando a origem não está preenchida — na dúvida não se penaliza o médico."
+    }
+  ],
+  "nf_propria": {
+    "pct": 0.1,
+    "texto": "Quando a cirurgia é faturada na nota fiscal do próprio médico, o dinheiro não passa pela clínica. Não há valor líquido a repartir: a clínica apenas retém a comissão sobre o procedimento, e por isso o repasse aparece negativo no relatório."
+  },
+  "fora": [
+    "agendamento cirurgico e visita hospitalar",
+    "endovascular sp",
+    "enfermagem",
+    "oxy recovery",
+    "paulo laredo",
+    "paulo laredo pinto",
+    "sala spa"
+  ],
+  "sem_repasse": [
+    "juliana olimpio",
+    "juliana olimpio de paula"
+  ],
+  "redireciona": [
+    "agendamento cirurgico e visita hospitalar",
+    "enfermagem"
+  ]
+}/*REGRAS_CODIGO*/;
 
 // Tipos que se resolvem por clique. Os demais aparecem como aviso: não são
 // dúvida de classificação, são falta de cadastro de regra — e mandar alguém
@@ -444,19 +512,43 @@ async function checkAuth(){
 }
 
 /* ===================== Carga ===================== */
+// O PostgREST devolve no máximo 1.000 linhas por requisição. Com 5.828
+// lançamentos, pedir "os profissionais" numa tacada só trazia 17 dos 27 — e os
+// que faltavam (Dr. Gustavo, Dra. Nicole, Dr. Mateus…) sumiam do menu de "de
+// quem é este atendimento?". Silenciosamente: não há erro, a lista só vem curta.
+async function _paginado(tabela, colunas){
+  const out = [];
+  for (let de = 0; ; de += 1000){
+    const { data, error } = await sb.from(tabela).select(colunas).range(de, de + 999);
+    if (error){ aviso('Falha ao ler ' + tabela + ': ' + error.message, true); break; }
+    out.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
+
 async function iniciar(){
   const [per, cat, lanc] = await Promise.all([
     sb.from('honorarios_periodos').select('periodo_id,label,status,congelado').order('periodo_id'),
     sb.from('honorarios_procedimentos').select('categoria'),
-    sb.from('honorarios_lancamentos').select('profissional').limit(2000),
+    _paginado('honorarios_lancamentos', 'profissional,empresa'),
   ]);
   if (per.error){ aviso('Não consegui ler os períodos: ' + per.error.message, true); return; }
 
   PERIODOS = per.data || [];
   CATEGORIAS = [...new Set((cat.data || []).map(c => c.categoria).filter(Boolean))].sort(
     (a,b) => a.localeCompare(b,'pt'));
-  PROFISSIONAIS = [...new Set((lanc.data || []).map(l => l.profissional).filter(Boolean))].sort(
-    (a,b) => a.localeCompare(b,'pt'));
+
+  // Nomes que não são gente (salas, nome de empresa no lugar do profissional)
+  // não entram nos menus. A lista vem do próprio código, injetada aqui.
+  const naoEhGente = new Set((CODIGO.fora || []).map(normalizar));
+  EMPRESAS_DO_PROF = {};
+  lanc.forEach(l => {
+    if (!l.profissional || naoEhGente.has(normalizar(l.profissional))) return;
+    (EMPRESAS_DO_PROF[l.profissional] = EMPRESAS_DO_PROF[l.profissional] || new Set())
+      .add(l.empresa);
+  });
+  PROFISSIONAIS = Object.keys(EMPRESAS_DO_PROF).sort((a,b) => a.localeCompare(b,'pt'));
 
   const sel = document.getElementById('sel-periodo');
   sel.innerHTML = PERIODOS.slice().reverse()
@@ -721,72 +813,7 @@ function trocarAba(qual){
 }
 
 /* ===================== Regras ===================== */
-// Percentuais e impostos vêm do banco, sempre atuais. O que não é percentual por
-// categoria (cirurgia, NF do médico, quem fica fora) mora no código e é injetado
-// aqui por _honorarios_publicar_regras.py a cada fechamento — assim a página não
-// mostra número velho depois de alguém mudar uma regra.
-const CODIGO = /*REGRAS_CODIGO*/{
-  "impostos": [
-    {
-      "rotulo": "ISS",
-      "valor": 0.18,
-      "quando": "Sempre, sobre o valor recebido."
-    },
-    {
-      "rotulo": "Taxa de cartão",
-      "valor": 0.03,
-      "quando": "Só quando o pagamento foi em cartão de crédito."
-    },
-    {
-      "rotulo": "Taxa comercial",
-      "valor": 0.02,
-      "quando": "Nas categorias e a partir das datas definidas na tabela de taxas."
-    }
-  ],
-  "cirurgia": [
-    {
-      "situacao": "Cirurgia feita na clínica",
-      "pct": 0.8,
-      "porque": "Estrutura da clínica, equipe da clínica."
-    },
-    {
-      "situacao": "Cirurgia por plano de saúde",
-      "pct": 0.85,
-      "porque": "O plano paga menos; a clínica fica com a diferença menor."
-    },
-    {
-      "situacao": "Cirurgia em hospital — paciente veio da clínica",
-      "pct": 0.8,
-      "porque": "A clínica trouxe o paciente."
-    },
-    {
-      "situacao": "Cirurgia em hospital — paciente veio do médico",
-      "pct": 0.9,
-      "porque": "O médico trouxe o paciente. É também o que vale quando a origem não está preenchida — na dúvida não se penaliza o médico."
-    }
-  ],
-  "nf_propria": {
-    "pct": 0.1,
-    "texto": "Quando a cirurgia é faturada na nota fiscal do próprio médico, o dinheiro não passa pela clínica. Não há valor líquido a repartir: a clínica apenas retém a comissão sobre o procedimento, e por isso o repasse aparece negativo no relatório."
-  },
-  "fora": [
-    "agendamento cirurgico e visita hospitalar",
-    "endovascular sp",
-    "enfermagem",
-    "oxy recovery",
-    "paulo laredo",
-    "paulo laredo pinto",
-    "sala spa"
-  ],
-  "sem_repasse": [
-    "juliana olimpio",
-    "juliana olimpio de paula"
-  ],
-  "redireciona": [
-    "agendamento cirurgico e visita hospitalar",
-    "enfermagem"
-  ]
-}/*REGRAS_CODIGO*/;
+
 
 let REGRAS = [];
 let TAXAS = [];
@@ -826,9 +853,23 @@ function verProfissional(nome){
   const el = document.getElementById('ficha-prof');
   if (!nome){ el.innerHTML = ''; return; }
 
-  // Onde ele atende: as empresas em que tem regra própria, ou todas.
   const dele = REGRAS.filter(x => x.profissional === nome);
-  const empresas = [...new Set(REGRAS.map(x => x.empresa))].sort();
+
+  // Só as empresas em que ele DE FATO atende — pelos lançamentos, ou porque tem
+  // regra própria lá. Mostrar todas fazia a Dra. Andrea, que só atende no
+  // Endovascular, aparecer com as regras da Oxy: informação falsa numa tela
+  // feita justamente para consultar regra.
+  const ondeAtende = new Set([
+    ...(EMPRESAS_DO_PROF[nome] || []),
+    ...dele.map(x => x.empresa),
+  ]);
+  const empresas = [...new Set(REGRAS.map(x => x.empresa))]
+    .filter(e => ondeAtende.has(e)).sort();
+  if (!empresas.length){
+    el.innerHTML = `<div class="nota-info">Não há lançamento nem regra própria
+      para <b>${esc(nome)}</b> nas empresas cadastradas.</div>`;
+    return;
+  }
 
   const blocos = empresas.map(emp => {
     const esp = dele.filter(x => x.empresa === emp);
