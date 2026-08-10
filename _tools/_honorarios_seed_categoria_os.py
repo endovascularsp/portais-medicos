@@ -41,22 +41,32 @@ MOTIVO = {
 }
 
 
-def contexto() -> dict:
-    """(OS, chave) -> {procedimento, paciente, profissional}, tirado do próprio
-    fechamento. A grafia original some ao normalizar, e é ela que a tela mostra;
-    paciente e profissional evitam que alguém precise abrir o Saudevianet só
-    para saber de quem é a OS."""
-    fora = {}
+def contexto() -> tuple:
+    """Devolve (por_os_e_procedimento, por_os).
+
+    A grafia original some ao normalizar, e é ela que a tela mostra; paciente e
+    profissional evitam que alguém precise abrir o Saudevianet só para saber de
+    quem é a OS.
+
+    O segundo índice existe porque 16 das 22 OS só aparecem em meses antigos,
+    onde o mesmo laser entrou com o nome completo ("Laser Transdérmico") em vez
+    de "Laser". Casar só por (OS, procedimento) deixava a tela mostrando
+    "(sem contexto)" justamente onde o nome do paciente mais ajuda a conferir.
+    O paciente da OS é o mesmo em qualquer linha dela.
+    """
+    exato, por_os = {}, {}
     for l in DB.buscar("honorarios_lancamentos", "os_numero,procedimento,paciente,profissional"):
-        k = (str(l.get("os_numero") or "").strip(), CAT.chave(l.get("procedimento")))
-        fora.setdefault(k, {"procedimento": l.get("procedimento"),
-                            "paciente": l.get("paciente"),
-                            "profissional": l.get("profissional")})
-    return fora
+        os_numero = str(l.get("os_numero") or "").strip()
+        dados = {"procedimento": l.get("procedimento"),
+                 "paciente": l.get("paciente"),
+                 "profissional": l.get("profissional")}
+        exato.setdefault((os_numero, CAT.chave(l.get("procedimento"))), dados)
+        por_os.setdefault(os_numero, dados)
+    return exato, por_os
 
 
 def main(gravar: bool) -> int:
-    ctx = contexto()
+    exato, por_os = contexto()
     try:
         ja = {(str(r["os_numero"]).strip(), r["chave"])
               for r in DB.buscar("honorarios_categoria_os", "os_numero,chave")}
@@ -73,19 +83,22 @@ def main(gravar: bool) -> int:
         if (os_numero, k) in ja:
             pulados += 1
             continue
-        c = ctx.get((os_numero, k), {})
+        # A grafia vem do casamento exato; paciente e médico podem vir do
+        # casamento só por OS, que cobre os meses antigos.
+        c = exato.get((os_numero, k)) or {}
+        amplo = por_os.get(os_numero) or {}
         reg = {
             "os_numero": os_numero,
             "chave": k,
             "procedimento": c.get("procedimento") or k.title(),
             "categoria": categoria,
             "motivo": MOTIVO.get(categoria),
-            "paciente": c.get("paciente"),
-            "profissional": c.get("profissional"),
+            "paciente": c.get("paciente") or amplo.get("paciente"),
+            "profissional": c.get("profissional") or amplo.get("profissional"),
             "decidido_por": "thiago.luiz@endovascularsp.com.br",
         }
         print(f"  OS {os_numero} · {k:16s} -> {categoria:20s} "
-              f"{(c.get('paciente') or '(sem contexto)')[:28]}")
+              f"{(reg['paciente'] or '(sem contexto)')[:30]}")
         if gravar:
             DB.inserir("honorarios_categoria_os", reg)
         novos += 1
