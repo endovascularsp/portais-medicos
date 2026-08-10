@@ -27,8 +27,7 @@ ALTER TABLE public.honorarios_procedimentos
   ADD COLUMN IF NOT EXISTS revisado_em        timestamptz,
   ADD COLUMN IF NOT EXISTS revisado_por       text,
   ADD COLUMN IF NOT EXISTS categoria_anterior text,
-  ADD COLUMN IF NOT EXISTS observacao         text,
-  ADD COLUMN IF NOT EXISTS tipo_svn           text;
+  ADD COLUMN IF NOT EXISTS observacao         text;
 
 COMMENT ON COLUMN public.honorarios_procedimentos.revisado_em IS
   'Quando um humano confirmou esta categoria na tela. NULL = ainda veio do '
@@ -38,11 +37,10 @@ COMMENT ON COLUMN public.honorarios_procedimentos.categoria_anterior IS
   'O que a categoria era antes da revisão. Guardado para explicar diferença de '
   'repasse entre um fechamento e outro sem ter que garimpar histórico.';
 
-COMMENT ON COLUMN public.honorarios_procedimentos.tipo_svn IS
-  'Como o Saudevianet classifica o mesmo procedimento (Cirurgia, Consulta, '
-  'Procedimentos, PDT, Exame, RET). NÃO é fonte da verdade — o SVN chama '
-  'Morpheus de "PDT" e cirurgia de varizes de "Procedimentos". Serve só como '
-  'segunda opinião na tela de revisão.';
+-- Nota: o SVN tem um campo próprio de tipo de procedimento e ele NÃO entra
+-- aqui. É justamente por ele ser inconsistente que as categorias desta casa
+-- foram criadas. A tela de revisão se apoia só em dado nosso: quanto cada
+-- procedimento move, o valor médio por lançamento e os percentuais que saíram.
 
 -- Quem já foi revisado sai da fila de atenção; o índice serve à tela.
 CREATE INDEX IF NOT EXISTS honorarios_procedimentos_revisao_idx

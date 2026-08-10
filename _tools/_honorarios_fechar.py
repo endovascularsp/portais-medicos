@@ -129,10 +129,6 @@ def main(periodo: str, escrever: bool, pular_download: bool) -> int:
     # que a tela mostre número velho depois de alguém mudar uma regra — e é
     # justamente essa tela que o Dr. Igor vai abrir para conferir.
     rodar(["_tools/_honorarios_publicar_regras.py", "--escrever"])
-    # A aba Catálogo compara a nossa categoria com a classificação do próprio
-    # Saudevianet e destaca onde as duas discordam. Sem reler isso a cada mês, um
-    # procedimento novo entra sem segunda opinião e ninguém é avisado.
-    rodar(["_tools/_honorarios_tipo_svn.py", "--escrever"])
     rodar(["_tools/_cache_bust_hubs.py"])
 
     # ---- resumo -------------------------------------------------------------

@@ -333,15 +333,20 @@
           fixo da categoria e passa a perguntar quem trouxe o paciente, pagando 80% ou
           90%. Foi assim que uma visita hospitalar de R$&nbsp;50 acabou sendo repartida
           como cirurgia.
+          <br><br>
+          Para conferir sem abrir o Saudevianet, cada linha mostra <b>quanto vale em
+          média</b> cada lançamento e <b>que percentuais saíram</b>. Cirurgia de verdade
+          tem ticket alto; procedimento de consultório, não. É essa leitura que denuncia
+          o rótulo trocado.
         </div>
 
         <div class="cat-topo">
           <input class="cat-busca" id="cat-busca" placeholder="Procurar procedimento…"
                  oninput="montarCatalogo()" autocomplete="off"/>
-          <button class="cat-chip ativo" id="chip-atencao" onclick="filtrarCatalogo('atencao')">
-            Precisa de atenção<span class="n" id="n-atencao"></span></button>
-          <button class="cat-chip" id="chip-cirurgia" onclick="filtrarCatalogo('cirurgia')">
+          <button class="cat-chip ativo" id="chip-cirurgia" onclick="filtrarCatalogo('cirurgia')">
             Marcados como cirurgia<span class="n" id="n-cirurgia"></span></button>
+          <button class="cat-chip" id="chip-pendentes" onclick="filtrarCatalogo('pendentes')">
+            Ainda não conferidos<span class="n" id="n-pendentes"></span></button>
           <button class="cat-chip" id="chip-revisados" onclick="filtrarCatalogo('revisados')">
             Já conferidos<span class="n" id="n-revisados"></span></button>
           <button class="cat-chip" id="chip-todos" onclick="filtrarCatalogo('todos')">
@@ -1125,8 +1130,8 @@ function montarGente(){
 // e fique assinada.
 
 let CATALOGO = [];
-let USO = {};                       // chave -> {linhas, repasse, abertas}
-let FILTRO_CAT = 'atencao';
+let USO = {};                       // chave -> {linhas, repasse, recebido, abertas, pcts}
+let FILTRO_CAT = 'cirurgia';
 
 async function carregarCatalogo(){
   const lista = document.getElementById('cat-lista');
@@ -1135,8 +1140,9 @@ async function carregarCatalogo(){
   const [c, lanc] = await Promise.all([
     sb.from('honorarios_procedimentos')
       .select('id,chave,procedimento,categoria,ativo,origem,revisado_em,revisado_por,'
-              + 'categoria_anterior,observacao,tipo_svn'),
-    _paginado('honorarios_lancamentos', 'procedimento,repasse_profissional,periodo_id'),
+              + 'categoria_anterior,observacao'),
+    _paginado('honorarios_lancamentos',
+              'procedimento,repasse_profissional,valor_recebido,pct_aplicado,periodo_id'),
   ]);
   if (c.error){
     // Antes da migration_011 as colunas de revisão não existem e o PostgREST
@@ -1160,9 +1166,11 @@ async function carregarCatalogo(){
   lanc.forEach(l => {
     const k = normalizar(l.procedimento);
     if (!k) return;
-    const u = USO[k] = USO[k] || { linhas: 0, repasse: 0, abertas: 0 };
+    const u = USO[k] = USO[k] || { linhas: 0, repasse: 0, recebido: 0, abertas: 0, pcts: new Set() };
     u.linhas++;
-    u.repasse += Number(l.repasse_profissional) || 0;
+    u.repasse  += Number(l.repasse_profissional) || 0;
+    u.recebido += Number(l.valor_recebido) || 0;
+    if (l.pct_aplicado != null) u.pcts.add(Math.round(Number(l.pct_aplicado) * 100));
     if (abertos.has(l.periodo_id)) u.abertas++;
   });
 
@@ -1170,81 +1178,58 @@ async function carregarCatalogo(){
   carregarCategoriaOS();
 }
 
-// Por que este procedimento merece um olhar. Devolve null quando não merece.
-function alertaDe(p){
-  const cat = String(p.categoria || '');
-  const svn = String(p.tipo_svn || '');
-  const ehCir = cat.indexOf('Cirurgia') === 0;
+const VAZIO = { linhas: 0, repasse: 0, recebido: 0, abertas: 0, pcts: new Set() };
 
-  if (ehCir && svn && svn !== 'Cirurgia')
-    return { nivel: 'alto', texto: `O catálogo trata como <b>cirurgia</b>, mas no `
-      + `Saudevianet este procedimento é <b>${esc(svn)}</b>. Rótulo de cirurgia `
-      + `manda o cálculo para a regra de lead (80% ou 90%) em vez do percentual da categoria.` };
-
-  if (!ehCir && svn === 'Cirurgia')
-    return { nivel: 'medio', texto: `O Saudevianet classifica como <b>cirurgia</b> e o `
-      + `catálogo, não. Se for cirurgia de verdade, o percentual em uso está errado.` };
-
-  if (!p.revisado_em)
-    return { nivel: 'baixo', texto: 'Categoria herdada da planilha antiga; ninguém confirmou ainda.' };
-
-  return null;
-}
+// O rótulo de cirurgia é o único que muda o CAMINHO do cálculo: em vez do
+// percentual fixo da categoria, a linha vai para a regra de lead e sai a 80% ou
+// 90%. Por isso é o que se revisa primeiro — e por isso a tela mostra o valor
+// médio por lançamento e os percentuais que saíram. Uma visita de R$ 50 dividida
+// a 80% aparece sozinha nessa leitura, sem precisar de palpite de ninguém.
+function ehCirurgia(p){ return String(p.categoria || '').indexOf('Cirurgia') === 0; }
 
 function contar(){
-  let at = 0, cir = 0, rev = 0;
+  let cir = 0, rev = 0;
   CATALOGO.forEach(p => {
-    const a = alertaDe(p);
-    if (a && a.nivel !== 'baixo') at++;
-    if (String(p.categoria || '').indexOf('Cirurgia') === 0) cir++;
+    if (ehCirurgia(p)) cir++;
     if (p.revisado_em) rev++;
   });
-  document.getElementById('n-atencao').textContent = at;
   document.getElementById('n-cirurgia').textContent = cir;
   document.getElementById('n-revisados').textContent = rev;
+  document.getElementById('n-pendentes').textContent = CATALOGO.length - rev;
   document.getElementById('n-todos').textContent = CATALOGO.length;
 }
 
 function filtrarCatalogo(qual){
   FILTRO_CAT = qual;
-  ['atencao','cirurgia','revisados','todos'].forEach(q =>
+  ['cirurgia','pendentes','revisados','todos'].forEach(q =>
     document.getElementById('chip-' + q).classList.toggle('ativo', q === qual));
   montarCatalogo();
 }
-
-const PESO = { alto: 0, medio: 1, baixo: 2 };
 
 function montarCatalogo(){
   contar();
   const busca = normalizar(document.getElementById('cat-busca').value);
 
-  let itens = CATALOGO.map(p => ({ p, a: alertaDe(p), u: USO[p.chave] || { linhas:0, repasse:0, abertas:0 } }));
+  let itens = CATALOGO.map(p => ({ p, u: USO[p.chave] || VAZIO }));
 
-  if (FILTRO_CAT === 'atencao')   itens = itens.filter(x => x.a && x.a.nivel !== 'baixo');
-  if (FILTRO_CAT === 'cirurgia')  itens = itens.filter(x => String(x.p.categoria||'').indexOf('Cirurgia') === 0);
+  if (FILTRO_CAT === 'cirurgia')  itens = itens.filter(x => ehCirurgia(x.p));
+  if (FILTRO_CAT === 'pendentes') itens = itens.filter(x => !x.p.revisado_em);
   if (FILTRO_CAT === 'revisados') itens = itens.filter(x => x.p.revisado_em);
   if (busca) itens = itens.filter(x => normalizar(x.p.procedimento).indexOf(busca) >= 0);
 
-  // Quem tem alerta mais grave primeiro; dentro do mesmo nível, quem move mais dinheiro.
-  itens.sort((x, y) => {
-    const px = x.a ? PESO[x.a.nivel] : 3, py = y.a ? PESO[y.a.nivel] : 3;
-    if (px !== py) return px - py;
-    return y.u.repasse - x.u.repasse;
-  });
+  // Quem move mais dinheiro primeiro: é onde um rótulo errado custa mais caro.
+  itens.sort((x, y) => y.u.repasse - x.u.repasse);
 
   const lista = document.getElementById('cat-lista');
   if (!itens.length){
-    lista.innerHTML = '<div class="vazio"><span class="ic">✓</span>'
-      + (FILTRO_CAT === 'atencao' ? 'Nada pedindo atenção neste momento.' : 'Nenhum procedimento aqui.')
-      + '</div>';
+    lista.innerHTML = '<div class="vazio"><span class="ic">✓</span>Nenhum procedimento aqui.</div>';
     return;
   }
   lista.innerHTML = itens.map(cartaoProcedimento).join('');
 }
 
-function cartaoProcedimento({ p, a, u }){
-  const ehCir = String(p.categoria || '').indexOf('Cirurgia') === 0;
-  const classe = a ? a.nivel : 'ok';
+function cartaoProcedimento({ p, u }){
+  const cir = ehCirurgia(p);
   const opcoes = CATEGORIAS.map(c =>
     `<option value="${esc(c)}"${c === p.categoria ? ' selected' : ''}>${esc(c)}</option>`).join('');
 
@@ -1259,18 +1244,25 @@ function cartaoProcedimento({ p, a, u }){
       + (p.observacao ? ` · “${esc(p.observacao)}”` : '')
     : '';
 
-  return `<div class="cat-item ${classe}" id="cat-${p.id}">
+  const media = u.linhas ? u.recebido / u.linhas : 0;
+  const pcts = [...u.pcts].sort((a, b) => a - b);
+
+  return `<div class="cat-item ${p.revisado_em ? 'ok' : (cir ? 'medio' : '')}" id="cat-${p.id}">
     <div class="cat-cab" onclick="abrirRevisao('${p.id}')">
       <span class="cat-nome">${esc(p.procedimento)}</span>
-      <span class="cat-cat ${ehCir ? 'cir' : ''}">${esc(p.categoria)}</span>
+      <span class="cat-cat ${cir ? 'cir' : ''}">${esc(p.categoria)}</span>
       ${selo}
     </div>
     <div class="cat-meta">
       <span>${u.linhas} lançamento${u.linhas === 1 ? '' : 's'}</span>
+      ${u.linhas ? `<span>${brl(media)} em média por lançamento</span>` : ''}
+      ${pcts.length ? `<span>saiu a ${pcts.join('%, ')}%</span>` : ''}
       <span class="cat-valor">${brl(u.repasse)} em repasse</span>
-      ${p.tipo_svn ? `<span>Saudevianet: ${esc(p.tipo_svn)}</span>` : ''}
     </div>
-    ${a ? `<div class="cat-porque ${a.nivel}">${a.texto}</div>` : ''}
+    ${cir ? `<div class="cat-porque medio">Marcado como <b>cirurgia</b>: o cálculo
+      não usa percentual fixo de categoria — pergunta quem trouxe o paciente e
+      paga <b>80% ou 90%</b>. Se este procedimento não é cirurgia, o repasse
+      está saindo por uma regra que não é a dele.</div>` : ''}
     ${quem ? `<div class="cat-porque">${quem}</div>` : ''}
 
     <div class="cat-painel" id="pan-${p.id}">
