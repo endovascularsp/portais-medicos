@@ -226,6 +226,56 @@
     .toast.ver{transform:translateX(-50%) translateY(0)}
     .toast.erro{background:var(--vermelho)}
 
+    /* ===== Catálogo de procedimentos ===== */
+    #painel-catalogo{display:flex;flex-direction:column;gap:26px}
+    .cat-topo{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+    .cat-busca{flex:1;min-width:210px;padding:9px 14px;border-radius:20px;
+      border:1.5px solid var(--borda);font-size:13px;font-family:inherit;color:var(--texto)}
+    .cat-chip{padding:7px 15px;border-radius:20px;border:1.5px solid var(--borda);
+      background:#fff;font-size:12.5px;font-weight:650;color:var(--texto2);
+      cursor:pointer;font-family:inherit;white-space:nowrap}
+    .cat-chip:hover{background:var(--bg)}
+    .cat-chip.ativo{background:var(--navy);border-color:var(--navy);color:#fff}
+    .cat-chip .n{font-variant-numeric:tabular-nums;opacity:.75;margin-left:5px}
+
+    .cat-lista{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+    .cat-item{border:1px solid var(--borda);border-left:4px solid var(--borda);
+      border-radius:10px;padding:14px 16px;background:#FCFDFE}
+    .cat-item.alto{border-left-color:var(--vermelho)}
+    .cat-item.medio{border-left-color:var(--ambar)}
+    .cat-item.ok{border-left-color:var(--verde);background:#fff}
+    .cat-cab{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;cursor:pointer}
+    .cat-nome{font-weight:700;font-size:14px;flex:1;min-width:180px}
+    .cat-cat{font-size:12px;font-weight:700;padding:3px 11px;border-radius:20px;
+      background:var(--bg);color:var(--texto2);white-space:nowrap}
+    .cat-cat.cir{background:var(--ambar-bg);color:var(--ambar)}
+    .cat-valor{font-size:12.5px;font-weight:800;color:var(--navy);white-space:nowrap;
+      font-variant-numeric:tabular-nums}
+    .cat-meta{font-size:11.5px;color:var(--texto2);margin-top:5px;
+      display:flex;gap:14px;flex-wrap:wrap}
+    .cat-porque{font-size:12.5px;margin-top:9px;padding-top:9px;
+      border-top:1px solid var(--borda);color:var(--texto2)}
+    .cat-porque b{color:var(--texto)}
+    .cat-porque.alto b{color:var(--vermelho)}
+    .cat-selo{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+      padding:3px 9px;border-radius:20px;background:var(--verde-bg);color:var(--verde);
+      white-space:nowrap}
+    .cat-selo.pend{background:var(--bg);color:var(--texto3)}
+    .cat-painel{margin-top:14px;padding-top:14px;border-top:1px dashed var(--borda);
+      display:none;flex-direction:column;gap:10px}
+    .cat-painel.aberto{display:flex}
+    .cat-linha{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+    .cat-linha label{font-size:11px;font-weight:700;letter-spacing:.4px;
+      text-transform:uppercase;color:var(--texto2);min-width:74px}
+    .cat-painel select,.cat-painel input{padding:8px 12px;border-radius:8px;
+      border:1.5px solid var(--borda);font-size:13px;font-family:inherit;
+      color:var(--texto);background:#fff}
+    .cat-painel select{min-width:200px}
+    .cat-painel input{flex:1;min-width:200px}
+    .cat-efeito{font-size:12px;color:var(--texto2);background:var(--bg);
+      border-radius:8px;padding:9px 13px;line-height:1.55}
+    .cat-efeito b{color:var(--texto)}
+
     @media(max-width:640px){
       header{padding:14px 16px} .wrap{padding:20px 14px 60px}
       .bloco{padding:18px 15px} .div-acao select,.div-acao input{min-width:100%}
@@ -264,6 +314,51 @@
     <div class="abas">
       <button class="aba ativa" id="aba-fechar" onclick="trocarAba('fechar')">Fechamento do mês</button>
       <button class="aba" id="aba-regras" onclick="trocarAba('regras')">Regras de repasse</button>
+      <button class="aba" id="aba-catalogo" onclick="trocarAba('catalogo')">Catálogo de procedimentos</button>
+    </div>
+
+    <!-- ================= ABA: CATÁLOGO ================= -->
+    <div id="painel-catalogo" style="display:none">
+
+      <div class="bloco">
+        <h2>🗂️ Que categoria cada procedimento tem</h2>
+        <div class="sub">A categoria é o que decide o percentual. Este catálogo veio
+          inteiro da aba "Apoio" da planilha antiga e nunca foi conferido linha a
+          linha — o que estiver errado aqui erra o repasse de todo mundo que fizer
+          aquele procedimento.</div>
+
+        <div class="nota-info">
+          <b>Rótulo de cirurgia não é cosmético.</b> Quando um procedimento é marcado
+          como <b>Cirurgia&nbsp;-&nbsp;Hospital</b>, o cálculo deixa de usar o percentual
+          fixo da categoria e passa a perguntar quem trouxe o paciente, pagando 80% ou
+          90%. Foi assim que uma visita hospitalar de R$&nbsp;50 acabou sendo repartida
+          como cirurgia.
+        </div>
+
+        <div class="cat-topo">
+          <input class="cat-busca" id="cat-busca" placeholder="Procurar procedimento…"
+                 oninput="montarCatalogo()" autocomplete="off"/>
+          <button class="cat-chip ativo" id="chip-atencao" onclick="filtrarCatalogo('atencao')">
+            Precisa de atenção<span class="n" id="n-atencao"></span></button>
+          <button class="cat-chip" id="chip-cirurgia" onclick="filtrarCatalogo('cirurgia')">
+            Marcados como cirurgia<span class="n" id="n-cirurgia"></span></button>
+          <button class="cat-chip" id="chip-revisados" onclick="filtrarCatalogo('revisados')">
+            Já conferidos<span class="n" id="n-revisados"></span></button>
+          <button class="cat-chip" id="chip-todos" onclick="filtrarCatalogo('todos')">
+            Todos<span class="n" id="n-todos"></span></button>
+        </div>
+
+        <div class="cat-lista" id="cat-lista"></div>
+      </div>
+
+      <div class="bloco">
+        <h2>⏱️ Quando a mudança vale</h2>
+        <div class="sub">Mudar a categoria aqui <b>não mexe em mês já fechado</b>.
+          A correção entra no próximo fechamento, quando o motor recalcula os meses
+          abertos. Se um mês congelado precisar ser corrigido, ele tem que ser
+          reaberto de propósito — e aí a diferença aparece no acerto do time.</div>
+      </div>
+
     </div>
 
     <!-- ================= ABA: REGRAS ================= -->
@@ -807,9 +902,12 @@ function montarPassos(){
 function trocarAba(qual){
   document.getElementById('painel-fechar').style.display = qual === 'fechar' ? '' : 'none';
   document.getElementById('painel-regras').style.display = qual === 'regras' ? 'flex' : 'none';
+  document.getElementById('painel-catalogo').style.display = qual === 'catalogo' ? 'flex' : 'none';
   document.getElementById('aba-fechar').classList.toggle('ativa', qual === 'fechar');
   document.getElementById('aba-regras').classList.toggle('ativa', qual === 'regras');
+  document.getElementById('aba-catalogo').classList.toggle('ativa', qual === 'catalogo');
   if (qual === 'regras' && !REGRAS.length) carregarRegras();
+  if (qual === 'catalogo' && !CATALOGO.length) carregarCatalogo();
 }
 
 /* ===================== Regras ===================== */
@@ -1005,6 +1103,237 @@ function montarGente(){
         Quando a ordem tem um solicitante de verdade, o atendimento é dele.</p>
       <div class="gente">${(c.redireciona || []).map(n => `<span>${esc(bonito(n))}</span>`).join('')}</div>
     </div>`;
+}
+
+/* ===================== Catálogo de procedimentos ===================== */
+// A categoria decide o percentual, e o catálogo inteiro entrou pela aba "Apoio"
+// do Excel sem revisão. Em 10/08/2026 quatro rótulos errados apareceram juntos
+// (Morpheus, visita hospitalar, Laser, Radiofrequência), todos marcados como
+// cirurgia hospitalar — o que joga o cálculo na regra de lead, de 80% ou 90%.
+// Esta tela existe para que a conferência seja feita uma vez, por quem manda,
+// e fique assinada.
+
+let CATALOGO = [];
+let USO = {};                       // chave -> {linhas, repasse, abertas}
+let FILTRO_CAT = 'atencao';
+
+async function carregarCatalogo(){
+  const lista = document.getElementById('cat-lista');
+  lista.innerHTML = '<div class="vazio">Carregando…</div>';
+
+  const [c, lanc] = await Promise.all([
+    sb.from('honorarios_procedimentos')
+      .select('id,chave,procedimento,categoria,ativo,origem,revisado_em,revisado_por,'
+              + 'categoria_anterior,observacao,tipo_svn'),
+    _paginado('honorarios_lancamentos', 'procedimento,repasse_profissional,periodo_id'),
+  ]);
+  if (c.error){
+    // Antes da migration_011 as colunas de revisão não existem e o PostgREST
+    // devolve 42703. Sem esta mensagem o erro chega como "column does not exist",
+    // que não diz a ninguém o que fazer.
+    const falta = /column .* does not exist|42703/i.test(c.error.message || '');
+    lista.innerHTML = `<div class="vazio"><span class="ic">⚙️</span>${falta
+      ? 'Falta preparar o banco: rode <b>db/migration_011_procedimentos_revisao.sql</b>'
+        + ' no SQL Editor do Supabase e recarregue esta página.'
+      : 'Não consegui ler o catálogo.'}</div>`;
+    if (!falta) aviso('Não consegui ler o catálogo: ' + c.error.message, true);
+    return;
+  }
+  CATALOGO = c.data || [];
+
+  // Quais meses ainda aceitam recálculo. Mudar categoria não mexe em mês fechado,
+  // e a tela precisa dizer isso com número, não com aviso genérico.
+  const abertos = new Set(PERIODOS.filter(p => !p.congelado).map(p => p.periodo_id));
+
+  USO = {};
+  lanc.forEach(l => {
+    const k = normalizar(l.procedimento);
+    if (!k) return;
+    const u = USO[k] = USO[k] || { linhas: 0, repasse: 0, abertas: 0 };
+    u.linhas++;
+    u.repasse += Number(l.repasse_profissional) || 0;
+    if (abertos.has(l.periodo_id)) u.abertas++;
+  });
+
+  montarCatalogo();
+}
+
+// Por que este procedimento merece um olhar. Devolve null quando não merece.
+function alertaDe(p){
+  const cat = String(p.categoria || '');
+  const svn = String(p.tipo_svn || '');
+  const ehCir = cat.indexOf('Cirurgia') === 0;
+
+  if (ehCir && svn && svn !== 'Cirurgia')
+    return { nivel: 'alto', texto: `O catálogo trata como <b>cirurgia</b>, mas no `
+      + `Saudevianet este procedimento é <b>${esc(svn)}</b>. Rótulo de cirurgia `
+      + `manda o cálculo para a regra de lead (80% ou 90%) em vez do percentual da categoria.` };
+
+  if (!ehCir && svn === 'Cirurgia')
+    return { nivel: 'medio', texto: `O Saudevianet classifica como <b>cirurgia</b> e o `
+      + `catálogo, não. Se for cirurgia de verdade, o percentual em uso está errado.` };
+
+  if (!p.revisado_em)
+    return { nivel: 'baixo', texto: 'Categoria herdada da planilha antiga; ninguém confirmou ainda.' };
+
+  return null;
+}
+
+function contar(){
+  let at = 0, cir = 0, rev = 0;
+  CATALOGO.forEach(p => {
+    const a = alertaDe(p);
+    if (a && a.nivel !== 'baixo') at++;
+    if (String(p.categoria || '').indexOf('Cirurgia') === 0) cir++;
+    if (p.revisado_em) rev++;
+  });
+  document.getElementById('n-atencao').textContent = at;
+  document.getElementById('n-cirurgia').textContent = cir;
+  document.getElementById('n-revisados').textContent = rev;
+  document.getElementById('n-todos').textContent = CATALOGO.length;
+}
+
+function filtrarCatalogo(qual){
+  FILTRO_CAT = qual;
+  ['atencao','cirurgia','revisados','todos'].forEach(q =>
+    document.getElementById('chip-' + q).classList.toggle('ativo', q === qual));
+  montarCatalogo();
+}
+
+const PESO = { alto: 0, medio: 1, baixo: 2 };
+
+function montarCatalogo(){
+  contar();
+  const busca = normalizar(document.getElementById('cat-busca').value);
+
+  let itens = CATALOGO.map(p => ({ p, a: alertaDe(p), u: USO[p.chave] || { linhas:0, repasse:0, abertas:0 } }));
+
+  if (FILTRO_CAT === 'atencao')   itens = itens.filter(x => x.a && x.a.nivel !== 'baixo');
+  if (FILTRO_CAT === 'cirurgia')  itens = itens.filter(x => String(x.p.categoria||'').indexOf('Cirurgia') === 0);
+  if (FILTRO_CAT === 'revisados') itens = itens.filter(x => x.p.revisado_em);
+  if (busca) itens = itens.filter(x => normalizar(x.p.procedimento).indexOf(busca) >= 0);
+
+  // Quem tem alerta mais grave primeiro; dentro do mesmo nível, quem move mais dinheiro.
+  itens.sort((x, y) => {
+    const px = x.a ? PESO[x.a.nivel] : 3, py = y.a ? PESO[y.a.nivel] : 3;
+    if (px !== py) return px - py;
+    return y.u.repasse - x.u.repasse;
+  });
+
+  const lista = document.getElementById('cat-lista');
+  if (!itens.length){
+    lista.innerHTML = '<div class="vazio"><span class="ic">✓</span>'
+      + (FILTRO_CAT === 'atencao' ? 'Nada pedindo atenção neste momento.' : 'Nenhum procedimento aqui.')
+      + '</div>';
+    return;
+  }
+  lista.innerHTML = itens.map(cartaoProcedimento).join('');
+}
+
+function cartaoProcedimento({ p, a, u }){
+  const ehCir = String(p.categoria || '').indexOf('Cirurgia') === 0;
+  const classe = a ? a.nivel : 'ok';
+  const opcoes = CATEGORIAS.map(c =>
+    `<option value="${esc(c)}"${c === p.categoria ? ' selected' : ''}>${esc(c)}</option>`).join('');
+
+  const selo = p.revisado_em
+    ? `<span class="cat-selo">Conferido</span>`
+    : `<span class="cat-selo pend">Não conferido</span>`;
+
+  const quem = p.revisado_em
+    ? `Conferido por ${esc(p.revisado_por || '—')} em `
+      + new Date(p.revisado_em).toLocaleDateString('pt-BR')
+      + (p.categoria_anterior ? ` · era <b>${esc(p.categoria_anterior)}</b>` : '')
+      + (p.observacao ? ` · “${esc(p.observacao)}”` : '')
+    : '';
+
+  return `<div class="cat-item ${classe}" id="cat-${p.id}">
+    <div class="cat-cab" onclick="abrirRevisao('${p.id}')">
+      <span class="cat-nome">${esc(p.procedimento)}</span>
+      <span class="cat-cat ${ehCir ? 'cir' : ''}">${esc(p.categoria)}</span>
+      ${selo}
+    </div>
+    <div class="cat-meta">
+      <span>${u.linhas} lançamento${u.linhas === 1 ? '' : 's'}</span>
+      <span class="cat-valor">${brl(u.repasse)} em repasse</span>
+      ${p.tipo_svn ? `<span>Saudevianet: ${esc(p.tipo_svn)}</span>` : ''}
+    </div>
+    ${a ? `<div class="cat-porque ${a.nivel}">${a.texto}</div>` : ''}
+    ${quem ? `<div class="cat-porque">${quem}</div>` : ''}
+
+    <div class="cat-painel" id="pan-${p.id}">
+      <div class="cat-linha">
+        <label for="cat-sel-${p.id}">Categoria</label>
+        <select id="cat-sel-${p.id}">${opcoes}</select>
+      </div>
+      <div class="cat-linha">
+        <label for="cat-obs-${p.id}">Por quê</label>
+        <input id="cat-obs-${p.id}" maxlength="160"
+               placeholder="Fica registrado com o seu nome — ex.: feito só na clínica"/>
+      </div>
+      <div class="cat-efeito">
+        ${u.abertas
+          ? `Afeta <b>${u.abertas}</b> lançamento${u.abertas === 1 ? '' : 's'} em meses ainda
+             abertos, no próximo fechamento.
+             ${u.linhas - u.abertas > 0
+               ? `Os outros ${u.linhas - u.abertas} estão em meses já fechados e não mudam.`
+               : ''}`
+          : `Nenhum lançamento em mês aberto — a mudança só vale daqui pra frente.`}
+      </div>
+      <div class="cat-linha">
+        <button class="btn" onclick="salvarCategoria('${p.id}')">Salvar categoria</button>
+        <button class="btn claro" onclick="confirmarCategoria('${p.id}')">Está correto assim</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function abrirRevisao(id){
+  document.getElementById('pan-' + id).classList.toggle('aberto');
+}
+
+async function gravarRevisao(id, campos, msg){
+  const { error } = await sb.from('honorarios_procedimentos').update(campos).eq('id', id);
+  if (error){ aviso('Não consegui gravar: ' + error.message, true); return false; }
+  const p = CATALOGO.find(x => x.id === id);
+  if (p) Object.assign(p, campos);
+  aviso(msg);
+  montarCatalogo();
+  return true;
+}
+
+async function salvarCategoria(id){
+  const p = CATALOGO.find(x => x.id === id);
+  if (!p) return;
+  const nova = document.getElementById('cat-sel-' + id).value;
+  const obs = document.getElementById('cat-obs-' + id).value.trim();
+
+  if (nova === p.categoria){
+    aviso('A categoria não mudou. Use "Está correto assim" para confirmar.', true);
+    return;
+  }
+  if (!obs){
+    aviso('Escreva o motivo — é ele que explica a diferença de repasse depois.', true);
+    return;
+  }
+  await gravarRevisao(id, {
+    categoria: nova,
+    categoria_anterior: p.categoria,
+    observacao: obs,
+    revisado_em: new Date().toISOString(),
+    revisado_por: me.email,
+  }, `${p.procedimento} agora é ${nova}.`);
+}
+
+async function confirmarCategoria(id){
+  const p = CATALOGO.find(x => x.id === id);
+  if (!p) return;
+  const obs = document.getElementById('cat-obs-' + id).value.trim();
+  await gravarRevisao(id, {
+    observacao: obs || null,
+    revisado_em: new Date().toISOString(),
+    revisado_por: me.email,
+  }, `${p.procedimento} confirmado como ${p.categoria}.`);
 }
 
 /* ===================== Boot ===================== */
