@@ -238,6 +238,37 @@
     .cat-chip.ativo{background:var(--navy);border-color:var(--navy);color:#fff}
     .cat-chip .n{font-variant-numeric:tabular-nums;opacity:.75;margin-left:5px}
 
+    .cat-chip.nova{border-color:var(--gold);color:var(--gold)}
+    .cat-chip.nova:hover{background:#FBF7F0}
+
+    /* A aba "Apoio" da planilha, agora na tela: nome à esquerda, categoria à
+       direita. Clicar na linha abre embaixo o que a planilha nunca teve — quem
+       decidiu, quando e por quê. */
+    table.dados.cat-tab{margin-top:18px;min-width:660px}
+    table.dados.cat-tab th.r,table.dados.cat-tab td.r{text-align:right;
+      font-variant-numeric:tabular-nums;white-space:nowrap}
+    tr.cat-lin{cursor:pointer}
+    tr.cat-lin:hover td{background:#F7FAFC}
+    tr.cat-lin td:first-child{color:var(--texto);font-weight:600}
+    tr.cat-lin.cir td:nth-child(2){color:var(--ambar);font-weight:700}
+    tr.cat-lin.aberta td{background:#F4F8FC}
+    tr.cat-det{display:none}
+    tr.cat-det.aberta{display:table-row}
+    tr.cat-det>td{background:#FCFDFE;padding:16px 14px}
+
+    .nova-cat{display:none;flex-direction:column;gap:10px;margin-top:18px;
+      border:1.5px solid var(--gold);border-radius:10px;padding:18px;background:#FEFCF8}
+    .nova-cat.aberto{display:flex}
+    .nova-cat-titulo{font-size:14px;font-weight:700}
+    .nova-cat-aviso{font-size:12.5px;color:#8B2C20;background:var(--vermelho-bg);
+      border-radius:8px;padding:10px 13px;line-height:1.55}
+    .nova-cat-aviso b{font-weight:800}
+    .nova-cat input{padding:8px 12px;border-radius:8px;border:1.5px solid var(--borda);
+      font-size:13px;font-family:inherit;color:var(--texto);background:#fff}
+    .nova-cat input[type=number]{width:96px}
+    .nova-cat input:not([type=number]){flex:1;min-width:200px}
+    .nc-dica{font-size:11.5px;color:var(--texto2)}
+
     .cat-lista{display:flex;flex-direction:column;gap:10px;margin-top:18px}
     .cat-item{border:1px solid var(--borda);border-left:4px solid var(--borda);
       border-radius:10px;padding:14px 16px;background:#FCFDFE}
@@ -351,9 +382,50 @@
             Já conferidos<span class="n" id="n-revisados"></span></button>
           <button class="cat-chip" id="chip-todos" onclick="filtrarCatalogo('todos')">
             Todos<span class="n" id="n-todos"></span></button>
+          <button class="cat-chip nova" onclick="abrirNovaCategoria()">➕ Nova categoria</button>
         </div>
 
-        <div class="cat-lista" id="cat-lista"></div>
+        <!-- Criar categoria. Fica escondido até pedirem, porque criar categoria
+             é raro e perigoso: sem percentual, todo lançamento nela trava o mês. -->
+        <div class="nova-cat" id="nova-cat">
+          <div class="nova-cat-titulo">Criar uma categoria nova</div>
+          <div class="nova-cat-aviso">Categoria sem percentual <b>trava o fechamento</b>:
+            o motor não chuta repasse, ele para na linha e manda para as divergências.
+            Por isso o percentual entra junto, aqui.</div>
+          <div class="cat-linha">
+            <label for="nc-nome">Nome</label>
+            <input id="nc-nome" maxlength="40" placeholder="ex.: Cirurgia - Ambulatorial"/>
+          </div>
+          <div class="cat-linha">
+            <label for="nc-endo">Endovascular</label>
+            <input id="nc-endo" type="number" min="0" max="100" step="1" placeholder="%"/>
+            <span class="nc-dica">deixe vazio se não se aplica a esta empresa</span>
+          </div>
+          <div class="cat-linha">
+            <label for="nc-oxy">Oxy Recovery</label>
+            <input id="nc-oxy" type="number" min="0" max="100" step="1" placeholder="%"/>
+            <span class="nc-dica">percentual do executor sobre o valor líquido</span>
+          </div>
+          <div class="cat-linha">
+            <label for="nc-obs">Por quê</label>
+            <input id="nc-obs" maxlength="160" placeholder="O que esta categoria separa que as outras não separam"/>
+          </div>
+          <div class="cat-linha">
+            <button class="btn" onclick="criarCategoria()">Criar categoria</button>
+            <button class="btn claro" onclick="document.getElementById('nova-cat').classList.remove('aberto')">Cancelar</button>
+          </div>
+        </div>
+
+        <div class="rolagem">
+          <table class="dados cat-tab">
+            <thead><tr>
+              <th>Procedimento</th><th>Categoria</th>
+              <th class="r">Lanç.</th><th class="r">Média</th><th class="r">Repasse</th>
+              <th>Situação</th>
+            </tr></thead>
+            <tbody id="cat-corpo"></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="bloco">
@@ -1158,6 +1230,13 @@ async function carregarCatalogo(){
   }
   CATALOGO = c.data || [];
 
+  // Uma categoria recém-criada ainda não tem procedimento nenhum, então não
+  // apareceria no menu se a lista viesse só do catálogo. Quem sabe que ela
+  // existe é a tabela de regras — é lá que o percentual dela foi cadastrado.
+  const rc = await sb.from('honorarios_regras').select('categoria').eq('ativo', true);
+  CATEGORIAS = [...new Set([...CATEGORIAS, ...(rc.data || []).map(r => r.categoria)])]
+    .filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt'));
+
   // Quais meses ainda aceitam recálculo. Mudar categoria não mexe em mês fechado,
   // e a tela precisa dizer isso com número, não com aviso genérico.
   const abertos = new Set(PERIODOS.filter(p => !p.congelado).map(p => p.periodo_id));
@@ -1220,20 +1299,26 @@ function montarCatalogo(){
   // Quem move mais dinheiro primeiro: é onde um rótulo errado custa mais caro.
   itens.sort((x, y) => y.u.repasse - x.u.repasse);
 
-  const lista = document.getElementById('cat-lista');
+  const corpo = document.getElementById('cat-corpo');
   if (!itens.length){
-    lista.innerHTML = '<div class="vazio"><span class="ic">✓</span>Nenhum procedimento aqui.</div>';
+    corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px">'
+      + 'Nenhum procedimento aqui.</td></tr>';
     return;
   }
-  lista.innerHTML = itens.map(cartaoProcedimento).join('');
+  corpo.innerHTML = itens.map(linhaProcedimento).join('');
 }
 
-function cartaoProcedimento({ p, u }){
+// Duas linhas por procedimento: a de cima é a planilha (nome | categoria), a de
+// baixo abre com o que a planilha nunca teve — o efeito da mudança e o registro
+// de quem decidiu.
+function linhaProcedimento({ p, u }){
   const cir = ehCirurgia(p);
+  const media = u.linhas ? u.recebido / u.linhas : 0;
+  const pcts = [...u.pcts].sort((a, b) => a - b);
   const opcoes = CATEGORIAS.map(c =>
     `<option value="${esc(c)}"${c === p.categoria ? ' selected' : ''}>${esc(c)}</option>`).join('');
 
-  const selo = p.revisado_em
+  const situacao = p.revisado_em
     ? `<span class="cat-selo">Conferido</span>`
     : `<span class="cat-selo pend">Não conferido</span>`;
 
@@ -1244,56 +1329,106 @@ function cartaoProcedimento({ p, u }){
       + (p.observacao ? ` · “${esc(p.observacao)}”` : '')
     : '';
 
-  const media = u.linhas ? u.recebido / u.linhas : 0;
-  const pcts = [...u.pcts].sort((a, b) => a - b);
-
-  return `<div class="cat-item ${p.revisado_em ? 'ok' : (cir ? 'medio' : '')}" id="cat-${p.id}">
-    <div class="cat-cab" onclick="abrirRevisao('${p.id}')">
-      <span class="cat-nome">${esc(p.procedimento)}</span>
-      <span class="cat-cat ${cir ? 'cir' : ''}">${esc(p.categoria)}</span>
-      ${selo}
-    </div>
-    <div class="cat-meta">
-      <span>${u.linhas} lançamento${u.linhas === 1 ? '' : 's'}</span>
-      ${u.linhas ? `<span>${brl(media)} em média por lançamento</span>` : ''}
-      ${pcts.length ? `<span>saiu a ${pcts.join('%, ')}%</span>` : ''}
-      <span class="cat-valor">${brl(u.repasse)} em repasse</span>
-    </div>
-    ${cir ? `<div class="cat-porque medio">Marcado como <b>cirurgia</b>: o cálculo
-      não usa percentual fixo de categoria — pergunta quem trouxe o paciente e
-      paga <b>80% ou 90%</b>. Se este procedimento não é cirurgia, o repasse
-      está saindo por uma regra que não é a dele.</div>` : ''}
-    ${quem ? `<div class="cat-porque">${quem}</div>` : ''}
-
-    <div class="cat-painel" id="pan-${p.id}">
-      <div class="cat-linha">
-        <label for="cat-sel-${p.id}">Categoria</label>
-        <select id="cat-sel-${p.id}">${opcoes}</select>
+  return `<tr class="cat-lin ${cir ? 'cir' : ''}" id="lin-${p.id}" onclick="abrirRevisao('${p.id}')">
+      <td>${esc(p.procedimento)}</td>
+      <td>${esc(p.categoria)}</td>
+      <td class="r">${u.linhas || '—'}</td>
+      <td class="r">${u.linhas ? brl(media) : '—'}</td>
+      <td class="r">${u.linhas ? brl(u.repasse) : '—'}</td>
+      <td>${situacao}</td>
+    </tr>
+    <tr class="cat-det" id="det-${p.id}"><td colspan="6">
+      ${cir ? `<div class="cat-porque medio" style="margin-top:0;padding-top:0;border:none">
+        Marcado como <b>cirurgia</b>: o cálculo não usa percentual fixo de categoria —
+        pergunta quem trouxe o paciente e paga <b>80% ou 90%</b>. Se este procedimento
+        não é cirurgia, o repasse está saindo por uma regra que não é a dele.</div>` : ''}
+      ${pcts.length ? `<div class="cat-meta"><span>saiu a ${pcts.join('%, ')}%</span></div>` : ''}
+      ${quem ? `<div class="cat-porque">${quem}</div>` : ''}
+      <div class="cat-painel aberto">
+        <div class="cat-linha">
+          <label for="cat-sel-${p.id}">Categoria</label>
+          <select id="cat-sel-${p.id}">${opcoes}</select>
+        </div>
+        <div class="cat-linha">
+          <label for="cat-obs-${p.id}">Por quê</label>
+          <input id="cat-obs-${p.id}" maxlength="160"
+                 placeholder="Fica registrado com o seu nome — ex.: feito só na clínica"/>
+        </div>
+        <div class="cat-efeito">
+          ${u.abertas
+            ? `Afeta <b>${u.abertas}</b> lançamento${u.abertas === 1 ? '' : 's'} em meses ainda
+               abertos, no próximo fechamento.
+               ${u.linhas - u.abertas > 0
+                 ? `Os outros ${u.linhas - u.abertas} estão em meses já fechados e não mudam.`
+                 : ''}`
+            : `Nenhum lançamento em mês aberto — a mudança só vale daqui pra frente.`}
+        </div>
+        <div class="cat-linha">
+          <button class="btn" onclick="salvarCategoria('${p.id}')">Salvar categoria</button>
+          <button class="btn claro" onclick="confirmarCategoria('${p.id}')">Está correto assim</button>
+        </div>
       </div>
-      <div class="cat-linha">
-        <label for="cat-obs-${p.id}">Por quê</label>
-        <input id="cat-obs-${p.id}" maxlength="160"
-               placeholder="Fica registrado com o seu nome — ex.: feito só na clínica"/>
-      </div>
-      <div class="cat-efeito">
-        ${u.abertas
-          ? `Afeta <b>${u.abertas}</b> lançamento${u.abertas === 1 ? '' : 's'} em meses ainda
-             abertos, no próximo fechamento.
-             ${u.linhas - u.abertas > 0
-               ? `Os outros ${u.linhas - u.abertas} estão em meses já fechados e não mudam.`
-               : ''}`
-          : `Nenhum lançamento em mês aberto — a mudança só vale daqui pra frente.`}
-      </div>
-      <div class="cat-linha">
-        <button class="btn" onclick="salvarCategoria('${p.id}')">Salvar categoria</button>
-        <button class="btn claro" onclick="confirmarCategoria('${p.id}')">Está correto assim</button>
-      </div>
-    </div>
-  </div>`;
+    </td></tr>`;
 }
 
 function abrirRevisao(id){
-  document.getElementById('pan-' + id).classList.toggle('aberto');
+  const det = document.getElementById('det-' + id);
+  const lin = document.getElementById('lin-' + id);
+  const abre = !det.classList.contains('aberta');
+  det.classList.toggle('aberta', abre);
+  lin.classList.toggle('aberta', abre);
+}
+
+/* ---------- Criar categoria ---------- */
+// Categoria nova sem percentual não é uma categoria: é uma armadilha. O motor
+// não chuta repasse — ele para na linha e manda para as divergências. Um mês
+// inteiro pode travar por causa de uma categoria criada pela metade, e o erro
+// só aparece no fechamento seguinte. Por isso o percentual entra aqui, junto.
+
+function abrirNovaCategoria(){
+  document.getElementById('nova-cat').classList.toggle('aberto');
+}
+
+async function criarCategoria(){
+  const nome = document.getElementById('nc-nome').value.trim();
+  const obs  = document.getElementById('nc-obs').value.trim();
+  const ler = id => {
+    const v = document.getElementById(id).value.trim();
+    return v === '' ? null : Number(v);
+  };
+  const endo = ler('nc-endo'), oxy = ler('nc-oxy');
+
+  if (!nome){ aviso('Dê um nome à categoria.', true); return; }
+  if (CATEGORIAS.some(c => normalizar(c) === normalizar(nome))){
+    aviso(`"${nome}" já existe.`, true); return;
+  }
+  if (endo === null && oxy === null){
+    aviso('Informe o percentual em pelo menos uma das empresas.', true); return;
+  }
+  for (const v of [endo, oxy]){
+    if (v !== null && (isNaN(v) || v < 0 || v > 100)){
+      aviso('O percentual tem que ficar entre 0 e 100.', true); return;
+    }
+  }
+  if (!obs){ aviso('Escreva para que serve — quem ler daqui a seis meses precisa entender.', true); return; }
+
+  const regras = [];
+  if (endo !== null) regras.push({ empresa: 'Endovascular SP', categoria: nome, papel: 'executor',
+                                   percentual: endo / 100, base_calculo: 'liquido',
+                                   observacao: obs, ativo: true });
+  if (oxy  !== null) regras.push({ empresa: 'Oxy Recovery',    categoria: nome, papel: 'executor',
+                                   percentual: oxy / 100,  base_calculo: 'liquido',
+                                   observacao: obs, ativo: true });
+
+  const { error } = await sb.from('honorarios_regras').insert(regras);
+  if (error){ aviso('Não consegui criar: ' + error.message, true); return; }
+
+  CATEGORIAS = [...CATEGORIAS, nome].sort((a, b) => a.localeCompare(b, 'pt'));
+  REGRAS = [];                        // força a aba de Regras a reler
+  ['nc-nome','nc-endo','nc-oxy','nc-obs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('nova-cat').classList.remove('aberto');
+  aviso(`Categoria "${nome}" criada. Agora ela aparece na lista de cada procedimento.`);
+  montarCatalogo();
 }
 
 async function gravarRevisao(id, campos, msg){
