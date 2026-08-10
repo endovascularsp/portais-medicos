@@ -352,6 +352,17 @@
       </div>
 
       <div class="bloco">
+        <h2>🔀 Decididos caso a caso <span class="conta-fila" id="conta-os">0</span></h2>
+        <div class="sub">Alguns nomes não dizem a categoria. O caso vivo é
+          <b>Laser</b>: tanto pode ser Laser Transdérmico, feito na clínica, quanto a
+          fibra de laser usada dentro de uma cirurgia. A diferença é de 60% para 80–90%,
+          e só dá para saber olhando o que mais foi lançado na mesma ordem de serviço.
+          Por isso estes não entram no catálogo — cada OS é decidida sozinha, e a
+          decisão vale para todos os meses em que aquela OS aparecer.</div>
+        <div class="cat-lista" id="os-lista"></div>
+      </div>
+
+      <div class="bloco">
         <h2>⏱️ Quando a mudança vale</h2>
         <div class="sub">Mudar a categoria aqui <b>não mexe em mês já fechado</b>.
           A correção entra no próximo fechamento, quando o motor recalcula os meses
@@ -1156,6 +1167,7 @@ async function carregarCatalogo(){
   });
 
   montarCatalogo();
+  carregarCategoriaOS();
 }
 
 // Por que este procedimento merece um olhar. Devolve null quando não merece.
@@ -1334,6 +1346,85 @@ async function confirmarCategoria(id){
     revisado_em: new Date().toISOString(),
     revisado_por: me.email,
   }, `${p.procedimento} confirmado como ${p.categoria}.`);
+}
+
+/* ---------- Categoria decidida por OS ---------- */
+// "Laser" no Saudevianet tanto é Laser Transdérmico (60%) quanto a fibra usada
+// numa cirurgia (80% ou 90%). O nome não decide; o que resolve é olhar os outros
+// procedimentos da mesma OS. Essas 22 decisões viviam num dicionário Python e
+// ninguém que usa o portal conseguia vê-las.
+
+let CAT_OS = [];
+
+async function carregarCategoriaOS(){
+  const lista = document.getElementById('os-lista');
+  const { data, error } = await sb.from('honorarios_categoria_os')
+    .select('*').order('procedimento').order('os_numero');
+  if (error){
+    lista.innerHTML = '<div class="vazio">Não consegui ler as decisões por OS.</div>';
+    return;
+  }
+  CAT_OS = data || [];
+  montarCategoriaOS();
+}
+
+function montarCategoriaOS(){
+  document.getElementById('conta-os').textContent = CAT_OS.length;
+  const lista = document.getElementById('os-lista');
+  if (!CAT_OS.length){
+    lista.innerHTML = '<div class="vazio"><span class="ic">—</span>'
+      + 'Nenhuma decisão por OS registrada.</div>';
+    return;
+  }
+  lista.innerHTML = CAT_OS.map(o => {
+    const ehCir = String(o.categoria || '').indexOf('Cirurgia') === 0;
+    const opcoes = CATEGORIAS.map(c =>
+      `<option value="${esc(c)}"${c === o.categoria ? ' selected' : ''}>${esc(c)}</option>`).join('');
+    return `<div class="cat-item ok" id="os-${o.id}">
+      <div class="cat-cab" onclick="document.getElementById('panos-${o.id}').classList.toggle('aberto')">
+        <span class="cat-nome">${esc(o.procedimento)} · OS ${esc(o.os_numero)}</span>
+        <span class="cat-cat ${ehCir ? 'cir' : ''}">${esc(o.categoria)}</span>
+      </div>
+      <div class="cat-meta">
+        ${o.paciente ? `<span>${esc(o.paciente)}</span>` : ''}
+        ${o.profissional ? `<span>${esc(o.profissional)}</span>` : ''}
+        <span>decidido por ${esc(o.decidido_por || '—')}</span>
+      </div>
+      ${o.motivo ? `<div class="cat-porque">${esc(o.motivo)}</div>` : ''}
+      <div class="cat-painel" id="panos-${o.id}">
+        <div class="cat-linha">
+          <label for="os-sel-${o.id}">Categoria</label>
+          <select id="os-sel-${o.id}">${opcoes}</select>
+        </div>
+        <div class="cat-linha">
+          <label for="os-mot-${o.id}">Por quê</label>
+          <input id="os-mot-${o.id}" maxlength="200" value="${esc(o.motivo || '')}"
+                 placeholder="O que nesta OS levou a essa conclusão"/>
+        </div>
+        <div class="cat-linha">
+          <button class="btn" onclick="salvarCategoriaOS('${o.id}')">Salvar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function salvarCategoriaOS(id){
+  const o = CAT_OS.find(x => x.id === id);
+  if (!o) return;
+  const nova = document.getElementById('os-sel-' + id).value;
+  const motivo = document.getElementById('os-mot-' + id).value.trim();
+  if (!motivo){
+    aviso('Escreva o motivo — sem ele a decisão não se defende sozinha depois.', true);
+    return;
+  }
+  const campos = { categoria: nova, motivo,
+                   decidido_por: me.email, decidido_em: new Date().toISOString() };
+  const { error } = await sb.from('honorarios_categoria_os').update(campos).eq('id', id);
+  if (error){ aviso('Não consegui gravar: ' + error.message, true); return; }
+  Object.assign(o, campos);
+  aviso(`OS ${o.os_numero} agora é ${nova}.`);
+  montarCategoriaOS();
 }
 
 /* ===================== Boot ===================== */

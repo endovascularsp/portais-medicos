@@ -167,13 +167,46 @@ def carregar_do_excel(planilha: str = PLANILHA) -> dict:
     return cat
 
 
+_OVERRIDES = None
+
+
+def carregar_overrides() -> dict:
+    """(nº OS, chave do procedimento) -> categoria, lido do Supabase.
+
+    Desde 10/08/2026 essas decisões vivem em `honorarios_categoria_os` e são
+    editáveis na aba Catálogo do card de Fechamento. Antes disso eram o
+    dicionário `OVERRIDES_POR_OS` logo acima: funcionavam, mas ninguém que usa o
+    portal conseguia ver o que tinha sido decidido nem por quem.
+
+    O dicionário do código continua como rede de segurança para o caso de a
+    tabela ainda não existir no ambiente. Quando ela responde, ela manda.
+    """
+    global _OVERRIDES
+    if _OVERRIDES is not None:
+        return _OVERRIDES
+    import _honorarios_db as DB
+    try:
+        linhas = DB.buscar("honorarios_categoria_os", "os_numero,chave,categoria")
+    except SystemExit:
+        print("  [aviso] honorarios_categoria_os indisponível — usando a lista do código. "
+              "Rode db/migration_011 e _honorarios_seed_categoria_os.py.")
+        _OVERRIDES = dict(OVERRIDES_POR_OS)
+        return _OVERRIDES
+    if not linhas:
+        print("  [aviso] honorarios_categoria_os está vazia — usando a lista do código.")
+        _OVERRIDES = dict(OVERRIDES_POR_OS)
+        return _OVERRIDES
+    _OVERRIDES = {(str(r["os_numero"]).strip(), r["chave"]): r["categoria"] for r in linhas}
+    return _OVERRIDES
+
+
 def categoria_de(procedimento, os_numero, catalogo: dict):
     """(categoria, origem) — ou (None, motivo) quando precisa de decisão humana.
 
     Ordem: override da linha vence o catálogo; procedimento ambíguo nunca é
     resolvido pelo nome."""
     k = chave(procedimento)
-    over = OVERRIDES_POR_OS.get((str(os_numero).strip(), k))
+    over = carregar_overrides().get((str(os_numero).strip(), k))
     if over:
         return over, "categoria definida por OS"
     if k in AMBIGUOS:
