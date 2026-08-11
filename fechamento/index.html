@@ -354,9 +354,12 @@
       <div class="bloco">
         <h2>🗂️ Que categoria cada procedimento tem</h2>
         <div class="sub">A categoria é o que decide o percentual. Este catálogo veio
-          inteiro da aba "Apoio" da planilha antiga e nunca foi conferido linha a
-          linha — o que estiver errado aqui erra o repasse de todo mundo que fizer
-          aquele procedimento.</div>
+          inteiro da aba "Apoio" da planilha antiga, e o que estiver errado aqui erra o
+          repasse de todo mundo que fizer aquele procedimento. <b>Consulta, exame,
+          medicação injetável, Fotona, fisioterapia e produto já entram conferidos</b> —
+          nunca houve dúvida sobre eles, e ficar clicando em cada um só faz perder tempo.
+          A tela abre no que sobrou: os casos em que cabe perguntar <b>se é cirurgia, e se
+          foi no hospital ou na clínica</b>.</div>
 
         <div class="nota-info">
           <b>Rótulo de cirurgia não é cosmético.</b> Quando um procedimento é marcado
@@ -374,10 +377,10 @@
         <div class="cat-topo">
           <input class="cat-busca" id="cat-busca" placeholder="Procurar procedimento…"
                  oninput="montarCatalogo()" autocomplete="off"/>
-          <button class="cat-chip ativo" id="chip-cirurgia" onclick="filtrarCatalogo('cirurgia')">
+          <button class="cat-chip ativo" id="chip-pendentes" onclick="filtrarCatalogo('pendentes')">
+            Falta decidir<span class="n" id="n-pendentes"></span></button>
+          <button class="cat-chip" id="chip-cirurgia" onclick="filtrarCatalogo('cirurgia')">
             Marcados como cirurgia<span class="n" id="n-cirurgia"></span></button>
-          <button class="cat-chip" id="chip-pendentes" onclick="filtrarCatalogo('pendentes')">
-            Ainda não conferidos<span class="n" id="n-pendentes"></span></button>
           <button class="cat-chip" id="chip-revisados" onclick="filtrarCatalogo('revisados')">
             Já conferidos<span class="n" id="n-revisados"></span></button>
           <button class="cat-chip" id="chip-todos" onclick="filtrarCatalogo('todos')">
@@ -1203,7 +1206,11 @@ function montarGente(){
 
 let CATALOGO = [];
 let USO = {};                       // chave -> {linhas, repasse, recebido, abertas, pcts}
-let FILTRO_CAT = 'cirurgia';
+// A aba abre no que falta decidir, não no catálogo inteiro. Depois da varredura
+// de 11/08/2026 (_tools/_honorarios_varrer_catalogo.py), consulta, exame,
+// medicação e Fotona já entram conferidos: sobra na tela só a dúvida que muda o
+// dinheiro — isto é cirurgia? e foi no hospital ou na clínica?
+let FILTRO_CAT = 'pendentes';
 
 async function carregarCatalogo(){
   // O destino é o corpo da tabela ('cat-corpo'). Já foi 'cat-lista' aqui, um id
