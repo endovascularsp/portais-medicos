@@ -1107,14 +1107,16 @@ function coletarAtendimentos(pids, pf){
 // ---------------------------------------------------------------------------
 // Origem dos Atendimentos — Particular x Planos (11/08/2026)
 // ---------------------------------------------------------------------------
-// Plano é a tabela de preço que traz OMINT ou SULAM no nome; o resto é
-// particular. É o MESMO teste do card de Recebimento, de propósito: se um dia
-// mudar, muda nos dois, senão o médico vê dois números para a mesma coisa.
+// Plano é a tabela de preço que traz OMINT, SULAM ou MEDSÊNIOR no nome; o
+// resto é particular. É o MESMO teste do card de Recebimento, de propósito:
+// se um dia mudar, muda nos dois, senão o médico vê dois números para a
+// mesma coisa. MEDSÊNIOR entrou em 11/08/2026: é convênio, e a regra de
+// repasse sempre o tratou como plano (cirurgia com plano paga 85%).
 const COR_PARTICULAR = '#A18960';
 const COR_PLANO      = '#23476F';
 let chartOrigem = null;
 
-function ehPlano(tab){ return /OMINT|SULAM/i.test(tab || ''); }
+function ehPlano(tab){ return /OMINT|SULAM|MEDS[EÊ]N/i.test(tab || ''); }
 
 // A tabela mora no procedimento. O atendimento só serve de reserva, para
 // publicação antiga em que o procedimento ainda não carregava o campo.

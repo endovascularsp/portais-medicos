@@ -405,6 +405,39 @@ body{background:#EEF2F6;}
 .tab:hover:not(.active){border-color:#A18960;color:#fff;}
 .tab.active{background:#A18960;border-color:#A18960;color:#0B1F3A;}
 </style>
+<style id="origem-produtividade">
+/* ============================================================================
+   Origem dos Atendimentos — Particular x Planos (11/08/2026)
+
+   Mesmo desenho do card de Recebimento: pílulas com o total de cada lado, uma
+   barra de proporção e a lista das tabelas de preço. Dourado é particular,
+   navy é plano — a mesma dupla de cores dos gráficos daqui.
+   ============================================================================ */
+.origem-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;
+  background:#EEF3F9;color:#2E6DA4;text-transform:none;letter-spacing:normal;}
+.origem-pills{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.origem-pill{padding:8px 16px;border-radius:24px;font-size:13px;font-weight:700;
+  display:flex;align-items:center;gap:8px;}
+.origem-pill.particular{background:#F5F0E6;color:#8A7348;border:1.5px solid #E0D2B4;}
+.origem-pill.plano{background:#E7EDF5;color:#23476F;border:1.5px solid #BACBE0;}
+.origem-bar{height:12px;border-radius:6px;background:#DDE4ED;overflow:hidden;margin-bottom:14px;}
+.origem-bar-inner{height:100%;border-radius:6px;transition:width .6s ease;}
+.tabela-row{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 4px;border-bottom:1px solid #EDF1F6;font-size:13px;}
+.tabela-row:last-child{border-bottom:none;}
+.tabela-nome{font-weight:600;color:var(--texto);}
+.tabela-tipo{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;margin-left:8px;}
+.tabela-tipo.part{background:#F5F0E6;color:#8A7348;}
+.tabela-tipo.plano{background:#E7EDF5;color:#23476F;}
+.tabela-val{font-weight:700;color:#8A7348;text-align:right;}
+.tabela-pct{font-size:12px;color:var(--texto2);margin-left:10px;min-width:44px;text-align:right;}
+.origem-vazio{padding:26px 4px;color:var(--texto2);font-size:13px;text-align:center;}
+/* Chip da coluna "Tabela de preço" da lista de atendimentos */
+.tabela-chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;
+  border-radius:10px;white-space:nowrap;margin:1px 2px 1px 0;}
+.tabela-chip.part{background:#F5F0E6;color:#8A7348;}
+.tabela-chip.plano{background:#E7EDF5;color:#23476F;}
+</style>
 </head>
 <body>
 
@@ -483,6 +516,16 @@ body{background:#EEF2F6;}
         </div>
       </div>
     </div>
+    <div class='grid-pag'>
+      <div class='pag-section'>
+        <div class='section-title'>🏷️ Origem dos Atendimentos <span class='origem-badge'>Particular vs Planos</span></div>
+        <div id='origem-lista'></div>
+      </div>
+      <div class='pag-section'>
+        <div class='section-title'>◕ Mix Particular / Planos</div>
+        <div class='chart-wrap'><canvas id='chart-origem'></canvas></div>
+      </div>
+    </div>
     <div class='table-section'>
       <div class='table-header'>
         <div class='section-title' style='margin:0'>🗓️ Lista de Atendimentos</div>
@@ -497,8 +540,8 @@ body{background:#EEF2F6;}
             <tr>
               <th>Data</th>
               <th>Paciente</th>
-              <th>Procedimentos</th>
               <th>Pagamento</th>
+              <th>Tabela de preço</th>
               <th style='text-align:right'>Valor</th>
             </tr>
           </thead>
@@ -742,16 +785,17 @@ function exportarCSV(){
     let s = (v == null ? '' : String(v));
     return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
-  const linhas = [['Data','Paciente','Procedimentos','Forma de Pagamento','Parcelas','Valor (R$)']];
+  const linhas = [['Data','Paciente','Procedimentos','Forma de Pagamento','Tabela de preço','Parcelas','Valor (R$)']];
   let totalGeral = 0;
   (atendimentos || []).forEach(a => {
     const procs = (a.procedimentos || []).map(p => p.nome + (p.qtd > 1 ? ' (' + p.qtd + ')' : '')).join(' | ');
     const valor = Number(a.valor) || 0; totalGeral += valor;
-    linhas.push([ a.data || '', a.paciente || '', procs, a.pagamento || '',
+    const tabs = [...new Set((a.procedimentos || []).map(p => _tabDe(p, a)))].join(' | ');
+    linhas.push([ a.data || '', a.paciente || '', procs, a.pagamento || '', tabs,
                   (a.parcelas || 1), valor.toFixed(2).replace('.', ',') ]);
   });
   linhas.push([]);
-  linhas.push(['', '', '', '', 'TOTAL', totalGeral.toFixed(2).replace('.', ',')]);
+  linhas.push(['', '', '', '', '', 'TOTAL', totalGeral.toFixed(2).replace('.', ',')]);
   const csv = '﻿' + linhas.map(r => r.map(esc).join(';')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -760,6 +804,110 @@ function exportarCSV(){
   a.href = url; a.download = 'Produtividade_' + safe + '.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+
+// ---------------------------------------------------------------------------
+// Origem dos Atendimentos — Particular x Planos (11/08/2026)
+// ---------------------------------------------------------------------------
+// Plano é a tabela de preço que traz OMINT, SULAM ou MEDSÊNIOR no nome; o
+// resto é particular. É o MESMO teste do card de Recebimento, de propósito:
+// se um dia mudar, muda nos dois, senão o médico vê dois números para a
+// mesma coisa. MEDSÊNIOR entrou em 11/08/2026: é convênio, e a regra de
+// repasse sempre o tratou como plano (cirurgia com plano paga 85%).
+const COR_PARTICULAR = '#A18960';
+const COR_PLANO      = '#23476F';
+let chartOrigem = null;
+
+function ehPlano(tab){ return /OMINT|SULAM|MEDS[EÊ]N/i.test(tab || ''); }
+
+// A tabela mora no procedimento. O atendimento só serve de reserva, para
+// publicação antiga em que o procedimento ainda não carregava o campo.
+function _tabDe(p, a){
+  return (p && p.tabela) || (a && a.tabela) || '(sem tabela)';
+}
+
+function agruparTabelas(atends){
+  const acc = {};
+  (atends || []).forEach(a=>{
+    (a.procedimentos || []).forEach(p=>{
+      const t = _tabDe(p, a);
+      if(!acc[t]) acc[t] = {valor:0, qtd:0};
+      acc[t].valor += p.valor || 0;
+      acc[t].qtd   += p.qtd   || 1;
+    });
+  });
+  return Object.entries(acc)
+    .map(([tabela, d])=>({tabela, valor:Math.round(d.valor*100)/100, qtd:d.qtd}))
+    .sort((x,y)=>y.valor-x.valor);
+}
+
+// Uma OS pode ter procedimentos de tabelas diferentes: aparecem todas, sem repetir.
+function chipsTabela(procs, fallback){
+  const ts = [...new Set((procs||[]).map(p=>_tabDe(p, {tabela:fallback})))];
+  if(!ts.length) return '—';
+  return ts.map(t=>`<span class="tabela-chip ${ehPlano(t)?'plano':'part'}">${t}</span>`).join('');
+}
+
+function renderOrigem(atends){
+  const lista = document.getElementById('origem-lista');
+  if(!lista) return;
+  const linhas = agruparTabelas(atends);
+  const total  = linhas.reduce((s,t)=>s+t.valor, 0);
+  const plano  = linhas.filter(t=>ehPlano(t.tabela)).reduce((s,t)=>s+t.valor, 0);
+  const part   = total - plano;
+  const pct    = total>0 ? part/total : 0;
+
+  if(!linhas.length){
+    lista.innerHTML = '<div class="origem-vazio">Sem atendimentos no período selecionado.</div>';
+    if(chartOrigem){ chartOrigem.destroy(); chartOrigem = null; }
+    return;
+  }
+
+  const pills =
+    '<div class="origem-pills">' +
+    '<div class="origem-pill particular">📈 Particular: ' + br(part) +
+      ' <span style="opacity:.7">(' + (pct*100).toFixed(1) + '%)</span></div>' +
+    '<div class="origem-pill plano">🏥 Planos: ' + br(plano) +
+      ' <span style="opacity:.7">(' + ((1-pct)*100).toFixed(1) + '%)</span></div>' +
+    '</div>' +
+    '<div class="origem-bar"><div class="origem-bar-inner" style="width:100%;background:linear-gradient(90deg,' +
+      COR_PARTICULAR + ' ' + (pct*100).toFixed(1) + '%,' + COR_PLANO + ' ' + (pct*100).toFixed(1) + '%)"></div></div>';
+
+  const corpo = linhas.map(t=>{
+    const cls = ehPlano(t.tabela) ? 'plano' : 'part';
+    const rot = ehPlano(t.tabela) ? 'Plano' : 'Particular';
+    return '<div class="tabela-row">' +
+      '<div style="display:flex;align-items:center">' +
+        '<span class="tabela-nome">' + (t.tabela || '—') + '</span>' +
+        '<span class="tabela-tipo ' + cls + '">' + rot + '</span></div>' +
+      '<div style="display:flex;align-items:center">' +
+        '<span class="tabela-val">' + br(t.valor) + '</span>' +
+        '<span class="tabela-pct">' + (total>0 ? ((t.valor/total)*100).toFixed(1) : '0') + '%</span></div>' +
+      '</div>';
+  }).join('');
+
+  lista.innerHTML = pills + corpo;
+
+  const ctx = document.getElementById('chart-origem');
+  if(!ctx) return;
+  if(chartOrigem) chartOrigem.destroy();
+  chartOrigem = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels:['Particular','Planos de Saúde'],
+          datasets:[{data:[part, plano], backgroundColor:[COR_PARTICULAR, COR_PLANO],
+                     borderColor:'#fff', borderWidth:2}]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'right', labels:{font:{size:11}, boxWidth:14, padding:10, color:'#0D1E30'}},
+        tooltip:{callbacks:{label:c=>{
+          const tot = c.dataset.data.reduce((a,b)=>a+b, 0);
+          const v = c.parsed, p = tot>0 ? ((v/tot)*100).toFixed(1) : '0';
+          return ' ' + br(v) + ' (' + p + '%)';
+        }}}}
+    }
+  });
 }
 
 function render(){
@@ -810,6 +958,7 @@ function render(){
   }
 
   renderChartPagamento(pag);
+  renderOrigem(atendimentos);
 
   document.getElementById('table-count').textContent = `${atendimentos.length} registro${atendimentos.length!==1?'s':''}`;
   const tbody = document.getElementById('tbody');
@@ -820,8 +969,8 @@ function render(){
     tbody.innerHTML += `<tr>
       <td style="white-space:nowrap;color:var(--texto2)">${a.data||''}</td>
       <td><div class="paciente-nome">${a.paciente}</div><div class="proc-list">${procs}</div></td>
-      <td></td>
       <td>${badgePag(a.pagamento)}${parc}</td>
+      <td>${chipsTabela(a.procedimentos, a.tabela)}</td>
       <td class="valor-cell">${br(a.valor)}</td>
     </tr>`;
   });
