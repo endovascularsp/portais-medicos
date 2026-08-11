@@ -1206,8 +1206,14 @@ let USO = {};                       // chave -> {linhas, repasse, recebido, aber
 let FILTRO_CAT = 'cirurgia';
 
 async function carregarCatalogo(){
-  const lista = document.getElementById('cat-lista');
-  lista.innerHTML = '<div class="vazio">Carregando…</div>';
+  // O destino é o corpo da tabela ('cat-corpo'). Já foi 'cat-lista' aqui, um id
+  // que não existe: getElementById devolvia null, a linha de baixo estourava e a
+  // função morria antes de qualquer consulta — tabela vazia, contadores em branco
+  // e o bloco "Decididos caso a caso" nunca carregado, sem nenhum erro na tela.
+  const lista = document.getElementById('cat-corpo');
+  const recado = t => { lista.innerHTML =
+    `<tr><td colspan="6" style="text-align:center;padding:30px">${t}</td></tr>`; };
+  recado('Carregando…');
 
   const [c, lanc] = await Promise.all([
     sb.from('honorarios_procedimentos')
@@ -1221,10 +1227,10 @@ async function carregarCatalogo(){
     // devolve 42703. Sem esta mensagem o erro chega como "column does not exist",
     // que não diz a ninguém o que fazer.
     const falta = /column .* does not exist|42703/i.test(c.error.message || '');
-    lista.innerHTML = `<div class="vazio"><span class="ic">⚙️</span>${falta
+    recado(falta
       ? 'Falta preparar o banco: rode <b>db/migration_011_procedimentos_revisao.sql</b>'
         + ' no SQL Editor do Supabase e recarregue esta página.'
-      : 'Não consegui ler o catálogo.'}</div>`;
+      : 'Não consegui ler o catálogo.');
     if (!falta) aviso('Não consegui ler o catálogo: ' + c.error.message, true);
     return;
   }
