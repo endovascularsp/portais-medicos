@@ -170,7 +170,8 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
   <div class="main">
     <p class="intro">
       Escolhe o dia que a equipe vai confirmar e o portal monta a planilha no formato que a
-      <b>Envya</b> espera. Entram só os agendamentos com situação <b>Marcado</b> — quem já está
+      <b>Envya</b> espera. Cobre as duas unidades — <b>🏥 Endovascular SP</b> e <b>💊 Oxy Recovery</b> —
+      num arquivo só. Entram só os agendamentos com situação <b>Marcado</b> — quem já está
       <b>Confirmado</b>, <b>Remarcado</b> ou <b>Desmarcado</b> fica de fora. Os dados vêm direto do
       Saudevianet (agenda + cadastro), sem exportar relatório na mão. Se algum profissional não entra
       na confirmação, é só <b>desmarcar</b> ele no filtro <b>Profissionais</b>.
@@ -204,11 +205,21 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
 // ============================================================================
 // Confirmação de Agenda — gera o CSV de disparo em massa da Envya.
 //
-// Fluxo: agenda-svn (relatório #7 do SVN, agendamentos do dia)
+// Fluxo: agenda-svn (relatório #7 do SVN, agendamentos do dia, Endo + Oxy)
 //        -> filtra situação "Marcado"
 //        -> consolida 1 linha por paciente
 //        -> contatos-svn (relatório #12) pra buscar o telefone
 //        -> CSV UTF-8 com BOM, separador ";", quebra CRLF (formato da Envya).
+//
+// DUAS UNIDADES (12/08/2026): Endovascular SP e Oxy Recovery são instituições
+// separadas no Saudevianet, cada uma com token próprio. A edge function chama as
+// duas quando recebe `unidade=ambas` e carimba cada agendamento. O CSV sai ÚNICO,
+// com as duas agendas juntas (decisão do Thiago) — a unidade aparece só na tela,
+// porque o layout de 7 colunas da Envya não pode mudar.
+//
+// Os telefones NÃO precisam de tratamento separado: a base de pacientes do SVN é
+// comum às duas instituições (20.855 IDs em comum; 100% dos pacientes da agenda
+// Oxy estão na base da Endo, com telefone). A contatos-svn segue como estava.
 // ============================================================================
 
 const CARD_REQUERIDO = 'confirmacao_agenda';
@@ -260,6 +271,10 @@ const PROFISSIONAIS = {
   'fernanda liporaci villela zuchi': ['a Fisioterapeuta Fernanda Liporaci', 'Fisioterapeuta'],
   'maria fernanda r fernandes':    ['a Nutricionista Maria Fernanda', 'Nutricionista'],
   'julia do valle bargieri':       ['a Nutricionista Julia Bargieri', 'Nutricionista'],
+  // Oxy Recovery. No SVN ela aparece como "Juliana Olimpio" (o rótulo da agenda
+  // traz "Juliana Olimpio de Paula"). Sem título profissional, por decisão do
+  // Thiago em 12/08/2026.
+  'juliana olimpio':               ['a Juliana Olimpio',            'Estética'],
 };
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -338,12 +353,105 @@ async function sair() { await sb.auth.signOut(); location.reload(); }
 
 // ===== NORMALIZAÇÕES =====
 
-// "MÉLANIE ISABELLE SMUGA" / "mélanie isabelle smuga" -> "Mélanie"
-// A Envya usa esse campo na saudação, então vai só o primeiro nome.
-function primeiroNome(nomeCompleto) {
-  const bruto = (nomeCompleto || '').trim().split(/\s+/)[0] || '';
-  if (!bruto) return '';
-  return bruto.charAt(0).toLocaleUpperCase('pt-BR') + bruto.slice(1).toLocaleLowerCase('pt-BR');
+// Nome que vai na saudação da mensagem da Envya.
+//
+// Regra (Thiago, 12/08/2026): PRIMEIRO + ÚLTIMO nome. Quando o nome é composto,
+// PRIMEIRO + SEGUNDO — "Ana Carolina de Castro Bahia Dare" vira "Ana Carolina",
+// não "Ana Dare". Antes daqui ia só o primeiro nome.
+//
+// Como se detecta "composto": o segundo termo é nome de pessoa (lista abaixo).
+// Na dúvida cai no primeiro + último, que é a regra principal. O pior erro
+// possível é soar formal ou usar o nome do meio — nunca o nome de outra pessoa,
+// porque todo pedaço vem do cadastro do próprio paciente.
+//
+// Validado contra os 343 nomes reais da agenda de 45 dias (Endo + Oxy): 86
+// tratados como composto (25%), conferidos um a um.
+const CONECTIVOS = new Set(['de','da','do','das','dos','e','di','du','del','dello',
+                            'van','von','der','la','las','los','y','san','saint','st']);
+
+// Segundos termos que são PRENOME (=> nome composto). Só entra aqui quem é
+// inequivocamente nome de pessoa; sobrenome comum (Silva, Santos, Costa...) fica
+// de fora de propósito. Nome que não está na lista cai na regra principal.
+const PRENOMES_COMPOSTOS = new Set([
+  'maria','ana','aparecida','cristina','cristine','christina','lucia','lúcia','helena',
+  'regina','paula','paulo','luiza','luisa','luísa','beatriz','clara','fernanda','carolina',
+  'eduarda','elisa','elisabete','elizabeth','camila','bianca','vitoria','vitória','alexandra',
+  'adelina','geralda','ariela','akemi','aurora','celia','célia','eunice','emanuela','emanoela',
+  'gabriela','isabel','isabela','isabelle','julia','júlia','juliana','laura','leticia','letícia',
+  'lourdes','luana','manuela','marcia','márcia','mariana','marina','marta','natalia','natália',
+  'patricia','patrícia','rafaela','raquel','rita','rosa','rosana','sandra','sonia','sônia',
+  'silvia','sílvia','tereza','teresa','valeria','valéria','vera','yara','alice','amanda',
+  'andreia','andréia','angela','ângela','carla','caroline','cecilia','cecília','claudia','cláudia',
+  'daniela','denise','edna','eliane','fatima','fátima','flavia','flávia','gloria','glória',
+  'ines','inês','ivone','joana','jussara','katia','kátia','lea','léa','lidia','lídia','lilian',
+  'livia','lívia','luciana','madalena','marilene','marlene','michele','nadia','nádia','neide',
+  'nilza','norma','olga','priscila','renata','roberta','rosangela','rosângela','simone','solange',
+  'sueli','tatiana','telma','vania','vânia','vilma','viviane','zilda',
+  'jose','josé','joao','joão','carlos','antonio','antônio','luiz','luis','luís','pedro',
+  'francisco','augusto','cesar','césar','cezar','alberto','eduardo','henrique','felipe',
+  'miguel','gabriel','vinicius','vinícius','rafael','ricardo','roberto','rodrigo','sergio',
+  'sérgio','marcelo','marcos','marco','mario','mário','fernando','fabio','fábio','bruno',
+  'daniel','david','diego','douglas','emanuel','enrico','fabricio','gustavo',
+  'heitor','hugo','igor','ivan','jorge','julio','júlio','leonardo','lucas','manoel','manuel',
+  'mateus','matheus','mauricio','maurício','nelson','octavio','otavio','otávio','paulino',
+  'renato','samuel','tiago','thiago','victor','vitor','wagner','wilson','alfredo',
+  'edvilson','emerson','everton','geraldo','gilberto','joaquim','leandro','luciano','marcio',
+  'márcio','nicolas','osvaldo','oswaldo','raul','reinaldo','sebastiao','sebastião','valdir',
+]);
+
+// Sufixos de geração: em "João Silva Neto" o sobrenome é Silva, não Neto.
+const SUFIXOS_GERACAO = new Set(['filho','filha','neto','neta','junior','júnior','jr',
+                                 'sobrinho','segundo','terceiro']);
+
+// Composto devocional: em "Maria de Lourdes" o conectivo faz parte do nome. É a
+// exceção da regra de que quem vem depois de "de/da" é sobrenome (caso contrário
+// "Felipe de Paula Rosa Medeiros" viraria "Felipe Paula" em vez de "Felipe Medeiros").
+const DEVOCIONAIS = new Set(['lourdes','gloria','glória','gracas','graças','fatima','fátima',
+                             'conceicao','conceição','penha','socorro','carmo','jesus','aparecida']);
+const CABECAS_DEVOCIONAIS = new Set(['maria','ana','jose','josé']);
+
+const capitaliza = (p) =>
+  p.charAt(0).toLocaleUpperCase('pt-BR') + p.slice(1).toLocaleLowerCase('pt-BR');
+const semAcento = (s) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+function nomeCurto(nomeCompleto) {
+  const brutas = String(nomeCompleto || '')
+    .replace(/[^\p{L}\s'-]/gu, ' ')
+    .trim().split(/\s+/)
+    .filter(Boolean);
+
+  // Guarda quem vinha logo depois de um conectivo — "de Paula" é sobrenome.
+  const partes = [], aposConectivo = [];
+  let conectivoPendente = false;
+  for (const p of brutas) {
+    if (CONECTIVOS.has(p.toLocaleLowerCase('pt-BR'))) { conectivoPendente = true; continue; }
+    if (p.length <= 1) continue;         // inicial solta ("Maria Fernanda R Fernandes")
+    partes.push(p);
+    aposConectivo.push(conectivoPendente);
+    conectivoPendente = false;
+  }
+
+  if (!partes.length) return '';
+  if (partes.length === 1) return capitaliza(partes[0]);
+  if (partes.length === 2) return `${capitaliza(partes[0])} ${capitaliza(partes[1])}`;
+
+  const segundo = partes[1];
+  const ehPrenome = PRENOMES_COMPOSTOS.has(segundo.toLocaleLowerCase('pt-BR')) ||
+                    PRENOMES_COMPOSTOS.has(semAcento(segundo));
+  const devocional = CABECAS_DEVOCIONAIS.has(semAcento(partes[0])) &&
+                     DEVOCIONAIS.has(semAcento(segundo));
+  const ehComposto = ehPrenome && (!aposConectivo[1] || devocional);
+
+  let escolhido;
+  if (ehComposto) {
+    escolhido = segundo;
+  } else {
+    let i = partes.length - 1;
+    while (i > 1 && SUFIXOS_GERACAO.has(semAcento(partes[i]))) i--;
+    escolhido = partes[i];
+  }
+  return `${capitaliza(partes[0])} ${capitaliza(escolhido)}`;
 }
 
 // O cadastro do SVN guarda os telefones num campo texto só, separados por vírgula,
@@ -559,8 +667,9 @@ async function gerar() {
       'Authorization': `Bearer ${session?.access_token || SUPABASE_KEY}`,
     };
 
-    // 1) Agenda do dia
-    const rAg = await fetch(`${EDGE_AGENDA}?data=${DATA_SEL}`, { headers: auth });
+    // 1) Agenda do dia — as duas unidades numa chamada só (a edge function faz
+    //    as 2 consultas ao SVN em paralelo e carimba o campo `unidade`).
+    const rAg = await fetch(`${EDGE_AGENDA}?data=${DATA_SEL}&unidade=ambas`, { headers: auth });
     if (!rAg.ok) throw new Error(`Agenda: ${rAg.status} — ${(await rAg.text()).slice(0, 180)}`);
     const agendamentos = (await rAg.json()).agendamentos || [];
 
@@ -584,28 +693,35 @@ async function gerar() {
     const reais  = marcados.filter(a => !ehSala(a.nome_profissional));
     const salas  = marcados.filter(a =>  ehSala(a.nome_profissional));
 
-    const linhasBrutas = new Map();   // chave: paciente|profissional|horário
-    const chave = (id, prof, hora) => `${id}|${(prof || '').toLowerCase()}|${hora}`;
+    //    A unidade entra em todas as chaves: o mesmo paciente pode ter horário na
+    //    Endo e na Oxy, e uma sala da Oxy não pode ser absorvida por um médico da
+    //    Endo que atende no mesmo horário.
+    const linhasBrutas = new Map();   // chave: unidade|paciente|profissional|horário
+    const chave = (uni, id, prof, hora) => `${uni}|${id}|${(prof || '').toLowerCase()}|${hora}`;
 
     for (const a of reais) {
       const p = partesData(a.agen_dt_inicio);
       if (!p) continue;
       const id = String(a.pess_id || '').toUpperCase();
-      const k = chave(id, a.nome_profissional, p.hora);
+      const uni = a.unidade || 'Endovascular';
+      const k = chave(uni, id, a.nome_profissional, p.hora);
       if (!linhasBrutas.has(k)) {
-        linhasBrutas.set(k, { pess_id: id, nome: a.pess_tx_nome, medico: a.nome_profissional, ...p });
+        linhasBrutas.set(k, { pess_id: id, nome: a.pess_tx_nome,
+                              medico: a.nome_profissional, unidade: uni, ...p });
       }
     }
     // Sala sem médico no mesmo paciente+horário -> vira linha própria, sem profissional.
-    const ocupado = new Set([...linhasBrutas.values()].map(l => `${l.pess_id}|${l.hora}`));
+    const ocupado = new Set([...linhasBrutas.values()].map(l => `${l.unidade}|${l.pess_id}|${l.hora}`));
     for (const a of salas) {
       const p = partesData(a.agen_dt_inicio);
       if (!p) continue;
       const id = String(a.pess_id || '').toUpperCase();
-      if (ocupado.has(`${id}|${p.hora}`)) continue;
-      const k = chave(id, '', p.hora);
+      const uni = a.unidade || 'Endovascular';
+      if (ocupado.has(`${uni}|${id}|${p.hora}`)) continue;
+      const k = chave(uni, id, '', p.hora);
       if (!linhasBrutas.has(k)) {
-        linhasBrutas.set(k, { pess_id: id, nome: a.pess_tx_nome, medico: '', ...p });
+        linhasBrutas.set(k, { pess_id: id, nome: a.pess_tx_nome,
+                              medico: '', unidade: uni, ...p });
       }
     }
     const agendamentosConsolidados = [...linhasBrutas.values()].sort((a, b) => a.ordem - b.ordem);
@@ -630,7 +746,7 @@ async function gerar() {
       const celular = extrairCelular(contatos[p.pess_id]);
 
       const linha = {
-        Nome: primeiroNome(p.nome),
+        Nome: nomeCurto(p.nome),
         'WhatsApp Business': celular,
         Data: p.data,
         'Dia da semana': p.diaSemana,
@@ -641,6 +757,7 @@ async function gerar() {
         _medicoSVN: nomeMedico,
         _profKey: chaveProf(nomeMedico),
         _pessId: p.pess_id,
+        _unidade: p.unidade,
         _telefoneBruto: contatos[p.pess_id] || '',
       };
 
@@ -672,17 +789,26 @@ async function gerar() {
 // ===== RENDER =====
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+// Quantos itens de uma lista são de cada unidade -> "12 Endo · 3 Oxy".
+function porUnidade(lista, campo = '_unidade') {
+  const n = { Endovascular: 0, Oxy: 0 };
+  for (const x of lista) n[x[campo] || 'Endovascular'] = (n[x[campo] || 'Endovascular'] || 0) + 1;
+  return `${n.Endovascular} Endo · ${n.Oxy} Oxy`;
+}
+
 function render({ agendamentos, marcados, prontos, pendencias, multiplos, removidos = 0 }) {
   const semTelefone = pendencias.filter(p => !p['WhatsApp Business']).length;
   let h = '';
 
   h += `<div class="kpi-row">
     <div class="kpi"><div class="kpi-label">Agendamentos no dia</div>
-      <div class="kpi-val">${agendamentos.length}</div><div class="kpi-foot">todas as situações</div></div>
+      <div class="kpi-val">${agendamentos.length}</div>
+      <div class="kpi-foot">${porUnidade(agendamentos, 'unidade')}</div></div>
     <div class="kpi"><div class="kpi-label">A confirmar</div>
-      <div class="kpi-val">${marcados.length}</div><div class="kpi-foot">situação "Marcado"</div></div>
+      <div class="kpi-val">${marcados.length}</div>
+      <div class="kpi-foot">situação "Marcado" · ${porUnidade(marcados, 'unidade')}</div></div>
     <div class="kpi ok"><div class="kpi-label">Vão no CSV</div>
-      <div class="kpi-val">${prontos.length}</div><div class="kpi-foot">mensagens a disparar${
+      <div class="kpi-val">${prontos.length}</div><div class="kpi-foot">${porUnidade(prontos)}${
         removidos ? ` · ${removidos} fora pelo filtro` : ''}</div></div>
     <div class="kpi ${semTelefone ? 'alerta' : ''}"><div class="kpi-label">Ficam de fora</div>
       <div class="kpi-val">${semTelefone}</div><div class="kpi-foot">sem celular no cadastro</div></div>
@@ -708,16 +834,21 @@ function render({ agendamentos, marcados, prontos, pendencias, multiplos, removi
 
   h += `<div class="secao">
     <div class="secao-titulo">Prévia do CSV <span class="pill pill-ok">${prontos.length} linha(s)</span></div>
-    <div class="secao-sub">Exatamente o que vai no arquivo, na ordem do horário.</div>
+    <div class="secao-sub">Exatamente o que vai no arquivo, na ordem do horário.
+      A coluna <b>Unidade</b> e o nome completo aparecem só aqui, pra conferência —
+      no CSV vão as 7 colunas do modelo da Envya, sem alteração de layout.</div>
     <div class="table-scroll"><table><thead><tr>
-      <th>Nome</th><th>WhatsApp Business</th><th>Data</th><th>Dia da semana</th>
+      <th>Unidade</th><th>Nome</th><th>Nome no cadastro</th><th>WhatsApp Business</th>
+      <th>Data</th><th>Dia da semana</th>
       <th>Horário</th><th>Profissional</th><th>Especialidade</th></tr></thead><tbody>`;
   if (!prontos.length) {
-    h += `<tr><td colspan="7" class="empty">Nenhuma linha pronta.</td></tr>`;
+    h += `<tr><td colspan="9" class="empty">Nenhuma linha pronta.</td></tr>`;
   } else {
     for (const l of prontos) {
       h += `<tr>
-        <td>${esc(l.Nome)}</td>
+        <td>${l._unidade === 'Oxy' ? '💊 Oxy' : '🏥 Endo'}</td>
+        <td><b>${esc(l.Nome)}</b></td>
+        <td class="falta">${esc(l._nomeCompleto)}</td>
         <td class="mono">${esc(l['WhatsApp Business'])}</td>
         <td>${esc(l.Data)}</td>
         <td>${esc(l['Dia da semana'])}</td>
@@ -736,10 +867,11 @@ function render({ agendamentos, marcados, prontos, pendencias, multiplos, removi
         ou de atualizar o cadastro no Saudevianet. Quem só está sem o de-para do profissional entra
         no arquivo, mas com as colunas Profissional e Especialidade vazias.</div>
       <div class="table-scroll"><table><thead><tr>
-        <th>Paciente</th><th>Horário</th><th>Profissional no SVN</th>
+        <th>Unidade</th><th>Paciente</th><th>Horário</th><th>Profissional no SVN</th>
         <th>Telefone no cadastro</th><th>Motivo</th></tr></thead><tbody>`;
     for (const p of pendencias) {
       h += `<tr>
+        <td>${p._unidade === 'Oxy' ? '💊 Oxy' : '🏥 Endo'}</td>
         <td>${esc(p._nomeCompleto)}</td>
         <td>${esc(p['Horário'])}</td>
         <td>${esc(p._medicoSVN || '—')}</td>
