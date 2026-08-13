@@ -190,6 +190,38 @@
     .vazio{text-align:center;padding:36px 20px;color:var(--texto2);font-size:14px}
     .vazio .ic{font-size:34px;display:block;margin-bottom:10px}
 
+    /* ===== Aba Base de dados ===== */
+    /* A tabela é larga de propósito: são as mesmas 23 colunas do Excel que o
+       médico recebe. Rola na horizontal dentro do bloco; a página não. */
+    .bd-filtros{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+    .bd-filtros select,.bd-filtros input{padding:8px 12px;border-radius:8px;
+      border:1.5px solid var(--borda);font-size:13px;font-family:inherit;
+      color:var(--texto);background:#fff}
+    .bd-filtros input{flex:1;min-width:190px}
+    .bd-resumo{margin-left:auto;font-size:12.5px;color:var(--texto2);
+      font-variant-numeric:tabular-nums;white-space:nowrap}
+    .bd-rolagem{margin-top:14px;overflow-x:auto;border:1px solid var(--borda);
+      border-radius:10px;max-height:70vh;overflow-y:auto}
+    table.bd{border-collapse:collapse;font-size:12px;white-space:nowrap}
+    table.bd th{position:sticky;top:0;z-index:1;background:var(--navy);color:#fff;
+      font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+      padding:9px 10px;text-align:left}
+    table.bd td{padding:7px 10px;border-bottom:1px solid var(--borda);color:var(--texto)}
+    table.bd tr:nth-child(even) td{background:#FAFCFD}
+    table.bd tr:hover td{background:var(--azul-cl,#EEF4FA)}
+    table.bd td.n{text-align:right;font-variant-numeric:tabular-nums}
+    table.bd td.larga{white-space:normal;min-width:230px}
+
+    /* ===== Base do mês ===== */
+    .base-linha{display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap}
+    .base-estado{flex:1;min-width:240px;font-size:13px;color:var(--texto2);line-height:1.6}
+    .base-estado b{color:var(--texto)}
+    .base-pt{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px}
+    .base-pt.ok{background:var(--verde)} .base-pt.espera{background:var(--ambar)}
+    .base-pt.erro{background:var(--vermelho)} .base-pt.rodando{background:var(--gold);
+      animation:pulsa 1.2s ease-in-out infinite}
+    @keyframes pulsa{0%,100%{opacity:1}50%{opacity:.25}}
+
     /* ===== Passos ===== */
     .passos{display:flex;flex-direction:column;gap:10px;margin-top:16px}
     .passo{display:grid;grid-template-columns:26px 1fr auto;gap:14px;align-items:start;
@@ -346,6 +378,7 @@
       <button class="aba ativa" id="aba-fechar" onclick="trocarAba('fechar')">Fechamento do mês</button>
       <button class="aba" id="aba-regras" onclick="trocarAba('regras')">Regras de repasse</button>
       <button class="aba" id="aba-catalogo" onclick="trocarAba('catalogo')">Catálogo de procedimentos</button>
+      <button class="aba" id="aba-base" onclick="trocarAba('base')">Base de dados</button>
     </div>
 
     <!-- ================= ABA: CATÁLOGO ================= -->
@@ -514,6 +547,21 @@
 
     <div class="placar" id="placar"></div>
 
+    <!-- ---------- Base do mês ---------- -->
+    <!-- Buscar no Saudevianet e calcular deixou de ser comando de terminal em
+         13/08/2026. Roda sozinho toda madrugada; o botão serve para quem não
+         quer esperar até amanhã. Publicar continua sendo passo à parte: o
+         médico não pode ver número mudando sozinho no meio do mês. -->
+    <div class="bloco">
+      <h2>🔄 Base do mês</h2>
+      <div class="sub">Busca o movimento no Saudevianet, calcula o repasse e traz para esta tela
+        o que ficou em dúvida. Roda sozinha toda madrugada. <b>Não altera o portal de nenhum médico.</b></div>
+      <div class="base-linha">
+        <div class="base-estado" id="base-estado">Lendo…</div>
+        <button class="btn" id="btn-base" onclick="atualizarBase()">Atualizar base agora</button>
+      </div>
+    </div>
+
     <!-- ---------- Divergências ---------- -->
     <div class="bloco">
       <h2>⚖️ Divergências a decidir <span class="conta-fila" id="conta-fila">0</span></h2>
@@ -540,6 +588,36 @@
 
     </div><!-- /painel-fechar -->
 
+    <!-- ================= ABA: BASE DE DADOS ================= -->
+    <!-- Pedido do Thiago em 13/08/2026: ninguém além dele abre o Supabase, e
+         sem isto conferir um valor significa caçar a OS no Saudevianet. A base
+         inteira, na tela, nas MESMAS colunas do Excel que o médico já recebe.
+         Só leitura, e só para quem tem acesso de gestão — mostra o repasse de
+         todo o corpo clínico. -->
+    <div id="painel-base">
+      <div class="barra">
+        <label for="bd-periodo">Mês</label>
+        <select id="bd-periodo" onchange="carregarBase(this.value)"></select>
+        <button class="btn" onclick="exportarBase()">⬇ Exportar Excel</button>
+      </div>
+
+      <div class="bloco">
+        <h2>📋 Base de dados do mês</h2>
+        <div class="sub">Uma linha por procedimento, do jeito que está gravado — a tela não refaz
+          nenhuma conta. É a mesma base que alimenta os portais de Recebimento e Produtividade.</div>
+
+        <div class="bd-filtros">
+          <select id="bd-prof" onchange="pintarBase()"><option value="">Todos os profissionais</option></select>
+          <select id="bd-empresa" onchange="pintarBase()"><option value="">Todas as empresas</option></select>
+          <select id="bd-categoria" onchange="pintarBase()"><option value="">Todas as categorias</option></select>
+          <input id="bd-busca" type="text" placeholder="🔎 OS, paciente ou procedimento" oninput="pintarBase()">
+          <div class="bd-resumo" id="bd-resumo"></div>
+        </div>
+
+        <div class="bd-rolagem"><table class="bd" id="bd-tabela"></table></div>
+      </div>
+    </div><!-- /painel-base -->
+
   </div>
 </div>
 
@@ -554,6 +632,7 @@ let me = null;
 let PERIODO = null;
 let PERIODOS = [];
 let CATEGORIAS = [];   // do catálogo, para o menu de classificação
+let BD_PERIODO = null; // mês aberto na aba Base de dados, independente do resto
 let PROFISSIONAIS = [];
 let EMPRESAS_DO_PROF = {};   // nome -> Set das empresas em que ele de fato atende
 
@@ -702,10 +781,12 @@ async function checkAuth(){
 // lançamentos, pedir "os profissionais" numa tacada só trazia 17 dos 27 — e os
 // que faltavam (Dr. Gustavo, Dra. Nicole, Dr. Mateus…) sumiam do menu de "de
 // quem é este atendimento?". Silenciosamente: não há erro, a lista só vem curta.
-async function _paginado(tabela, colunas){
+async function _paginado(tabela, colunas, ajustar){
   const out = [];
   for (let de = 0; ; de += 1000){
-    const { data, error } = await sb.from(tabela).select(colunas).range(de, de + 999);
+    let q = sb.from(tabela).select(colunas);
+    if (ajustar) q = ajustar(q);          // filtro/ordem de quem chamou
+    const { data, error } = await q.range(de, de + 999);
     if (error){ aviso('Falha ao ler ' + tabela + ': ' + error.message, true); break; }
     out.push(...(data || []));
     if (!data || data.length < 1000) break;
@@ -742,6 +823,11 @@ async function iniciar(){
   const aberto = PERIODOS.filter(p => !p.congelado).slice(-1)[0];
   PERIODO = (aberto || PERIODOS[PERIODOS.length - 1] || {}).periodo_id;
   if (PERIODO) sel.value = PERIODO;
+
+  const selBd = document.getElementById('bd-periodo');
+  selBd.innerHTML = sel.innerHTML;
+  BD_PERIODO = PERIODO;
+  if (BD_PERIODO) selBd.value = BD_PERIODO;
   await trocarPeriodo(PERIODO);
 }
 
@@ -754,6 +840,10 @@ async function trocarPeriodo(pid){
   selo.textContent = p.congelado ? 'Fechado — não aceita alteração' : estado;
   await Promise.all([carregarPlacar(), carregarFila(), carregarResolvidas()]);
   montarPassos();
+  const ex = await carregarUltimaExecucao();
+  // Se caiu na tela no meio de uma rodada, acompanha até o fim sem precisar
+  // que alguém aperte F5 para descobrir o resultado.
+  if (ex && (ex.status === 'enfileirado' || ex.status === 'rodando') && !_pollBase) _vigiarBase();
 }
 
 async function carregarPlacar(){
@@ -955,18 +1045,430 @@ async function carregarResolvidas(){
   }).join('');
 }
 
+/* ===================== Base de dados ===================== */
+// As 23 colunas são as MESMAS do Excel que o médico recebe, na mesma ordem: é
+// o que deixa alguém comparar as duas coisas sem traduzir nada. Único rótulo
+// diferente — "NF" virou "Conta", porque o campo sempre trouxe a conta de
+// recebimento ("SP Itau - Endovascular") e nunca o número da nota.
+//
+// NENHUMA conta é refeita aqui. Cada célula é o que está gravado em
+// honorarios_lancamentos. Recalcular na tela criaria uma segunda verdade sobre
+// o mesmo dinheiro, e a primeira diferença entre as duas destruiria a
+// confiança que esta aba existe para criar.
+//
+// A explicação de COMO se chegou ao valor não mora aqui: mora no "Ver conta"
+// do portal do médico, que abre a base de cálculo linha a linha.
+let BASE_LINHAS = [];
+
+const MESES_PT = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+// "Cirurgias" não é empresa no banco — é a fatia da Endovascular cujas
+// categorias são de cirurgia. Mesma regra dos portais: se aqui dissesse
+// "Endovascular SP" e o portal do médico dissesse "Cirurgias", a comparação
+// já começaria torta.
+function _empresaDe(r){
+  return (r.empresa === 'Endovascular SP' && /^Cirurgia/i.test(r.categoria || ''))
+    ? 'Cirurgias' : (r.empresa || '');
+}
+function _dataBR(v){
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v || ''));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+}
+// ── Arredondamento: tem de dar EXATAMENTE o mesmo número do Excel do médico ──
+// O banco guarda a fração cheia (R$ 481,8275); o portal guarda o valor já
+// arredondado pelo gerador. Conferindo o Julho da Dra. Andrea, a diferença
+// aparecia em 8 células — pouco dinheiro e muita desconfiança.
+//
+// Duas armadilhas, as duas resolvidas aqui:
+//   1. Math.round(x*100)/100 erra por causa da multiplicação: 0,18 × 625,75 vira
+//      112,635 e sobe para 112,64, enquanto o gerador dá 112,63.
+//   2. Em valores que caem exatamente no meio (433,125 — múltiplos de 1/8 são
+//      exatos em binário), o Python arredonda para o PAR e o toFixed do
+//      JavaScript arredonda para cima. Daí 433,12 contra 433,13.
+function _r2(v){
+  const x = Number(v);
+  if (!isFinite(x)) return 0;
+  if (Number.isInteger(x * 8) && !Number.isInteger(x * 100)){
+    const cent = Math.floor(x * 100);            // empate exato: vai para o par
+    return ((cent % 2 === 0) ? cent : cent + 1) / 100;
+  }
+  return Number(x.toFixed(2));
+}
+const _num = v => (v === null || v === undefined || v === '' || isNaN(v)) ? '' : _r2(v);
+
+// O ISS não sai do campo `imposto` do banco: sai da mesma derivação que o Excel
+// do médico faz — total deduzido menos a taxa comercial. As duas colunas têm de
+// somar o total que gerou o líquido; arredondar cada parte por conta própria
+// deixava centavo fantasma sobrando na conta.
+const _iss = r => _r2(_r2((+r.imposto || 0) + (+r.taxa_comercial || 0)) - _r2(+r.taxa_comercial || 0));
+
+const BASE_COLS = [
+  { h: 'Empresa',             t: 's', w: 16, get: r => _empresaDe(r) },
+  { h: 'Mês',                 t: 's', w: 11, get: r => MESES_PT[+String(r.periodo_id || '').slice(5, 7)] || '' },
+  { h: 'Ano',                 t: 'i', w: 7,  get: r => +String(r.periodo_id || '').slice(0, 4) || '' },
+  { h: 'Nº OS',               t: 'i', w: 11, get: r => r.os_numero },
+  { h: 'Profissional',        t: 's', w: 26, get: r => r.profissional },
+  { h: 'Solicitante',         t: 's', w: 26, get: r => r.solicitante },
+  { h: 'Paciente',            t: 's', w: 30, get: r => r.paciente, larga: true },
+  { h: 'Indicação',           t: 's', w: 22, get: r => r.indicacao },
+  { h: 'Tabela',              t: 's', w: 16, get: r => r.tabela },
+  { h: 'Procedimento',        t: 's', w: 40, get: r => r.procedimento, larga: true },
+  { h: 'Categoria',           t: 's', w: 20, get: r => r.categoria },
+  { h: 'Conta',               t: 's', w: 24, get: r => r.conta_pagamento },
+  { h: 'Data emissão',        t: 'd', w: 14, get: r => _dataBR(r.data_emissao) },
+  { h: 'Data compensação',    t: 'd', w: 17, get: r => _dataBR(r.data_compensacao) },
+  { h: 'Tipo de pagamento',   t: 's', w: 20, get: r => r.tipo_pagamento },
+  { h: 'Valor recebido',      t: 'm', w: 15, get: r => _num(r.valor_recebido) },
+  { h: 'ISS (18%)',           t: 'm', w: 14, get: r => _iss(r) },
+  { h: 'Taxa comercial (2%)', t: 'm', w: 19, get: r => _num(r.taxa_comercial) },
+  { h: 'Taxa cartão (3%)',    t: 'm', w: 15, get: r => _num(r.taxa_cartao) },
+  { h: 'Custo',               t: 'm', w: 13, get: r => _num(r.custo) },
+  { h: 'Valor Líquido',       t: 'm', w: 15, get: r => _num(r.valor_liquido) },
+  { h: '% Profissional',      t: 'm', w: 15, get: r => _num(r.repasse_profissional) },
+  { h: '% Clínica',           t: 'm', w: 15, get: r => _num(r.repasse_clinica) },
+];
+
+const BD_CAMPOS = 'periodo_id,empresa,os_numero,profissional,solicitante,paciente,' +
+  'indicacao,tabela,procedimento,categoria,conta_pagamento,data_emissao,' +
+  'data_compensacao,tipo_pagamento,valor_recebido,imposto,taxa_comercial,' +
+  'taxa_cartao,custo,valor_liquido,repasse_profissional,repasse_clinica';
+
+async function carregarBase(pid){
+  BD_PERIODO = pid;
+  const tab = document.getElementById('bd-tabela');
+  tab.innerHTML = `<tr><td style="padding:26px">Carregando…</td></tr>`;
+  BASE_LINHAS = await _paginado('honorarios_lancamentos', BD_CAMPOS,
+    q => q.eq('periodo_id', pid).order('os_numero'));
+
+  // Os menus saem do próprio mês: filtro que oferece opção sem linha nenhuma
+  // faz a pessoa achar que perdeu dado.
+  const opcoes = (id, vals, rotulo) => {
+    const sel = document.getElementById(id), antes = sel.value;
+    sel.innerHTML = `<option value="">${rotulo}</option>` +
+      [...new Set(vals.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'))
+        .map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    sel.value = [...sel.options].some(o => o.value === antes) ? antes : '';
+  };
+  opcoes('bd-prof', BASE_LINHAS.map(r => r.profissional), 'Todos os profissionais');
+  opcoes('bd-empresa', BASE_LINHAS.map(_empresaDe), 'Todas as empresas');
+  opcoes('bd-categoria', BASE_LINHAS.map(r => r.categoria), 'Todas as categorias');
+  pintarBase();
+}
+
+function _bdFiltradas(){
+  const prof = document.getElementById('bd-prof').value;
+  const emp  = document.getElementById('bd-empresa').value;
+  const cat  = document.getElementById('bd-categoria').value;
+  const bus  = normalizar(document.getElementById('bd-busca').value || '');
+  return BASE_LINHAS.filter(r => {
+    if (prof && r.profissional !== prof) return false;
+    if (emp && _empresaDe(r) !== emp) return false;
+    if (cat && r.categoria !== cat) return false;
+    if (bus){
+      const alvo = normalizar(
+        `${r.os_numero || ''} ${r.paciente || ''} ${r.procedimento || ''}`);
+      if (!alvo.includes(bus)) return false;
+    }
+    return true;
+  });
+}
+
+function pintarBase(){
+  const linhas = _bdFiltradas();
+  // Soma dos valores ARREDONDADOS, não do bruto: é assim que a conta fecha com
+  // o que está no Excel do médico e no portal dele.
+  const soma = c => _r2(linhas.reduce((s, r) => s + (_r2(r[c] || 0) || 0), 0));
+  document.getElementById('bd-resumo').innerHTML =
+    `<b>${linhas.length.toLocaleString('pt-BR')}</b> linha(s) · ` +
+    `${brl(soma('valor_recebido'))} recebido · ${brl(soma('repasse_profissional'))} de repasse`;
+
+  const cab = '<thead><tr>' + BASE_COLS.map(c => `<th>${esc(c.h)}</th>`).join('') + '</tr></thead>';
+  if (!linhas.length){
+    document.getElementById('bd-tabela').innerHTML = cab +
+      `<tbody><tr><td colspan="${BASE_COLS.length}" style="padding:30px;text-align:center;color:var(--texto2)">
+        Nenhuma linha para este filtro.</td></tr></tbody>`;
+    return;
+  }
+  const corpo = linhas.map(r => '<tr>' + BASE_COLS.map(c => {
+    const v = c.get(r);
+    const cls = c.t === 'm' ? ' class="n"' : (c.larga ? ' class="larga"' : '');
+    return `<td${cls}>${esc(c.t === 'm' && v !== '' ? brl(v) : (v === null || v === undefined ? '' : v))}</td>`;
+  }).join('') + '</tr>').join('');
+  document.getElementById('bd-tabela').innerHTML = cab + '<tbody>' + corpo + '</tbody>';
+}
+
+function exportarBase(){
+  const linhas = _bdFiltradas();
+  if (!linhas.length){ aviso('Nada para exportar com este filtro.', true); return; }
+  const dados = linhas.map(r => BASE_COLS.map(c => { try { return c.get(r); } catch (e) { return ''; } }));
+  const p = PERIODOS.find(x => x.periodo_id === BD_PERIODO) || {};
+  const nome = 'Base de honorários - ' + String(p.label || BD_PERIODO).replace(/\//g, '.') + '.xlsx';
+  _downloadBin(_xlsxArquivo('Base', BASE_COLS, dados), nome);
+}
+
+/* ── Escritor de .xlsx ────────────────────────────────────────────────────────
+   Copiado de _tools/_xlsx_export_bloco.js, que é a fonte usada nos 39 portais
+   de Recebimento. Se aquele mudar, este precisa mudar junto — é o mesmo
+   arquivo que o médico recebe e o que sai daqui tem de abrir igual.
+   ──────────────────────────────────────────────────────────────────────────── */
+function _xmlEsc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function _colLetra(n){let s='';while(n>0){const r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=(n-r-1)/26;}return s;}
+
+// 'dd/mm/aaaa' -> número de série do Excel (base 1899-12-30)
+function _dataSerial(v){
+  const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(String(v||'').trim());
+  if(!m) return null;
+  return Math.round((Date.UTC(+m[3],+m[2]-1,+m[1])-Date.UTC(1899,11,30))/86400000);
+}
+
+let _CRC_TAB=null;
+function _crc32(buf){
+  if(!_CRC_TAB){
+    _CRC_TAB=new Uint32Array(256);
+    for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);_CRC_TAB[i]=c>>>0;}
+  }
+  let c=0xFFFFFFFF;
+  for(let i=0;i<buf.length;i++)c=_CRC_TAB[(c^buf[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+
+// ZIP sem compressão (método "stored") — suficiente e sem dependências
+function _zipStore(arquivos){
+  const enc=new TextEncoder(), locais=[], central=[]; let off=0;
+  arquivos.forEach(f=>{
+    const nome=enc.encode(f.nome), crc=_crc32(f.dados), n=f.dados.length;
+    const lh=new Uint8Array(30+nome.length), dv=new DataView(lh.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,n,true); dv.setUint32(22,n,true);
+    dv.setUint16(26,nome.length,true);
+    lh.set(nome,30); locais.push(lh,f.dados);
+    const ch=new Uint8Array(46+nome.length), dc=new DataView(ch.buffer);
+    dc.setUint32(0,0x02014b50,true); dc.setUint16(4,20,true); dc.setUint16(6,20,true);
+    dc.setUint16(8,0x0800,true);
+    dc.setUint32(16,crc,true); dc.setUint32(20,n,true); dc.setUint32(24,n,true);
+    dc.setUint16(28,nome.length,true); dc.setUint32(42,off,true);
+    ch.set(nome,46); central.push(ch);
+    off+=lh.length+n;
+  });
+  const cdSize=central.reduce((s,c)=>s+c.length,0);
+  const eocd=new Uint8Array(22), de=new DataView(eocd.buffer);
+  de.setUint32(0,0x06054b50,true);
+  de.setUint16(8,arquivos.length,true); de.setUint16(10,arquivos.length,true);
+  de.setUint32(12,cdSize,true); de.setUint32(16,off,true);
+  const partes=locais.concat(central,[eocd]);
+  const out=new Uint8Array(partes.reduce((s,p)=>s+p.length,0));
+  let p=0; partes.forEach(x=>{out.set(x,p);p+=x.length;});
+  return out;
+}
+
+const _FMT_BRL='_-&quot;R$&quot;\\ * #,##0.00_-;\\-&quot;R$&quot;\\ * #,##0.00_-;_-&quot;R$&quot;\\ * &quot;-&quot;??_-;_-@_-';
+
+function _xlsxEstilos(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+  '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+  '<numFmts count="2"><numFmt numFmtId="164" formatCode="'+_FMT_BRL+'"/>'+
+  '<numFmt numFmtId="165" formatCode="dd/mm/yyyy"/></numFmts>'+
+  '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font>'+
+  '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts>'+
+  '<fills count="3"><fill><patternFill patternType="none"/></fill>'+
+  '<fill><patternFill patternType="gray125"/></fill>'+
+  '<fill><patternFill patternType="solid"><fgColor rgb="FF1F3864"/><bgColor indexed="64"/></patternFill></fill></fills>'+
+  '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'+
+  '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+  '<cellXfs count="4">'+
+  '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
+  '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1">'+
+  '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>'+
+  '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'+
+  '<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'+
+  '</cellXfs>'+
+  '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'+
+  '</styleSheet>';
+}
+
+function _xlsxPlanilha(cols,linhas){
+  const larguras='<cols>'+cols.map((c,i)=>
+    '<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+c.w+'" customWidth="1"/>').join('')+'</cols>';
+  let sd='<sheetData><row r="1" ht="26" customHeight="1">'+cols.map((c,i)=>
+    '<c r="'+_colLetra(i+1)+'1" s="1" t="inlineStr"><is><t xml:space="preserve">'+_xmlEsc(c.h)+'</t></is></c>').join('')+'</row>';
+  linhas.forEach((vals,ri)=>{
+    const r=ri+2; let cells='';
+    vals.forEach((v,ci)=>{
+      if(v===null||v===undefined||v==='') return;
+      const ref=_colLetra(ci+1)+r, tipo=cols[ci].t;
+      if(tipo==='m')      cells+='<c r="'+ref+'" s="2"><v>'+(+v||0)+'</v></c>';
+      else if(tipo==='d'){
+        const s=_dataSerial(v);
+        cells+= (s!==null) ? '<c r="'+ref+'" s="3"><v>'+s+'</v></c>'
+                           : '<c r="'+ref+'" t="inlineStr"><is><t>'+_xmlEsc(v)+'</t></is></c>';
+      }
+      else if(tipo==='i'&&!isNaN(+v)) cells+='<c r="'+ref+'"><v>'+(+v)+'</v></c>';
+      else cells+='<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+_xmlEsc(v)+'</t></is></c>';
+    });
+    sd+='<row r="'+r+'">'+cells+'</row>';
+  });
+  sd+='</sheetData>';
+  const ref='A1:'+_colLetra(cols.length)+(linhas.length+1);
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+  '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+  '<dimension ref="'+ref+'"/>'+
+  '<sheetViews><sheetView workbookViewId="0">'+
+  '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'+
+  '<sheetFormatPr defaultRowHeight="15"/>'+larguras+sd+
+  '<autoFilter ref="'+ref+'"/></worksheet>';
+}
+
+function _xlsxArquivo(nomeAba,cols,linhas){
+  const enc=new TextEncoder(), b=s=>enc.encode(s);
+  const REL='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  return _zipStore([
+    {nome:'[Content_Types].xml', dados:b('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+      '<Default Extension="xml" ContentType="application/xml"/>'+
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+      '</Types>')},
+    {nome:'_rels/.rels', dados:b('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+      '<Relationship Id="rId1" Type="'+REL+'/officeDocument" Target="xl/workbook.xml"/></Relationships>')},
+    {nome:'xl/workbook.xml', dados:b('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="'+REL+'">'+
+      '<sheets><sheet name="'+_xmlEsc(nomeAba).slice(0,31)+'" sheetId="1" r:id="rId1"/></sheets></workbook>')},
+    {nome:'xl/_rels/workbook.xml.rels', dados:b('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+      '<Relationship Id="rId1" Type="'+REL+'/worksheet" Target="worksheets/sheet1.xml"/>'+
+      '<Relationship Id="rId2" Type="'+REL+'/styles" Target="styles.xml"/></Relationships>')},
+    {nome:'xl/styles.xml', dados:b(_xlsxEstilos())},
+    {nome:'xl/worksheets/sheet1.xml', dados:b(_xlsxPlanilha(cols,linhas))},
+  ]);
+}
+
+function _downloadBin(bytes,nome){
+  const blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=nome;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+
+/* ===================== Base do mês ===================== */
+// Esta tela não calcula nada: ela pede e mostra o que a rotina respondeu. Quem
+// calcula é o mesmo Python do fechamento — duas contas diferentes sobre
+// dinheiro de médico seria a pior coisa que este portal poderia ter.
+let _pollBase = null;
+
+function _quando(iso){
+  if (!iso) return 'em momento não registrado';
+  const d = new Date(iso);
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return d.toDateString() === new Date().toDateString()
+    ? `hoje às ${hora}` : `em ${d.toLocaleDateString('pt-BR')} às ${hora}`;
+}
+
+function _pintarExecucao(e){
+  const el = document.getElementById('base-estado');
+  const btn = document.getElementById('btn-base');
+  if (!el || !btn) return;
+  if (!e){
+    el.innerHTML = 'A base ainda não foi atualizada por aqui.';
+    btn.disabled = false; btn.textContent = 'Atualizar base agora';
+    return;
+  }
+  const rodando = e.status === 'enfileirado' || e.status === 'rodando';
+  btn.disabled = rodando;
+  btn.textContent = rodando ? 'Atualizando…' : 'Atualizar base agora';
+
+  const mapa = {
+    enfileirado:  ['rodando', 'Na fila para começar…'],
+    rodando:      ['rodando', 'Buscando no Saudevianet e calculando…'],
+    ok:           ['ok', `Base em dia — <b>${e.lancamentos ?? '—'}</b> lançamento(s), nenhuma divergência.`],
+    divergencias: ['espera', `<b>${e.divergencias_abertas ?? '—'}</b> divergência(s) esperando decisão logo abaixo.`],
+    erro:         ['erro', `Não deu certo: ${esc(e.mensagem || 'motivo não registrado')}`],
+  };
+  const [cor, txt] = mapa[e.status] || ['espera', esc(e.status)];
+  const quem = e.disparado_por === 'rotina'
+    ? 'pela rotina automática' : `a pedido de ${esc(e.disparado_por || '—')}`;
+  // O mês da rodada pode não ser o que está selecionado na tela — dizer qual
+  // foi evita alguém ler o resultado de Agosto achando que é de Julho.
+  const doMes = (e.periodo_id && e.periodo_id !== PERIODO && e.periodo_id !== 'auto')
+    ? ` (mês ${esc(e.periodo_id)})` : '';
+  el.innerHTML = `<span class="base-pt ${cor}"></span>${txt}<br>` +
+    `<span style="font-size:12px">Última rodada ${_quando(e.terminado_em || e.iniciado_em)}, ${quem}${doMes}.</span>`;
+}
+
+async function carregarUltimaExecucao(){
+  const { data, error } = await sb.from('honorarios_execucoes')
+    .select('id,status,periodo_id,disparado_por,iniciado_em,terminado_em,' +
+            'divergencias_abertas,lancamentos,mensagem')
+    .eq('tipo', 'base').order('iniciado_em', { ascending: false }).limit(1);
+  if (error){
+    // Enquanto a migration 012 não rodar, o resto da tela continua servindo.
+    const el = document.getElementById('base-estado');
+    if (el) el.textContent = 'Registro de execuções indisponível: ' + error.message;
+    return null;
+  }
+  const e = (data || [])[0] || null;
+  _pintarExecucao(e);
+  return e;
+}
+
+// Enquanto está rodando, a tela pergunta de dez em dez segundos. Para sozinha
+// em 15 minutos: se passou disso, alguma coisa travou e ficar perguntando não
+// resolve.
+function _vigiarBase(){
+  clearInterval(_pollBase);
+  let voltas = 0;
+  _pollBase = setInterval(async () => {
+    const e = await carregarUltimaExecucao();
+    const rodando = e && (e.status === 'enfileirado' || e.status === 'rodando');
+    if (!rodando || ++voltas > 90){
+      clearInterval(_pollBase); _pollBase = null;
+      if (e && !rodando) await trocarPeriodo(PERIODO);   // a fila mudou
+    }
+  }, 10000);
+}
+
+async function atualizarBase(){
+  const btn = document.getElementById('btn-base');
+  btn.disabled = true; btn.textContent = 'Pedindo…';
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/honorarios-atualizar-base`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY,
+                 Authorization: 'Bearer ' + (session?.access_token || '') },
+      body: JSON.stringify({ periodo: 'auto' }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.erro || ('HTTP ' + r.status));
+    aviso(j.ja_rodando
+      ? 'Já havia uma atualização em andamento — acompanhando essa.'
+      : 'Atualização pedida. Costuma levar alguns minutos.');
+  } catch (err) {
+    aviso('Não consegui pedir a atualização: ' + err.message, true);
+    btn.disabled = false; btn.textContent = 'Atualizar base agora';
+    return;
+  }
+  await carregarUltimaExecucao();
+  _vigiarBase();
+}
+
 /* ===================== Passos ===================== */
 function montarPassos(){
   const fila = Number(document.getElementById('conta-fila').textContent || 0);
   const p = PERIODOS.find(x => x.periodo_id === PERIODO) || {};
   const passos = [
     ['Buscar o movimento no Saudevianet',
-     'Puxa o relatório de comissões direto pela API, sem exportar planilha.',
-     `python _tools/_svn_puxar_560.py --instituicao endo --de ${PERIODO} --ate ${PERIODO} --filtro-data baix_dt_recebimento`,
-     'ok', 'No computador'],
+     'Puxa o relatório de comissões direto pela API, sem exportar planilha. ' +
+     'Roda sozinho toda madrugada — ou no botão "Atualizar base agora", aqui em cima.',
+     '', 'ok', 'Automático'],
     ['Calcular o repasse',
-     'Aplica imposto, taxas e o percentual de cada regra. O que não souber resolver vem parar nesta tela.',
-     '', 'ok', 'No computador'],
+     'Aplica imposto, taxas e o percentual de cada regra. O que não souber resolver vem parar nesta tela. ' +
+     'Vai junto com o passo 1.',
+     '', 'ok', 'Automático'],
     ['Decidir as divergências',
      fila ? `${fila} esperando decisão logo acima.` : 'Nada pendente.',
      '', fila ? 'espera' : 'ok', 'Aqui nesta tela'],
@@ -992,6 +1494,12 @@ function montarPassos(){
 /* ===================== Abas ===================== */
 function trocarAba(qual){
   document.getElementById('painel-fechar').style.display = qual === 'fechar' ? '' : 'none';
+  document.getElementById('painel-base').style.display = qual === 'base' ? '' : 'none';
+  document.getElementById('aba-base').classList.toggle('ativa', qual === 'base');
+  // A base só é buscada quando alguém abre a aba: são mais de mil linhas por
+  // mês, e carregar isso na abertura da tela atrasaria o que o portal faz
+  // todo dia, que é decidir divergência.
+  if (qual === 'base' && !BASE_LINHAS.length) carregarBase(document.getElementById('bd-periodo').value);
   document.getElementById('painel-regras').style.display = qual === 'regras' ? 'flex' : 'none';
   document.getElementById('painel-catalogo').style.display = qual === 'catalogo' ? 'flex' : 'none';
   document.getElementById('aba-fechar').classList.toggle('ativa', qual === 'fechar');

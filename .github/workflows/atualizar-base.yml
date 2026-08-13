@@ -1,0 +1,73 @@
+# Atualiza a base de honorários do mês aberto — sem publicar nada.
+#
+# Faz o que antes alguém fazia no terminal: busca o movimento do mês no
+# Saudevianet, calcula o repasse, põe o banco em dia e manda o que ficou em
+# dúvida para a fila de divergências do card de Fechamento.
+#
+# NÃO ESCREVE EM PORTAL DE MÉDICO. Publicar é um passo separado e deliberado —
+# mês em aberto é verdade parcial e o médico não pode ver número mudando
+# sozinho no meio do mês.
+#
+# Três formas de disparar:
+#   · schedule ............ toda madrugada, sem ninguém apertar nada;
+#   · workflow_dispatch ... na mão, pela aba Actions do GitHub;
+#   · repository_dispatch . o botão "Atualizar base" do portal.
+name: Atualizar base de honorários
+
+on:
+  schedule:
+    # 06:00 UTC = 03:00 em Brasília. O cron do GitHub é sempre UTC.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      periodo:
+        description: "AAAA-MM, ou 'auto' para o mês aberto"
+        required: false
+        default: 'auto'
+  repository_dispatch:
+    types: [atualizar-base]
+
+# Duas rodadas ao mesmo tempo escreveriam no mesmo período. A segunda espera.
+concurrency:
+  group: honorarios-base
+  cancel-in-progress: false
+
+jobs:
+  base:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install pandas openpyxl
+
+      - name: Atualizar a base do mês aberto
+        env:
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SVN_TOKEN:           ${{ secrets.SVN_TOKEN }}
+          SVN_TOKEN_OXY:       ${{ secrets.SVN_TOKEN_OXY }}
+          # O cache do SVN vive na máquina do Thiago; aqui é descartável.
+          SVN_CACHE_DIR: ${{ runner.temp }}/svn_560_cache
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: '1'
+          # Os três chegam por variável, não interpolados no meio do shell:
+          # client_payload é entrada de fora, e ${{ }} solto numa linha de
+          # comando é porta de injeção.
+          PERIODO: ${{ github.event.inputs.periodo || github.event.client_payload.periodo || 'auto' }}
+          QUEM: ${{ github.event.client_payload.disparado_por || 'rotina' }}
+          EXEC: ${{ github.event.client_payload.execucao_id }}
+        run: |
+          if [ -n "$EXEC" ]; then
+            python _tools/_honorarios_fechar.py --periodo "$PERIODO" --so-base \
+              --escrever --abrir-se-preciso --disparado-por "$QUEM" --execucao-id "$EXEC"
+          else
+            python _tools/_honorarios_fechar.py --periodo "$PERIODO" --so-base \
+              --escrever --abrir-se-preciso --disparado-por "$QUEM"
+          fi

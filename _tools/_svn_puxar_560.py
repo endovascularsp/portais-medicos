@@ -33,7 +33,10 @@ import urllib.request
 from pathlib import Path
 
 ENV = Path(r"C:\Users\thiag\Documents\Endovascular_Farmer\.env")
-SAIDA = Path(r"C:\Users\thiag\Documents\Endovascular_Farmer\svn_560_cache")
+# Onde ficam os JSON baixados. Fora desta máquina (GitHub Actions) o caminho do
+# OneDrive não existe: SVN_CACHE_DIR manda, quando estiver definido.
+SAIDA = Path(os.environ.get("SVN_CACHE_DIR")
+             or r"C:\Users\thiag\Documents\Endovascular_Farmer\svn_560_cache")
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 JANELA = 5   # dias por requisição
@@ -44,6 +47,13 @@ VAR = {"endo": "SVN_TOKEN", "oxy": "SVN_TOKEN_OXY"}
 
 def token(instituicao: str) -> str:
     nome = VAR[instituicao]
+    # Ambiente ganha do arquivo: é assim que a rotina automática recebe o token
+    # sem que ele exista em disco em lugar nenhum.
+    do_ambiente = os.environ.get(nome)
+    if do_ambiente:
+        return do_ambiente.strip()
+    if not ENV.exists():
+        raise SystemExit(f"ABORTADO: {nome} não está no ambiente e {ENV} não existe.")
     txt = ENV.read_text(encoding="utf-8", errors="replace")
     m = re.search(rf"^\s*{nome}\s*=\s*(.+)$", txt, re.M)
     if not m:
@@ -79,12 +89,13 @@ def meses(de: str, ate: str):
         a = prox
 
 
-def main(de: str, ate: str, filtro_data: str, instituicao: str):
+def main(de: str, ate: str, filtro_data: str, instituicao: str,
+         refazer: bool = False):
     tok = token(instituicao)
-    SAIDA.mkdir(exist_ok=True)
+    SAIDA.mkdir(parents=True, exist_ok=True)
     for pid, ini, fim in meses(de, ate):
         alvo = SAIDA / f"560_{instituicao}_{pid}_{filtro_data}.json"
-        if alvo.exists():
+        if alvo.exists() and not refazer:
             n = len(json.loads(alvo.read_text(encoding="utf-8")))
             print(f"  {pid}  já em cache ({n} registros)")
             continue
@@ -104,6 +115,11 @@ if __name__ == "__main__":
     ap.add_argument("--ate", required=True)
     ap.add_argument("--filtro-data", default="baix_dt_pagamento")
     ap.add_argument("--instituicao", default="endo", choices=list(VAR))
+    # O mês FECHADO nunca muda, e por isso o cache existe. O mês EM ABERTO muda
+    # todo dia: reaproveitar o arquivo baixado de manhã faria a rotina da noite
+    # recalcular em cima de dado velho e jurar que está em dia.
+    ap.add_argument("--refazer", action="store_true",
+                    help="ignora o cache e busca de novo (use no mês em aberto)")
     a = ap.parse_args()
     print(f"Relatório #560 · {a.instituicao} · {a.de} a {a.ate} · filtro_data={a.filtro_data}")
-    main(a.de, a.ate, a.filtro_data, a.instituicao)
+    main(a.de, a.ate, a.filtro_data, a.instituicao, a.refazer)

@@ -21,8 +21,18 @@ PAGINA = 1000
 
 
 def _cred() -> tuple:
+    # Fora desta máquina — GitHub Actions, por exemplo — não existe .env: as
+    # credenciais chegam por variável de ambiente. O ambiente ganha do arquivo,
+    # para que o mesmo script rode nos dois lugares sem edição.
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_KEY")
+    if url and key:
+        return url.rstrip("/"), key
+
     if not ENV.exists():
-        raise SystemExit(f"ABORTADO: {ENV} não encontrado.")
+        raise SystemExit(
+            f"ABORTADO: {ENV} não encontrado e SUPABASE_URL/SUPABASE_SERVICE_KEY "
+            "não estão no ambiente.")
     txt = ENV.read_text(encoding="utf-8", errors="replace")
     def pega(nome):
         m = re.search(rf"^\s*{nome}\s*=\s*(.+)$", txt, re.M)

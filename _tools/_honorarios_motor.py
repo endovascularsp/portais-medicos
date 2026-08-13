@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import sys
 import unicodedata
 from collections import Counter
@@ -30,7 +31,8 @@ import _honorarios_catalogo as _cat  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 # Onde `_svn_puxar_560.py` grava o que baixa da API do SVN.
-CACHE_SVN = Path.home() / "Documents" / "Endovascular_Farmer" / "svn_560_cache"
+CACHE_SVN = Path(os.environ["SVN_CACHE_DIR"]) if os.environ.get("SVN_CACHE_DIR") \
+    else Path.home() / "Documents" / "Endovascular_Farmer" / "svn_560_cache"
 # A constante da planilha saiu em 07/08/2026: o motor não abre mais o Excel.
 # O catálogo vem do Supabase (ver _honorarios_catalogo.carregar).
 
