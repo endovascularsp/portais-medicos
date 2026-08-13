@@ -18,7 +18,10 @@ const _XLSX_COLS = [
   {h:'Tabela',            t:'s', w:16, get:a=>a['Tabela']},
   {h:'Procedimento',      t:'s', w:40, get:a=>a['Procedimento']},
   {h:'Categoria',         t:'s', w:20, get:a=>a['Categoria']},
-  {h:'NF',                t:'s', w:24, get:a=>a['NF']},
+  // O campo sempre trouxe a CONTA de recebimento ("SP Itau - Endovascular"),
+  // nunca o número da nota. Rótulo corrigido em 13/08/2026, a pedido do Thiago;
+  // o campo do PDATA continua 'NF' para não obrigar a republicar mês nenhum.
+  {h:'Conta',             t:'s', w:24, get:a=>a['NF']},
   {h:'Data emissão',      t:'d', w:14, get:a=>a['Data emissão']||a['Data agendamento']},
   {h:'Data compensação',  t:'d', w:17, get:a=>a['Data compensação']},
   {h:'Tipo de pagamento', t:'s', w:20, get:a=>a['Tipo de pagamento']},

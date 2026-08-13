@@ -43,7 +43,9 @@ RANGE_PARA = (
 
 def alvos():
     if len(sys.argv) > 1 and not sys.argv[1].startswith("--"):
-        return [RAIZ / a for a in sys.argv[1:]]
+        # As flags convivem com o nome do arquivo: sem este filtro,
+        # "portal.html --resync" tentava abrir um arquivo chamado "--resync".
+        return [RAIZ / a for a in sys.argv[1:] if not a.startswith("--")]
     return sorted(
         p for p in RAIZ.rglob("*.html")
         if ".git" not in p.parts and "exportarCSVProf" in p.read_text(encoding="utf-8", errors="ignore")
