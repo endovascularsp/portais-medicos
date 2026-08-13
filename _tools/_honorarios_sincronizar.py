@@ -40,17 +40,24 @@ CHAVE = ["empresa", "os_numero", "procedimento", "data_compensacao",
          "valor_recebido", "profissional", "seq"]
 
 
+# O valor entra na chave com 4 casas, que é a precisão da coluna
+# (numeric(14,4)) e a que o Saudevianet devolve. Arredondar para 2 aqui juntava
+# linhas que o banco considera distintas: em Agosto/2026, duas parcelas de
+# "Laser" da mesma OS, R$ 238,0957 e R$ 238,1014, viravam a mesma chave e a
+# sincronização abortava com "chave natural repetida". O motor sempre usou o
+# valor cheio para numerar o `seq`; eram as duas pontas discordando do que faz
+# uma linha ser única.
 def k_api(r) -> tuple:
     return (str(r["empresa"]), str(r["os_numero"]).strip(),
             str(r["procedimento"] or "").strip(), str(r["data_compensacao"])[:10],
-            f"{round(float(r['valor_recebido'] or 0), 2):.2f}",
+            f"{round(float(r['valor_recebido'] or 0), 4):.4f}",
             str(r["profissional"] or "").strip(), int(r["seq"]))
 
 
 def k_db(r) -> tuple:
     return (str(r["empresa"]), str(r["os_numero"]).strip(),
             str(r["procedimento"] or "").strip(), str(r["data_compensacao"])[:10],
-            f"{round(float(r['valor_recebido'] or 0), 2):.2f}",
+            f"{round(float(r['valor_recebido'] or 0), 4):.4f}",
             str(r["profissional"] or "").strip(), int(r["seq"] or 1))
 
 
