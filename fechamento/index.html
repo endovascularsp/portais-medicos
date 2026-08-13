@@ -200,9 +200,12 @@
     .bd-filtros input{flex:1;min-width:190px}
     .bd-resumo{margin-left:auto;font-size:12.5px;color:var(--texto2);
       font-variant-numeric:tabular-nums;white-space:nowrap}
+    /* A página toda é travada em 1000px, largura boa para ler texto e apertada
+       demais para 23 colunas. A trava sai só nesta aba. */
+    .wrap.largo{max-width:none}
     .bd-rolagem{margin-top:14px;overflow-x:auto;border:1px solid var(--borda);
-      border-radius:10px;max-height:70vh;overflow-y:auto}
-    table.bd{border-collapse:collapse;font-size:12px;white-space:nowrap}
+      border-radius:10px;max-height:76vh;overflow-y:auto}
+    table.bd{border-collapse:collapse;font-size:12px;white-space:nowrap;min-width:100%}
     table.bd th{position:sticky;top:0;z-index:1;background:var(--navy);color:#fff;
       font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
       padding:9px 10px;text-align:left}
@@ -1496,6 +1499,9 @@ function trocarAba(qual){
   document.getElementById('painel-fechar').style.display = qual === 'fechar' ? '' : 'none';
   document.getElementById('painel-base').style.display = qual === 'base' ? '' : 'none';
   document.getElementById('aba-base').classList.toggle('ativa', qual === 'base');
+  // Só a Base de dados usa a tela inteira; as outras três continuam em coluna
+  // estreita, que é o que faz texto ser legível.
+  document.querySelector('.wrap').classList.toggle('largo', qual === 'base');
   // A base só é buscada quando alguém abre a aba: são mais de mil linhas por
   // mês, e carregar isso na abertura da tela atrasaria o que o portal faz
   // todo dia, que é decidir divergência.
