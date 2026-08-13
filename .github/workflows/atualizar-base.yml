@@ -39,10 +39,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Sem `cache: pip`: o cache exige um requirements.txt, e este repositório
+      # é um site estático — Python aqui é ferramenta de manutenção, não
+      # projeto. Instalar do zero custa uns 20 segundos por rodada.
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: pip
 
       - name: Instalar dependências
         run: pip install pandas openpyxl
