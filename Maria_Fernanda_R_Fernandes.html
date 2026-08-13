@@ -428,6 +428,10 @@ body{background:#EEF2F6;}
 .tab:hover:not(.active){border-color:#A18960;color:#fff;}
 .tab.active{background:#A18960;border-color:#A18960;color:#0B1F3A;}
 </style>
+<style id='coluna-os'>
+.atend-table th.os-col,.atend-table td.os-col{white-space:nowrap;width:1%;
+  font-variant-numeric:tabular-nums;color:var(--texto-secundario);}
+</style>
 </head>
 <body>
 <div class='login-overlay' id='login-overlay'>
@@ -453,7 +457,6 @@ body{background:#EEF2F6;}
   <div class='header-actions'>
     <a href='hub/Maria_Fernanda_R_Fernandes_Hub.html' class='header-action-btn home'>🏠 Home</a>
     <button class='header-action-btn' onclick='exportarCSVProf()' title='Exportar planilha Excel do período'>⬇ Excel</button>
-    <button class='header-action-btn' onclick='window.print()' title='Imprimir página'>🖨️ Imprimir</button>
     <span id='header-periodo' style='font-size:13px;opacity:0.85;margin-left:6px;'></span>
   </div>
 </header>
@@ -527,7 +530,6 @@ body{background:#EEF2F6;}
         <div><h2 id='prof-nome'></h2><span id='prof-periodo'></span></div>
         <div class='prof-header-actions'>
           <button class='btn-export' onclick='exportarCSVProf()'>&#11123; Exportar Excel</button>
-          <button class='btn-export' onclick='window.print()'>&#128438; Imprimir</button>
           <div class='prof-avatar' id='prof-avatar'></div>
         </div>
       </div>
@@ -545,7 +547,7 @@ body{background:#EEF2F6;}
         <div class='section-title'>&#128203; Atendimentos <span class='badge' id='badge-atend'></span></div>
         <div class='table-scroll'>
           <table class='atend-table'><thead><tr>
-            <th>Paciente</th><th>Procedimento</th><th>Categoria</th>
+            <th class='os-col'>Nº OS</th><th>Paciente</th><th>Procedimento</th><th>Categoria</th>
             <th>Pagamento</th><th>Data</th>
             <th class='r'>Vr. Recebido</th><th class='r'>Vr. L&#237;quido</th><th class='r'>Repasse</th>
             <th class='c'>Conta</th>
@@ -841,9 +843,9 @@ function mostrarProf(id,btnEl){
   const atends=d.atendimentos||[];
   _ATEND_NA_TELA = atends;   // o botão "Ver conta" indexa nesta lista
   document.getElementById('body-atend').innerHTML=atends.length===0
-    ?'<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--texto-secundario)">Sem atendimentos</td></tr>'
+    ?'<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--texto-secundario)">Sem atendimentos</td></tr>'
     : atends.map((a,i)=>'<tr>'+
-        '<td>'+(a.Paciente||'—')+'</td><td>'+(a.Procedimento||'—')+'</td>'+
+        '<td class="os-col">'+(a['Nº OS']||'—')+'</td>'+'<td>'+(a.Paciente||'—')+'</td><td>'+(a.Procedimento||'—')+'</td>'+
         '<td><span class="cat-badge">'+(a.Categoria||'—')+'</span></td>'+
         '<td>'+(a['Tipo de pagamento']||'—')+'</td><td>'+(a['Data agendamento']||'—')+'</td>'+
         '<td class="r">'+fmtBRL(a['Valor recebido'])+'</td>'+
@@ -921,21 +923,15 @@ const _XLSX_COLS = [
   {h:'Tabela',            t:'s', w:16, get:a=>a['Tabela']},
   {h:'Procedimento',      t:'s', w:40, get:a=>a['Procedimento']},
   {h:'Categoria',         t:'s', w:20, get:a=>a['Categoria']},
-  {h:'NF',                t:'s', w:24, get:a=>a['NF']},
+  // O campo sempre trouxe a CONTA de recebimento ("SP Itau - Endovascular"),
+  // nunca o número da nota. Rótulo corrigido em 13/08/2026, a pedido do Thiago;
+  // o campo do PDATA continua 'NF' para não obrigar a republicar mês nenhum.
+  {h:'Conta',             t:'s', w:24, get:a=>a['NF']},
   {h:'Data emissão',      t:'d', w:14, get:a=>a['Data emissão']||a['Data agendamento']},
   {h:'Data compensação',  t:'d', w:17, get:a=>a['Data compensação']},
   {h:'Tipo de pagamento', t:'s', w:20, get:a=>a['Tipo de pagamento']},
   {h:'Valor recebido',    t:'m', w:15, get:a=>a['Valor recebido']},
-    // Ate Maio/2026 a taxa comercial nao existia e o total era so ISS; por
-  // isso, quando o detalhe nao vem gravado, o total inteiro cai em ISS e a
-  // taxa fica zerada. As duas colunas sempre somam o antigo 'Imposto (18%)'.
-{h:'ISS (18%)',         t:'m', w:14,
-   // Derivado do total, nao do ISS gravado: cada parte foi arredondada
-   // separadamente, entao em 26 linhas do semestre a soma das duas dava
-   // 1 centavo a mais ou a menos que o total que gerou o Valor Liquido.
-   // Assim as colunas sempre fecham com o liquido, sem centavo fantasma.
-   get:a=>Math.round(((a['Imposto (18%)']||0)-(a['Taxa comercial (2%)']||0))*100)/100},
-{h:'Taxa comercial (2%)', t:'m', w:19, get:a=>a['Taxa comercial (2%)']||0},
+  {h:'Imposto (18%)',     t:'m', w:15, get:a=>a['Imposto (18%)']},
   {h:'Taxa cartão (3%)',  t:'m', w:15, get:a=>a['Taxa cartão (3%)']},
   {h:'Custo',             t:'m', w:13, get:a=>a['Custo']},
   {h:'Valor Líquido',     t:'m', w:15, get:a=>a['Valor Líquido']},
@@ -1458,7 +1454,7 @@ function abrirBase(i){
     _idItem('Tabela',     a.Tabela) +
     _idItem('Pagamento',  a['Tipo de pagamento']) +
     _idItem('Compensado', a['Data compensação']) +
-    _idItem('Nota fiscal', a.NF) +
+    _idItem('Conta', a.NF) +
     _idItem('Indicação',  a['Indicação']) +
     '</dl>';
 

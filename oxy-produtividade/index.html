@@ -483,6 +483,9 @@ html[style*="visible"] #boot{display:none;}
 .tabela-chip.part{background:#F5F0E6;color:#8A7348;}
 .tabela-chip.plano{background:#E7EDF5;color:#23476F;}
 </style>
+<style id='coluna-os'>
+.os-col{white-space:nowrap;width:1%;font-variant-numeric:tabular-nums;color:var(--texto2);}
+</style>
 </head>
 <body>
 <!--boot-spinner-v1--><div id="boot"><div class="sp"></div><div class="tx">Carregando dados…</div></div>
@@ -1019,7 +1022,7 @@ function coletarAtendimentos(pids, pf){
       if(Array.isArray(r.atendimentos)){
         r.atendimentos.forEach(a=>{
           linhas.push({
-            prof:nome, data:a.data||'', data_iso:a.data_iso||'',
+            prof:nome, os:a.os||'', data:a.data||'', data_iso:a.data_iso||'',
             paciente:a.paciente||'',
             procArr:(a.procedimentos||[]),
             pagamento:a.pagamento||'', parcelas:a.parcelas||1, valor:a.valor||0,
@@ -1164,22 +1167,22 @@ function renderPacientes(){
     return;
   }
   const showProf = !pf;
-  const head = `<tr>${showProf?'<th>Profissional</th>':''}<th>Data</th><th>Paciente</th><th>Pagamento</th><th>Tabela de preço</th><th style='text-align:right'>Valor</th></tr>`;
+  const head = `<tr><th class='os-col'>OS</th>${showProf?'<th>Profissional</th>':''}<th>Data</th><th>Paciente</th><th>Pagamento</th><th>Tabela de preço</th><th style='text-align:right'>Valor</th></tr>`;
   const body = linhas.map(l=>{
     const procs = l.procArr.map(p=>`<div class="proc-item">• ${p.nome}${p.qtd>1?' ('+p.qtd+')':''}</div>`).join('');
     const parc  = l.parcelas>1?`<div class="parc-badge">📅 ${l.parcelas}x</div>`:'';
-    return `<tr>${showProf?`<td class='pac-prof'>${l.prof}</td>`:''}<td style="white-space:nowrap;color:var(--texto2)">${l.data}</td><td><div class="paciente-nome">${l.paciente}</div><div class="proc-list">${procs}</div></td><td>${badgePag(l.pagamento)}${parc}</td><td>${chipsTabela(l.procArr, l.tabela)}</td><td class="valor-cell">${br(l.valor)}</td></tr>`;
+    return `<tr><td class='os-col'>${l.os||'—'}</td>${showProf?`<td class='pac-prof'>${l.prof}</td>`:''}<td style="white-space:nowrap;color:var(--texto2)">${l.data}</td><td><div class="paciente-nome">${l.paciente}</div><div class="proc-list">${procs}</div></td><td>${badgePag(l.pagamento)}${parc}</td><td>${chipsTabela(l.procArr, l.tabela)}</td><td class="valor-cell">${br(l.valor)}</td></tr>`;
   }).join('');
   det.innerHTML = `<table><thead>${head}</thead><tbody>${body}</tbody></table>${avisoSem}`;
 }
 
 function exportarPacientesCSV(){
   if(!_pacLast.length){ alert('Nada para exportar no período/filtro atual.'); return; }
-  const head = ['Profissional','Data','Paciente','Procedimentos','Pagamento','Tabela de preço','Parcelas','Valor'];
+  const head = ['OS','Profissional','Data','Paciente','Procedimentos','Pagamento','Tabela de preço','Parcelas','Valor'];
   const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
   const procStr = l => l.procArr.map(p=>p.qtd>1?`${p.nome} (${p.qtd})`:p.nome).join(' | ');
   const tabStr = l => [...new Set((l.procArr||[]).map(p=>_tabDe(p, l)))].join(' | ');
-  const linhas = _pacLast.map(l=>[l.prof,l.data,l.paciente,procStr(l),l.pagamento,tabStr(l),l.parcelas,l.valor.toFixed(2).replace('.',',')].map(esc).join(';'));
+  const linhas = _pacLast.map(l=>[l.os,l.prof,l.data,l.paciente,procStr(l),l.pagamento,tabStr(l),l.parcelas,l.valor.toFixed(2).replace('.',',')].map(esc).join(';'));
   const csv = '﻿'+head.map(esc).join(';')+'\n'+linhas.join('\n');
   const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a = document.createElement('a');

@@ -409,6 +409,9 @@ body{background:#EEF2F6;}
 .tabela-chip.part{background:#F5F0E6;color:#8A7348;}
 .tabela-chip.plano{background:#E7EDF5;color:#23476F;}
 </style>
+<style id='coluna-os'>
+.os-col{white-space:nowrap;width:1%;font-variant-numeric:tabular-nums;color:var(--texto2);}
+</style>
 </head>
 <body>
 
@@ -509,6 +512,7 @@ body{background:#EEF2F6;}
         <table>
           <thead>
             <tr>
+              <th class='os-col'>OS</th>
               <th>Data</th>
               <th>Paciente</th>
               <th>Pagamento</th>
@@ -756,17 +760,17 @@ function exportarCSV(){
     let s = (v == null ? '' : String(v));
     return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
-  const linhas = [['Data','Paciente','Procedimentos','Forma de Pagamento','Tabela de preço','Parcelas','Valor (R$)']];
+  const linhas = [['OS','Data','Paciente','Procedimentos','Forma de Pagamento','Tabela de preço','Parcelas','Valor (R$)']];
   let totalGeral = 0;
   (atendimentos || []).forEach(a => {
     const procs = (a.procedimentos || []).map(p => p.nome + (p.qtd > 1 ? ' (' + p.qtd + ')' : '')).join(' | ');
     const valor = Number(a.valor) || 0; totalGeral += valor;
     const tabs = [...new Set((a.procedimentos || []).map(p => _tabDe(p, a)))].join(' | ');
-    linhas.push([ a.data || '', a.paciente || '', procs, a.pagamento || '', tabs,
+    linhas.push([ a.os || '', a.data || '', a.paciente || '', procs, a.pagamento || '', tabs,
                   (a.parcelas || 1), valor.toFixed(2).replace('.', ',') ]);
   });
   linhas.push([]);
-  linhas.push(['', '', '', '', '', 'TOTAL', totalGeral.toFixed(2).replace('.', ',')]);
+  linhas.push(['', '', '', '', '', '', 'TOTAL', totalGeral.toFixed(2).replace('.', ',')]);
   const csv = '﻿' + linhas.map(r => r.map(esc).join(';')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -938,6 +942,7 @@ function render(){
     const procs = (a.procedimentos||[]).map(p=>`<div class="proc-item">• ${p.nome}${p.qtd>1?' ('+p.qtd+')':''}</div>`).join('');
     const parc  = a.parcelas>1?`<div class="parc-badge">📅 ${a.parcelas}x</div>`:'';
     tbody.innerHTML += `<tr>
+      <td class="os-col">${a.os||'—'}</td>
       <td style="white-space:nowrap;color:var(--texto2)">${a.data||''}</td>
       <td><div class="paciente-nome">${a.paciente}</div><div class="proc-list">${procs}</div></td>
       <td>${badgePag(a.pagamento)}${parc}</td>
