@@ -310,7 +310,7 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
       <div class="cards-checks">
         <label class="card-check"><input type="checkbox" value="gestor_recebimento"/><span>💰 Recebimento</span></label>
         <label class="card-check"><input type="checkbox" value="gestor_produtividade"/><span>📈 Produtividade</span></label>
-        <label class="card-check"><input type="checkbox" value="gestor_fechamento"/><span>🧮 Fechamento</span></label>
+        <label class="card-check"><input type="checkbox" value="gestor_fechamento" onchange="fechamentoTrazDados(this)"/><span>🧮 Fechamento (tela + dados)</span></label>
         <label class="card-check"><input type="checkbox" value="gestor_insights"/><span>📊 Insights</span></label>
         <label class="card-check"><input type="checkbox" value="gestor_dashboard_op"/><span>📡 Dashboard Operacional</span></label>
         <label class="card-check"><input type="checkbox" value="gestor_fotona"/><span>💎 Beauty Legs</span></label>
@@ -328,7 +328,14 @@ html,body{overflow-x:hidden!important;max-width:100vw;}
 
       <div class="cards-grupo-label">💵 Financeiro</div>
       <div class="cards-checks">
-        <label class="card-check"><input type="checkbox" value="honorarios"/><span>💵 Fechamento de Honorários</span></label>
+        <!-- Este card NÃO abre tela nenhuma: é a permissão de LER as tabelas de
+             honorários no banco (a RLS de todas elas é `is_admin_user() OR
+             has_card('honorarios')`). Em 14/08/2026 o Thiago marcou só o
+             "🧮 Fechamento" para a Micaele e a aba abriu vazia, sem erro — os
+             dois rótulos diziam "Fechamento" e nada indicava que eram metades
+             do mesmo acesso. Agora um traz o outro; este ficou visível só para
+             dar para tirar, e para não sumir de quem já tem. -->
+        <label class="card-check"><input type="checkbox" value="honorarios"/><span>💵 Dados de honorários <i style="opacity:.6;font-style:normal">— vem junto com o Fechamento</i></span></label>
       </div>
 
       <div class="cards-grupo-label">🛒 Compras</div>
@@ -550,6 +557,16 @@ function editar(email) {
 
 function fecharModal() { $('modal').classList.remove('show'); }
 
+// Marcar "🧮 Fechamento" marca também "💵 Dados de honorários": são as duas
+// metades do mesmo acesso (a tela e a permissão de ler as tabelas). Desmarcar
+// NÃO tira o outro — pode haver quem precise só dos dados, e tirar acesso por
+// efeito colateral é pior do que deixar sobrando.
+function fechamentoTrazDados(el){
+  if (!el.checked) return;
+  const dados = document.querySelector('.cards-checks input[value="honorarios"]');
+  if (dados && !dados.checked) dados.checked = true;
+}
+
 async function salvar() {
   const email = $('f-email').value.trim().toLowerCase();
   const name = $('f-name').value.trim();
@@ -557,6 +574,11 @@ async function salvar() {
   const slug = $('f-slug').value.trim() || null;
   const senha = $('f-senha').value.trim();
   const cards = [...document.querySelectorAll('.cards-checks input:checked')].map(i => i.value);
+  // Cinto e suspensório: quem tem a tela do Fechamento precisa da permissão de
+  // ler as tabelas de honorários, senão a tela abre e fica vazia SEM ERRO.
+  // O checkbox já marca o outro na hora do clique; isto cobre quem foi salvo
+  // por outro caminho.
+  if (cards.includes('gestor_fechamento') && !cards.includes('honorarios')) cards.push('honorarios');
   const departamento_id = $('f-departamento').value ? parseInt($('f-departamento').value, 10) : null;
 
   if (!email || !email.includes('@')) { $('form-erro').textContent = 'Email inválido.'; return; }
