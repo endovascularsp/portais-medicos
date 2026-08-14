@@ -35,6 +35,10 @@ PDATA_RE = re.compile(r"(/\*PDATA\*/')([A-Za-z0-9+/=]+)('/\*PDATA\*/)")
 AMBIENTE = {
     "endo": ("produtividade", "_Produtividade", "Endovascular SP"),
     "oxy":  ("oxy-produtividade", "_Oxy_Produtividade", "Oxy Recovery"),
+    # 3º ambiente, 14/08/2026: recorte por categoria de dentro da Endovascular,
+    # como o Recebimento faz. Publicar 'cir' e 'endo' sempre em sequência — os
+    # dois saem da mesma base e um sem o outro deixa a soma errada na tela.
+    "cir":  ("cirurgias-produtividade", "_Cirurgias_Produtividade", "Cirurgias"),
 }
 
 

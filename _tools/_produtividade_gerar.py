@@ -42,7 +42,31 @@ import _produtividade_impacto as R      # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 CACHE = Path(r"C:\Users\thiag\Documents\Endovascular_Farmer\svn_560_cache")
-EMPRESA = {"endo": "Endovascular SP", "oxy": "Oxy Recovery"}
+EMPRESA = {"endo": "Endovascular SP", "oxy": "Oxy Recovery", "cir": "Cirurgias"}
+
+# Cirurgias não é empresa no SVN — é um recorte por CATEGORIA de dentro da
+# Endovascular, igual ao que o Recebimento sempre fez. Por isso 'endo' e 'cir'
+# leem o MESMO arquivo do cache e se dividem pela categoria do procedimento.
+# (Pedido do Thiago em 14/08/2026: Produtividade com os 3 ambientes do
+# Recebimento. Só ficou possível quando a Produtividade passou a ler o #560,
+# que traz categoria — o relatório antigo não tinha.)
+FONTE = {"endo": "endo", "oxy": "oxy", "cir": "endo"}
+
+
+def eh_cirurgia(categoria) -> bool:
+    return "cirurgia" in str(categoria or "").lower()
+
+
+def aceita(inst: str, categoria) -> bool:
+    """A divisão é por PROCEDIMENTO, não por OS: das 1.830 OS da Endovascular,
+    12 misturam cirurgia e não-cirurgia e aparecem nos dois ambientes, cada uma
+    com os procedimentos que são dela. É como o Recebimento faz — lá a linha é
+    procedimento × parcela — e é o que faz os dois portais fecharem entre si."""
+    if inst == "cir":
+        return eh_cirurgia(categoria)
+    if inst == "endo":
+        return not eh_cirurgia(categoria)
+    return True
 
 MESES = {"01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
          "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
@@ -77,7 +101,7 @@ def montar(inst: str, catalogo: dict) -> dict:
                                  por_pagamento, por_categoria, por_tabela,
                                  atendimentos}}}"""
     saida: dict = defaultdict(dict)
-    for arq in sorted(CACHE.glob(f"560_{inst}_*_baix_dt_pagamento.json")):
+    for arq in sorted(CACHE.glob(f"560_{FONTE[inst]}_*_baix_dt_pagamento.json")):
         pid = arq.name.split("_")[2]
         linhas = json.loads(arq.read_text(encoding="utf-8"))
 
@@ -100,6 +124,11 @@ def montar(inst: str, catalogo: dict) -> dict:
             oc = max(1, round(g["n"] / max(1, len(g["titus"]))))
             r = g["amostra"]
             cat, _ = CAT.categoria_de(proc, os_id, catalogo)
+            # Filtrar ANTES de tocar em `por_os`: é defaultdict, e só de ler a
+            # chave a OS já nasceria vazia no ambiente errado, contando como
+            # atendimento sem nenhum procedimento dentro.
+            if not aceita(inst, cat):
+                continue
             a = por_os[(dono, os_id)]
             a["procedimentos"].append({
                 "nome": proc, "qtd": oc, "valor": round(valor * oc, 2),

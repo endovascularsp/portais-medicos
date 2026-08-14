@@ -150,6 +150,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .portais-nav-btn.prod-oxy{color:#6dd5a0;border-color:var(--borda-fr);}
 .portais-nav-btn.prod-oxy:hover{background:#6dd5a0;color:#fff;border-color:#6dd5a0;}
 .portais-nav-btn.active{color:#fff;border-color:var(--azul);background:var(--azul);opacity:0.85;cursor:default;pointer-events:none;}
+.portais-nav-btn.prod-cir{color:#f5a623;border-color:rgba(245,166,35,0.40);background:rgba(245,166,35,0.08);}
+.portais-nav-btn.prod-cir:hover{background:rgba(245,166,35,0.22);border-color:#f5a623;}
 
 .main{padding:28px 48px;margin:0;}
 
@@ -444,7 +446,7 @@ body{background:#EEF2F6;}
     </div>
     <div style='display:flex;align-items:center;gap:12px;'><a href='../hub/Simone_Denise_David_Hub.html' style='display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:rgba(148,163,184,0.15);border:1.5px solid rgba(148,163,184,0.4);color:#94a3b8;font-size:12px;font-weight:600;text-decoration:none;transition:all 0.2s;' onmouseover="this.style.background='rgba(148,163,184,0.25)'" onmouseout="this.style.background='rgba(148,163,184,0.15)'">🏠 Home</a><span class='header-tag'>📊 Produtividade</span></div>
   </header>
-  <div class='portais-nav'><span class='portais-nav-label'>Meus Portais</span><a class='portais-nav-btn prod active'>📊 Prod. Endo</a><a href='../oxy-produtividade/Simone_Denise_David_Oxy_Produtividade.html' class='portais-nav-btn prod-oxy'>💊 Prod. Oxy</a></div>
+  <div class='portais-nav'><span class='portais-nav-label'>Meus Portais</span><a class='portais-nav-btn prod active'>📊 Produtividade</a></div>
   <div class='main'>
     <div class='banner-prod'>
       <div class='banner-prod-icon'>📋</div>
@@ -530,7 +532,7 @@ body{background:#EEF2F6;}
 </div>
 
 <script>
-const DADOS_ENC = /*PDATA*/'kXnr0xqxVTFUUyVw0vpn/8bCeDQWe+7yls6IZyNz4ZowDa9RZkpAZaykeis0vgWNbRvLprGWGaMUDiy/WQJg+mk9fh4A3POve7Uf6YvHwO+Dj9jWltiwZeYuZ3LJCGYszCm6JJ64Qkaw1NpnfahLRpLQ3aAxC6RtyCkEWohWgtBzXuJb8F2ryHAnyuyv7EYJh6/q9UMA4cIat3CUPiyjT8LDfP4U0kMVgDSR5n85ZUC/mg5W9o77zUMYI7RG+MbzwR289y+xJwyldCqvMJ45YOezLCVBS6DatN2WbpicVrKjVHn1ymIn/PJ+147dpBTkrk/13TijLhZC80UY5zpYACblXzPbYbT0KKAqXXdL+gF5fItKQIdqvLhFn+jQMxccT4NKGpNAod0vDFyl2yGTkx/MbqW+//I1IJwpZmpfpwcki2Myx8KW8AlGNyQEefc1uO2lI2yRuJRe7K5ysEiPiwOYDNE0cslAhwO8TQhSHiNCPmxPS3UjsujjfgWa4ekbg2VMSlwo600DsycT7oobvlavU7G21K/3CC6R8fInLOlwLSyCKiNt8nau234Oeiv9xe9KEn3vkf0OyRpjlmT99dnhOku2+TXn9Zf/3BWSweY2VhR8oOBG1pXjAFrQUZZPH0QV2gntwKec83s9l9pNMR5LqDvTTiFDip8iju8JyJ4j9IQ1uRHgm35awa5rfAQF6FV/uIrQzLIoVvUGq3oZzhbYlPPwskn0YnhLKEkm1u5Ihc1R94NHLi7bnjJ6/NW77JfHFNJdqpCkmi6QTl6nDU3QU0rjKv59Q8oNmH6/LCW3OBrbmn34LfBR4fKzCImxJ8WdLLRd3k740oPughpuqdecTs13GkK9bLsM3g1DP5tpMaFMwSLEHfMVygiPhLpiI6KWFnMn81JNQ4aseUuK1mSKPngwfgvkKYJ8kP1jU9oHsNgevLeoDb5aIcS025Ib4MHfDGF+JjWF2ARGTF7qlF0cHxJerCc2LwsC62VAPUtf0dxxatbq4oZQaWgj+BLWx7Wj4VtF2N+JeUj/GyDvzZcNRGfkzg8rSvOp88fVqt279uxv631OCskcjLcCnhj5bGuic4TFAdbFRg=='/*PDATA*/;
+const DADOS_ENC = /*PDATA*/'1DiAOGGGepZFWUqhndTyxQ6Um5QjrafH39S+rvmrIgn0fQRIiAALquy4ddhwbli3pkJRove+d+oSnYcgmm/f0JEorG8Ze6mGr+w8zFFjdNUqToV0RzIKUeK2lVerYoW4kspMbOsI27UABVv1RuS2AI6czXFdNcmiOThodSrE/AfojQq343o3IfquHUngUyXg49FA5kQJpxwPc+mbtMu3bn71ZtLvbtVpez4J04W13qDn/YDwOOYGXBISYR0f5EddRvsTFG120esxrKLmw5KZR/4vZuokuIcfX8B7eZtet2Ai13gwDlNeB+Y58gCyUfHuHEiN97zsy+GdJXTJ3tM7JA0GzeeHkxkkD7KmwqT91RlCiRol88ORAPLmZ6Ho49+hSMYkA+73b73vZdsxD3QZa34eLyLDAkC2nfGF4JXqIPNrDgUghLP4Nrnx56LYAVN+q1dAqgC8UOwKhvqYe4OMFxvXXH7X5PXmyw+PXSgvmXhj+ruqtydAu2nm2Osn25bD718GNmcHk+92OzaZ6oXSCnU60gMHxUiOqeClMWks6+4IouSpSIgpV9YXULiSXS8cjOC8ESVhTEoilL7F9b6Md2yTMWpTgJVhEiF3ChJ6aR6o8kz2m+AbFmcEBWMLbKCSrmYFtmeDeapbJUg0zKX420SZGujuTMV97CUVk5WfqhVk4C7TvjogR9e/XU+Sqcl7hPEpg33lupDwl+yXB2yvTe13w3xq4qJBCIUc6BwoBCHV/0IqEJU6ZZ5LJnq1g1tD4Ndron6Fo0yRS67/1wJyrqJ2vI03cHImvm9v1Ij/Z0+1tNuxVWh2ebh647EZTgAQjhlYQ/PMOlWp4HlsFrHT0uFB1Nkz8hboNQNmdZPAajNSJ6JZux2oLHDiY8SWa4VxurzzBuZAdiAeuhmwHW+W05qq7gKDSBPqv9sF1SrMBu2Jg4VyALeVJqKi/kaqxYoxUV3hL4ede6k2zle/DJp5EafIamkWX77n7J01AW04FyY+00xtOxQN3ct36Ysti0RnULOYIX9e3L1SdRLmIQvVHWN2ZKWgQ+OWUEQft7UP5+xqTM4Q9NDAPIv3FiAYob4gSOeC/q6To4ygrA=='/*PDATA*/;
 const PERIODOS_ORDER = ["2026-01", "2026-02", "2026-03", "2026-04"];
 
 function br(v){return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}

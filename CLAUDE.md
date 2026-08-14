@@ -17,6 +17,7 @@ portais-medicos/              ← raiz do repositório (GitHub Pages)
 ├── oxy/                      ← Portais individuais Oxy Recovery
 ├── cirurgias/                ← Portais individuais Cirurgias
 ├── oxy-produtividade/        ← Portais de produtividade Oxy Recovery
+├── cirurgias-produtividade/  ← Portais de produtividade Cirurgias (14/08/2026)
 ├── dashboard-insights/       ← Dashboards de insights
 └── *.html (raiz)             ← Portais de Recebimento (Endovascular SP)
 ```
