@@ -24,13 +24,16 @@ vir com desconto embutido, ele somaria as linhas, daria diferente do card, e
 teríamos criado a confusão que fomos consertar. O ajuste entra como um passo a
 mais, e o último número é o que cai na conta.
 
-Os cards só existem quando há lançamento no mês — mês limpo mostra a tela de
-sempre, sem card novo e sem pergunta nova.
+Os cards aparecem SEMPRE, mesmo zerados (decisão do Thiago em 14/08/2026): card
+que só nasce no mês do desconto vira susto; aparecendo todo mês, o médico já
+sabe o que é quando finalmente tiver valor. Sem lançamento, o card mostra
+R$ 0,00 e "Nada descontado ou somado neste mês", sem botão de detalhe.
 
 Uso:
     python _tools/_propagar_ajustes_portais.py                     # simula
     python _tools/_propagar_ajustes_portais.py --somente Igor_Rafael_Sincos.html --escrever
     python _tools/_propagar_ajustes_portais.py --escrever
+    python _tools/_propagar_ajustes_portais.py --atualizar --escrever   # troca o bloco em quem já tem
 """
 from __future__ import annotations
 import argparse
@@ -51,18 +54,29 @@ CSS = """
 
 CALCULO = """  // ── Descontos e acréscimos ──────────────────────────────────────────────
   // Valores que não passam pelo Saudevianet (plano de saúde que a clínica paga
-  // e desconta, custo pessoal, devolução de cobrança indevida). São lançados à
-  // mão na aba "Descontos e acréscimos" do card de Fechamento e chegam aqui
-  // pelo PDATA. Sem lançamento no mês, nada aparece.
+  // e desconta, custo pessoal, devolução de cobrança indevida), lançados à mão
+  // na aba "Descontos e acréscimos" do card de Fechamento.
+  //
+  // Os dois cards aparecem SEMPRE, mesmo zerados — decisão do Thiago em
+  // 14/08/2026: card que só nasce no mês do desconto vira susto. Aparecendo
+  // todo mês, quando finalmente tiver valor o médico já sabe o que é.
   _AJUSTES_NA_TELA = d.ajustes || [];
   const _ajEfeito = Number(r['Ajustes (R$)'] || 0);
-  const cardsAjuste = _AJUSTES_NA_TELA.length ? (
+  // Mês publicado antes de 14/08/2026 não tem o campo no PDATA. Recalcular aqui
+  // evita "Total a Receber R$ 0,00" em mês antigo, que assustaria à toa.
+  const _ajTotal = (r['Total a Receber (R$)'] === undefined || r['Total a Receber (R$)'] === null)
+    ? rep + _ajEfeito : Number(r['Total a Receber (R$)']);
+  const _ajSinal = _ajEfeito < 0 ? '&minus; ' : (_ajEfeito > 0 ? '+ ' : '');
+  const cardsAjuste =
     '<div class="kpi cinza"><div class="kpi-ic">💼</div><div class="kpi-label">Descontos e acr&eacute;scimos</div><div class="kpi-val">' +
-      (_ajEfeito < 0 ? '&minus; ' : '+ ') + fmtBRL(Math.abs(_ajEfeito)) +
-      '</div><div class="kpi-foot"><button class="bc-btn" onclick="verAjustes()">entenda os valores</button></div></div>' +
+      _ajSinal + fmtBRL(Math.abs(_ajEfeito)) + '</div><div class="kpi-foot">' +
+      (_AJUSTES_NA_TELA.length
+        ? '<button class="bc-btn" onclick="verAjustes()">entenda os valores</button>'
+        : '<span style="opacity:0.6">Nada descontado ou somado neste mês</span>') +
+      '</div></div>' +
     '<div class="kpi gold"><div class="kpi-ic">🏦</div><div class="kpi-label">Total a Receber</div><div class="kpi-val">' +
-      fmtBRL(Number(r['Total a Receber (R$)'] || 0)) +
-      '</div><div class="kpi-foot"><span style="opacity:0.6">O que entra na sua conta</span></div></div>') : '';
+      fmtBRL(_ajTotal) +
+      '</div><div class="kpi-foot"><span style="opacity:0.6">O que entra na sua conta</span></div></div>';
 
 """
 
@@ -103,6 +117,27 @@ function verAjustes(){
 
 class Falha(Exception):
     pass
+
+
+BLOCO_RE = re.compile(
+    r"  // ── Descontos e acréscimos ─.*?\n\n(?=  document\.getElementById\('metrics-prof'\))",
+    re.S)
+
+
+def atualizar(t: str) -> str:
+    """Troca o bloco de cálculo dos cards pela versão atual do CALCULO.
+
+    Existe porque o bloco já foi para 38 arquivos antes de o Thiago decidir que
+    os cards aparecem sempre. Reescrever o trecho é mais seguro do que remendar
+    cada arquivo à mão."""
+    if "verAjustes(" not in t:
+        raise Falha("ainda não tem os cards — rode sem --atualizar")
+    m = BLOCO_RE.search(t)
+    if not m:
+        raise Falha("não achei o bloco de cálculo para trocar")
+    if m.group(0) == CALCULO:
+        raise Falha("já está na versão atual")
+    return t[:m.start()] + CALCULO + t[m.end():]
 
 
 def aplicar(t: str) -> str:
@@ -159,15 +194,16 @@ def alvos(somente: str | None) -> list:
     return out
 
 
-def main(escrever: bool, somente: str | None) -> int:
-    print(f"\n=== Cards de descontos e acréscimos · escrever={escrever} ===\n")
+def main(escrever: bool, somente: str | None, modo_atualizar: bool = False) -> int:
+    print(f"\n=== Cards de descontos e acréscimos · "
+          f"{'atualizar' if modo_atualizar else 'instalar'} · escrever={escrever} ===\n")
     ok = pulados = 0
     for path in alvos(somente):
         t = io.open(path, encoding="utf-8").read()
         bruto = path.read_bytes()
         fim = "\r\n" if bruto.count(b"\r\n") > bruto.count(b"\n") // 2 else "\n"
         try:
-            novo = aplicar(t)
+            novo = atualizar(t) if modo_atualizar else aplicar(t)
         except Falha as e:
             pulados += 1
             print(f"  [PULADO] {str(path.relative_to(REPO))[:52]:54s} {e}")
@@ -186,5 +222,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--escrever", action="store_true")
     ap.add_argument("--somente")
+    ap.add_argument("--atualizar", action="store_true",
+                    help="troca o bloco dos cards pela versão atual, em quem já tem")
     a = ap.parse_args()
-    raise SystemExit(1 if main(a.escrever, a.somente) else 0)
+    raise SystemExit(1 if main(a.escrever, a.somente, a.atualizar) else 0)

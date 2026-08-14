@@ -1070,18 +1070,29 @@ function mostrarProf(id,btnEl){
 
   // ── Descontos e acréscimos ──────────────────────────────────────────────
   // Valores que não passam pelo Saudevianet (plano de saúde que a clínica paga
-  // e desconta, custo pessoal, devolução de cobrança indevida). São lançados à
-  // mão na aba "Descontos e acréscimos" do card de Fechamento e chegam aqui
-  // pelo PDATA. Sem lançamento no mês, nada aparece.
+  // e desconta, custo pessoal, devolução de cobrança indevida), lançados à mão
+  // na aba "Descontos e acréscimos" do card de Fechamento.
+  //
+  // Os dois cards aparecem SEMPRE, mesmo zerados — decisão do Thiago em
+  // 14/08/2026: card que só nasce no mês do desconto vira susto. Aparecendo
+  // todo mês, quando finalmente tiver valor o médico já sabe o que é.
   _AJUSTES_NA_TELA = d.ajustes || [];
   const _ajEfeito = Number(r['Ajustes (R$)'] || 0);
-  const cardsAjuste = _AJUSTES_NA_TELA.length ? (
+  // Mês publicado antes de 14/08/2026 não tem o campo no PDATA. Recalcular aqui
+  // evita "Total a Receber R$ 0,00" em mês antigo, que assustaria à toa.
+  const _ajTotal = (r['Total a Receber (R$)'] === undefined || r['Total a Receber (R$)'] === null)
+    ? rep + _ajEfeito : Number(r['Total a Receber (R$)']);
+  const _ajSinal = _ajEfeito < 0 ? '&minus; ' : (_ajEfeito > 0 ? '+ ' : '');
+  const cardsAjuste =
     '<div class="kpi cinza"><div class="kpi-ic">💼</div><div class="kpi-label">Descontos e acr&eacute;scimos</div><div class="kpi-val">' +
-      (_ajEfeito < 0 ? '&minus; ' : '+ ') + fmtBRL(Math.abs(_ajEfeito)) +
-      '</div><div class="kpi-foot"><button class="bc-btn" onclick="verAjustes()">entenda os valores</button></div></div>' +
+      _ajSinal + fmtBRL(Math.abs(_ajEfeito)) + '</div><div class="kpi-foot">' +
+      (_AJUSTES_NA_TELA.length
+        ? '<button class="bc-btn" onclick="verAjustes()">entenda os valores</button>'
+        : '<span style="opacity:0.6">Nada descontado ou somado neste mês</span>') +
+      '</div></div>' +
     '<div class="kpi gold"><div class="kpi-ic">🏦</div><div class="kpi-label">Total a Receber</div><div class="kpi-val">' +
-      fmtBRL(Number(r['Total a Receber (R$)'] || 0)) +
-      '</div><div class="kpi-foot"><span style="opacity:0.6">O que entra na sua conta</span></div></div>') : '';
+      fmtBRL(_ajTotal) +
+      '</div><div class="kpi-foot"><span style="opacity:0.6">O que entra na sua conta</span></div></div>';
 
   document.getElementById('metrics-prof').innerHTML=
     '<div class="kpi gold"><div class="kpi-ic">💰</div><div class="kpi-label">Valor Recebido</div><div class="kpi-val">'+fmtBRL(r['Valor recebido'])+'</div><div class="kpi-foot">'+dRecP+'<span style="opacity:0.6">Bruto compensado</span></div></div>'+

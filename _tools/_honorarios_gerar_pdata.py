@@ -216,13 +216,16 @@ def montar(periodo_id: str, com_periodo_id: bool = True) -> dict:
                     "Valor": r2(a["valor"])} for a in ajs]
         efeito = r2(sum((1 if a["tipo"] == "acrescimo" else -1) * float(a["valor"] or 0)
                         for a in ajs))
-        if ajustes:
-            # O "Repasse Profissional (R$)" continua sendo a soma da coluna de
-            # repasse da tabela de atendimentos — é com ele que o médico confere
-            # linha a linha, e mexer nele quebraria a conferência. O ajuste entra
-            # como um passo A MAIS, e o total a receber é o último número.
-            resumo["Ajustes (R$)"] = efeito
-            resumo["Total a Receber (R$)"] = r2(resumo["Repasse Profissional (R$)"] + efeito)
+        # O "Repasse Profissional (R$)" continua sendo a soma da coluna de
+        # repasse da tabela de atendimentos — é com ele que o médico confere
+        # linha a linha, e mexer nele quebraria a conferência. O ajuste entra
+        # como um passo A MAIS, e o total a receber é o último número.
+        #
+        # Os dois campos vão SEMPRE, mesmo zerados: o Thiago decidiu em
+        # 14/08/2026 que o card aparece todos os meses, para o médico se
+        # acostumar com o que ele significa antes de haver valor nele.
+        resumo["Ajustes (R$)"] = efeito
+        resumo["Total a Receber (R$)"] = r2(resumo["Repasse Profissional (R$)"] + efeito)
 
         inner = {"profissional": prof, "empresa": emp, "mes": mes, "ano": ano,
                  "resumo": resumo, "por_categoria": por_categoria,
