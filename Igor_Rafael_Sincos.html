@@ -170,6 +170,13 @@ html{overflow-x:hidden;}
   border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;
   font-family:inherit;white-space:nowrap;transition:all .15s;}
 .bc-btn:hover{background:var(--gold);color:#fff;}
+/* O botão vive dentro de um card colorido: herda o branco do card, não o
+   dourado do "Ver conta" da tabela. */
+.kpi .bc-btn{border-color:rgba(255,255,255,0.55);color:#fff;background:transparent;}
+.kpi .bc-btn:hover{background:rgba(255,255,255,0.18);border-color:#fff;color:#fff;}
+.kpi.cinza .bc-btn{border-color:var(--gold);color:var(--gold);}
+.kpi.cinza .bc-btn:hover{background:var(--gold);color:#fff;}
+
 .bc-fundo{position:fixed;inset:0;background:rgba(11,31,58,0.55);z-index:9000;
   display:none;align-items:center;justify-content:center;padding:20px;}
 .bc-fundo.aberto{display:flex;}
@@ -823,10 +830,26 @@ function mostrarProf(id,btnEl){
   const dRepP = _delta(rep, prevResumo['Repasse Profissional (R$)']);
   const dAtP  = _delta((d.atendimentos||[]).length, (prevProf?.atendimentos||[]).length, true);
 
+  // ── Descontos e acréscimos ──────────────────────────────────────────────
+  // Valores que não passam pelo Saudevianet (plano de saúde que a clínica paga
+  // e desconta, custo pessoal, devolução de cobrança indevida). São lançados à
+  // mão na aba "Descontos e acréscimos" do card de Fechamento e chegam aqui
+  // pelo PDATA. Sem lançamento no mês, nada aparece.
+  _AJUSTES_NA_TELA = d.ajustes || [];
+  const _ajEfeito = Number(r['Ajustes (R$)'] || 0);
+  const cardsAjuste = _AJUSTES_NA_TELA.length ? (
+    '<div class="kpi cinza"><div class="kpi-ic">💼</div><div class="kpi-label">Descontos e acr&eacute;scimos</div><div class="kpi-val">' +
+      (_ajEfeito < 0 ? '&minus; ' : '+ ') + fmtBRL(Math.abs(_ajEfeito)) +
+      '</div><div class="kpi-foot"><button class="bc-btn" onclick="verAjustes()">entenda os valores</button></div></div>' +
+    '<div class="kpi gold"><div class="kpi-ic">🏦</div><div class="kpi-label">Total a Receber</div><div class="kpi-val">' +
+      fmtBRL(Number(r['Total a Receber (R$)'] || 0)) +
+      '</div><div class="kpi-foot"><span style="opacity:0.6">O que entra na sua conta</span></div></div>') : '';
+
   document.getElementById('metrics-prof').innerHTML=
     '<div class="kpi gold"><div class="kpi-ic">💰</div><div class="kpi-label">Valor Recebido</div><div class="kpi-val">'+fmtBRL(r['Valor recebido'])+'</div><div class="kpi-foot">'+dRecP+'<span style="opacity:0.6">Bruto compensado</span></div></div>'+
     '<div class="kpi cinza"><div class="kpi-ic">🧮</div><div class="kpi-label">Valor L&iacute;quido</div><div class="kpi-val">'+fmtBRL(liq)+'</div><div class="kpi-foot">'+dLiqP+'<span style="opacity:0.6">Após custos fiscais e operacionais</span></div></div>'+
     '<div class="kpi gold"><div class="kpi-ic">💸</div><div class="kpi-label">Repasse do M&ecirc;s</div><div class="kpi-val">'+fmtBRL(rep)+'</div><div class="kpi-foot">'+dRepP+'<span style="opacity:0.6">'+fmtPct(liq>0?rep/liq:0)+' do líquido</span></div></div>'+
+    cardsAjuste+
     '<div class="kpi navy-med"><div class="kpi-ic">📋</div><div class="kpi-label">Atendimentos</div><div class="kpi-val">'+(d.atendimentos||[]).length+'</div><div class="kpi-foot">'+dAtP+'<span style="opacity:0.6">Procedimentos no período</span></div></div>';
 
   const cats={};(d.por_categoria||[]).forEach(c=>{cats[c.Categoria]=(cats[c.Categoria]||0)+(c['Valor recebido']||0);});
@@ -1438,6 +1461,7 @@ function _idItem(rot, valor){
 function abrirBase(i){
   const a = _ATEND_NA_TELA[i];
   if(!a) return;
+  document.getElementById('bc-titulo').textContent = 'Base de cálculo';
   const recebido = _num(a['Valor recebido']);
   const liquido  = _num(a['Valor Líquido']);
   const repasse  = _num(a['Repasse Profissional (R$)']);
@@ -1533,6 +1557,38 @@ function fecharBase(){
 }
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape') fecharBase(); });
 
+
+// ── Descontos e acréscimos ──────────────────────────────────────────────────
+// Reaproveita a janela do "Ver conta": mesma moldura, mesmo Esc para fechar.
+// Por isso as duas funções escrevem o título — quem não escrevesse herdaria o
+// título da outra.
+let _AJUSTES_NA_TELA = [];
+
+function verAjustes(){
+  const itens = _AJUSTES_NA_TELA || [];
+  if(!itens.length) return;
+  const soma = itens.reduce((s,a) => s + (a.Tipo === 'acrescimo' ? 1 : -1) * Number(a.Valor||0), 0);
+
+  document.getElementById('bc-titulo').textContent = 'Descontos e acréscimos';
+  document.getElementById('bc-sub').innerHTML =
+    'O que a clínica descontou ou somou fora dos atendimentos do mês';
+
+  let html = '<table class="bc-conta">';
+  itens.forEach(a => {
+    const desconto = a.Tipo !== 'acrescimo';
+    html += '<tr class="' + (desconto ? 'desc' : '') + '"><td>' +
+      (desconto ? '(&minus;) ' : '(+) ') + (a['Descrição'] || '—') +
+      '</td><td>' + fmtBRL(a.Valor) + '</td></tr>';
+  });
+  html += '<tr class="rep"><td>' + (soma < 0 ? 'Total descontado' : 'Total somado') +
+          '</td><td>' + fmtBRL(Math.abs(soma)) + '</td></tr></table>' +
+    '<div class="bc-rapida">Estes valores não vêm de atendimento: são acertos ' +
+    'lançados pela clínica. O card <b>Repasse do Mês</b> continua sendo a soma ' +
+    'dos seus atendimentos; o <b>Total a Receber</b> é ele mais estes acertos.</div>';
+
+  document.getElementById('bc-corpo').innerHTML = html;
+  document.getElementById('bc-fundo').classList.add('aberto');
+}
 </script>
 
 </body>

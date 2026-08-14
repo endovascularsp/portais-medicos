@@ -225,6 +225,7 @@ Para injetar no `index.html`, substituir o bloco entre `/*PDATA*/` e o `;` segui
 
 1. Receber Excel de fechamento do mês → salvar como `Fechamento - Endovascular SP.xlsx`
 2. Rodar script Python para gerar novo PDATA
+2b. **Antes de publicar**, conferir a aba **Descontos e acréscimos** do card de Fechamento: plano de saúde descontado, custo pessoal, devolução de cobrança indevida. O portal do médico é arquivo gerado — lançamento que entrar depois da publicação só aparece se o mês for republicado. O botão "Trazer os que se repetem" traz do mês anterior o que é fixo (o plano de saúde do Dr. Igor).
 3. Injetar PDATA nos **3 admins**: `index.html` (Endo SP), `oxy/index.html` (Oxy Recovery), `cirurgias/index.html` (Cirurgias). **ATENÇÃO:** os 3 admins têm formatos diferentes — Endo SP usa slug sem sufixo, Oxy usa slug + `_Oxy_Recovery`, Cirurgias usa slug puro. Se algum admin for esquecido, médicos que acessam pelo path `/oxy/` ou `/cirurgias/` (sem nome de arquivo) veem mês desatualizado. Bug histórico: Fechamento Abril/2026 pulou `oxy/index.html` e `cirurgias/index.html`, reconstruído via `_reconstruir_abril_admins.py` em 19/05/2026.
 4. Injetar PDATA nos portais individuais de cada profissional (raiz, oxy/, cirurgias/)
 5. Conferir que os 3 admins têm o mês novo (`python -c "import re,json;[print(f,sorted(json.loads(re.search(r'/\\*PDATA\\*/(.*?)/\\*PDATA\\*/',open(f,encoding='utf-8').read(),re.S).group(1).strip()).keys())) for f in ['index.html','oxy/index.html','cirurgias/index.html']]"`)

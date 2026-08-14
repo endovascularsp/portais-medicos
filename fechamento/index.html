@@ -302,6 +302,31 @@
       font-size:13px;font-family:inherit;color:var(--texto);background:#fff}
     .nova-cat input[type=number]{width:96px}
     .nova-cat input:not([type=number]){flex:1;min-width:200px}
+    .nova-cat select{padding:8px 12px;border-radius:8px;border:1.5px solid var(--borda);
+      font-family:inherit;font-size:13px;background:#fff;color:var(--texto)}
+
+    /* ===== Aba Descontos e acréscimos ===== */
+    .aj-resumo{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 4px}
+    .aj-cx{flex:1;min-width:150px;background:var(--bg);border:1px solid var(--borda);
+      border-radius:10px;padding:12px 14px}
+    .aj-cx-rot{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;
+      color:var(--texto2);font-weight:700}
+    .aj-cx-val{font-size:19px;font-weight:800;margin-top:4px;
+      font-variant-numeric:tabular-nums}
+    .aj-cx.desc .aj-cx-val{color:#8B2C20}
+    .aj-cx.acr  .aj-cx-val{color:#1E6B3A}
+    table.dados td.aj-val{text-align:right;font-variant-numeric:tabular-nums;
+      white-space:nowrap;font-weight:700}
+    table.dados td.aj-val.desc{color:#8B2C20}
+    table.dados td.aj-val.acr{color:#1E6B3A}
+    .aj-obs{display:block;font-size:11.5px;color:var(--texto2);margin-top:3px}
+    .aj-tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;
+      border-radius:20px;background:var(--bg);border:1px solid var(--borda);
+      color:var(--texto2)}
+    .aj-acoes{white-space:nowrap;text-align:right}
+    .aj-acoes button{background:none;border:none;cursor:pointer;font-size:13px;
+      padding:4px 6px;color:var(--texto2);font-family:inherit}
+    .aj-acoes button:hover{color:var(--navy)}
     .nc-dica{font-size:11.5px;color:var(--texto2)}
 
     .cat-lista{display:flex;flex-direction:column;gap:10px;margin-top:18px}
@@ -382,6 +407,7 @@
       <button class="aba" id="aba-regras" onclick="trocarAba('regras')">Regras de repasse</button>
       <button class="aba" id="aba-catalogo" onclick="trocarAba('catalogo')">Catálogo de procedimentos</button>
       <button class="aba" id="aba-base" onclick="trocarAba('base')">Base de dados</button>
+      <button class="aba" id="aba-ajustes" onclick="trocarAba('ajustes')">Descontos e acréscimos</button>
     </div>
 
     <!-- ================= ABA: CATÁLOGO ================= -->
@@ -621,6 +647,88 @@
       </div>
     </div><!-- /painel-base -->
 
+    <!-- ================= ABA: DESCONTOS E ACRÉSCIMOS =================
+         Nasceu de um problema de Julho/2026: uma médica viu o valor no portal,
+         recebeu menos na conta e ligou. O portal não estava errado — ele
+         respondia "quanto a clínica te deve pelo trabalho", e o desconto de um
+         custo pessoal dela nunca passou pelo Saudevianet. É aqui que esse tipo
+         de valor entra, e daqui ele vai para o portal do médico. -->
+    <div id="painel-ajustes" style="display:none">
+      <div class="barra">
+        <label for="aj-periodo">Mês</label>
+        <select id="aj-periodo" onchange="carregarAjustes(this.value)"></select>
+        <button class="btn" onclick="abrirNovoAjuste()">＋ Novo lançamento</button>
+        <button class="btn claro" onclick="repetirDoMesAnterior()"
+                title="Copia do mês anterior os lançamentos marcados como 'repete todo mês'">
+          ↺ Trazer os que se repetem</button>
+      </div>
+
+      <div class="bloco">
+        <h2>💸 O que a clínica desconta ou devolve fora do Saudevianet</h2>
+        <div class="sub">Plano de saúde que a clínica paga e desconta, custo pessoal,
+          devolução de cobrança indevida. Nada disso tem OS, então o motor não tem como
+          saber — entra à mão aqui e aparece no portal do profissional como
+          <b>“Descontos e acréscimos”</b>, com o detalhe aberto no botão
+          <b>“entenda os valores”</b>.</div>
+
+        <div class="nota-info">O <b>mês</b> é aquele em que o valor será descontado ou
+          somado, não o mês do fato que o originou. O <b>centro de custo</b> diz de qual
+          portal do profissional o valor sai — sem ele, quem tem três portais veria o
+          mesmo desconto três vezes. E a <b>descrição é lida pelo médico</b>: o que for
+          interno vai no campo de observação, que fica só nesta tela.</div>
+
+        <div id="aj-alerta"></div>
+
+        <div class="nova-cat" id="aj-form">
+          <div class="nova-cat-titulo" id="aj-form-titulo">Novo lançamento</div>
+          <div class="cat-linha">
+            <label for="aj-prof">Profissional</label>
+            <select id="aj-prof"></select>
+          </div>
+          <div class="cat-linha">
+            <label for="aj-centro">Centro de custo</label>
+            <select id="aj-centro">
+              <option value="Endovascular SP">Endovascular SP</option>
+              <option value="Oxy Recovery">Oxy Recovery</option>
+              <option value="Cirurgias">Cirurgias</option>
+            </select>
+            <span class="nc-dica">de qual portal do profissional o valor sai</span>
+          </div>
+          <div class="cat-linha">
+            <label for="aj-tipo">Operação</label>
+            <select id="aj-tipo">
+              <option value="desconto">Descontar (−)</option>
+              <option value="acrescimo">Acrescentar (+)</option>
+            </select>
+            <label for="aj-valor" style="margin-left:8px">Valor</label>
+            <input id="aj-valor" type="number" min="0.01" step="0.01" placeholder="0,00"/>
+          </div>
+          <div class="cat-linha">
+            <label for="aj-desc">Descrição</label>
+            <input id="aj-desc" maxlength="80" placeholder="ex.: Plano de saúde — agosto"/>
+            <span class="nc-dica">o médico lê este texto</span>
+          </div>
+          <div class="cat-linha">
+            <label for="aj-obs">Observação</label>
+            <input id="aj-obs" maxlength="160" placeholder="Interno — o médico não vê"/>
+          </div>
+          <div class="cat-linha">
+            <label for="aj-repete">Repete</label>
+            <input id="aj-repete" type="checkbox" style="width:auto;flex:none"/>
+            <span class="nc-dica">marque se acontece todo mês — o botão “Trazer os que
+              se repetem” traz estes para o mês seguinte</span>
+          </div>
+          <div class="cat-linha">
+            <button class="btn" onclick="salvarAjuste()">Salvar lançamento</button>
+            <button class="btn claro" onclick="fecharFormAjuste()">Cancelar</button>
+          </div>
+        </div>
+
+        <div class="aj-resumo" id="aj-resumo"></div>
+        <div class="rolagem"><table class="dados" id="aj-tabela"></table></div>
+      </div>
+    </div><!-- /painel-ajustes -->
+
   </div>
 </div>
 
@@ -831,6 +939,10 @@ async function iniciar(){
   selBd.innerHTML = sel.innerHTML;
   BD_PERIODO = PERIODO;
   if (BD_PERIODO) selBd.value = BD_PERIODO;
+
+  const selAj = document.getElementById('aj-periodo');
+  selAj.innerHTML = sel.innerHTML;
+  if (PERIODO) selAj.value = PERIODO;
   await trocarPeriodo(PERIODO);
 }
 
@@ -1508,8 +1620,193 @@ function trocarAba(qual){
   document.getElementById('aba-fechar').classList.toggle('ativa', qual === 'fechar');
   document.getElementById('aba-regras').classList.toggle('ativa', qual === 'regras');
   document.getElementById('aba-catalogo').classList.toggle('ativa', qual === 'catalogo');
+  document.getElementById('painel-ajustes').style.display = qual === 'ajustes' ? '' : 'none';
+  document.getElementById('aba-ajustes').classList.toggle('ativa', qual === 'ajustes');
   if (qual === 'regras' && !REGRAS.length) carregarRegras();
   if (qual === 'catalogo' && !CATALOGO.length) carregarCatalogo();
+  if (qual === 'ajustes' && AJ_PERIODO === null) carregarAjustes(document.getElementById('aj-periodo').value);
+}
+
+/* ============ Descontos e acréscimos ============
+   Valores que não passam pelo Saudevianet e por isso não têm como sair do
+   motor: plano de saúde que a clínica paga e desconta, custo pessoal,
+   devolução de cobrança indevida.
+
+   Duas regras que a tela precisa impor, porque erra-se calado nas duas:
+     - o SINAL não mora no valor. `valor` é sempre positivo e `tipo` diz se
+       soma ou subtrai. Valor negativo com tipo 'desconto' viraria desconto ao
+       contrário no portal do médico;
+     - lançar em mês já publicado é permitido (às vezes lembra-se tarde), mas
+       a tela avisa em vermelho que o mês precisa ser republicado — senão o
+       lançamento fica só no banco e o médico nunca vê. */
+let AJUSTES = [];
+let AJ_PERIODO = null;
+let AJ_EDIT = null;      // id em edição, ou null quando é lançamento novo
+
+async function carregarAjustes(pid){
+  AJ_PERIODO = pid;
+  const { data, error } = await sb.from('honorarios_ajustes')
+    .select('*').eq('periodo_id', pid)
+    .order('profissional').order('criado_em');
+  if (error){
+    document.getElementById('aj-tabela').innerHTML =
+      `<tr><td class="vazio">Não consegui ler os lançamentos: ${esc(error.message)}</td></tr>`;
+    return;
+  }
+  AJUSTES = data || [];
+  pintarAjustes();
+}
+
+function pintarAjustes(){
+  const p = PERIODOS.find(x => x.periodo_id === AJ_PERIODO) || {};
+  const publicado = p.congelado || p.status === 'publicado';
+  document.getElementById('aj-alerta').innerHTML = publicado
+    ? `<div class="aviso-caixa"><b>${esc(p.label || AJ_PERIODO)} já foi publicado.</b>
+       Pode lançar, mas o portal do profissional é um arquivo gerado: o que entrar
+       agora só aparece para ele quando o mês for republicado.</div>`
+    : '';
+
+  const desc = AJUSTES.filter(a => a.tipo === 'desconto')
+                      .reduce((s, a) => s + Number(a.valor || 0), 0);
+  const acr  = AJUSTES.filter(a => a.tipo === 'acrescimo')
+                      .reduce((s, a) => s + Number(a.valor || 0), 0);
+  document.getElementById('aj-resumo').innerHTML = AJUSTES.length ? `
+    <div class="aj-cx desc"><div class="aj-cx-rot">A descontar</div>
+      <div class="aj-cx-val">− ${brl(desc)}</div></div>
+    <div class="aj-cx acr"><div class="aj-cx-rot">A acrescentar</div>
+      <div class="aj-cx-val">+ ${brl(acr)}</div></div>
+    <div class="aj-cx"><div class="aj-cx-rot">Efeito no repasse</div>
+      <div class="aj-cx-val">${acr - desc < 0 ? '− ' : '+ '}${brl(Math.abs(acr - desc))}</div></div>
+    <div class="aj-cx"><div class="aj-cx-rot">Profissionais</div>
+      <div class="aj-cx-val">${new Set(AJUSTES.map(a => a.profissional)).size}</div></div>` : '';
+
+  const t = document.getElementById('aj-tabela');
+  if (!AJUSTES.length){
+    t.innerHTML = `<tr><td class="vazio"><span class="ic">💸</span>
+      Nenhum lançamento neste mês.<br/>Mês sem lançamento não muda nada no portal
+      do profissional — o card nem aparece para ele.</td></tr>`;
+    return;
+  }
+  t.innerHTML = `<thead><tr>
+      <th>Profissional</th><th>Centro de custo</th><th>Descrição</th>
+      <th style="text-align:right">Valor</th><th></th>
+    </tr></thead><tbody>` + AJUSTES.map(a => {
+    const sinal = a.tipo === 'desconto' ? '−' : '+';
+    const cls   = a.tipo === 'desconto' ? 'desc' : 'acr';
+    return `<tr>
+      <td><b>${esc(a.profissional)}</b></td>
+      <td>${esc(a.centro_custo)}</td>
+      <td>${esc(a.descricao)}
+        ${a.repete ? ' <span class="aj-tag">repete todo mês</span>' : ''}
+        ${a.observacao ? `<span class="aj-obs">🔒 ${esc(a.observacao)}</span>` : ''}</td>
+      <td class="aj-val ${cls}">${sinal} ${brl(a.valor)}</td>
+      <td class="aj-acoes">
+        <button onclick="editarAjuste('${a.id}')" title="Editar">✏️</button>
+        <button onclick="excluirAjuste('${a.id}')" title="Excluir">🗑️</button>
+      </td></tr>`;
+  }).join('') + '</tbody>';
+}
+
+function fecharFormAjuste(){
+  document.getElementById('aj-form').classList.remove('aberto');
+  AJ_EDIT = null;
+}
+
+function abrirNovoAjuste(){
+  AJ_EDIT = null;
+  const sel = document.getElementById('aj-prof');
+  sel.innerHTML = '<option value="">Escolha o profissional…</option>' +
+    PROFISSIONAIS.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  document.getElementById('aj-form-titulo').textContent = 'Novo lançamento';
+  document.getElementById('aj-centro').value = 'Endovascular SP';
+  document.getElementById('aj-tipo').value = 'desconto';
+  document.getElementById('aj-valor').value = '';
+  document.getElementById('aj-desc').value = '';
+  document.getElementById('aj-obs').value = '';
+  document.getElementById('aj-repete').checked = false;
+  document.getElementById('aj-form').classList.add('aberto');
+}
+
+function editarAjuste(id){
+  const a = AJUSTES.find(x => x.id === id);
+  if (!a) return;
+  abrirNovoAjuste();
+  AJ_EDIT = id;
+  document.getElementById('aj-form-titulo').textContent = 'Editar lançamento';
+  document.getElementById('aj-prof').value = a.profissional;
+  document.getElementById('aj-centro').value = a.centro_custo;
+  document.getElementById('aj-tipo').value = a.tipo;
+  document.getElementById('aj-valor').value = a.valor;
+  document.getElementById('aj-desc').value = a.descricao;
+  document.getElementById('aj-obs').value = a.observacao || '';
+  document.getElementById('aj-repete').checked = !!a.repete;
+}
+
+async function salvarAjuste(){
+  const prof   = document.getElementById('aj-prof').value;
+  const valor  = Number(document.getElementById('aj-valor').value);
+  const desc   = document.getElementById('aj-desc').value.trim();
+  if (!prof)                 return aviso('Escolha o profissional.', true);
+  if (!(valor > 0))          return aviso('O valor tem de ser maior que zero.', true);
+  if (desc.length < 3)       return aviso('Escreva uma descrição — o médico vai ler.', true);
+
+  const reg = {
+    periodo_id:   AJ_PERIODO,
+    profissional: prof,
+    centro_custo: document.getElementById('aj-centro').value,
+    tipo:         document.getElementById('aj-tipo').value,
+    descricao:    desc,
+    observacao:   document.getElementById('aj-obs').value.trim() || null,
+    valor:        valor,
+    repete:       document.getElementById('aj-repete').checked,
+  };
+  const r = AJ_EDIT
+    ? await sb.from('honorarios_ajustes')
+        .update({ ...reg, atualizado_por: me.email, atualizado_em: new Date().toISOString() })
+        .eq('id', AJ_EDIT)
+    : await sb.from('honorarios_ajustes').insert({ ...reg, criado_por: me.email });
+  if (r.error) return aviso('Não consegui gravar: ' + r.error.message, true);
+  aviso(AJ_EDIT ? 'Lançamento atualizado.' : 'Lançamento gravado.');
+  fecharFormAjuste();
+  await carregarAjustes(AJ_PERIODO);
+}
+
+async function excluirAjuste(id){
+  const a = AJUSTES.find(x => x.id === id);
+  if (!a) return;
+  if (!confirm(`Excluir "${a.descricao}" de ${a.profissional}?`)) return;
+  const { error } = await sb.from('honorarios_ajustes').delete().eq('id', id);
+  if (error) return aviso('Não consegui excluir: ' + error.message, true);
+  aviso('Lançamento excluído.');
+  await carregarAjustes(AJ_PERIODO);
+}
+
+async function repetirDoMesAnterior(){
+  const i = PERIODOS.findIndex(p => p.periodo_id === AJ_PERIODO);
+  const anterior = i > 0 ? PERIODOS[i - 1] : null;
+  if (!anterior) return aviso('Não existe mês anterior a este.', true);
+
+  const { data, error } = await sb.from('honorarios_ajustes')
+    .select('*').eq('periodo_id', anterior.periodo_id).eq('repete', true);
+  if (error) return aviso('Não consegui ler o mês anterior: ' + error.message, true);
+  if (!data || !data.length)
+    return aviso(`${anterior.label} não tem lançamento marcado como "repete".`, true);
+
+  // Não duplicar o que já veio: a mesma pessoa, com a mesma descrição, no mesmo
+  // centro de custo, já está neste mês.
+  const jaTem = new Set(AJUSTES.map(a => [a.profissional, a.centro_custo, a.descricao].join('|')));
+  const novos = data.filter(a => !jaTem.has([a.profissional, a.centro_custo, a.descricao].join('|')))
+    .map(a => ({
+      periodo_id: AJ_PERIODO, profissional: a.profissional, centro_custo: a.centro_custo,
+      tipo: a.tipo, descricao: a.descricao, observacao: a.observacao, valor: a.valor,
+      repete: true, origem_id: a.id, criado_por: me.email,
+    }));
+  if (!novos.length) return aviso('Os que se repetem já estão neste mês.');
+
+  const { error: e2 } = await sb.from('honorarios_ajustes').insert(novos);
+  if (e2) return aviso('Não consegui copiar: ' + e2.message, true);
+  aviso(`${novos.length} lançamento(s) trazido(s) de ${anterior.label}. Confira os valores.`);
+  await carregarAjustes(AJ_PERIODO);
 }
 
 /* ===================== Regras ===================== */

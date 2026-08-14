@@ -140,6 +140,20 @@ def montar(periodo_id: str, com_periodo_id: bool = True) -> dict:
     ano = int(periodo_id.split("-")[0])
     linhas = DB.buscar("honorarios_lancamentos", "*", {"periodo_id": f"eq.{periodo_id}"})
 
+    # Descontos e acréscimos lançados à mão (migration_013). São valores que não
+    # passam pelo Saudevianet — plano de saúde que a clínica paga e desconta,
+    # custo pessoal, devolução de cobrança indevida — e sem eles o portal mostra
+    # um número que não é o que cai na conta do médico.
+    #
+    # `centro_custo` casa com a empresa do PORTAL ("Endovascular SP", "Oxy
+    # Recovery", "Cirurgias"), não com a empresa da planilha: é o que impede o
+    # mesmo desconto de aparecer nos três portais de quem tem três.
+    #
+    # `observacao` NUNCA entra aqui: é o campo interno da equipe financeira.
+    ajustes_por: dict = {}
+    for a in DB.buscar("honorarios_ajustes", "*", {"periodo_id": f"eq.{periodo_id}"}):
+        ajustes_por.setdefault((a["profissional"], a["centro_custo"]), []).append(a)
+
     grupos: dict = {}
     for l in linhas:
         if chave(l["profissional"]) in SEM_PORTAL:
@@ -194,10 +208,28 @@ def montar(periodo_id: str, com_periodo_id: bool = True) -> dict:
                                                   str(x["data_compensacao"] or ""),
                                                   str(x["os_numero"] or "")))]
 
+        # Só o que o médico pode ler, e ordenado para a tela: desconto primeiro,
+        # que é o que ele procura quando o valor da conta veio menor.
+        ajs = sorted(ajustes_por.get((prof, emp), []),
+                     key=lambda a: (a["tipo"] != "desconto", a["descricao"]))
+        ajustes = [{"Descrição": txt(a["descricao"]), "Tipo": a["tipo"],
+                    "Valor": r2(a["valor"])} for a in ajs]
+        efeito = r2(sum((1 if a["tipo"] == "acrescimo" else -1) * float(a["valor"] or 0)
+                        for a in ajs))
+        if ajustes:
+            # O "Repasse Profissional (R$)" continua sendo a soma da coluna de
+            # repasse da tabela de atendimentos — é com ele que o médico confere
+            # linha a linha, e mexer nele quebraria a conferência. O ajuste entra
+            # como um passo A MAIS, e o total a receber é o último número.
+            resumo["Ajustes (R$)"] = efeito
+            resumo["Total a Receber (R$)"] = r2(resumo["Repasse Profissional (R$)"] + efeito)
+
         inner = {"profissional": prof, "empresa": emp, "mes": mes, "ano": ano,
                  "resumo": resumo, "por_categoria": por_categoria,
                  "por_pagamento": por_pagamento, "por_tabela": por_tabela,
                  "atendimentos": atendimentos}
+        if ajustes:
+            inner["ajustes"] = ajustes
         if com_periodo_id:
             inner["periodo_id"] = periodo_id
         profs[slugify(prof) + SUFIXO[emp]] = inner
