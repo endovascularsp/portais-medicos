@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-_hub_prod_cirurgias.py — acerta o card 📊 Produtividade dos Hubs para os 3
-ambientes (Endovascular SP · Oxy Recovery · Cirurgias).
+_hub_botoes_portais.py — refaz os sub-botões dos cards 💰 Recebimento e
+📊 Produtividade dos Hubs, nos 3 ambientes de cada um.
 
-Companheiro do `_onboard_prod_cirurgias.py`. Refaz os sub-botões do card a
-partir do que EXISTE em disco, então serve para as três coisas de uma vez:
-adicionar o 🔬 Cirurgias a quem passou a ter, remover o 🏥 de quem deixou de ter
-(o Mateus, que é 100% cirurgia) e corrigir botão que aponta para arquivo que
-nunca existiu.
+Companheiro do `_onboard_prod_cirurgias.py`. Monta os botões a partir do que
+EXISTE em disco, e por isso resolve de uma vez: adicionar ambiente novo a quem
+passou a ter, tirar botão de quem deixou de ter (o Mateus, 100% cirurgia) e
+revelar portal que existia sem nenhum botão apontando para ele.
 
-Também mexe no `Gestor_Hub.html`, que lista os três admins.
+Esse último caso é o que ninguém percebe: em 14/08/2026 a Dra. Daniela tinha
+R$ 310,80 de repasse num Recebimento Oxy e a Dra. Julia R$ 10.332 numa
+Produtividade Oxy que **não apareciam em Hub nenhum**. Não é link quebrado nem
+erro de tela — é portal invisível, e só uma varredura acha
+(`_auditar_navegacao.py`, item 4).
+
+Também mexe no `Gestor_Hub.html`, que lista os três admins de Produtividade.
 
 O BLOB criptografado do Hub guarda um mapa `portais` que hoje NENHUMA tela lê em
 tempo de execução — os cards são HTML fixo. Ele é metadado usado pelos scripts
@@ -17,8 +22,8 @@ de criação de portal, e por isso é atualizado junto: se ficar mentindo, o
 próximo script que criar portal decide errado.
 
 Uso:
-    python _tools/_hub_prod_cirurgias.py             # simula
-    python _tools/_hub_prod_cirurgias.py --escrever
+    python _tools/_hub_botoes_portais.py             # simula
+    python _tools/_hub_botoes_portais.py --escrever
 """
 from __future__ import annotations
 import argparse
@@ -38,14 +43,21 @@ try:
 except AttributeError:      # stdout redirecionado por outro script
     pass
 
-# (chave no `portais`, pasta, sufixo, classe do botão, rótulo)
-AMB = [
-    ("prod",     "produtividade",           "_Produtividade",           "prod-btn", "🏥 Endovascular SP"),
-    ("prod_oxy", "oxy-produtividade",       "_Oxy_Produtividade",       "oxy-prod", "💊 Oxy Recovery"),
-    ("prod_cir", "cirurgias-produtividade", "_Cirurgias_Produtividade", "cir",      "🔬 Cirurgias"),
-]
+# card -> [(chave no `portais`, pasta, sufixo, classe do botão, rótulo)]
+CARDS = {
+    "card-rec": [
+        ("endo", "",                        "",                   "endo",     "🏥 Endovascular SP"),
+        ("oxy",  "oxy",                     "_Oxy_Recovery",      "oxy",      "💊 Oxy Recovery"),
+        ("cir",  "cirurgias",               "",                   "cir",      "🔬 Cirurgias"),
+    ],
+    "card-prod": [
+        ("prod",     "produtividade",           "_Produtividade",           "prod-btn", "🏥 Endovascular SP"),
+        ("prod_oxy", "oxy-produtividade",       "_Oxy_Produtividade",       "oxy-prod", "💊 Oxy Recovery"),
+        ("prod_cir", "cirurgias-produtividade", "_Cirurgias_Produtividade", "cir",      "🔬 Cirurgias"),
+    ],
+}
 
-LINK = ('              <a href="../{pasta}/{slug}{sufixo}.html" onclick="navegar(this,event)" '
+LINK = ('              <a href="../{pasta}{slug}{sufixo}.html" onclick="navegar(this,event)" '
         'class="hub-sub-btn {cls}">\n                {rotulo}\n              </a>')
 
 
@@ -76,22 +88,69 @@ def bloco_links(t: str, card_id: str) -> tuple:
     return (t.index(">", j) + 1, k)
 
 
+CARD_PROD = """
+          <div class="hub-card prod" id="card-prod">
+            <div class="hub-card-icon">&#x1F4CA;</div>
+            <div class="hub-card-title">Produtividade</div>
+            <div class="hub-card-desc">Atendimentos realizados<br>e procedimentos por período</div>
+            <div class="hub-card-links">
+            </div>
+          </div>"""
+
+
+def insere_card_prod(t: str, nome_arq: str) -> str:
+    """Cria o card 📊 logo depois do de Recebimento (ou do último card)."""
+    ancora = re.search(r'<div class="hub-card rec" id="card-rec">', t)
+    if not ancora:
+        for x in re.finditer(r'<div class="hub-card [a-z]+" id="card-[a-z]+">', t):
+            ancora = x
+    if not ancora:
+        raise SystemExit(f"ABORTADO: {nome_arq} não tem card algum para me orientar")
+    d, k = 0, ancora.start()
+    while k < len(t):
+        if t.startswith("<div", k):
+            d += 1
+            k += 4
+        elif t.startswith("</div>", k):
+            d -= 1
+            k += 6
+            if d == 0:
+                break
+        else:
+            k += 1
+    return t[:k] + CARD_PROD + t[k:]
+
+
+def caminho_de(pasta: str, slug: str, sufixo: str) -> Path:
+    return (REPO / pasta / f"{slug}{sufixo}.html") if pasta else (REPO / f"{slug}.html")
+
+
 def arrumar_hub(path: Path, escrever: bool) -> str:
     slug = path.name[:-len("_Hub.html")]
     t = velho = path.read_text(encoding="utf-8")
-    pos = bloco_links(t, "card-prod")
-    if not pos:
-        return "sem card de Produtividade"
+    feito = []
 
-    tem = [(k, pasta, sufixo, cls, rot) for k, pasta, sufixo, cls, rot in AMB
-           if (REPO / pasta / f"{slug}{sufixo}.html").exists()]
-    if not tem:
-        return "nenhum portal de Produtividade — card não mexido"
-
-    links = "\n" + "\n".join(
-        LINK.format(pasta=pasta, slug=slug, sufixo=sufixo, cls=cls, rotulo=rot)
-        for _k, pasta, sufixo, cls, rot in tem) + "\n          "
-    t = t[:pos[0]] + links + t[pos[1]:]
+    for card, ambientes in CARDS.items():
+        tem = [a for a in ambientes if caminho_de(a[1], slug, a[2]).exists()]
+        if not tem:
+            continue
+        pos = bloco_links(t, card)
+        if not pos:
+            # Portal existe e o Hub nem tem o card — o da Dra. Julia, que tinha
+            # Produtividade Oxy e só card de Recebimento e Insights. O card
+            # entra depois do de Recebimento, que é a ordem dos outros Hubs.
+            if card != "card-prod":
+                continue
+            t = insere_card_prod(t, path.name)
+            feito.append("card 📊 Produtividade criado")
+            pos = bloco_links(t, card)
+        links = "\n" + "\n".join(
+            LINK.format(pasta=(pasta + "/") if pasta else "", slug=slug, sufixo=sufixo,
+                        cls=cls, rotulo=rot)
+            for _k, pasta, sufixo, cls, rot in tem) + "\n          "
+        if t[pos[0]:pos[1]] != links:
+            feito.append(f"{card.split('-')[1]}: " + " + ".join(r.split()[0] for *_x, r in tem))
+        t = t[:pos[0]] + links + t[pos[1]:]
 
     # o mapa `portais` do blob acompanha o que existe
     chaves = _chaves()
@@ -100,12 +159,13 @@ def arrumar_hub(path: Path, escrever: bool) -> str:
         m = re.search(r'const BLOB = "([^"]+)"', t)
         d = P.decifrar(m.group(1), chaves[nome])
         portais = dict(d.get("portais") or {})
-        for k, pasta, sufixo, _c, _r in AMB:
-            caminho = f"../{pasta}/{slug}{sufixo}.html"
-            if (REPO / pasta / f"{slug}{sufixo}.html").exists():
-                portais[k] = caminho
-            else:
-                portais.pop(k, None)
+        for ambientes in CARDS.values():
+            for k, pasta, sufixo, _c, _r in ambientes:
+                p = caminho_de(pasta, slug, sufixo)
+                if p.exists():
+                    portais[k] = "../" + p.relative_to(REPO).as_posix()
+                else:
+                    portais.pop(k, None)
         d = dict(d, portais=portais)
         t = re.sub(r'const BLOB = "[^"]+"', 'const BLOB = "' + P.cifrar(d, chaves[nome]) + '"',
                    t, count=1)
@@ -116,7 +176,7 @@ def arrumar_hub(path: Path, escrever: bool) -> str:
         return "sem mudança"
     if escrever:
         path.write_text(t, encoding="utf-8")
-    return " + ".join(r for *_x, r in tem)
+    return " | ".join(feito) if feito else "botões refeitos"
 
 
 def arrumar_gestor(escrever: bool) -> str:

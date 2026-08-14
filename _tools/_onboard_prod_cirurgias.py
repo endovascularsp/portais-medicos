@@ -49,6 +49,13 @@ AMBIENTES = [
 PASTA = {a[0]: a[1] for a in AMBIENTES}
 SUFIXO = {a[0]: a[2] for a in AMBIENTES}
 
+# `.prod-endo` nunca foi definida: os portais da Oxy já usavam essa classe no
+# botão do Endo e ele saía sem cor nenhuma. Fica igual ao `.prod`, que é o
+# estilo de LINK (clicável) do ambiente Endo.
+CSS_PROD_ENDO = (".portais-nav-btn.prod-endo{color:var(--azul);border-color:var(--borda-fr);}\n"
+                 ".portais-nav-btn.prod-endo:hover{background:var(--azul);color:#fff;"
+                 "border-color:var(--azul);}\n")
+
 # Mesmo âmbar do 🔬 Cirurgias do Recebimento — o médico já associa a cor ao
 # ambiente. Ver a memória sobre identidade visual de cada ambiente.
 CSS_CIR = (".portais-nav-btn.prod-cir{color:#f5a623;border-color:rgba(245,166,35,0.40);"
@@ -102,15 +109,24 @@ def criar_admin(escrever: bool) -> str:
 
 
 def nav_admin(atual: str) -> str:
-    """Barra de navegação entre os 3 admins de Produtividade."""
+    """Barra de navegação entre os 3 admins de Produtividade.
+
+    ATENÇÃO à classe do botão do Endovascular quando ele é LINK: tem de ser
+    `endo`, não `prod`. No CSS do admin, `.admin-nav-btn.prod` é o estilo do
+    ambiente ATUAL e carrega `pointer-events:none` — usada num link, o botão
+    aparece e não clica. Foi assim que, em 14/08/2026, quem entrava em
+    Cirurgias ficava preso lá dentro. Só o botão do ambiente atual leva a classe
+    "cheia" + `active`.
+    """
     partes = ["<nav class='admin-nav'>", "<span class='admin-nav-label'>Meus Portais</span>"]
     rotulos = {"endo": "🏥 Endovascular SP", "oxy": "💊 Oxy Recovery", "cir": "🔬 Cirurgias"}
-    classes = {"endo": "prod", "oxy": "prod-oxy", "cir": "prod-cir"}
+    atuais = {"endo": "prod", "oxy": "prod-oxy", "cir": "prod-cir"}
+    links = {"endo": "endo", "oxy": "prod-oxy", "cir": "prod-cir"}
     for k, pasta, _s, _e, _r, _c in AMBIENTES:
         if k == atual:
-            partes.append(f"<a href='#' class='admin-nav-btn {classes[k]} active'>{rotulos[k]}</a>")
+            partes.append(f"<a href='#' class='admin-nav-btn {atuais[k]} active'>{rotulos[k]}</a>")
         else:
-            partes.append(f"<a href='../{pasta}/' class='admin-nav-btn {classes[k]}'>{rotulos[k]}</a>")
+            partes.append(f"<a href='../{pasta}/' class='admin-nav-btn {links[k]}'>{rotulos[k]}</a>")
     partes.append("</nav>")
     return "\n".join(partes)
 
@@ -211,14 +227,15 @@ def arrumar_navs(escrever: bool) -> list:
             slug = path.name[:-len(sufixo + ".html")]
             t = velho = path.read_text(encoding="utf-8")
             t = injeta_css(t, CSS_CIR, ".portais-nav-btn.")
+            t = injeta_css(t, CSS_PROD_ENDO, ".portais-nav-btn.")
             t = nav_individual(slug, amb, t)
             if t == velho:
                 continue
             if escrever:
                 path.write_text(t, encoding="utf-8")
             out.append(str(path.relative_to(REPO)))
-    # os 2 admins antigos ganham o 3º botão
-    for amb in ("endo", "oxy"):
+    # os 3 admins têm a barra refeita — inclusive o novo, que nasceu com ela
+    for amb in ("endo", "oxy", "cir"):
         path = REPO / PASTA[amb] / "index.html"
         t = velho = path.read_text(encoding="utf-8")
         m = ADMIN_NAV_RE.search(t)
