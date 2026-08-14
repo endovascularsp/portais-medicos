@@ -18,6 +18,12 @@ Os campos que a conta usa (ISS, taxa comercial, regra aplicada) já existem em
 todos os portais — conferido antes de escrever, inclusive dentro dos blocos
 criptografados dos individuais.
 
+ATENÇÃO (14/08/2026): a fonte `recebimento.html` é o admin do Gestor e AINDA
+mostra a linha "Fica com a clínica", que saiu dos portais de médico a pedido do
+Dr. Igor. Se algum dia este script rodar sobre um portal de médico, a linha
+volta junto — rodar `_tirar_clinica_do_medico.py` em seguida. Hoje não é risco:
+este script pula quem já tem `abrirBase(`, e todo portal de médico tem.
+
 Uso:
     python _tools/_propagar_ver_conta.py            # simula
     python _tools/_propagar_ver_conta.py --escrever

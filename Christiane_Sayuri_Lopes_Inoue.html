@@ -936,19 +936,11 @@ const _XLSX_COLS = [
   {h:'Custo',             t:'m', w:13, get:a=>a['Custo']},
   {h:'Valor Líquido',     t:'m', w:15, get:a=>a['Valor Líquido']},
   {h:'% Profissional',    t:'m', w:15, get:a=>a['Repasse Profissional (R$)']},
-  {h:'% Clínica',         t:'m', w:15, get:a=>_repasseClinica(a)},
+  // A parte da clínica não vai no arquivo do médico (pedido do Dr. Igor,
+  // 14/08/2026). O número continua na aba "Base de dados" do card de
+  // Fechamento, que é interna.
 ];
 
-// % Clínica passa a ser gravado por atendimento a partir do fechamento de
-// Julho/2026. Antes disso não existe no PDATA e sai VAZIO de propósito:
-// não dá para deduzir de Valor Líquido − % Profissional − % Indicador, porque
-// linhas de repasse de custo hospitalar têm Líquido = 0 com a clínica ficando
-// com 10% do recebido, e há ajustes manuais. Deduzir mostrava a fatia da
-// clínica inflada em até R$ 22 mil num mês. Vazio > errado.
-function _repasseClinica(a){
-  const v=a['Repasse Clínica (R$)'];
-  return (typeof v==='number') ? v : '';
-}
 
 function _xmlEsc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1441,7 +1433,6 @@ function abrirBase(i){
   const recebido = _num(a['Valor recebido']);
   const liquido  = _num(a['Valor Líquido']);
   const repasse  = _num(a['Repasse Profissional (R$)']);
-  const clinica  = _num(a['Repasse Clínica (R$)']);
   const indic    = _num(a['Repasse Indicador (R$)']);
   const regra    = a['Regra aplicada'];
 
@@ -1512,11 +1503,9 @@ function abrirBase(i){
     const pct = liquido ? repasse/liquido : 0;
     html += _linha('Repasse &mdash; ' + (pct*100).toFixed(0) + '%', repasse, 'rep');
     if(indic > 0) html += _linha('Repasse ao indicador', indic, 'resto');
-    // Até Maio/2026 a parte da clínica não vinha gravada na linha; nesse caso é
-    // o que sobra do líquido depois do profissional e do indicador.
-    const fica = (a['Repasse Clínica (R$)'] !== undefined && a['Repasse Clínica (R$)'] !== null)
-                 ? clinica : (liquido - repasse - indic);
-    if(Math.abs(fica) > 0.005) html += _linha('Fica com a clínica', fica, 'resto');
+    // O memorial termina no que o médico recebe: a parte da clínica saiu a
+    // pedido do Dr. Igor em 14/08/2026. Ela continua na aba "Base de dados"
+    // do card de Fechamento, que só a gestão abre.
     html += '</table>' +
       '<div class="bc-rapida">' + fmtBRL(liquido) + ' &times; ' +
         (pct*100).toFixed(0) + '% = ' + fmtBRL(repasse) + '</div>';

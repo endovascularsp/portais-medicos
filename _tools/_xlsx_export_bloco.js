@@ -31,19 +31,11 @@ const _XLSX_COLS = [
   {h:'Custo',             t:'m', w:13, get:a=>a['Custo']},
   {h:'Valor Líquido',     t:'m', w:15, get:a=>a['Valor Líquido']},
   {h:'% Profissional',    t:'m', w:15, get:a=>a['Repasse Profissional (R$)']},
-  {h:'% Clínica',         t:'m', w:15, get:a=>_repasseClinica(a)},
+  // A parte da clínica não vai no arquivo do médico (pedido do Dr. Igor,
+  // 14/08/2026). O número continua na aba "Base de dados" do card de
+  // Fechamento, que é interna — lá a lista de colunas é outra, lida do banco.
+  // Tirada dos 35 portais por `_tirar_clinica_do_medico.py`.
 ];
-
-// % Clínica passa a ser gravado por atendimento a partir do fechamento de
-// Julho/2026. Antes disso não existe no PDATA e sai VAZIO de propósito:
-// não dá para deduzir de Valor Líquido − % Profissional − % Indicador, porque
-// linhas de repasse de custo hospitalar têm Líquido = 0 com a clínica ficando
-// com 10% do recebido, e há ajustes manuais. Deduzir mostrava a fatia da
-// clínica inflada em até R$ 22 mil num mês. Vazio > errado.
-function _repasseClinica(a){
-  const v=a['Repasse Clínica (R$)'];
-  return (typeof v==='number') ? v : '';
-}
 
 function _xmlEsc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
