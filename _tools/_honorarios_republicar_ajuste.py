@@ -49,6 +49,48 @@ def chave(s) -> str:
     return "".join(c for c in s if unicodedata.category(c) != "Mn").lower()
 
 
+def republicar_admins(obj: dict, periodo: str, escrever: bool) -> list:
+    """Atualiza os 3 dashboards do Gestor com o período inteiro.
+
+    Por que os três, e não só o da empresa do lançamento: `recebimento.html` é o
+    admin UNIFICADO — tem as três empresas dentro dele (chaves `_Cir` e `_Oxy`),
+    então qualquer desconto obriga a reescrevê-lo de todo jeito. Filtrar por
+    centro de custo economizaria só os outros dois arquivos (1,5 MB de 5,4 MB) e
+    acrescentaria um mapeamento a errar. Decisão do Thiago em 17/08/2026.
+
+    O motivo de existir: em 17/08 os admins ficaram de fora da republicação
+    automática e o Thiago foi conferir o desconto do Dr. Igor justamente ali.
+    O campo não existia no PDATA, o card caiu no comportamento de mês antigo e
+    mostrou "Nada descontado ou somado neste mês" — número errado no lugar onde
+    a gestão decide pagamento.
+
+    As três convenções de chave são diferentes e vêm de
+    `_honorarios_publicar.py:main()`, que é a fonte da verdade; qualquer mudança
+    lá tem de ser repetida aqui.
+    """
+    label = obj["label"]
+    tarefas = [
+        (P.REPO / "recebimento.html", obj["profs"]),
+        (P.REPO / "oxy" / "index.html",
+         {G.slugify(v["profissional"]) + "_Oxy_Recovery":
+          {k: x for k, x in v.items() if k != "periodo_id"}
+          for v in obj["profs"].values()
+          if v["empresa"] == "Oxy Recovery"
+          and P.alvo_individual(v["profissional"], "Oxy Recovery").exists()}),
+        (P.REPO / "cirurgias" / "index.html",
+         {G.slugify(v["profissional"]): {k: x for k, x in v.items() if k != "periodo_id"}
+          for v in obj["profs"].values() if v["empresa"] == "Cirurgias"}),
+    ]
+    mudados = []
+    for path, profs in tarefas:
+        res = P.injetar_admin(path, periodo, {"label": label, "profs": profs}, escrever)
+        rel = str(path.relative_to(P.REPO)).replace("\\", "/")
+        print(f"  admin           {rel:44s} {res} ({len(profs)} chaves)")
+        if res in ("SUBSTITUI", "ADICIONA") and escrever:
+            mudados.append(str(path.relative_to(P.REPO)).replace("\\", "/"))
+    return mudados
+
+
 def cache_bust(slug: str, arquivos: list, escrever: bool) -> list:
     """Renova o ?v= APENAS no Hub deste médico, e só nos links dos portais que
     mudaram.
@@ -74,9 +116,10 @@ def cache_bust(slug: str, arquivos: list, escrever: bool) -> list:
             f'href="{alvo}?v={versao}"', html)
     if html == original:
         return []
-    if escrever:
-        hub.write_text(html, encoding="utf-8")
     print(f"  cache-bust  {hub.name:44s} ?v={versao}")
+    if not escrever:
+        return []          # simulação não gravou: não pode dizer que mudou
+    hub.write_text(html, encoding="utf-8")
     return [str(hub.relative_to(P.REPO)).replace("\\", "/")]
 
 
@@ -139,7 +182,10 @@ def main() -> int:
             raise SystemExit(f"{prof} não tem chave validada — publicar cifraria "
                              "com chave errada e trancaria o médico fora")
 
-        mudados, detalhes = [], []
+        # `mudados` só recebe arquivo quando há gravação de verdade; `tocou` diz
+        # que o portal FOI alcançado. Separados para a simulação mostrar o que
+        # faria — amarrar tudo a `mudados` escondia os admins no dry-run.
+        mudados, detalhes, tocou = [], [], False
         for inner in alvos:
             emp = inner["empresa"]
             path = P.alvo_individual(prof, emp)
@@ -150,11 +196,19 @@ def main() -> int:
             detalhes.append(f"{emp}: {res}"
                             + (f" (ajustes {aj:+.2f})" if aj else " (sem ajustes)"))
             print(f"  {emp:16s} {path.name:44s} {res}")
-            if res in ("SUBSTITUI", "ADICIONA") and a.escrever:
-                mudados.append(str(path.relative_to(P.REPO)).replace("\\", "/"))
+            if res in ("SUBSTITUI", "ADICIONA"):
+                tocou = True
+                if a.escrever:
+                    mudados.append(str(path.relative_to(P.REPO)).replace("\\", "/"))
 
-        if mudados:
-            mudados += cache_bust(G.slugify(prof), mudados, a.escrever)
+        if tocou:
+            alvos_hub = mudados or [str(P.alvo_individual(prof, i["empresa"])
+                                        .relative_to(P.REPO)).replace("\\", "/")
+                                    for i in alvos]
+            mudados += cache_bust(G.slugify(prof), alvos_hub, a.escrever)
+            # Os dashboards do Gestor entram sempre que o portal do médico mudou:
+            # ver a treta de 17/08 documentada em republicar_admins().
+            mudados += republicar_admins(obj, a.periodo, a.escrever)
 
         msg = f"{prof} · {a.periodo} · " + " · ".join(detalhes)
         if a.ok_depois and mudados:
