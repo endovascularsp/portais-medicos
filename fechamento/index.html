@@ -1642,6 +1642,11 @@ function trocarAba(qual){
 let AJUSTES = [];
 let AJ_PERIODO = null;
 let AJ_EDIT = null;      // id em edição, ou null quando é lançamento novo
+// Como o lançamento estava ANTES de editar. Serve para um caso só, mas que
+// deixaria desconto duplicado no ar: se a edição troca o profissional ou o
+// centro de custo, o portal do médico anterior também tem de ser republicado,
+// senão o desconto continua aparecendo lá e passa a aparecer no novo também.
+let AJ_ANTES = null;
 
 async function carregarAjustes(pid){
   AJ_PERIODO = pid;
@@ -1710,10 +1715,12 @@ function pintarAjustes(){
 function fecharFormAjuste(){
   document.getElementById('aj-form').classList.remove('aberto');
   AJ_EDIT = null;
+  AJ_ANTES = null;
 }
 
 function abrirNovoAjuste(){
   AJ_EDIT = null;
+  AJ_ANTES = null;
   const sel = document.getElementById('aj-prof');
   sel.innerHTML = '<option value="">Escolha o profissional…</option>' +
     PROFISSIONAIS.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
@@ -1732,6 +1739,7 @@ function editarAjuste(id){
   if (!a) return;
   abrirNovoAjuste();
   AJ_EDIT = id;
+  AJ_ANTES = { profissional: a.profissional, centro_custo: a.centro_custo };
   document.getElementById('aj-form-titulo').textContent = 'Editar lançamento';
   document.getElementById('aj-prof').value = a.profissional;
   document.getElementById('aj-centro').value = a.centro_custo;
@@ -1740,6 +1748,35 @@ function editarAjuste(id){
   document.getElementById('aj-desc').value = a.descricao;
   document.getElementById('aj-obs').value = a.observacao || '';
   document.getElementById('aj-repete').checked = !!a.repete;
+}
+
+/* O portal do médico é arquivo gerado: gravar aqui não muda o que ele vê. Este
+   pedido acorda o workflow que reescreve o portal daquele médico com o valor
+   novo. Sem isto, alguém tinha de lembrar de republicar à mão, com token, no
+   terminal — e em 17/08/2026 um desconto de R$ 9.335,99 ficou invisível para o
+   Dr. Igor por causa disso.
+
+   Nunca derruba a gravação: o lançamento no banco é o que importa e já está
+   salvo. Se a publicação falhar, a tela diz o que falta fazer à mão. */
+async function pedirPublicacao(prof, empresa, periodo){
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/honorarios-republicar-ajuste`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY,
+                 Authorization: 'Bearer ' + (session?.access_token || '') },
+      body: JSON.stringify({ periodo: periodo || AJ_PERIODO, profissional: prof,
+                             empresa: empresa || '' }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.erro || ('HTTP ' + r.status));
+    aviso(j.ja_rodando
+      ? 'Gravado. Já havia uma publicação em andamento para este médico — ela leva a alteração.'
+      : 'Gravado. Publicando no portal do médico — costuma levar 2 a 3 minutos.');
+  } catch (err) {
+    aviso('Gravado no sistema, mas NÃO consegui atualizar o portal do médico: '
+          + err.message + '. Até publicar, ele vê o repasse sem este lançamento.', true);
+  }
 }
 
 async function salvarAjuste(){
@@ -1766,9 +1803,18 @@ async function salvarAjuste(){
         .eq('id', AJ_EDIT)
     : await sb.from('honorarios_ajustes').insert({ ...reg, criado_por: me.email });
   if (r.error) return aviso('Não consegui gravar: ' + r.error.message, true);
-  aviso(AJ_EDIT ? 'Lançamento atualizado.' : 'Lançamento gravado.');
+  // Guardar antes de fechar o formulário, que zera AJ_ANTES.
+  const antes = AJ_ANTES;
+  const periodo = AJ_PERIODO;
   fecharFormAjuste();
-  await carregarAjustes(AJ_PERIODO);
+  await carregarAjustes(periodo);
+  // Editar mudou de profissional ou de centro de custo? O portal do anterior
+  // também precisa voltar ao valor sem o lançamento — senão o desconto fica
+  // aparecendo nos dois.
+  if (antes && (antes.profissional !== prof || antes.centro_custo !== reg.centro_custo)) {
+    await pedirPublicacao(antes.profissional, antes.centro_custo, periodo);
+  }
+  await pedirPublicacao(prof, reg.centro_custo, periodo);
 }
 
 async function excluirAjuste(id){
@@ -1777,8 +1823,10 @@ async function excluirAjuste(id){
   if (!confirm(`Excluir "${a.descricao}" de ${a.profissional}?`)) return;
   const { error } = await sb.from('honorarios_ajustes').delete().eq('id', id);
   if (error) return aviso('Não consegui excluir: ' + error.message, true);
-  aviso('Lançamento excluído.');
   await carregarAjustes(AJ_PERIODO);
+  // Excluir também muda o que o médico vê: sem republicar, o desconto continua
+  // no portal dele mesmo depois de apagado aqui.
+  await pedirPublicacao(a.profissional, a.centro_custo, AJ_PERIODO);
 }
 
 async function repetirDoMesAnterior(){
@@ -1807,6 +1855,13 @@ async function repetirDoMesAnterior(){
   if (e2) return aviso('Não consegui copiar: ' + e2.message, true);
   aviso(`${novos.length} lançamento(s) trazido(s) de ${anterior.label}. Confira os valores.`);
   await carregarAjustes(AJ_PERIODO);
+  // Um por médico/centro de custo, sem repetir: trazer 3 lançamentos do mesmo
+  // médico é uma publicação, não três.
+  const alvos = [...new Set(novos.map(a => a.profissional + '|' + a.centro_custo))];
+  for (const k of alvos) {
+    const [prof, centro] = k.split('|');
+    await pedirPublicacao(prof, centro, AJ_PERIODO);
+  }
 }
 
 /* ===================== Regras ===================== */

@@ -1,0 +1,122 @@
+# Republica o portal de UM médico depois de um desconto/acréscimo ser lançado,
+# editado ou excluído no card de Fechamento.
+#
+# O problema que resolve: o portal do médico é arquivo gerado. Lançar um desconto
+# num mês já publicado deixa o banco dizendo uma coisa e o portal outra — em
+# 17/08/2026 foi um desconto de R$ 9.335,99 no Dr. Igor, num Julho publicado em
+# 10/08. Sem isto, alguém tem de lembrar de republicar à mão, com token, no
+# terminal. Era o único passo do fluxo que ainda dependia de quem programa.
+#
+# Diferente de `atualizar-base.yml`, que NÃO toca em portal de médico: aqui o
+# ponto é justamente tocar, e só no portal de quem teve o lançamento.
+#
+# Duas formas de disparar:
+#   · repository_dispatch . a tela, ao gravar/editar/excluir um lançamento;
+#   · workflow_dispatch ... na mão, pela aba Actions, se precisar refazer.
+name: Republicar portal após desconto/acréscimo
+
+on:
+  workflow_dispatch:
+    inputs:
+      periodo:
+        description: "AAAA-MM do mês do lançamento"
+        required: true
+      profissional:
+        description: "Nome como está na base (ex: Igor Rafael Sincos)"
+        required: true
+      empresa:
+        description: "Centro de custo; vazio = todas as empresas do profissional"
+        required: false
+        default: ''
+  repository_dispatch:
+    types: [republicar-ajuste]
+
+# Duas publicações ao mesmo tempo escreveriam no mesmo repositório e a segunda
+# perderia o push. Enfileira em vez de cancelar: cada lançamento tem de chegar
+# ao portal, nenhum é descartável.
+concurrency:
+  group: honorarios-republicar
+  cancel-in-progress: false
+
+# Sem isto o push falha: o token do Actions nasce só-leitura quando a
+# configuração do repositório está em "read repository contents permission".
+permissions:
+  contents: write
+
+jobs:
+  republicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # `cryptography` é o que cifra o PDATA (AES-GCM + PBKDF2); pandas entra
+      # porque o gerador de PDATA usa. Sem cache de pip: ver atualizar-base.yml.
+      - name: Instalar dependências
+        run: pip install pandas openpyxl cryptography
+
+      - name: Republicar o portal do profissional
+        id: pub
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: '1'
+          # client_payload é entrada de fora: chega por variável de ambiente,
+          # nunca interpolado no meio da linha de comando.
+          PERIODO: ${{ github.event.inputs.periodo || github.event.client_payload.periodo }}
+          PROF:    ${{ github.event.inputs.profissional || github.event.client_payload.profissional }}
+          EMPRESA: ${{ github.event.inputs.empresa || github.event.client_payload.empresa }}
+          EXEC:    ${{ github.event.client_payload.execucao_id }}
+        run: |
+          set -o pipefail
+          if [ -z "$PERIODO" ] || [ -z "$PROF" ]; then
+            echo "::error::periodo e profissional são obrigatórios"
+            exit 1
+          fi
+          # Array, não string: "Endovascular SP" e "Igor Rafael Sincos" têm
+          # espaço, e montar a linha de comando por concatenação faria o bash
+          # quebrar em palavras e o argparse receber lixo.
+          ARGS=(--periodo "$PERIODO" --profissional "$PROF" --escrever)
+          if [ -n "$EMPRESA" ]; then ARGS+=(--empresa "$EMPRESA"); fi
+          if [ -n "$EXEC" ];    then ARGS+=(--execucao-id "$EXEC"); fi
+          # O script imprime "ARQUIVOS_MUDADOS=..." na última linha; é por ela
+          # que o commit sabe o que levar, em vez de um `git add -A` que pegaria
+          # qualquer coisa que aparecesse na árvore.
+          python _tools/_honorarios_republicar_ajuste.py "${ARGS[@]}" | tee saida.txt
+          echo "arquivos=$(grep '^ARQUIVOS_MUDADOS=' saida.txt | tail -1 | cut -d= -f2-)" \
+            >> "$GITHUB_OUTPUT"
+          rm -f saida.txt
+
+      - name: Publicar no site
+        if: steps.pub.outputs.arquivos != ''
+        env:
+          ARQUIVOS: ${{ steps.pub.outputs.arquivos }}
+          PERIODO:  ${{ github.event.inputs.periodo || github.event.client_payload.periodo }}
+          PROF:     ${{ github.event.inputs.profissional || github.event.client_payload.profissional }}
+          QUEM:     ${{ github.event.client_payload.disparado_por || 'manual' }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- $ARQUIVOS
+          if git diff --cached --quiet; then
+            echo "Nada mudou de fato — sem commit."
+            exit 0
+          fi
+          git commit -m "Republica portal de $PROF ($PERIODO) apos desconto/acrescimo
+
+          Pedido por $QUEM pela aba Descontos e acrescimos do card de Fechamento."
+          # Se alguém empurrou nesse meio-tempo, rebase e tenta de novo. O
+          # concurrency já serializa as rodadas deste workflow, mas não impede
+          # um push manual do Thiago no mesmo minuto.
+          for i in 1 2 3; do
+            if git push; then exit 0; fi
+            echo "push recusado; rebase e nova tentativa ($i)"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || exit 1
+          done
+          echo "::error::não consegui publicar depois de 3 tentativas"
+          exit 1
