@@ -623,6 +623,31 @@ html[style*="visible"] #boot{display:none;}
           </tr></thead><tbody id='body-repasse'></tbody></table>
         </div>
       </div>
+      <!-- Detalhe por atendimento. Só aparece quando há um profissional
+           filtrado: com todos, seriam centenas de linhas sem utilidade. Nasceu
+           do pedido do Thiago em 17/08/2026 — "eu veria a informação detalhada
+           lá embaixo" — quando ele filtrou Simone Matsuda + Produtos para
+           descobrir de que OS eram os R$ 767,92. -->
+      <div class='full-col card' id='card-detalhe' style='display:none'>
+        <div class='section-title'>&#128203; Detalhe dos Atendimentos
+          <span class='badge' id='badge-detalhe'></span></div>
+        <div class='table-scroll'>
+          <table class='repasse-table'><thead><tr>
+            <th>N&#186; OS</th>
+            <th>Data comp.</th>
+            <th>Paciente</th>
+            <th>Procedimento</th>
+            <th>Categoria</th>
+            <th>Tabela</th>
+            <th>Pagamento</th>
+            <th style='text-align:right'>Valor Recebido</th>
+            <th style='text-align:right'>Valor L&#237;quido</th>
+            <th style='text-align:center'>%</th>
+            <th style='text-align:right'>Repasse Prof.</th>
+          </tr></thead><tbody id='body-detalhe'></tbody>
+          <tfoot><tr id='foot-detalhe'></tr></tfoot></table>
+        </div>
+      </div>
     </div>
     <div class='view' id='view-prof'>
       <div class='prof-header'>
@@ -819,18 +844,14 @@ function _delta(atual, anterior, isInteger){
   return '<span class="'+cls+'">'+sinal+' '+valFmt+(pct>0?' ('+pct.toFixed(1)+'%)':'')+'</span>';
 }
 
-// Handler do select de profissional: '' = visão geral, valor = chave do prof
+// Handler do select de profissional. Agora é filtro, e se ACUMULA com Categoria
+// e Tabela: '' = todos, valor = só aquele profissional. Antes ele trocava de
+// tela (abria a página individual), o que impedia cruzar pessoa + categoria.
+// A página individual continua a um clique: pelo nome na barra lateral ou pela
+// linha da Tabela de Repasse Bancário.
 function filtrarPorProf(profKey){
-  if(!profKey){
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const gv = document.getElementById('view-geral');
-    if(gv) gv.classList.add('active');
-    renderGeral();
-    return;
-  }
-  if(DADOS_PROFS[profKey]){
-    mostrarProf(profKey);
-  }
+  FILTRO_PROF = profKey || '';
+  _reaplicar();
 }
 
 function renderGeral(){
@@ -931,6 +952,59 @@ function renderGeral(){
   if(todasTabelas.length>0 && document.getElementById('origem-geral-lista')){
     renderTabelas(todasTabelas,'origem-geral-lista','chart-origem-geral');
   }
+
+  _renderDetalhe(todos);
+}
+
+// Lista atendimento por atendimento, com a OS. Só com profissional filtrado —
+// com todos seriam centenas de linhas. Respeita Categoria e Tabela porque lê
+// `d.atendimentos`, que _recalcularProf já entregou filtrado.
+function _renderDetalhe(todos){
+  const card = document.getElementById('card-detalhe');
+  const corpo = document.getElementById('body-detalhe');
+  if(!card || !corpo) return;
+  if(!FILTRO_PROF){ card.style.display='none'; corpo.innerHTML=''; return; }
+
+  const ats = (todos||[]).flatMap(d => d.atendimentos || []);
+  if(!ats.length){ card.style.display='none'; corpo.innerHTML=''; return; }
+
+  // Mais recente primeiro; a data vem como dd/mm/aaaa, então compara invertida.
+  const chaveData = s => String(s||'').split('/').reverse().join('');
+  const ord = ats.slice().sort((a,b) =>
+    chaveData(b['Data compensação']).localeCompare(chaveData(a['Data compensação'])));
+
+  const pct = a => {
+    const p = a['% Aplicado'];
+    return (p===undefined||p===null||p==='') ? '—' : (Number(p)*100).toFixed(0)+'%';
+  };
+  corpo.innerHTML = ord.map(a =>
+    '<tr>'+
+    '<td style="font-weight:600">'+(a['Nº OS']||'—')+'</td>'+
+    '<td>'+(a['Data compensação']||'—')+'</td>'+
+    '<td class="prof">'+(a['Paciente']||'—')+'</td>'+
+    '<td>'+(a['Procedimento']||'—')+'</td>'+
+    '<td>'+(a['Categoria']||'—')+'</td>'+
+    '<td>'+(a['Tabela']||'—')+'</td>'+
+    '<td>'+(a['Tipo de pagamento']||'—')+'</td>'+
+    '<td class="r">'+fmtBRL(a['Valor recebido']||0)+'</td>'+
+    '<td class="r" style="color:var(--azul)">'+fmtBRL(a['Valor Líquido']||0)+'</td>'+
+    '<td style="text-align:center">'+pct(a)+'</td>'+
+    '<td class="r" style="color:var(--verde);font-weight:600">'+
+      fmtBRL(a['Repasse Profissional (R$)']||0)+'</td>'+
+    '</tr>').join('');
+
+  const soma = c => ord.reduce((s,a)=>s+(a[c]||0),0);
+  const pe = document.getElementById('foot-detalhe');
+  if(pe) pe.innerHTML =
+    '<td colspan="7" style="font-weight:700">TOTAL — '+ord.length+' atendimento(s)</td>'+
+    '<td class="r" style="font-weight:700">'+fmtBRL(soma('Valor recebido'))+'</td>'+
+    '<td class="r" style="font-weight:700">'+fmtBRL(soma('Valor Líquido'))+'</td>'+
+    '<td></td>'+
+    '<td class="r" style="font-weight:700">'+fmtBRL(soma('Repasse Profissional (R$)'))+'</td>';
+
+  const bd = document.getElementById('badge-detalhe');
+  if(bd) bd.textContent = ord.length + (ord.length===1 ? ' atendimento' : ' atendimentos');
+  card.style.display='';
 }
 
 function mostrarProf(id,btnEl){
@@ -1449,6 +1523,24 @@ function inicializarPortalPermanente(){
 // atendimentos filtrada, e as quebras (categoria/pagamento/tabela) junto.
 let FILTRO_CATEGORIA = '';
 let FILTRO_TABELA    = '';
+// Profissional virou FILTRO DE VERDADE em 17/08/2026. Antes era só um atalho de
+// navegação: escolher um nome abria a página individual dele, e mexer em
+// Categoria depois jogava a tela de volta para a visão geral — mas o <select>
+// continuava mostrando o nome, então a tela mentia. O Thiago filtrou
+// "Simone Matsuda + Produtos", viu R$ 2.587,92 (a soma dos três profissionais) e
+// perguntou se os filtros não se acumulavam. Não se acumulavam mesmo.
+let FILTRO_PROF = '';
+// Guarda o conjunto filtrado por empresa/categoria/tabela mas SEM o filtro de
+// profissional, para o <select> continuar oferecendo todos os nomes daquele
+// recorte — senão, ao escolher uma pessoa, ela seria a única opção da lista.
+let _PROFS_ANTES_DO_FILTRO_PROF = {};
+
+function _soDoProfFiltrado(mapa){
+  if(!FILTRO_PROF) return mapa;
+  const out = {};
+  if(mapa[FILTRO_PROF]) out[FILTRO_PROF] = mapa[FILTRO_PROF];
+  return out;
+}
 
 function _somaAtend(ats, campo){
   return ats.reduce((a,x)=>a+(x[campo]||0),0);
@@ -1509,8 +1601,10 @@ function _filtrarProfs(origem){
 
 function _aplicarFiltros(){
   const novo = _filtrarProfs(_DADOS_PROFS_PERIODO);
+  _PROFS_ANTES_DO_FILTRO_PROF = novo;
+  const comProf = _soDoProfFiltrado(novo);
   Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  Object.entries(novo).forEach(([k,v]) => DADOS_PROFS[k] = v);
+  Object.entries(comProf).forEach(([k,v]) => DADOS_PROFS[k] = v);
 }
 
 // Opções de Categoria e Tabela vêm dos atendimentos do período e da empresa ativa,
@@ -1563,16 +1657,27 @@ function _reaplicar(){
 function _atualizarSelectProfs(){
   const sel = document.getElementById('prof-filtro');
   if(!sel) return;
-  const valorAtual = sel.value;
-  const profs = Object.entries(DADOS_PROFS)
+  // A lista vem do recorte SEM o filtro de profissional: com ele, a pessoa
+  // escolhida seria a única opção e não haveria como trocar para outra.
+  const base = Object.keys(_PROFS_ANTES_DO_FILTRO_PROF||{}).length
+    ? _PROFS_ANTES_DO_FILTRO_PROF : DADOS_PROFS;
+  const profs = Object.entries(base)
     .filter(([,v])=> (v.resumo?.['Repasse Profissional (R$)']||0) > 0
                   || (v.resumo?.['Valor recebido']||0) > 0)
     .sort((a,b)=>a[1].profissional.localeCompare(b[1].profissional,'pt-BR'));
-  sel.innerHTML = '<option value="">— Visão Geral —</option>' +
+  sel.innerHTML = '<option value="">— Todos —</option>' +
     profs.map(([k,v])=>'<option value="'+k+'">'+v.profissional+'</option>').join('');
-  // Tenta preservar a seleção; se o prof não está mais disponível, volta pra Visão Geral
-  if(valorAtual && DADOS_PROFS[valorAtual]) sel.value = valorAtual;
-  else sel.value = '';
+  // Se a pessoa filtrada não existe mais neste recorte (trocou o mês, ou a
+  // categoria que ela não tem), o filtro cai sozinho em vez de zerar a tela.
+  if(FILTRO_PROF && base[FILTRO_PROF]){ sel.value = FILTRO_PROF; return; }
+  if(FILTRO_PROF){
+    // Cair o filtro aqui, depois de DADOS_PROFS já ter sido filtrado por ele,
+    // deixaria a tela vazia: é preciso devolver o recorte inteiro.
+    FILTRO_PROF = '';
+    Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
+    Object.entries(base).forEach(([k,v]) => DADOS_PROFS[k] = v);
+  }
+  sel.value = '';
 }
 
 function aplicarRange(){
@@ -1661,9 +1766,11 @@ function _renderRangeGeral(){
     });
   }
 
-  // Substitui DADOS_PROFS pelos agregados e renderiza
+  // Substitui DADOS_PROFS pelos agregados e renderiza. O filtro de profissional
+  // vale no intervalo também — é aqui que ele entra, depois da agregação.
+  _PROFS_ANTES_DO_FILTRO_PROF = agg;
   Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  Object.assign(DADOS_PROFS, agg);
+  Object.assign(DADOS_PROFS, _soDoProfFiltrado(agg));
 
   const lDe  = (TODOS_PERIODOS[periodos[0]]||{}).label || periodos[0];
   const lAte = (TODOS_PERIODOS[periodos[periodos.length-1]]||{}).label || periodos[periodos.length-1];
