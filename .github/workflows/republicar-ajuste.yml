@@ -31,15 +31,25 @@ on:
   repository_dispatch:
     types: [republicar-ajuste]
 
-# Duas publicações ao mesmo tempo escreveriam no mesmo repositório e a segunda
-# perderia o push. Enfileira em vez de cancelar: cada lançamento tem de chegar
-# ao portal, nenhum é descartável.
+# UMA FILA POR MÉDICO, não uma fila só.
+#
+# O GitHub, quando já existe uma rodada em andamento e outra esperando, CANCELA
+# a que estava esperando assim que chega uma terceira. Com fila única isso
+# significava perder publicação em silêncio — e o "Trazer os que se repetem"
+# dispara uma por médico, então três médicos já bastavam. Publicação perdida em
+# silêncio é inaceitável onde tem dinheiro.
+#
+# Por médico, duas pessoas diferentes publicam em paralelo sem se cancelar, e só
+# as do MESMO médico enfileiram — que é o único caso em que a ordem importa. Os
+# pushes simultâneos são resolvidos pelo rebase com 3 tentativas, mais abaixo.
 concurrency:
-  group: honorarios-republicar
+  group: >-
+    honorarios-republicar-${{ github.event.client_payload.profissional
+    || github.event.inputs.profissional }}
   cancel-in-progress: false
 
-# Sem isto o push falha: o token do Actions nasce só-leitura quando a
-# configuração do repositório está em "read repository contents permission".
+# Permissão do token interno. Continua aqui porque o checkout ainda a usa para
+# ler; quem escreve é o PAT_PUBLICAR (ver o passo de checkout).
 permissions:
   contents: write
 
@@ -48,7 +58,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # O TOKEN AQUI NÃO É DETALHE. Push feito com o token interno do Actions
+      # NÃO dispara outros workflows — inclusive o "pages build and deployment".
+      # O commit entrava no main, o arquivo ficava certo, e o site continuava
+      # servindo a versão velha; purgar o Cloudflare não adiantava, porque ele
+      # ia buscar de novo a mesma página velha no Pages. Descoberto em
+      # 17/08/2026, com o desconto da Dra. Simone Matsuda publicado no repo e
+      # invisível no portal. Com um PAT de verdade, o Pages reconstrói.
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_PUBLICAR }}
+
+      - name: Conferir se o token de publicação existe
+        env:
+          PAT: ${{ secrets.PAT_PUBLICAR }}
+        run: |
+          if [ -z "$PAT" ]; then
+            echo "::error::secret PAT_PUBLICAR não está configurado — o push até"
+            echo "::error::funcionaria, mas o site não seria reconstruído."
+            exit 1
+          fi
 
       - uses: actions/setup-python@v5
         with:
@@ -81,7 +110,7 @@ jobs:
           # Array, não string: "Endovascular SP" e "Igor Rafael Sincos" têm
           # espaço, e montar a linha de comando por concatenação faria o bash
           # quebrar em palavras e o argparse receber lixo.
-          ARGS=(--periodo "$PERIODO" --profissional "$PROF" --escrever)
+          ARGS=(--periodo "$PERIODO" --profissional "$PROF" --escrever --ok-depois)
           if [ -n "$EMPRESA" ]; then ARGS+=(--empresa "$EMPRESA"); fi
           if [ -n "$EXEC" ];    then ARGS+=(--execucao-id "$EXEC"); fi
           # O script imprime "ARQUIVOS_MUDADOS=..." na última linha; é por ela
@@ -110,9 +139,9 @@ jobs:
           git commit -m "Republica portal de $PROF ($PERIODO) apos desconto/acrescimo
 
           Pedido por $QUEM pela aba Descontos e acrescimos do card de Fechamento."
-          # Se alguém empurrou nesse meio-tempo, rebase e tenta de novo. O
-          # concurrency já serializa as rodadas deste workflow, mas não impede
-          # um push manual do Thiago no mesmo minuto.
+          # Se alguém empurrou nesse meio-tempo, rebase e tenta de novo. Agora
+          # que a fila é por médico, dois médicos publicam em paralelo e batem
+          # de frente com mais frequência — é aqui que isso se resolve.
           for i in 1 2 3; do
             if git push; then exit 0; fi
             echo "push recusado; rebase e nova tentativa ($i)"
@@ -120,3 +149,47 @@ jobs:
           done
           echo "::error::não consegui publicar depois de 3 tentativas"
           exit 1
+
+      # A execução só fecha AQUI, depois de o push ter acontecido de verdade.
+      # `if: always()` porque o caso que mais importa registrar é justamente o
+      # da falha: sem isto ela ficaria "rodando" para sempre e a tela mentiria.
+      - name: Fechar a execução
+        if: always() && github.event.client_payload.execucao_id != ''
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          EXEC:   ${{ github.event.client_payload.execucao_id }}
+          PUBLIC: ${{ steps.pub.outcome }}
+          SITE:   ${{ job.status }}
+        run: |
+          if [ "$SITE" = "success" ]; then
+            export STATUS="ok"
+            export EXTRA=" · publicado"
+          else
+            export STATUS="erro"
+            export EXTRA=" · FALHOU ao publicar no site (portal gerado, mas não foi ao ar)"
+          fi
+          # Acrescenta ao que o script já escreveu, em vez de sobrescrever: a
+          # mensagem dele diz o que mudou e quanto de ajuste entrou.
+          ATUAL_MSG=$(curl -s -H "apikey: $SUPABASE_SERVICE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            "$SUPABASE_URL/rest/v1/honorarios_execucoes?id=eq.$EXEC&select=mensagem" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['mensagem'] if d else '')")
+          export ATUAL_MSG
+          python3 - <<'PY' > corpo.json
+          import json, os, datetime
+          atual = os.environ.get("ATUAL_MSG", "")
+          print(json.dumps({
+            "status": os.environ["STATUS"],
+            "terminado_em": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "mensagem": (atual.replace(" · publicando", "") + os.environ["EXTRA"])[:500],
+          }))
+          PY
+          curl -s -X PATCH \
+            -H "apikey: $SUPABASE_SERVICE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -d @corpo.json \
+            "$SUPABASE_URL/rest/v1/honorarios_execucoes?id=eq.$EXEC" > /dev/null
+          rm -f corpo.json
+          echo "execução $EXEC fechada como $STATUS"

@@ -100,6 +100,11 @@ def main() -> int:
     ap.add_argument("--execucao-id", type=int)
     ap.add_argument("--escrever", action="store_true",
                     help="sem isto, nada é gravado — só mostra o que faria")
+    ap.add_argument("--ok-depois", action="store_true",
+                    help="não marcar 'ok' ao terminar: quem chamou fecha a "
+                         "execução depois de publicar de fato. Usado pelo "
+                         "workflow, porque gerar o portal certo não é o mesmo "
+                         "que ele chegar ao ar")
     a = ap.parse_args()
 
     from datetime import datetime, timezone
@@ -152,8 +157,15 @@ def main() -> int:
             mudados += cache_bust(G.slugify(prof), mudados, a.escrever)
 
         msg = f"{prof} · {a.periodo} · " + " · ".join(detalhes)
-        marcar(a.execucao_id, status="ok",
-               terminado_em=datetime.now(timezone.utc).isoformat(), mensagem=msg[:500])
+        if a.ok_depois and mudados:
+            # Portal gerado, mas ainda não publicado. Fechar como 'ok' aqui
+            # seria mentir: em 17/08/2026 a execução disse 'ok' e o site
+            # continuou servindo a versão velha por três horas.
+            marcar(a.execucao_id, status="rodando", mensagem=(msg + " · publicando")[:500])
+        else:
+            marcar(a.execucao_id, status="ok",
+                   terminado_em=datetime.now(timezone.utc).isoformat(),
+                   mensagem=msg[:500])
 
         # O workflow lê esta linha para commitar só o que mudou.
         print("ARQUIVOS_MUDADOS=" + " ".join(mudados))
