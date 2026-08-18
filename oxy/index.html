@@ -613,6 +613,28 @@ body{background:#EEF2F6;}
           </tr></thead><tbody id='body-repasse'></tbody></table>
         </div>
       </div>
+      <!-- Detalhe por atendimento. Só aparece com um profissional filtrado:
+           com todos, seriam centenas de linhas sem utilidade. -->
+      <div class='full-col card' id='card-detalhe' style='display:none'>
+        <div class='section-title'>&#128203; Detalhe dos Atendimentos
+          <span class='badge' id='badge-detalhe'></span></div>
+        <div class='table-scroll'>
+          <table class='repasse-table'><thead><tr>
+            <th>N&#186; OS</th>
+            <th>Data comp.</th>
+            <th>Paciente</th>
+            <th>Procedimento</th>
+            <th>Categoria</th>
+            <th>Tabela</th>
+            <th>Pagamento</th>
+            <th style='text-align:right'>Valor Recebido</th>
+            <th style='text-align:right'>Valor L&#237;quido</th>
+            <th style='text-align:center'>%</th>
+            <th style='text-align:right'>Repasse Prof.</th>
+          </tr></thead><tbody id='body-detalhe'></tbody>
+          <tfoot><tr id='foot-detalhe'></tr></tfoot></table>
+        </div>
+      </div>
     </div>
     <div class='view' id='view-prof'>
       <div class='prof-header'>
@@ -805,14 +827,8 @@ function _delta(atual, anterior, isInteger){
   return '<span class="'+cls+'">'+sinal+' '+valFmt+(pct>0?' ('+pct.toFixed(1)+'%)':'')+'</span>';
 }
 function filtrarPorProf(profKey){
-  if(!profKey){
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const gv = document.getElementById('view-geral');
-    if(gv) gv.classList.add('active');
-    renderGeral();
-    return;
-  }
-  if(DADOS_PROFS[profKey]) mostrarProf(profKey);
+  FILTRO_PROF = profKey || '';
+  _reaplicar();
 }
 // ── Filtros de Categoria e Tabela de preço ──────────────────────────────────
 // Quando um deles está ativo, o `resumo` que veio pronto no PDATA não serve mais:
@@ -820,6 +836,22 @@ function filtrarPorProf(profKey){
 // atendimentos filtrada, e as quebras (categoria/pagamento/tabela) junto.
 let FILTRO_CATEGORIA = '';
 let FILTRO_TABELA    = '';
+// Profissional virou FILTRO DE VERDADE em 17/08/2026. Antes era só um atalho de
+// navegação: escolher um nome abria a página individual dele, e mexer em
+// Categoria depois jogava a tela de volta para a visão geral — mas o <select>
+// continuava mostrando o nome, então a tela mentia.
+let FILTRO_PROF = '';
+// Guarda o conjunto filtrado por empresa/categoria/tabela mas SEM o filtro de
+// profissional, para o <select> continuar oferecendo todos os nomes daquele
+// recorte — senão, ao escolher uma pessoa, ela seria a única opção da lista.
+let _PROFS_ANTES_DO_FILTRO_PROF = {};
+
+function _soDoProfFiltrado(mapa){
+  if(!FILTRO_PROF) return mapa;
+  const out = {};
+  if(mapa[FILTRO_PROF]) out[FILTRO_PROF] = mapa[FILTRO_PROF];
+  return out;
+}
 
 function _somaAtend(ats, campo){
   return ats.reduce((a,x)=>a+(x[campo]||0),0);
@@ -880,8 +912,10 @@ function _filtrarProfs(origem){
 
 function _aplicarFiltros(){
   const novo = _filtrarProfs(_DADOS_PROFS_PERIODO);
+  _PROFS_ANTES_DO_FILTRO_PROF = novo;
+  const comProf = _soDoProfFiltrado(novo);
   Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  Object.entries(novo).forEach(([k,v]) => DADOS_PROFS[k] = v);
+  Object.entries(comProf).forEach(([k,v]) => DADOS_PROFS[k] = v);
 }
 
 // Opções de Categoria e Tabela vêm dos atendimentos do período e da empresa ativa,
@@ -933,15 +967,25 @@ function _reaplicar(){
 function _atualizarSelectProfs(){
   const sel = document.getElementById('prof-filtro');
   if(!sel) return;
-  const valorAtual = sel.value;
-  const profs = Object.entries(DADOS_PROFS)
+  // A lista vem do recorte SEM o filtro de profissional: com ele, a pessoa
+  // escolhida seria a única opção e não haveria como trocar para outra.
+  const base = Object.keys(_PROFS_ANTES_DO_FILTRO_PROF||{}).length
+    ? _PROFS_ANTES_DO_FILTRO_PROF : DADOS_PROFS;
+  const profs = Object.entries(base)
     .filter(([,v])=> (v.resumo?.['Repasse Profissional (R$)']||0) > 0
                   || (v.resumo?.['Valor recebido']||0) > 0)
     .sort((a,b)=>a[1].profissional.localeCompare(b[1].profissional,'pt-BR'));
-  sel.innerHTML = '<option value="">— Visão Geral —</option>' +
+  sel.innerHTML = '<option value="">— Todos —</option>' +
     profs.map(([k,v])=>'<option value="'+k+'">'+v.profissional+'</option>').join('');
-  if(valorAtual && DADOS_PROFS[valorAtual]) sel.value = valorAtual;
-  else sel.value = '';
+  if(FILTRO_PROF && base[FILTRO_PROF]){ sel.value = FILTRO_PROF; return; }
+  if(FILTRO_PROF){
+    // Cair o filtro aqui, depois de DADOS_PROFS já ter sido filtrado por ele,
+    // deixaria a tela vazia: é preciso devolver o recorte inteiro.
+    FILTRO_PROF = '';
+    Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
+    Object.entries(base).forEach(([k,v]) => DADOS_PROFS[k] = v);
+  }
+  sel.value = '';
 }
 
 function renderGeral(){
@@ -971,11 +1015,38 @@ function renderGeral(){
   const dCli = _delta(totalCli, prevSoma('Repasse Clínica (R$)'));
   const nProfs = todos.filter(d=>d.resumo?.['Repasse Profissional (R$)']>0).length;
 
+  // O lançamento de desconto é por PESSOA e vale o MÊS INTEIRO — não obedece a
+  // Categoria nem a Tabela. Por isso "Total a Receber" só aparece quando o
+  // recorte é o mês todo: com filtro de categoria, "repasse parcial menos
+  // desconto do mês" seria um número sem significado.
+  let kpiAjustes = '';
+  if(FILTRO_PROF && todos.length === 1){
+    const ef = Number(todos[0].resumo?.['Ajustes (R$)'] || 0);
+    const itens = (todos[0].ajustes || []).length;
+    const parcial = !!(FILTRO_CATEGORIA || FILTRO_TABELA);
+    const sinal = ef < 0 ? '&minus; ' : (ef > 0 ? '+ ' : '');
+    const legenda = itens
+      ? (parcial ? 'Do m&ecirc;s inteiro — n&atilde;o segue os filtros acima'
+                 : itens + (itens===1 ? ' lan&ccedil;amento' : ' lan&ccedil;amentos'))
+      : 'Nada descontado ou somado neste m&ecirc;s';
+    kpiAjustes =
+      '<div class="kpi cinza"><div class="kpi-ic">💼</div><div class="kpi-label">Descontos e acr&eacute;scimos</div><div class="kpi-val">'
+      + sinal + fmtBRL(Math.abs(ef))
+      + '</div><div class="kpi-foot"><span style="opacity:0.6">'+legenda+'</span></div></div>';
+    if(!parcial){
+      kpiAjustes +=
+        '<div class="kpi gold"><div class="kpi-ic">🏦</div><div class="kpi-label">Total a Receber</div><div class="kpi-val">'
+        + fmtBRL(totalRep + ef)
+        + '</div><div class="kpi-foot"><span style="opacity:0.6">O que entra na conta dele</span></div></div>';
+    }
+  }
+
   document.getElementById('metrics-geral').innerHTML=
     '<div class="kpi gold"><div class="kpi-ic">💰</div><div class="kpi-label">Total Recebido</div><div class="kpi-val">'+fmtBRL(totalRec)+'</div><div class="kpi-foot">'+dRec+'<span style="opacity:0.6">Bruto compensado</span></div></div>'+
     '<div class="kpi cinza"><div class="kpi-ic">🧮</div><div class="kpi-label">Valor L&iacute;quido</div><div class="kpi-val">'+fmtBRL(totalLiq)+'</div><div class="kpi-foot">'+dLiq+'<span style="opacity:0.6">Após custos fiscais e operacionais</span></div></div>'+
     '<div class="kpi navy-med"><div class="kpi-ic">💸</div><div class="kpi-label">Repasse M&eacute;dicos</div><div class="kpi-val">'+fmtBRL(totalRep)+'</div><div class="kpi-foot">'+dRep+'<span style="opacity:0.6">'+nProfs+' profissionais</span></div></div>'+
-    '<div class="kpi gold"><div class="kpi-ic">🏥</div><div class="kpi-label">Receita Cl&iacute;nica</div><div class="kpi-val">'+fmtBRL(totalCli)+'</div><div class="kpi-foot">'+dCli+'<span style="opacity:0.6">'+(totalLiq>0?((totalCli/totalLiq)*100).toFixed(1)+'%':'—')+' do líquido</span></div></div>';
+    '<div class="kpi gold"><div class="kpi-ic">🏥</div><div class="kpi-label">Receita Cl&iacute;nica</div><div class="kpi-val">'+fmtBRL(totalCli)+'</div><div class="kpi-foot">'+dCli+'<span style="opacity:0.6">'+(totalLiq>0?((totalCli/totalLiq)*100).toFixed(1)+'%':'—')+' do líquido</span></div></div>'+
+    kpiAjustes;
 
   const sorted=[...todos].sort((a,b)=>(b.resumo?.['Valor recebido']||0)-(a.resumo?.['Valor recebido']||0));
   let tr_rec=0,tr_imp=0,tr_tax=0,tr_cus=0,tr_liq=0,tr_rep=0,tr_cli=0;
@@ -1042,6 +1113,59 @@ function renderGeral(){
   if(todasTabelas.length>0 && document.getElementById('origem-geral-lista')){
     renderTabelas(todasTabelas,'origem-geral-lista','chart-origem-geral');
   }
+
+  _renderDetalhe(todos);
+}
+
+// Lista atendimento por atendimento, com a OS. Só com profissional filtrado.
+// Respeita Categoria e Tabela porque lê `d.atendimentos`, que _recalcularProf
+// já entregou filtrado.
+function _renderDetalhe(todos){
+  const card = document.getElementById('card-detalhe');
+  const corpo = document.getElementById('body-detalhe');
+  if(!card || !corpo) return;
+  if(!FILTRO_PROF){ card.style.display='none'; corpo.innerHTML=''; return; }
+
+  const ats = (todos||[]).flatMap(d => d.atendimentos || []);
+  if(!ats.length){ card.style.display='none'; corpo.innerHTML=''; return; }
+
+  // Mais recente primeiro; a data vem como dd/mm/aaaa, então compara invertida.
+  const chaveData = s => String(s||'').split('/').reverse().join('');
+  const ord = ats.slice().sort((a,b) =>
+    chaveData(b['Data compensação']).localeCompare(chaveData(a['Data compensação'])));
+
+  const pct = a => {
+    const p = a['% Aplicado'];
+    return (p===undefined||p===null||p==='') ? '—' : (Number(p)*100).toFixed(0)+'%';
+  };
+  corpo.innerHTML = ord.map(a =>
+    '<tr>'+
+    '<td style="font-weight:600">'+(a['Nº OS']||'—')+'</td>'+
+    '<td>'+(a['Data compensação']||'—')+'</td>'+
+    '<td class="prof">'+(a['Paciente']||'—')+'</td>'+
+    '<td>'+(a['Procedimento']||'—')+'</td>'+
+    '<td>'+(a['Categoria']||'—')+'</td>'+
+    '<td>'+(a['Tabela']||'—')+'</td>'+
+    '<td>'+(a['Tipo de pagamento']||'—')+'</td>'+
+    '<td class="r">'+fmtBRL(a['Valor recebido']||0)+'</td>'+
+    '<td class="r" style="color:var(--azul)">'+fmtBRL(a['Valor Líquido']||0)+'</td>'+
+    '<td style="text-align:center">'+pct(a)+'</td>'+
+    '<td class="r" style="color:var(--verde);font-weight:600">'+
+      fmtBRL(a['Repasse Profissional (R$)']||0)+'</td>'+
+    '</tr>').join('');
+
+  const soma = c => ord.reduce((s,a)=>s+(a[c]||0),0);
+  const pe = document.getElementById('foot-detalhe');
+  if(pe) pe.innerHTML =
+    '<td colspan="7" style="font-weight:700">TOTAL — '+ord.length+' atendimento(s)</td>'+
+    '<td class="r" style="font-weight:700">'+fmtBRL(soma('Valor recebido'))+'</td>'+
+    '<td class="r" style="font-weight:700">'+fmtBRL(soma('Valor Líquido'))+'</td>'+
+    '<td></td>'+
+    '<td class="r" style="font-weight:700">'+fmtBRL(soma('Repasse Profissional (R$)'))+'</td>';
+
+  const bd = document.getElementById('badge-detalhe');
+  if(bd) bd.textContent = ord.length + (ord.length===1 ? ' atendimento' : ' atendimentos');
+  card.style.display='';
 }
 
 function mostrarProf(id,btnEl){
@@ -1448,8 +1572,11 @@ function _renderRangeGeral(){
     });
   }
 
+  // O filtro de profissional vale no intervalo também — entra aqui, depois da
+  // agregação dos meses.
+  _PROFS_ANTES_DO_FILTRO_PROF = agg;
   Object.keys(DADOS_PROFS).forEach(k => delete DADOS_PROFS[k]);
-  Object.assign(DADOS_PROFS, agg);
+  Object.assign(DADOS_PROFS, _soDoProfFiltrado(agg));
 
   const lDe  = (TODOS_PERIODOS[periodos[0]]||{}).label || periodos[0];
   const lAte = (TODOS_PERIODOS[periodos[periodos.length-1]]||{}).label || periodos[periodos.length-1];
