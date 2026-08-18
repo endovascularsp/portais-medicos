@@ -1217,6 +1217,31 @@ const _num = v => (v === null || v === undefined || v === '' || isNaN(v)) ? '' :
 // deixava centavo fantasma sobrando na conta.
 const _iss = r => _r2(_r2((+r.imposto || 0) + (+r.taxa_comercial || 0)) - _r2(+r.taxa_comercial || 0));
 
+// De quem foi o lead, ao lado do texto cru que veio do Saudevianet. Pedido do
+// Thiago em 18/08/2026: "ao lado do texto original nasce uma coluna com a
+// definição que nós demos".
+//
+// LÊ DA REGRA QUE O MOTOR GRAVOU, não recalcula. Reimplementar a classificação
+// aqui em JavaScript criaria duas verdades sobre a mesma decisão de dinheiro, e
+// um dia elas discordariam — a tela diria uma coisa e o repasse seria outro.
+// `regra_aplicada` é o que de fato valeu naquele lançamento.
+function _ladoDoLead(r){
+  const regra = (r.regra_aplicada || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  if(!regra) return '';
+  // Sem repasse a repartir: não há lead que mude alguma coisa.
+  if(regra.includes('nf do profissional')) return '— NF própria';
+  if(regra.includes('profissional da casa')) return '— sem repasse';
+  if(regra.includes('lead da clinica')) return 'Clínica';
+  if(regra.includes('taxa de aquisicao')) return 'Clínica';
+  if(regra.includes('lead do medico')) return 'Profissional';
+  // Categoria comum sem a taxa: o percentual saiu inteiro, ou seja, lead do
+  // médico. Na Oxy a regra não vale, e dizer "Profissional" ali daria a
+  // entender que houve uma decisão de lead que não existiu.
+  if((r.empresa || '') === 'Oxy Recovery') return '—';
+  return 'Profissional';
+}
+
 const BASE_COLS = [
   { h: 'Empresa',             t: 's', w: 16, get: r => _empresaDe(r) },
   { h: 'Mês',                 t: 's', w: 11, get: r => MESES_PT[+String(r.periodo_id || '').slice(5, 7)] || '' },
@@ -1226,6 +1251,7 @@ const BASE_COLS = [
   { h: 'Solicitante',         t: 's', w: 26, get: r => r.solicitante },
   { h: 'Paciente',            t: 's', w: 30, get: r => r.paciente, larga: true },
   { h: 'Indicação',           t: 's', w: 22, get: r => r.indicacao },
+  { h: 'Lead',                t: 's', w: 14, get: r => _ladoDoLead(r) },
   { h: 'Tabela',              t: 's', w: 16, get: r => r.tabela },
   { h: 'Procedimento',        t: 's', w: 40, get: r => r.procedimento, larga: true },
   { h: 'Categoria',           t: 's', w: 20, get: r => r.categoria },
@@ -1246,7 +1272,8 @@ const BASE_COLS = [
 const BD_CAMPOS = 'periodo_id,empresa,os_numero,profissional,solicitante,paciente,' +
   'indicacao,tabela,procedimento,categoria,conta_pagamento,data_emissao,' +
   'data_compensacao,tipo_pagamento,valor_recebido,imposto,taxa_comercial,' +
-  'taxa_cartao,custo,valor_liquido,repasse_profissional,repasse_clinica';
+  'taxa_cartao,custo,valor_liquido,repasse_profissional,repasse_clinica,' +
+  'regra_aplicada';   // alimenta a coluna Lead
 
 async function carregarBase(pid){
   BD_PERIODO = pid;
