@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Autorização — Endovascular SP</title>
+  <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <!--
+    Página de retorno da autorização do Conta Azul.
+
+    Por que ela existe: o fluxo OAuth2 devolve o código de autorização na URL de
+    redirecionamento cadastrada. A primeira tentativa usou `https://contaazul.com`,
+    que redireciona para o dashboard deles e DESCARTA o código no caminho — a
+    autorização funcionava e ninguém conseguia ver o resultado. O caminho natural
+    seria `http://localhost`, mas o Portal do Desenvolvedor exige https.
+
+    Então o retorno vem para cá: domínio nosso, https, e uma página que só faz uma
+    coisa — mostrar o código em tamanho grande, com um botão de copiar. O código
+    vale 3 minutos, então o relógio na tela existe para a pessoa saber se ainda dá
+    tempo ou se é melhor já pedir outro.
+
+    Não guarda nada e não envia nada para lugar nenhum: o código aparece, é
+    copiado e morre aqui.
+  -->
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0B1F3A; --gold:#A18960; --bg:#EEF2F6; --branco:#fff;
+      --borda:#D5DEE8; --texto:#0D1E30; --texto2:#4A6278; --texto3:#7E93A8;
+      --verde:#2D7A3C; --verde-bg:#E4F1E7; --ambar:#B4622A; --ambar-bg:#F8ECE3;
+      --vermelho:#C0392B; --vermelho-bg:#FBEAE8;
+      --sombra:0 1px 2px rgba(11,31,58,.05), 0 10px 30px rgba(11,31,58,.10);
+    }
+    body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);
+      color:var(--texto);line-height:1.55;min-height:100vh;
+      display:flex;align-items:center;justify-content:center;padding:24px}
+    .caixa{background:var(--branco);border:1px solid var(--borda);border-radius:16px;
+      box-shadow:var(--sombra);max-width:620px;width:100%;padding:34px 36px}
+    .ic{font-size:38px;line-height:1}
+    h1{font-size:19px;color:var(--navy);margin:12px 0 4px}
+    .sub{font-size:13.5px;color:var(--texto2)}
+    .codigo{margin-top:22px;background:var(--bg);border:1px dashed var(--borda);
+      border-radius:12px;padding:16px 18px;font-family:Consolas,monospace;
+      font-size:15px;word-break:break-all;color:var(--navy);user-select:all}
+    .acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+    button{font-family:inherit;font-size:14px;font-weight:650;padding:11px 20px;
+      border-radius:10px;border:none;cursor:pointer;background:var(--navy);color:#fff}
+    button:hover{filter:brightness(1.15)}
+    button.sec{background:transparent;color:var(--navy);border:1.5px solid var(--borda)}
+    .relogio{font-size:13px;font-weight:700;padding:6px 12px;border-radius:20px;
+      background:var(--verde-bg);color:var(--verde)}
+    .relogio.pouco{background:var(--ambar-bg);color:var(--ambar)}
+    .relogio.fim{background:var(--vermelho-bg);color:var(--vermelho)}
+    .aviso{margin-top:20px;font-size:12.5px;color:var(--texto2);
+      background:var(--bg);border-radius:10px;padding:12px 14px}
+    .erro{background:var(--vermelho-bg);border-left:3px solid var(--vermelho);
+      border-radius:8px;padding:12px 14px;font-size:13px;color:var(--texto2);margin-top:18px}
+    code{background:var(--bg);padding:1px 6px;border-radius:4px;font-size:12.5px}
+  </style>
+</head>
+<body>
+  <div class="caixa" id="caixa"><div class="sub">Lendo o endereço…</div></div>
+
+<script>
+// O código pode voltar como ?code= (padrão) ou #code= (quando o provedor usa
+// fragmento). Olhamos os dois, senão a página fica em branco justamente no
+// caminho que o Conta Azul escolher.
+function achar(nome){
+  const q = new URLSearchParams(location.search);
+  if(q.get(nome)) return q.get(nome);
+  const h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  return h.get(nome);
+}
+
+const codigo = achar('code');
+const erro   = achar('error_description') || achar('error');
+const caixa  = document.getElementById('caixa');
+
+if(codigo){
+  caixa.innerHTML =
+    '<div class=ic>🔑</div>' +
+    '<h1>Código de autorização recebido</h1>' +
+    '<div class=sub>Copie e mande na conversa. Ele vale <b>3 minutos</b>.</div>' +
+    '<div class=codigo id=cod>' + codigo.replace(/[<>&]/g,'') + '</div>' +
+    '<div class=acoes>' +
+      '<button onclick="copiar()" id=btn>Copiar código</button>' +
+      '<button class=sec onclick="location.reload()">Recarregar</button>' +
+      '<span class=relogio id=relogio>3:00</span>' +
+    '</div>' +
+    '<div class=aviso>Esta página não guarda nem envia o código para lugar nenhum — ' +
+    'ele só aparece aqui para você copiar. Se o tempo acabar, é só autorizar de novo: ' +
+    'dá para gerar quantos códigos quiser.</div>';
+
+  // Relógio de 3 minutos: o erro mais comum neste fluxo é usar um código
+  // vencido, e o motivo que a API devolve ("invalid_grant") não explica isso.
+  let resta = 180;
+  const rel = document.getElementById('relogio');
+  setInterval(() => {
+    resta--;
+    if(resta <= 0){
+      rel.textContent = 'vencido';
+      rel.className = 'relogio fim';
+      return;
+    }
+    const m = Math.floor(resta/60), s = String(resta%60).padStart(2,'0');
+    rel.textContent = m + ':' + s;
+    rel.className = 'relogio' + (resta < 60 ? ' pouco' : '');
+  }, 1000);
+} else if(erro){
+  caixa.innerHTML =
+    '<div class=ic>⚠️</div><h1>O Conta Azul recusou a autorização</h1>' +
+    '<div class=erro>' + String(erro).replace(/[<>&]/g,'') + '</div>' +
+    '<div class=aviso>Mande esta mensagem na conversa — ela diz o motivo exato.</div>';
+} else {
+  caixa.innerHTML =
+    '<div class=ic>🔌</div><h1>Página de retorno da autorização</h1>' +
+    '<div class=sub>É aqui que o Conta Azul devolve o código depois que você ' +
+    'autoriza. Abrir direto, sem vir de lá, não mostra nada.</div>' +
+    '<div class=aviso>Se você chegou aqui <b>depois</b> de autorizar e nenhum código ' +
+    'apareceu, o endereço cadastrado na aplicação provavelmente não é este. ' +
+    'Ele precisa ser exatamente <code>https://portalendovascularsp.com.br/oauth/</code>.</div>';
+}
+
+function copiar(){
+  const t = document.getElementById('cod').textContent.trim();
+  navigator.clipboard.writeText(t).then(() => {
+    const b = document.getElementById('btn');
+    b.textContent = 'Copiado ✓';
+    setTimeout(() => b.textContent = 'Copiar código', 2000);
+  });
+}
+</script>
+</body>
+</html>
