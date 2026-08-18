@@ -58,26 +58,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      # O TOKEN AQUI NÃO É DETALHE. Push feito com o token interno do Actions
-      # NÃO dispara outros workflows — inclusive o "pages build and deployment".
-      # O commit entrava no main, o arquivo ficava certo, e o site continuava
-      # servindo a versão velha; purgar o Cloudflare não adiantava, porque ele
-      # ia buscar de novo a mesma página velha no Pages. Descoberto em
-      # 17/08/2026, com o desconto da Dra. Simone Matsuda publicado no repo e
-      # invisível no portal. Com um PAT de verdade, o Pages reconstrói.
+      # Checkout com o TOKEN INTERNO do Actions, de propósito.
+      #
+      # Em 17/08/2026 eu troquei isto por um PAT (`secrets.PAT_PUBLICAR`) por um
+      # diagnóstico errado: achei que push feito com o token interno não
+      # dispararia o "pages build and deployment". Não é verdade NESTE
+      # repositório — o Pages aqui é `build_type: legacy` (publica direto do
+      # branch), e nesse modo o GitHub constrói internamente, não por workflow.
+      # O histórico em /repos/:o/:r/pages/builds mostra builds `built`
+      # disparados pelo github-actions[bot].
+      #
+      # A troca não só era desnecessária como quebrou tudo no dia seguinte: o
+      # PAT foi revogado (como deve ser, PATs temporários se revogam) e os três
+      # disparos da manhã de 18/08 falharam no checkout. Cinco descontos de
+      # Cirurgias e um da Endo, R$ 18.299,98 do Dr. Igor, ficaram no banco sem
+      # chegar ao portal dele.
+      #
+      # O token interno não expira e não se revoga. É o certo aqui.
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT_PUBLICAR }}
-
-      - name: Conferir se o token de publicação existe
-        env:
-          PAT: ${{ secrets.PAT_PUBLICAR }}
-        run: |
-          if [ -z "$PAT" ]; then
-            echo "::error::secret PAT_PUBLICAR não está configurado — o push até"
-            echo "::error::funcionaria, mas o site não seria reconstruído."
-            exit 1
-          fi
 
       - uses: actions/setup-python@v5
         with:
