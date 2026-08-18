@@ -612,6 +612,7 @@ body{background:#EEF2F6;}
             <th style='text-align:right'>Valor L&#237;quido</th>
             <th style='text-align:center'>%</th>
             <th style='text-align:right'>Repasse Prof.</th>
+            <th style='text-align:center'>Base de c&aacute;lculo</th>
           </tr></thead><tbody id='body-detalhe'></tbody>
           <tfoot><tr id='foot-detalhe'></tr></tfoot></table>
         </div>
@@ -1120,11 +1121,15 @@ function _renderDetalhe(todos){
   const ord = ats.slice().sort((a,b) =>
     chaveData(b['Data compensação']).localeCompare(chaveData(a['Data compensação'])));
 
+  // O "Ver conta" indexa NESTA lista — sem isto o botão abriria a conta errada,
+  // ou nenhuma. É a mesma variável que a página individual usa.
+  _ATEND_NA_TELA = ord;
+
   const pct = a => {
     const p = a['% Aplicado'];
     return (p===undefined||p===null||p==='') ? '—' : (Number(p)*100).toFixed(0)+'%';
   };
-  corpo.innerHTML = ord.map(a =>
+  corpo.innerHTML = ord.map((a,i) =>
     '<tr>'+
     '<td style="font-weight:600">'+(a['Nº OS']||'—')+'</td>'+
     '<td>'+(a['Data compensação']||'—')+'</td>'+
@@ -1138,6 +1143,7 @@ function _renderDetalhe(todos){
     '<td style="text-align:center">'+pct(a)+'</td>'+
     '<td class="r" style="color:var(--verde);font-weight:600">'+
       fmtBRL(a['Repasse Profissional (R$)']||0)+'</td>'+
+    '<td style="text-align:center"><button class="bc-btn" onclick="abrirBase('+i+')">Ver conta</button></td>'+
     '</tr>').join('');
 
   const soma = c => ord.reduce((s,a)=>s+(a[c]||0),0);
@@ -1147,7 +1153,8 @@ function _renderDetalhe(todos){
     '<td class="r" style="font-weight:700">'+fmtBRL(soma('Valor recebido'))+'</td>'+
     '<td class="r" style="font-weight:700">'+fmtBRL(soma('Valor Líquido'))+'</td>'+
     '<td></td>'+
-    '<td class="r" style="font-weight:700">'+fmtBRL(soma('Repasse Profissional (R$)'))+'</td>';
+    '<td class="r" style="font-weight:700">'+fmtBRL(soma('Repasse Profissional (R$)'))+'</td>'+
+    '<td></td>';   // coluna do "Ver conta"
 
   const bd = document.getElementById('badge-detalhe');
   if(bd) bd.textContent = ord.length + (ord.length===1 ? ' atendimento' : ' atendimentos');
