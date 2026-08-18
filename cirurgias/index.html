@@ -1704,6 +1704,18 @@ function _idItem(rot, valor){
   return valor ? '<dt>'+rot+'</dt><dd>'+valor+'</dd>' : '';
 }
 
+// De quem foi o lead deste atendimento, lido da regra que o motor gravou.
+// Não recalcula: reimplementar a classificação aqui criaria duas verdades sobre
+// a mesma decisão de dinheiro.
+function _leadDaLinha(regra){
+  const r = (regra || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  if(!r) return null;
+  if(r.includes('nf do profissional') || r.includes('profissional da casa')) return null;
+  if(r.includes('lead da clinica') || r.includes('taxa de aquisicao')) return 'clinica';
+  if(r.includes('lead do medico')) return 'medico';
+  return null;
+}
+
 function abrirBase(i){
   const a = _ATEND_NA_TELA[i];
   if(!a) return;
@@ -1726,6 +1738,9 @@ function abrirBase(i){
     _idItem('Compensado', a['Data compensação']) +
     _idItem('Conta', a.NF) +
     _idItem('Indicação',  a['Indicação']) +
+    _idItem('Paciente trazido por',
+            _leadDaLinha(a['Regra aplicada']) === 'clinica' ? 'Clínica'
+          : _leadDaLinha(a['Regra aplicada']) === 'medico'  ? 'Você' : null) +
     '</dl>';
 
   // ── Caso 1: faturado na nota fiscal do próprio profissional ──────────────
@@ -1789,7 +1804,8 @@ function abrirBase(i){
     if(Math.abs(fica) > 0.005) html += _linha('Fica com a clínica', fica, 'resto');
     html += '</table>' +
       '<div class="bc-rapida">' + fmtBRL(liquido) + ' &times; ' +
-        (pct*100).toFixed(0) + '% = ' + fmtBRL(repasse) + '</div>';
+        (pct*100).toFixed(0) + '% = ' + fmtBRL(repasse) +
+        _porqueDoPercentual(a['Regra aplicada'], pct) + '</div>';
   }
 
   html += '<div class="bc-regra">Regra aplicada: ' +
@@ -1799,6 +1815,29 @@ function abrirBase(i){
 
   document.getElementById('bc-corpo').innerHTML = html;
   document.getElementById('bc-fundo').classList.add('aberto');
+}
+
+// Explica de onde saiu o percentual quando ele não é o cheio da categoria.
+// Sem isto o médico lê "40%" e não tem como saber que a categoria dele paga 60%
+// e que os 20 pontos foram a Taxa de Aquisição do Paciente.
+function _porqueDoPercentual(regra, pct){
+  const lead = _leadDaLinha(regra);
+  const r = (regra || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  if(lead === 'clinica' && r.includes('taxa de aquisicao')){
+    const cheio = Math.round((pct + 0.20) * 100);
+    return '<br><span style="opacity:0.75">A categoria paga ' + cheio + '%. '
+         + 'Saíram 20 pontos da Taxa de Aquisição do Paciente, porque este '
+         + 'paciente foi trazido pela clínica.</span>';
+  }
+  if(lead === 'clinica'){
+    return '<br><span style="opacity:0.75">Percentual de cirurgia para paciente '
+         + 'trazido pela clínica.</span>';
+  }
+  if(lead === 'medico'){
+    return '<br><span style="opacity:0.75">Percentual cheio: este paciente foi '
+         + 'trazido por você.</span>';
+  }
+  return '';
 }
 
 function fecharBase(){
