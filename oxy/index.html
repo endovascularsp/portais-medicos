@@ -1025,14 +1025,20 @@ function renderGeral(){
     const itens = (todos[0].ajustes || []).length;
     const parcial = !!(FILTRO_CATEGORIA || FILTRO_TABELA);
     const sinal = ef < 0 ? '&minus; ' : (ef > 0 ? '+ ' : '');
+    // Sem isto o botão abre a janela VAZIA: `_AJUSTES_NA_TELA` só era preenchido
+    // dentro da página individual, e filtrar um profissional deixa o usuário na
+    // visão geral. O botão fica FORA do <span> de opacidade 0.6 — dentro dele,
+    // nasce apagado e some no card.
+    _AJUSTES_NA_TELA = todos[0].ajustes || [];
     const legenda = itens
-      ? (parcial ? 'Do m&ecirc;s inteiro — n&atilde;o segue os filtros acima'
-                 : itens + (itens===1 ? ' lan&ccedil;amento' : ' lan&ccedil;amentos'))
-      : 'Nada descontado ou somado neste m&ecirc;s';
+      ? '<button class="bc-btn" onclick="verAjustes()">entenda os valores</button>'
+        + (parcial ? '<br><span style="opacity:0.6">Do m&ecirc;s inteiro — n&atilde;o'
+                   + ' segue os filtros acima</span>' : '')
+      : '<span style="opacity:0.6">Nada descontado ou somado neste m&ecirc;s</span>';
     kpiAjustes =
       '<div class="kpi cinza"><div class="kpi-ic">💼</div><div class="kpi-label">Descontos e acr&eacute;scimos</div><div class="kpi-val">'
       + sinal + fmtBRL(Math.abs(ef))
-      + '</div><div class="kpi-foot"><span style="opacity:0.6">'+legenda+'</span></div></div>';
+      + '</div><div class="kpi-foot">'+legenda+'</div></div>';
     if(!parcial){
       kpiAjustes +=
         '<div class="kpi gold"><div class="kpi-ic">🏦</div><div class="kpi-label">Total a Receber</div><div class="kpi-val">'
