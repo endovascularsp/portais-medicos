@@ -1230,6 +1230,13 @@ function _ladoDoLead(r){
     .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   if(!regra) return '';
   // Sem repasse a repartir: não há lead que mude alguma coisa.
+  //
+  // Categoria de 0% (Produtos, T-Sculptor) entra aqui por um motivo prático: o
+  // recálculo pula essas linhas, então a regra delas não carrega a marca da
+  // taxa. Sem esta checagem a tela mostrava "Clínica" escrito no campo e
+  // "Profissional" no lead, na mesma linha — contradição aparente, num caso em
+  // que o percentual é zero dos dois jeitos.
+  if(+r.pct_aplicado === 0) return '— sem repasse';
   if(regra.includes('nf do profissional')) return '— NF própria';
   if(regra.includes('profissional da casa')) return '— sem repasse';
   if(regra.includes('lead da clinica')) return 'Clínica';
@@ -1273,7 +1280,7 @@ const BD_CAMPOS = 'periodo_id,empresa,os_numero,profissional,solicitante,pacient
   'indicacao,tabela,procedimento,categoria,conta_pagamento,data_emissao,' +
   'data_compensacao,tipo_pagamento,valor_recebido,imposto,taxa_comercial,' +
   'taxa_cartao,custo,valor_liquido,repasse_profissional,repasse_clinica,' +
-  'regra_aplicada';   // alimenta a coluna Lead
+  'regra_aplicada,pct_aplicado';   // alimentam a coluna Lead
 
 async function carregarBase(pid){
   BD_PERIODO = pid;
