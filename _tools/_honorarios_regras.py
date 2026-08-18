@@ -133,6 +133,26 @@ INDICACAO_DECIDIDA = {
     "app da omint":    ("clinica", None),
     "app sulamerica":  ("clinica", None),
     "app omint":       ("clinica", None),
+    # canais da casa que caíam como "não classificada" (decididos em 18/08/2026)
+    "oxy prime":       ("clinica", None),
+    "oxyprime":        ("clinica", None),
+    "pesquisa":        ("clinica", None),
+    "chat gpt":        ("clinica", None),
+    "chatgpt":         ("clinica", None),
+    "fotona day":      ("clinica", None),
+    "amil":            ("clinica", None),
+    "aplicativo":      ("clinica", None),
+    "pelo convenio":   ("clinica", None),
+    "doctoralia":      ("clinica", None),
+    # a marca é do MÉDICO, não da clínica — decisão do Thiago em 18/08/2026.
+    # Texto que traga "clínica" escrito NÃO cai aqui: a checagem de "clinica" no
+    # texto vem antes, para "Instagram Clinica" seguir sendo da casa.
+    "internet":        ("medico", None),
+    "instagram":       ("medico", None),
+    "instragram":      ("medico", None),
+    "intagram":        ("medico", None),
+    "redes sociais":   ("medico", None),
+    "rede social":     ("medico", None),
     # decididos como rede do próprio médico
     "vila nova star":       ("medico", None),   # hospital onde o Dr. Igor opera
     "guilherme":            ("medico", None),
@@ -153,11 +173,19 @@ INDICACAO_DECIDIDA = {
 #
 # Canais da própria clínica (marketing e plano de saúde) são lead da clínica: são
 # preenchimentos corretos, não falha de cadastro.
+# INTERNET, INSTAGRAM e REDES SOCIAIS saíram daqui em 18/08/2026, por decisão do
+# Thiago: esses canais são movidos pela marca dos MÉDICOS, não pela da clínica —
+# o Instagram do Dr. Igor traz paciente pelo nome dele. Passaram para
+# INDICACAO_DECIDIDA como lead do médico. É a maior devolução da regra:
+# 291 lançamentos, R$ 223.984,78 de líquido, R$ 44.796,96 de volta aos médicos
+# em 7 meses. Eu registrei a ressalva de que quem paga tráfego, site e agência é
+# a clínica; ele confirmou assim mesmo.
+#
+# "site" e "google" FICARAM: são o site e a ficha da clínica, não de ninguém.
 CANAIS_CLINICA = (
-    "clinica", "internet", "google", "site", "instagram", "instragram", "facebook",
+    "clinica", "google", "site", "facebook",
     "omint", "sulamerica", "sulamérica", "medsenior", "tiktok", "whatsapp",
-    # faltavam, e caíam como "não classificada" -> lead do médico por engano
-    "redes sociais", "rede social", "anuncio", "anúncio", "marketing", "youtube",
+    "anuncio", "anúncio", "marketing", "youtube",
 )
 
 # Textos que significam "não informado". Sem isto, "Não possui" era tratado como
@@ -283,7 +311,14 @@ def lado_do_lead(indicacao, nomes_profissionais=(), executor=None) -> tuple:
         if any(t in k for t in toks_ex):
             return "medico", "lead do médico (paciente próprio dele)"
 
-        # 3) textos que o Thiago decidiu um a um: nome abreviado ou ambíguo não
+        # 3) a palavra "clínica" ESCRITA no texto vence o resto. Precisa vir
+        #    antes da lista decidida porque "Instagram Clinica" contém
+        #    "instagram", que passou a ser lead do médico em 18/08/2026 — sem
+        #    esta linha, quem escreveu "Clinica" no campo perderia o efeito.
+        if "clinica" in k:
+            return "clinica", "lead da clínica (escrito no campo)"
+
+        # 4) textos que o Thiago decidiu um a um: nome abreviado ou ambíguo não
         #    casa por comparação automática ("Dra Chris" não contém
         #    "christiane"). Sai daqui quando a tela de decisão existir.
         for texto, (lado, quem) in INDICACAO_DECIDIDA.items():

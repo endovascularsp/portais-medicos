@@ -76,8 +76,19 @@ def main() -> int:
         if cat in ("cirurgia - clinica", "cirurgia - hospital"):
             p1, regra = R.origem_lead(x.get("indicacao"), nomes, x.get("profissional"))
         else:
-            p1, sufixo = R.com_taxa_aquisicao(p0, lado, x.get("empresa"))
-            regra = (x.get("regra_aplicada") or "").split(" + taxa de aquisição")[0] + sufixo
+            # PARTE DO PERCENTUAL DA CATEGORIA, nunca do que está gravado.
+            # Subtrair 20 pontos do valor já gravado faz a segunda rodada tirar
+            # 40 — foi o que aconteceu em 18/08/2026: uma consulta de 60% que já
+            # estava em 40% caiu para 20%. Lendo a regra da categoria, rodar dez
+            # vezes dá o mesmo resultado que rodar uma.
+            papel = x.get("papel") or R.papel_de(x.get("empresa"), x.get("categoria"),
+                                                 x.get("profissional"))
+            base, regra_base = R.percentual(x.get("empresa"), x.get("categoria"),
+                                            x.get("profissional"), papel)
+            if base is None:
+                continue                    # sem regra cadastrada: não invento
+            p1, sufixo = R.com_taxa_aquisicao(base, lado, x.get("empresa"))
+            regra = (regra_base or "") + sufixo
         if abs(float(p1) - float(p0)) < 1e-9:
             continue
         liq = float(x.get("valor_liquido") or 0)
