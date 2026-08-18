@@ -821,9 +821,11 @@ function mostrarProf(id,btnEl){
   const bnome=document.getElementById('banner-nome');
   if(bnome)bnome.textContent=d.profissional+' — '+d.mes+'/'+d.ano;
   document.getElementById('badge-atend').textContent=(d.atendimentos||[]).length+' atendimentos';
-  // Delta vs período anterior para o mesmo profissional
+  // Delta vs período anterior — pelo MESMO recorte de categoria/tabela.
+  // Comparar "Produtos" deste mês contra o mês inteiro do anterior mostrava
+  // queda onde não houve queda.
   const prevPid = _getPeriodoAnterior(PERIODO_ATUAL);
-  const prevProf = prevPid ? ((TODOS_PERIODOS[prevPid]||{}).profs||{})[id] : null;
+  const prevProf = prevPid ? _profAnteriorFiltrado(prevPid, id) : null;
   const prevResumo = prevProf?.resumo || {};
   const dRecP = _delta(r['Valor recebido'], prevResumo['Valor recebido']);
   const dLiqP = _delta(liq, prevResumo['Valor Líquido']);
@@ -1225,6 +1227,20 @@ function _aplicarFiltroInd(){
     (!FILTRO_CATEGORIA || a.Categoria === FILTRO_CATEGORIA) &&
     (!FILTRO_TABELA    || a.Tabela    === FILTRO_TABELA));
   DADOS_PROFS[PROF_FIXO] = _recalcularProf(p, ats);
+}
+
+// O mês anterior tem de ser lido pelo mesmo filtro do mês atual, senão a
+// comparação é entre recortes diferentes. Devolve o profissional recalculado só
+// com os atendimentos que passam pelo filtro; se ele não existia no mês
+// anterior, devolve null e o card mostra "—".
+function _profAnteriorFiltrado(pid, id){
+  const p = ((TODOS_PERIODOS[pid]||{}).profs||{})[id];
+  if(!p) return null;
+  if(!FILTRO_CATEGORIA && !FILTRO_TABELA) return p;
+  const ats = (p.atendimentos||[]).filter(a =>
+    (!FILTRO_CATEGORIA || a.Categoria === FILTRO_CATEGORIA) &&
+    (!FILTRO_TABELA    || a.Tabela    === FILTRO_TABELA));
+  return _recalcularProf(p, ats);
 }
 
 function filtrarPorCategoria(v){ FILTRO_CATEGORIA = v || ''; _reaplicarInd(); }

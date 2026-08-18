@@ -586,7 +586,7 @@ body{background:#EEF2F6;}
     <div class='view active' id='view-geral'>
       <div class='kpi-row' id='metrics-geral'></div>
       <div class='two-col'>
-        <div class='card'><div class='section-title'>&#128202; Receita por Profissional</div><div class='chart-wrap'><canvas id='chart-profs'></canvas></div></div>
+        <div class='card'><div class='section-title' id='titulo-chart-profs'>&#128202; Receita por Profissional</div><div class='chart-wrap'><canvas id='chart-profs'></canvas></div></div>
         <div class='card'><div class='section-title'>&#128179; Por Tipo de Pagamento</div><div class='chart-wrap'><canvas id='chart-pgto'></canvas></div></div>
       </div>
       <div class='two-col'>
@@ -1003,11 +1003,19 @@ function renderGeral(){
 
   // Delta vs período anterior (mesma empresa)
   const prev = _getPeriodoAnterior(PERIODO_ATUAL);
+  // O mês anterior passa pelos MESMOS filtros do mês atual. Antes só a empresa
+  // era aplicada: filtrando "Simone Matsuda + Produtos", o card comparava os
+  // R$ 767,92 dela contra o total de TODOS no mês anterior, e cuspia
+  // "↓ 99,8%". Comparação entre coisas diferentes não é comparação.
+  //
+  // No modo intervalo não há comparação possível: o total atual cobre vários
+  // meses e o anterior seria um só. Melhor mostrar "—" do que um número errado.
+  const baseAnterior = (!prev || RANGE_ATIVO)
+    ? null
+    : _soDoProfFiltrado(_filtrarProfs((TODOS_PERIODOS[prev]||{}).profs || {}));
   const prevSoma = (key) => {
-    if(!prev) return null;
-    const profsPrev = (TODOS_PERIODOS[prev]||{}).profs||{};
-    return Object.values(profsPrev)
-      .filter(p=> FILTRO_EMPRESA==='todos' || (p.empresa||'Endovascular SP')===FILTRO_EMPRESA)
+    if(!baseAnterior) return null;
+    return Object.values(baseAnterior)
       .reduce((a,d)=>a+(d.resumo?.[key]||0),0);
   };
   const dRec = _delta(totalRec, prevSoma('Valor recebido'));
@@ -1101,7 +1109,22 @@ function renderGeral(){
 
   // Gráficos geral
   const top=sorted.slice(0,10);
-  renderChart('chart-profs','bar',top.map(d=>d.profissional.split(' ')[0]),top.map(d=>d.resumo?.['Valor recebido']||0),'Valor Recebido');
+  // Com UMA pessoa filtrada, um ranking de profissionais é uma barra só — não
+  // informa nada. O gráfico passa a mostrar as categorias dela, que é o que o
+  // próprio médico vê no portal individual.
+  const _tituloProfs = document.getElementById('titulo-chart-profs');
+  if(FILTRO_PROF && todos.length === 1){
+    const cats = {};
+    (todos[0].por_categoria||[]).forEach(c=>{
+      cats[c.Categoria] = (cats[c.Categoria]||0) + (c['Valor recebido']||0);
+    });
+    if(_tituloProfs) _tituloProfs.innerHTML = '&#128193; Por Categoria — '
+      + (todos[0].profissional||'').split(' ')[0];
+    renderChart('chart-profs','doughnut',Object.keys(cats),Object.values(cats),'Categoria');
+  } else {
+    if(_tituloProfs) _tituloProfs.innerHTML = '&#128202; Receita por Profissional';
+    renderChart('chart-profs','bar',top.map(d=>d.profissional.split(' ')[0]),top.map(d=>d.resumo?.['Valor recebido']||0),'Valor Recebido');
+  }
   const pgtoAgg={};
   todos.forEach(d=>{(d.por_pagamento||[]).forEach(p=>{const tp=p['Tipo de pagamento']||'Outros';pgtoAgg[tp]=(pgtoAgg[tp]||0)+(p['Valor recebido']||0);});});
   renderChart('chart-pgto','doughnut',Object.keys(pgtoAgg),Object.values(pgtoAgg),'Pagamento');
@@ -1194,9 +1217,13 @@ function mostrarProf(id,btnEl){
   const bnome=document.getElementById('banner-nome');
   if(bnome)bnome.textContent=d.profissional+' — '+d.mes+'/'+d.ano;
   document.getElementById('badge-atend').textContent=(d.atendimentos||[]).length+' atendimentos';
-  // Delta vs período anterior para o mesmo profissional
+  // Delta vs período anterior para o mesmo profissional — pelo mesmo recorte.
+  // Sem passar o mês anterior pelo filtro, comparar "Produtos" deste mês contra
+  // o MÊS INTEIRO do anterior dava queda onde não houve queda.
   const prevPid = _getPeriodoAnterior(PERIODO_ATUAL);
-  const prevProf = prevPid ? ((TODOS_PERIODOS[prevPid]||{}).profs||{})[id] : null;
+  const prevProf = prevPid
+    ? (_filtrarProfs((TODOS_PERIODOS[prevPid]||{}).profs || {})[id] || null)
+    : null;
   const prevResumo = prevProf?.resumo || {};
   const prevLiq = prevResumo['Valor Líquido'];
   const prevRep = prevResumo['Repasse Profissional (R$)'];
