@@ -68,13 +68,84 @@ MARCAS_PLANO = ("omint", "sulam", "medsenior")
 # Endovascular, mas em Julho/2026 apareceram duas cirurgias da Christiane na Oxy
 # (Endolift e Morpheus) — Thiago confirmou em 04/08/2026 que é raro, porém possível,
 # e que segue as mesmas regras. Por isso não há chave por empresa aqui.
-CIRURGIA_CLINICA = 0.80        # "Cirurgia - Clínica" — feita na clínica, sempre 80/20
-CIRURGIA_PLANO = 0.85          # "Cirurgia - Hospital" por plano de saúde
+# TAXA DE AQUISIÇÃO DO PACIENTE — decidida pelo Dr. Igor e fechada com o Thiago
+# em 18/08/2026. Quando o LEAD é da clínica, a clínica retém 20 pontos
+# percentuais a mais: quem trouxe o paciente foi a casa, não o médico.
+#
+# Vale para Endovascular SP e Cirurgias. **A Oxy Recovery está FORA** — decisão
+# explícita do Thiago.
+TAXA_AQUISICAO = 0.20
 
-# "Cirurgia - Hospital" particular: 80% se o lead é da clínica, 90% se é do médico.
-# Derivado do campo "Indicado Por".
-CIRURGIA_HOSPITAL_LEAD_CLINICA = 0.80
-CIRURGIA_HOSPITAL_LEAD_MEDICO = 0.90
+# UMA regra para toda cirurgia, escolhida entre duas alternativas em 18/08/2026:
+# 90% se o lead é do médico, 70% se é da clínica — não importa se foi no hospital,
+# na clínica ou por plano de saúde. O 80% da cirurgia na clínica e o 85% do plano
+# DEIXARAM DE EXISTIR.
+#
+# A alternativa descartada era mais fiel à economia (a clínica reter mais onde a
+# estrutura é dela: hospital 60, clínica 50, plano 70) e rendia R$ 13 mil/mês a
+# mais. Perdeu porque eram três regras: esta é a que o médico entende de cabeça,
+# e o Thiago vai ter de explicar isso 11 vezes.
+CIRURGIA_LEAD_MEDICO = 0.90
+CIRURGIA_LEAD_CLINICA = 0.70
+
+# A OXY NÃO ENTROU na regra nova — decisão do Thiago em 18/08/2026. Lá a cirurgia
+# continua como era: 80% na clínica, 85% por plano, e 80/90 conforme o lead no
+# hospital. São poucos casos (9 em 7 meses), mas sem estas constantes o
+# fechamento de Agosto aplicaria 90/70 na Oxy sem ninguém pedir.
+OXY_CIRURGIA_CLINICA = 0.80
+OXY_CIRURGIA_PLANO = 0.85
+OXY_CIRURGIA_LEAD_CLINICA = 0.80
+OXY_CIRURGIA_LEAD_MEDICO = 0.90
+
+# Nomes antigos, mantidos para não quebrar quem importa daqui.
+CIRURGIA_CLINICA = CIRURGIA_LEAD_MEDICO
+CIRURGIA_PLANO = CIRURGIA_LEAD_MEDICO
+CIRURGIA_HOSPITAL_LEAD_CLINICA = CIRURGIA_LEAD_CLINICA
+CIRURGIA_HOSPITAL_LEAD_MEDICO = CIRURGIA_LEAD_MEDICO
+
+# O campo "Indicado Por" em branco não é neutro: para o Dr. Igor conta como lead
+# da clínica, para os demais como lead do próprio médico. Decisão do Thiago em
+# 18/08/2026, olhando os 93 lançamentos de Julho com o campo vazio.
+BRANCO_CONTA_COMO_CLINICA = ("igor rafael sincos",)
+
+# Textos do campo "Indicado Por" que o Thiago decidiu UM A UM em 18/08/2026,
+# porque comparação automática não resolve: "Dra Chris" é abreviação e não contém
+# "christiane"; "App da Omint" é canal do plano, não médico. A decisão vale para
+# todos os meses e para os que voltarem (OS parcelada traz o mesmo texto).
+#
+# TEMPORÁRIO: isto vira tabela + tela, como a do Catálogo. Enquanto não existe,
+# mora aqui para não haver decisão de dinheiro escondida em heurística.
+#
+# A checagem de "o próprio executor" vem ANTES desta lista: "Dra Simone" numa
+# consulta da própria Dra. Simone é paciente dela, não indicação da casa.
+# Formato: texto -> (lado, token_de_quem_e).
+#   ("casa", "christiane") = profissional da casa. Vira lead da CLÍNICA quando
+#   outro atende, e lead do MÉDICO quando quem atende é a própria pessoa — por
+#   isso o token: "Dra Chris" não contém "christiane", e sem ele a abreviação
+#   transformaria o paciente dela em lead da casa.
+INDICACAO_DECIDIDA = {
+    # profissionais da casa
+    "dra chris":       ("casa", "christiane"),
+    "dra simone":      ("casa", "simone"),
+    "dr paulo laredo": ("casa", "laredo"),
+    "paulo laredo":    ("casa", "laredo"),
+    # canais do plano de saúde -> lead da clínica (o credenciamento é da casa)
+    "app da omint":    ("clinica", None),
+    "app sulamerica":  ("clinica", None),
+    "app omint":       ("clinica", None),
+    # decididos como rede do próprio médico
+    "vila nova star":       ("medico", None),   # hospital onde o Dr. Igor opera
+    "guilherme":            ("medico", None),
+    "sumiko":               ("medico", None),
+    "aline lamaita":        ("medico", None),
+    "raquel rufino":        ("medico", None),
+    "renata ginecologista": ("medico", None),
+    "ludmilla":             ("medico", None),
+    "vascular de americana":("medico", None),
+    "padovessi":            ("medico", None),
+    "sheila moreno":        ("medico", None),
+    "marcia dermato":       ("medico", None),
+}
 
 # Decisão do Dr. Igor, reafirmada em 03/08/2026: **na dúvida, conta como lead do
 # médico**. A clínica prefere pagar a mais a penalizar um médico por falha de
@@ -85,7 +156,13 @@ CIRURGIA_HOSPITAL_LEAD_MEDICO = 0.90
 CANAIS_CLINICA = (
     "clinica", "internet", "google", "site", "instagram", "instragram", "facebook",
     "omint", "sulamerica", "sulamérica", "medsenior", "tiktok", "whatsapp",
+    # faltavam, e caíam como "não classificada" -> lead do médico por engano
+    "redes sociais", "rede social", "anuncio", "anúncio", "marketing", "youtube",
 )
+
+# Textos que significam "não informado". Sem isto, "Não possui" era tratado como
+# uma indicação de verdade e caía em "não classificada".
+VAZIOS = ("", "nao possui", "nao informado", "nao tem", "sem indicacao", "-", "--", "n/a")
 
 # Marcadores de que a indicação é uma PESSOA (médico de dentro ou de fora).
 # Vence os canais: "Instagram da Dra. Ludmilla" é lead da médica, não do Instagram.
@@ -172,27 +249,102 @@ SEM_REPASSE_PROPRIO = {
 }
 
 
-def origem_lead(indicacao, nomes_profissionais=()) -> tuple:
-    """Classifica o campo "Indicado Por" em (percentual, descrição da regra).
+def lado_do_lead(indicacao, nomes_profissionais=(), executor=None) -> tuple:
+    """Devolve ('clinica'|'medico', descrição) — de quem é o lead.
 
-    Ordem importa: "Clínica" explícito vence tudo; depois pessoa; depois canal;
-    e o que sobra cai no princípio do Dr. Igor (não penalizar o médico)."""
+    A ORDEM DOS TESTES MUDOU em 18/08/2026, e é o coração da regra nova:
+
+      1. "Clínica" escrito                       -> clínica
+      2. o PRÓPRIO executor                      -> médico   (paciente dele)
+      3. OUTRO profissional da casa              -> CLÍNICA  (era médico até 17/08)
+      4. Dr./Dra. que não é da casa              -> médico   (rede dele)
+      5. canal da própria clínica                -> clínica
+      6. em branco                               -> depende de quem atendeu
+
+    O passo 3 é uma INVERSÃO, não um ajuste: até 17/08 "indicado por profissional
+    da casa" pagava 90% (lead do médico). O Dr. Igor definiu o contrário — se a
+    Dra. Simone manda um paciente para o Dr. Igor, quem gerou o lead foi a casa.
+    E por isso o passo 2 tem de vir ANTES do 3: o nome do próprio executor no
+    campo é paciente dele, não indicação de terceiro.
+    """
     k = chave(indicacao)
+    ex = chave(executor)
+    toks_ex = {t for t in ex.split() if len(t) > 3}
+    if k in VAZIOS:
+        k = ""
 
     if k in ("clinica", "clinica endovascular", "endovascular"):
-        return CIRURGIA_HOSPITAL_LEAD_CLINICA, "R3C lead da clínica"
+        return "clinica", "lead da clínica"
 
     if k:
-        alvo = f" {k} "
-        if any(m in alvo for m in MARCADORES_PESSOA):
-            return CIRURGIA_HOSPITAL_LEAD_MEDICO, "R3B lead do médico (indicado por médico)"
-        for nome in nomes_profissionais:
-            if nome and nome in k:
-                return CIRURGIA_HOSPITAL_LEAD_MEDICO, "R3B lead do médico (indicado por profissional da casa)"
-        if any(c in k for c in CANAIS_CLINICA):
-            return CIRURGIA_HOSPITAL_LEAD_CLINICA, "R3C lead da clínica (canal próprio)"
+        # 2) o PRÓPRIO executor: qualquer token do nome dele no campo. Vem antes
+        #    de tudo — "Dra Simone" numa consulta DA Dra. Simone é paciente dela,
+        #    não indicação de terceiro.
+        if any(t in k for t in toks_ex):
+            return "medico", "lead do médico (paciente próprio dele)"
 
-    return CIRURGIA_HOSPITAL_LEAD_MEDICO, "R3B lead do médico (indicação não classificada — na dúvida, do médico)"
+        # 3) textos que o Thiago decidiu um a um: nome abreviado ou ambíguo não
+        #    casa por comparação automática ("Dra Chris" não contém
+        #    "christiane"). Sai daqui quando a tela de decisão existir.
+        for texto, (lado, quem) in INDICACAO_DECIDIDA.items():
+            if texto not in k:
+                continue
+            if lado == "casa":
+                if quem and quem in ex:
+                    return "medico", "lead do médico (paciente próprio dele)"
+                return "clinica", "lead da clínica (profissional da casa, decidido caso a caso)"
+            return lado, ("lead da clínica" if lado == "clinica"
+                          else "lead do médico") + " (decidido caso a caso)"
+
+        # 4) outro profissional da casa.
+        #
+        # Aceita nomes COMPLETOS (conjunto de tokens por pessoa) ou a lista antiga
+        # de tokens soltos. Com nomes completos exige DUAS partes do nome da mesma
+        # pessoa — sobrenome solto colide: "Juliana Bica" batia com a Juliana
+        # Olimpio, "Maria Luiza ... LOPES ..." com o sobrenome da Christiane, e
+        # "Dr Luiz Gonzaga ... SOUZA ..." com o Jonathan Souza. Três pessoas de
+        # fora viravam lead da clínica por acidente, tirando repasse do médico.
+        for nome in nomes_profissionais:
+            if isinstance(nome, (set, frozenset, tuple, list)):
+                toks = {t for t in nome if t not in toks_ex}
+                achados = [t for t in toks if t in k]
+                if len(achados) >= min(2, len(toks)) and achados:
+                    return "clinica", "lead da clínica (indicado por profissional da casa)"
+            elif nome and nome in k and nome not in toks_ex:
+                return "clinica", "lead da clínica (indicado por profissional da casa)"
+
+        # 5) médico de fora
+        if any(m in f" {k} " for m in MARCADORES_PESSOA):
+            return "medico", "lead do médico (indicado por médico de fora)"
+        # 6) canal da casa
+        if any(c in k for c in CANAIS_CLINICA):
+            return "clinica", "lead da clínica (canal próprio)"
+        return "medico", "lead do médico (indicação não classificada)"
+
+    # 6) em branco
+    if ex and any(n in ex for n in BRANCO_CONTA_COMO_CLINICA):
+        return "clinica", "lead da clínica (indicação em branco)"
+    return "medico", "lead do médico (indicação em branco)"
+
+
+def origem_lead(indicacao, nomes_profissionais=(), executor=None) -> tuple:
+    """(percentual de CIRURGIA, descrição). Uma regra só: 90% médico, 70% clínica."""
+    lado, desc = lado_do_lead(indicacao, nomes_profissionais, executor)
+    pct = CIRURGIA_LEAD_CLINICA if lado == "clinica" else CIRURGIA_LEAD_MEDICO
+    return pct, ("R3C " if lado == "clinica" else "R3B ") + desc
+
+
+def com_taxa_aquisicao(pct, lado, empresa) -> tuple:
+    """Aplica os 20 pontos da Taxa de Aquisição fora da cirurgia.
+
+    Só quando o lead é da clínica, e **nunca na Oxy Recovery**. O piso é zero:
+    categoria de percentual baixo pode chegar a 0, e o Thiago decidiu em
+    18/08/2026 não abrir exceção para elas ("pra gente não ficar criando mais
+    exceções") — medicação injetável vai de 30% para 10%.
+    """
+    if pct is None or empresa == OXY or lado != "clinica" or pct <= 0:
+        return pct, ""
+    return max(0.0, round(pct - TAXA_AQUISICAO, 4)), " + taxa de aquisição (−20 pts)"
 
 
 def eh_plano(tabela) -> bool:

@@ -231,15 +231,23 @@ def resolver_dono(df) -> pd.DataFrame:
     return df
 
 
-def nomes_profissionais(df) -> set:
-    """Sobrenomes dos profissionais que aparecem no período, para reconhecer quando
-    o campo "Indicado Por" traz o nome de alguém da casa."""
-    out = set()
+def nomes_profissionais(df) -> list:
+    """Nomes COMPLETOS dos profissionais do período, um conjunto de tokens por
+    pessoa, para reconhecer quando o campo "Indicado Por" traz alguém da casa.
+
+    Era um conjunto de sobrenomes soltos até 18/08/2026, e isso colidia: com a
+    Taxa de Aquisição valendo, "Juliana Bica" (de fora) casava com a Juliana
+    Olimpio e virava lead da clínica, tirando 20 pontos do médico sem motivo.
+    Guardando o nome inteiro, a regra pode exigir duas partes da MESMA pessoa.
+    """
+    out = []
+    vistos = set()
     for col in ("profissional", "solicitante"):
         for v in df[col].dropna().unique():
-            for t in R.chave(v).split():
-                if len(t) > 4:
-                    out.add(t)
+            toks = frozenset(t for t in R.chave(v).split() if len(t) > 3)
+            if toks and toks not in vistos:
+                vistos.add(toks)
+                out.append(toks)
     return out
 
 
@@ -325,14 +333,12 @@ def calcular(row, periodo_id, catalogo, nomes_prof=(), decisoes=None):
                valor_liquido=liquido, nf_propria=False)
 
     # --- cirurgias ---
-    if cat_k == "cirurgia - clinica":
-        pct, regra = R.CIRURGIA_CLINICA, "R2 cirurgia em clínica particular"
+    if cat_k in ("cirurgia - clinica", "cirurgia - hospital"):
         papel = "executor"
-    elif cat_k == "cirurgia - hospital":
-        papel = "executor"
-        if R.eh_plano(row["tabela"]):
-            pct, regra = R.CIRURGIA_PLANO, "R1 cirurgia por plano de saúde"
-        elif dec.get("pct") is not None:
+        # UMA regra para toda cirurgia desde 18/08/2026: 90% lead do médico,
+        # 70% lead da clínica. Onde foi feita e quem paga deixaram de importar —
+        # o 80% da clínica e o 85% do plano não existem mais.
+        if dec.get("pct") is not None:
             # Alguém olhou a indicação e decidiu de quem é o lead, no portal.
             # Vale só para esta linha: a origem de uma cirurgia não diz nada
             # sobre a próxima.
@@ -340,13 +346,32 @@ def calcular(row, periodo_id, catalogo, nomes_prof=(), decisoes=None):
             regra = f"R3 lead decidido no portal ({pct*100:.0f}%)"
             if dec.get("motivo"):
                 regra += f" — {dec['motivo']}"
+        elif empresa == R.OXY:
+            # A Oxy ficou FORA da regra nova: lá a cirurgia continua 80% na
+            # clínica, 85% por plano e 80/90 conforme o lead no hospital.
+            if cat_k == "cirurgia - clinica":
+                pct, regra = R.OXY_CIRURGIA_CLINICA, "R2 cirurgia em clínica particular (Oxy)"
+            elif R.eh_plano(row["tabela"]):
+                pct, regra = R.OXY_CIRURGIA_PLANO, "R1 cirurgia por plano de saúde (Oxy)"
+            else:
+                lado, desc = R.lado_do_lead(row["indicacao"], nomes_prof, prof)
+                pct = (R.OXY_CIRURGIA_LEAD_CLINICA if lado == "clinica"
+                       else R.OXY_CIRURGIA_LEAD_MEDICO)
+                regra = ("R3C " if lado == "clinica" else "R3B ") + desc + " (Oxy)"
         else:
-            pct, regra = R.origem_lead(row["indicacao"], nomes_prof)
+            pct, regra = R.origem_lead(row["indicacao"], nomes_prof, prof)
     else:
         papel = R.papel_de(empresa, categoria, prof)
         pct, regra = R.percentual(empresa, categoria, prof, papel)
         if pct is None:
             return None, ("sem_regra", regra, "Cadastrar o percentual da categoria.")
+        # TAXA DE AQUISIÇÃO fora da cirurgia: o percentual da categoria perde 20
+        # pontos quando o lead é da clínica. Vale para Endovascular SP e
+        # Cirurgias; a Oxy fica de fora, e `com_taxa_aquisicao` cuida disso.
+        lado, desc_lead = R.lado_do_lead(row["indicacao"], nomes_prof, prof)
+        pct, sufixo = R.com_taxa_aquisicao(pct, lado, empresa)
+        if sufixo:
+            regra += sufixo
 
     rep_prof = pct * liquido
     if via_solicitante:

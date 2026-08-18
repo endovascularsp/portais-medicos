@@ -46,21 +46,36 @@ def montar() -> dict:
             {"rotulo": "Taxa comercial", "valor": R.TAXA_COMERCIAL,
              "quando": "Nas categorias e a partir das datas definidas na tabela de taxas."},
         ],
+        # Desde 18/08/2026 é UMA regra só: quem trouxe o paciente decide. Onde a
+        # cirurgia foi feita e quem paga deixaram de importar — o 80% da clínica
+        # e o 85% do plano não existem mais.
         "cirurgia": [
-            {"situacao": "Cirurgia feita na clínica",
-             "pct": R.CIRURGIA_CLINICA,
-             "porque": "Estrutura da clínica, equipe da clínica."},
-            {"situacao": "Cirurgia por plano de saúde",
-             "pct": R.CIRURGIA_PLANO,
-             "porque": "O plano paga menos; a clínica fica com a diferença menor."},
-            {"situacao": "Cirurgia em hospital — paciente veio da clínica",
-             "pct": R.CIRURGIA_HOSPITAL_LEAD_CLINICA,
-             "porque": "A clínica trouxe o paciente."},
-            {"situacao": "Cirurgia em hospital — paciente veio do médico",
-             "pct": R.CIRURGIA_HOSPITAL_LEAD_MEDICO,
-             "porque": "O médico trouxe o paciente. É também o que vale quando a "
-                       "origem não está preenchida — na dúvida não se penaliza o médico."},
+            {"situacao": "Cirurgia — paciente trazido pelo médico",
+             "pct": R.CIRURGIA_LEAD_MEDICO,
+             "porque": "O médico trouxe o paciente. Vale no hospital, na clínica "
+                       "e por plano de saúde — o lugar e o pagador não mudam o "
+                       "percentual."},
+            {"situacao": "Cirurgia — paciente trazido pela clínica",
+             "pct": R.CIRURGIA_LEAD_CLINICA,
+             "porque": "A clínica adquiriu o paciente e retém a Taxa de Aquisição "
+                       "de 20 pontos. Conta como da clínica: o campo escrito "
+                       "\"Clínica\", os canais próprios (site, Google, redes, app "
+                       "do plano) e a indicação feita por OUTRO profissional da "
+                       "casa."},
+            {"situacao": "Cirurgia na Oxy Recovery",
+             "pct": R.OXY_CIRURGIA_LEAD_MEDICO,
+             "porque": "A Oxy ficou fora da regra nova: lá seguem 80% na clínica, "
+                       "85% por plano e 80% quando o lead é da clínica."},
         ],
+        # A Taxa de Aquisição não é só de cirurgia: vale para toda categoria.
+        "taxa_aquisicao": {
+            "pct": R.TAXA_AQUISICAO,
+            "texto": "Quando o paciente foi trazido pela clínica, o percentual da "
+                     "categoria cai 20 pontos — uma consulta de 60% paga 40%. É a "
+                     "Taxa de Aquisição do Paciente. Não se aplica na Oxy Recovery, "
+                     "nem quando quem trouxe o paciente foi o próprio profissional, "
+                     "um médico de fora ou alguém do círculo do paciente.",
+        },
         "nf_propria": {
             "pct": R.REPASSE_CLINICA_NF_PROPRIA,
             "texto": "Quando a cirurgia é faturada na nota fiscal do próprio médico, "
