@@ -17,33 +17,28 @@
   A página não fala com o Conta Azul: se falasse, o token da contabilidade da
   empresa viajaria dentro do HTML.
 
-  VISUAL: azul na moldura (topo e barra lateral), branco no conteúdo — o mesmo
-  arranjo dos portais de Recebimento e Produtividade, para quem circula entre
-  eles não sentir que trocou de sistema.
+  QUATRO REGRAS DE LEITURA que valem para tudo aqui:
 
-  TRÊS REGRAS DE LEITURA que valem para tudo aqui:
+  · CUSTO É POR COMPETÊNCIA — o mês em que o gasto aconteceu. A lista de contas
+    em aberto é por VENCIMENTO, que é quando o dinheiro sai.
 
-  · CUSTO É POR COMPETÊNCIA — o mês em que o gasto aconteceu. A fila de contas em
-    aberto é por VENCIMENTO, que é quando o dinheiro sai. Uma compra em 12x
-    custou o mês em que aconteceu e sai do caixa em doze pedaços.
+  · A DRE E O FLUXO DE CAIXA SÃO BASE CAIXA — usam a parte já paga de cada
+    conta. É o mesmo critério do fechamento que a CFO de Consultório manda todo
+    mês, para os dois documentos poderem ser postos lado a lado.
 
   · TRANSFERÊNCIA E EMPRÉSTIMO FICAM DE FORA por padrão: é dinheiro andando
-    entre contas da própria casa, que entra como despesa numa ponta e receita na
-    outra. O botão na barra de filtros mostra tudo.
+    entre contas da própria casa.
 
-  · O ANO ANTERIOR VEM JUNTO. Quase todo número desta tela existe para ser
-    comparado com o mesmo intervalo do ano passado — sem isso, "gastamos
-    R$ 600 mil" não é informação, é só um número grande.
+  · O ANO ANTERIOR VEM JUNTO, sempre no mesmo intervalo — e a tela só mostra a
+    comparação quando existe base para ela.
 
-  Os gráficos são desenhados à mão em SVG, sem biblioteca: são seis tipos, todos
-  precisam de rótulo em português e formato de real, e uma biblioteca genérica
-  custaria mais adaptação do que as linhas que eles ocupam.
+  Os gráficos são SVG escrito à mão, sem biblioteca: são sete tipos, todos
+  precisam de rótulo em português e formato de real.
 -->
 <style>
   /* ===================== identidade =====================
-     Paleta emprestada do portal de Recebimento, para os dois ambientes
-     conversarem: navy na moldura, ouro no que está ativo, cinza-azulado de
-     fundo e branco nos cartões. */
+     Paleta emprestada do portal de Recebimento: navy na moldura, ouro no que
+     está ativo, cinza-azulado de fundo e branco nos cartões. */
   :root{
     --navy:#0B1F3A; --navy2:#13315B; --azul:#1A5296; --azul-cl:#3A8DD4;
     --azul-pal:#7FB3E0; --azul-fundo:#D6E8F7;
@@ -55,7 +50,6 @@
     --raio:12px;
     --disp:'Segoe UI Variable Display','Segoe UI Semibold','Segoe UI',system-ui,sans-serif;
     --corpo:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;
-    --mono:'Cascadia Mono','Consolas','SF Mono',ui-monospace,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--fundo);color:var(--texto);font-family:var(--corpo);line-height:1.5;
@@ -92,13 +86,16 @@
   .home:hover{background:var(--ouro);border-color:var(--ouro)}
   .corpo{display:flex;align-items:flex-start}
 
-  .rail{width:198px;flex:none;background:var(--navy);padding:16px 12px 40px;
+  .rail{width:206px;flex:none;background:var(--navy);padding:16px 12px 40px;
     position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto}
-  .rail button{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;
+  .rail button{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:8px;
     font-family:var(--corpo);font-size:12.5px;color:rgba(255,255,255,.68);background:none;
     border:none;width:100%;text-align:left;cursor:pointer;margin-bottom:2px}
+  .rail button svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;
+    stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
   .rail button:hover{color:#fff;background:rgba(255,255,255,.07)}
   .rail button[aria-current=page]{background:var(--ouro);color:#fff;font-weight:700}
+  .rail button[aria-current=page] svg{opacity:1}
   .rail button:focus-visible{outline:2px solid var(--ouro-cl);outline-offset:-2px}
   .rail .gr{margin:16px 0 7px;padding-left:11px;color:rgba(255,255,255,.34)}
   .abrir-rail{display:none}
@@ -107,14 +104,14 @@
   .titulo-tela{font-family:var(--disp);font-size:20px;font-weight:700;margin-bottom:3px}
   .sub-tela{font-size:12.5px;color:var(--texto2);margin-bottom:16px}
 
-  /* ===================== filtros (padrão do Recebimento) ===================== */
+  /* ===================== filtros ===================== */
   .periodo-bloco{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;
     background:var(--branco);padding:13px 17px;border-radius:var(--raio);
     border:1px solid var(--borda);box-shadow:var(--sombra)}
   .f-grp{display:flex;align-items:center;gap:7px}
   .f-sep{width:1px;height:28px;background:var(--borda2)}
   .sel{padding:6px 12px;border:1.5px solid var(--borda2);border-radius:20px;font-size:12px;
-    font-weight:600;color:var(--navy);background:var(--branco);cursor:pointer;max-width:230px;
+    font-weight:600;color:var(--navy);background:var(--branco);cursor:pointer;max-width:240px;
     font-family:inherit;outline:none;transition:border .15s}
   .sel:focus{border-color:var(--ouro)}
   .sel option{background:var(--branco);color:var(--texto);font-weight:500}
@@ -130,29 +127,31 @@
   .limpar:hover{color:var(--navy)}
 
   /* ===================== cartões ===================== */
-  .grade{display:grid;gap:18px;margin-bottom:20px}
   .card{background:var(--branco);border-radius:var(--raio);padding:20px 22px;
-    box-shadow:var(--sombra);border:1px solid var(--borda);min-width:0;margin-bottom:20px}
-  .grade .card{margin-bottom:0}
+    box-shadow:var(--sombra);border:1px solid var(--borda);min-width:0;margin-bottom:18px}
   .card h2{font-family:var(--disp);font-size:15.5px;font-weight:700;margin-bottom:3px;
-    display:flex;align-items:center;gap:8px}
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .card .leg{font-size:12px;color:var(--texto2);margin-bottom:15px;line-height:1.55}
   .card .leg b{color:var(--texto)}
 
-  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(206px,1fr));gap:16px;
-    margin-bottom:20px}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(214px,1fr));gap:16px;
+    margin-bottom:18px}
   .kpi{background:linear-gradient(180deg,var(--navy) 0%,var(--navy2) 100%);border-radius:var(--raio);
-    padding:16px 18px;box-shadow:var(--sombra);border-left:4px solid var(--ouro);
+    padding:15px 17px 34px;box-shadow:var(--sombra);border-left:4px solid var(--ouro);
     position:relative;overflow:hidden;color:#fff;min-width:0}
-  .kpi .rot{color:rgba(255,255,255,.55)}
+  .kpi .rot{color:rgba(255,255,255,.55);padding-right:22px}
   .kpi .v{font-family:var(--disp);font-size:25px;font-weight:700;letter-spacing:-.025em;
-    margin:6px 0 3px}
-  .kpi .d{font-size:11.5px;font-weight:650;display:flex;align-items:center;gap:5px;
-    color:rgba(255,255,255,.62)}
-  .kpi .sp{position:absolute;right:0;bottom:0;opacity:.5}
-  .kpi .ajuda{position:absolute;top:13px;right:13px;width:17px;height:17px;border-radius:50%;
-    background:rgba(255,255,255,.16);color:#fff;font-size:11px;line-height:17px;text-align:center;
-    cursor:help;font-weight:700}
+    margin:6px 0 4px;position:relative;z-index:2}
+  .kpi .d{font-size:11.5px;font-weight:650;line-height:1.4;color:rgba(255,255,255,.62);
+    position:relative;z-index:2}
+  /* A faixa fica colada no rodapé, atrás do texto e em largura cheia — antes ela
+     era um retângulo solto no canto, que cortava no meio da frase. */
+  .kpi .sp{position:absolute;left:0;right:0;bottom:0;height:34px;opacity:.3;z-index:1}
+  .kpi .sp svg{width:100%;height:34px}
+  .kpi .info{position:absolute;top:13px;right:14px;width:15px;height:15px;cursor:help;
+    color:rgba(255,255,255,.4);z-index:3}
+  .kpi .info:hover{color:#fff}
+  .kpi .info svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
   .sobe{color:#7BE0A0!important} .desce{color:#FF9DA3!important}
 
   .insight{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--borda)}
@@ -171,7 +170,7 @@
   tr.cl{cursor:pointer}
   tr.cl:hover td{background:var(--azul-fundo)}
   .rolar{overflow-x:auto}
-  .rolar-y{overflow-y:auto;max-height:560px;padding-right:4px}
+  .rolar-y{overflow-y:auto;max-height:620px;padding-right:6px}
   .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.3px;padding:3px 9px;
     border-radius:20px;white-space:nowrap;text-transform:uppercase}
   .tag.venc{background:#FBEAE8;color:var(--vermelho)}
@@ -179,9 +178,18 @@
   .tag.ok{background:#E8F5EB;color:var(--verde)}
   .tag.mov{background:var(--azul-fundo);color:var(--azul)}
 
-  .migalha{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:16px;
-    background:var(--branco);border:1px solid var(--borda);border-radius:20px;padding:9px 16px;
-    box-shadow:var(--sombra)}
+  /* filtros de coluna, logo acima do cabeçalho da tabela */
+  .filtro-col{display:grid;gap:8px;margin-bottom:12px;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .filtro-col input,.filtro-col select{width:100%;padding:7px 11px;border:1.5px solid var(--borda2);
+    border-radius:8px;font-size:12px;font-family:inherit;color:var(--texto);background:var(--branco);
+    outline:none}
+  .filtro-col input:focus,.filtro-col select:focus{border-color:var(--ouro)}
+  .filtro-col label{display:block;font-size:9.5px;font-weight:700;letter-spacing:.4px;
+    text-transform:uppercase;color:var(--texto3);margin-bottom:3px}
+
+  .migalha{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:14px;
+    background:var(--fundo);border:1px solid var(--borda);border-radius:20px;padding:8px 15px}
   .migalha button{font-family:inherit;font-size:13px;font-weight:600;color:var(--azul);
     background:none;border:none;cursor:pointer;padding:2px;border-radius:4px}
   .migalha button:hover{text-decoration:underline}
@@ -191,19 +199,35 @@
 
   .vazio{text-align:center;color:var(--texto3);padding:36px 18px;font-size:13px}
   .nota{font-size:12px;color:var(--texto2);line-height:1.65;margin-top:14px;padding:11px 14px;
-    background:var(--fundo);border-left:3px solid var(--azul-cl);border-radius:0 8px 8px 0;
-    max-width:88ch}
+    background:var(--fundo);border-left:3px solid var(--azul-cl);border-radius:0 8px 8px 0}
   .nota b{color:var(--texto)}
   .cores{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--texto2);margin-top:12px}
   .cores i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:7px;
     vertical-align:-1px}
-  .cores i.tracejada{width:16px;height:0;border-radius:0;border-top:2.5px dashed var(--ouro);
+  .cores i.tracejada{width:18px;height:0;border-radius:0;border-top:2.5px dashed var(--ouro);
     vertical-align:4px}
-  .legenda-lado{display:flex;flex-direction:column;gap:11px;justify-content:center;min-width:0}
+  .rosca-linha{display:grid;grid-template-columns:290px 1fr;gap:30px;align-items:center}
+  .legenda-lado{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:13px}
   .legenda-lado div{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;min-width:0}
   .legenda-lado i{width:11px;height:11px;border-radius:3px;flex:none;margin-top:4px}
   .legenda-lado b{display:block;color:var(--texto);font-weight:600}
   .legenda-lado span{color:var(--texto3);font-size:11.5px;font-variant-numeric:tabular-nums}
+
+  /* dica que segue o mouse — vale para todos os gráficos */
+  #dica{position:fixed;z-index:900;background:var(--navy);color:#fff;font-size:12px;
+    padding:9px 12px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;
+    box-shadow:0 6px 22px rgba(11,31,58,.28);max-width:290px;line-height:1.5}
+  #dica.on{opacity:1}
+  #dica b{display:block;font-size:12.5px;margin-bottom:3px}
+  #dica span{color:rgba(255,255,255,.7)}
+  [data-d]{cursor:default}
+
+  .dre th.mes{text-align:right}
+  .dre td.rotulo{font-weight:600;white-space:nowrap}
+  .dre tr.forte td{background:var(--azul-fundo);font-weight:700}
+  .dre tr.total td{background:var(--navy);color:#fff;font-weight:700}
+  .dre tr.pct td{font-size:11px;color:var(--texto3)}
+  .dre td{white-space:nowrap}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   @media(max-width:980px){
@@ -212,7 +236,7 @@
     .abrir-rail{display:inline-block;font-family:inherit;font-size:14px;color:#fff;
       background:none;border:1.5px solid rgba(255,255,255,.35);border-radius:8px;
       padding:6px 11px;cursor:pointer}
-    .grade{grid-template-columns:1fr!important}
+    .rosca-linha{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -227,6 +251,8 @@
     <div class="login-erro" id="login-erro"></div>
   </div>
 </div>
+
+<div id="dica"></div>
 
 <div id="main">
   <div class="topo">
@@ -262,13 +288,13 @@ const SUPABASE_URL = 'https://egpcrqrvctnpxbdjdhtf.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_3XwZlcCc_bb7eyy5UAIkxg_BY61mwsW';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Cores dos gráficos, agora sobre fundo branco: azul mede tamanho, verde e
-// vermelho só dizem direção, ouro marca o resultado.
+// Sobre fundo branco: azul mede tamanho, verde e vermelho só dizem direção,
+// ouro marca o resultado.
 const C = { navy:'#0B1F3A', azul:'#1A5296', azulCl:'#3A8DD4', azulPal:'#7FB3E0',
             azulFundo:'#D6E8F7', ouro:'#A18960', ouroCl:'#C7AD82',
             verde:'#2D7A3C', verdeCl:'#4FA463', vermelho:'#C0392B', laranja:'#D4621A',
             borda:'#DDE4ED', borda2:'#C4D4E8', texto:'#0D1E30', texto2:'#4A6278',
-            texto3:'#7E93A8', branco:'#fff' };
+            texto3:'#7E93A8' };
 const RAMPA = ['#0B1F3A','#12365F','#1A5296','#2670BC','#3A8DD4','#5AA3DE','#7FB3E0',
                '#9AC5E9','#B4D5F0','#C9E0F5'];
 const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -280,8 +306,8 @@ let F = { de:null, ate:null, amb:'todos', mov:false };
 // Cada tela abre no período que faz sentido para ela: a Visão Geral quer os
 // últimos 12 meses (é onde tendência aparece), as telas de trabalho querem o mês
 // vigente. Depois que a pessoa mexe no filtro, a escolha dela vale para aquela
-// tela até ela sair da página.
-const PADRAO = { geral:'12m', pagar:'mes', analise:'mes', ambientes:'mes', dre:'12m' };
+// tela enquanto a página estiver aberta.
+const PADRAO = { geral:'12m', pagar:'mes', analise:'mes', centros:'mes', dre:'ano' };
 const escolhido = {};
 
 /* ===================== auth ===================== */
@@ -319,11 +345,11 @@ async function checkAuth(){
 }
 
 /* ===================== números ===================== */
-const brl = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const brl = v => (v<0?'-':'') + 'R$ ' + Math.abs(Math.round(v)).toLocaleString('pt-BR');
 function curto(v){
-  const a = Math.abs(v);
-  if(a >= 1e6) return 'R$ ' + (v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' mi';
-  if(a >= 1e3) return 'R$ ' + Math.round(v/1e3).toLocaleString('pt-BR') + ' mil';
+  const a = Math.abs(v), s = v<0 ? '-' : '';
+  if(a >= 1e6) return s+'R$ ' + (a/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' mi';
+  if(a >= 1e3) return s+'R$ ' + Math.round(a/1e3).toLocaleString('pt-BR') + ' mil';
   return brl(v);
 }
 const pct = (a,b) => b ? (100*(a-b)/Math.abs(b)) : 0;
@@ -335,8 +361,34 @@ function somarDias(iso, n){
   const d = new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n);
   return d.toISOString().slice(0,10);
 }
-// O mesmo mês um ano atrás — a régua de quase todo número da tela.
 const anoAntes = m => (+m.slice(0,4)-1) + m.slice(4);
+const chaveTexto = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+
+/* ===================== dica do mouse ===================== */
+// Um só balão para a página inteira. Qualquer elemento com data-d mostra o
+// texto; o <title> nativo do SVG demora quase um segundo para aparecer e não
+// aceita formatação, o que deixava os gráficos parecendo mudos.
+(function(){
+  const el = () => document.getElementById('dica');
+  document.addEventListener('mouseover', function(e){
+    const alvo = e.target.closest('[data-d]');
+    if(!alvo) return;
+    const d = el(); d.innerHTML = alvo.getAttribute('data-d'); d.classList.add('on');
+  });
+  document.addEventListener('mousemove', function(e){
+    const d = el();
+    if(!d.classList.contains('on')) return;
+    const l = Math.min(e.clientX + 16, window.innerWidth - d.offsetWidth - 12);
+    const t = Math.max(8, e.clientY - d.offsetHeight - 12);
+    d.style.left = l + 'px'; d.style.top = t + 'px';
+  });
+  document.addEventListener('mouseout', function(e){
+    if(e.target.closest('[data-d]')) el().classList.remove('on');
+  });
+})();
+const dica = (titulo, linhas) => esc(titulo) === '' ? '' :
+  ('<b>'+esc(titulo)+'</b>' + (linhas||[]).map(l => '<span>'+l+'</span>').join('<br/>'))
+    .replace(/"/g,'&quot;');
 
 /* ===================== filtro ===================== */
 function passa(l, campo, ignoraPeriodo){
@@ -347,21 +399,11 @@ function passa(l, campo, ignoraPeriodo){
   return !!m && m >= F.de && m <= F.ate;
 }
 const filtrar = (lista, campo, ign) => lista.filter(l => passa(l, campo, ign));
-// A base só cobre a partir de um certo mês. Se a janela de um ano atrás cair
-// (mesmo que em parte) antes disso, a comparação vira mentira: com a Visão Geral
-// abrindo em 12 meses, o ano anterior cairia num intervalo em que só existem
-// alguns meses de dados, e o custo pareceria ter explodido. Nesse caso a tela
-// diz que não há base de comparação em vez de mostrar um número errado.
 // A régua é `D.de`, o começo do que o gerador puxou POR COMPETÊNCIA — e não o
 // mês mais antigo que aparece nos lançamentos. Os dois são diferentes: a lista
-// de contas em aberto traz parcelas de compras bem mais velhas, então existem
-// linhas de 2024 numa base que só cobre 2025 em diante. Comparar contra elas
-// daria um "custo subiu 400%" que é só falta de dado do outro lado.
-function temAnoAnterior(){
-  return anoAntes(F.de) >= D.de.slice(0,7);
-}
-// A mesma janela um ano atrás. Sempre o mesmo INTERVALO, nunca o ano fechado:
-// comparar oito meses com doze é o erro clássico deste tipo de tela.
+// de contas em aberto traz parcelas de compras bem mais velhas, e comparar
+// contra elas daria um "custo subiu 400%" que é só falta de dado do outro lado.
+function temAnoAnterior(){ return anoAntes(F.de) >= D.de.slice(0,7); }
 function doAnoAnterior(lista){
   if(!temAnoAnterior()) return [];
   const de = anoAntes(F.de), ate = anoAntes(F.ate);
@@ -373,173 +415,197 @@ function doAnoAnterior(lista){
   });
 }
 const soma = l => l.reduce((s,x) => s + x[TOTAL], 0);
+const somaPago = l => l.reduce((s,x) => s + x[PAGO], 0);
 
 /* ===================== desenho ===================== */
-function sparkline(vals, cor, w, h){
-  w = w||104; h = h||30;
+function sparkline(vals, cor){
+  const w=200, h=34;
   if(!vals.length) return '';
   const mx = Math.max.apply(null, vals.concat([1])), passo = w/((vals.length-1)||1);
-  const pts = vals.map((v,i) => [i*passo, h - (Math.max(v,0)/mx)*(h-3) - 1.5]);
+  const pts = vals.map((v,i) => [i*passo, h - (Math.max(v,0)/mx)*(h-4) - 2]);
   const d = pts.map((p,i) => (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-  return '<svg class="sp" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'+
-    '<path d="'+d+' L'+w+' '+h+' L0 '+h+' Z" fill="'+cor+'" opacity=".22"/>'+
-    '<path d="'+d+'" fill="none" stroke="'+cor+'" stroke-width="1.6"/>'+
-    '<circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+
-    '" r="2.4" fill="'+cor+'"/></svg>';
+  return '<div class="sp"><svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true">'+
+    '<path d="'+d+' L'+w+' '+h+' L0 '+h+' Z" fill="'+cor+'" opacity=".45"/>'+
+    '<path d="'+d+'" fill="none" stroke="'+cor+'" stroke-width="2" vector-effect="non-scaling-stroke"/>'+
+    '</svg></div>';
 }
 
-// Grade e eixo Y, comuns a todos os gráficos de coluna.
-function _eixoY(pe, w, pd, pt, ih, mx){
+// Eixo com zero no lugar certo. Quando existe valor negativo (o resultado do
+// mês, por exemplo), a linha do zero sobe e a área de baixo passa a existir —
+// sem isso a linha tracejada some por baixo do eixo, que foi exatamente o que
+// aconteceu no gráfico de Receita vs Custos.
+function _escalaY(min, max, pt, ih){
+  const alto = Math.max(max, 0), baixo = Math.min(min, 0);
+  const faixa = (alto - baixo) || 1;
+  const zero = pt + ih * (alto / faixa);
+  return { y: v => pt + ih * ((alto - v) / faixa), zero:zero, alto:alto, baixo:baixo, faixa:faixa };
+}
+function _grade(e, pe, w, pd, passos){
   let g = '';
-  for(let i=0;i<=4;i++){
-    const yy = pt + ih*i/4;
+  for(let i=0;i<=passos;i++){
+    const v = e.alto - (e.faixa*i/passos), yy = e.y(v);
+    const zeroAqui = Math.abs(v) < e.faixa/1000;
     g += '<line x1="'+pe+'" y1="'+yy.toFixed(1)+'" x2="'+(w-pd)+'" y2="'+yy.toFixed(1)+
-      '" stroke="'+C.borda+'" stroke-width="1"/><text x="'+(pe-8)+'" y="'+(yy+3.5).toFixed(1)+
-      '" fill="'+C.texto3+'" font-size="9.5" text-anchor="end">'+
-      curto(mx*(1-i/4)).replace('R$ ','')+'</text>';
+      '" stroke="'+(zeroAqui?C.borda2:C.borda)+'" stroke-width="'+(zeroAqui?1.5:1)+'"/>'+
+      '<text x="'+(pe-8)+'" y="'+(yy+3.5).toFixed(1)+'" fill="'+C.texto3+
+      '" font-size="9.5" text-anchor="end">'+curto(v).replace('R$ ','')+'</text>';
   }
   return g;
 }
 
-// Colunas de duas séries com uma linha por cima. O <title> dentro de cada grupo
-// vira a dica do navegador: sem biblioteca, é o que dá o valor exato no mouse.
+// Colunas de até duas séries com uma linha por cima.
 function colunas(rot, s1, s2, linha, alt){
-  const w=700, h=alt||220, pe=54, pd=10, pt=14, pb=24;
+  const w=1180, h=alt||300, pe=62, pd=14, pt=16, pb=26;
   const iw=w-pe-pd, ih=h-pt-pb, n=rot.length || 1;
-  const mx = Math.max.apply(null, s1.dados.concat(s2?s2.dados:[], [1]));
-  const passo = iw/n, larg = Math.min(16, passo/(s2?2.9:1.9));
-  const y = v => pt + ih - (Math.max(v,0)/mx)*ih;
+  const todos = s1.dados.concat(s2?s2.dados:[], linha?linha.dados:[]);
+  const e = _escalaY(Math.min.apply(null, todos.concat([0])),
+                     Math.max.apply(null, todos.concat([1])), pt, ih);
+  const passo = iw/n, larg = Math.min(26, passo/(s2?2.7:1.8));
   let b='';
   rot.forEach(function(r,i){
     const cx = pe + passo*i + passo/2;
-    const x1 = s2 ? cx-larg-1.5 : cx-larg/2;
-    b += '<g><title>'+esc(r)+' · '+s1.nome+' '+brl(s1.dados[i])+
-      (s2 ? ' · '+s2.nome+' '+brl(s2.dados[i]) : '')+
-      (linha ? ' · '+linha.nome+' '+brl(linha.dados[i]) : '')+'</title>'+
-      '<rect x="'+x1.toFixed(1)+'" y="'+y(s1.dados[i]).toFixed(1)+'" width="'+larg.toFixed(1)+
-      '" height="'+Math.max(pt+ih-y(s1.dados[i]),0).toFixed(1)+'" fill="'+s1.cor+'" rx="2"/>'+
-      (s2 ? '<rect x="'+(cx+1.5).toFixed(1)+'" y="'+y(s2.dados[i]).toFixed(1)+'" width="'+larg.toFixed(1)+
-        '" height="'+Math.max(pt+ih-y(s2.dados[i]),0).toFixed(1)+'" fill="'+s2.cor+'" rx="2"/>' : '')+
-      '<text x="'+cx.toFixed(1)+'" y="'+(h-8)+'" fill="'+C.texto2+'" font-size="10" '+
+    const x1 = s2 ? cx-larg-2 : cx-larg/2;
+    const d = dica(r, [s1.nome+': <b style="display:inline">'+brl(s1.dados[i])+'</b>']
+      .concat(s2 ? [s2.nome+': '+brl(s2.dados[i])] : [])
+      .concat(linha ? [linha.nome+': '+brl(linha.dados[i])] : []));
+    b += '<g data-d="'+d+'">'+
+      '<rect x="'+(pe+passo*i).toFixed(1)+'" y="'+pt+'" width="'+passo.toFixed(1)+'" height="'+ih+
+        '" fill="transparent"/>'+
+      '<rect x="'+x1.toFixed(1)+'" y="'+Math.min(e.y(s1.dados[i]),e.zero).toFixed(1)+'" width="'+larg.toFixed(1)+
+      '" height="'+Math.max(Math.abs(e.zero-e.y(s1.dados[i])),1).toFixed(1)+'" fill="'+s1.cor+'" rx="2"/>'+
+      (s2 ? '<rect x="'+(cx+2).toFixed(1)+'" y="'+Math.min(e.y(s2.dados[i]),e.zero).toFixed(1)+
+        '" width="'+larg.toFixed(1)+'" height="'+Math.max(Math.abs(e.zero-e.y(s2.dados[i])),1).toFixed(1)+
+        '" fill="'+s2.cor+'" rx="2"/>' : '')+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-8)+'" fill="'+C.texto2+'" font-size="11" '+
       'text-anchor="middle">'+esc(r)+'</text></g>';
   });
   let l='';
   if(linha){
-    const pts = linha.dados.map((v,i) => [pe+passo*i+passo/2, y(v)]);
+    const pts = linha.dados.map((v,i) => [pe+passo*i+passo/2, e.y(v)]);
     l = '<path d="'+pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+
-      '" fill="none" stroke="'+linha.cor+'" stroke-width="2.2" stroke-dasharray="5 4"/>' +
-      pts.map(p=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3" fill="'+
-        linha.cor+'" stroke="#fff" stroke-width="1.2"/>').join('');
+      '" fill="none" stroke="'+linha.cor+'" stroke-width="2.4" stroke-dasharray="6 4"/>' +
+      pts.map((p,i)=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.4" fill="'+
+        (linha.dados[i]<0?C.vermelho:linha.cor)+'" stroke="#fff" stroke-width="1.4"/>').join('');
   }
   return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="Valores por período">'+
-    _eixoY(pe,w,pd,pt,ih,mx)+b+l+'</svg>';
+    _grade(e,pe,w,pd,4)+b+l+'</svg>';
 }
 
-// Colunas de uma série só, com o valor escrito em cima de cada barra. Serve para
-// as faixas de vencimento, onde o número importa mais que a proporção.
+// Colunas de uma série só, com o valor escrito em cima de cada barra.
 function colunasRotuladas(itens, cores, alt){
-  const w=700, h=alt||210, pe=54, pd=10, pt=24, pb=38;
+  const w=1180, h=alt||270, pe=62, pd=14, pt=30, pb=44;
   const iw=w-pe-pd, ih=h-pt-pb, n=itens.length||1;
-  const mx = Math.max.apply(null, itens.map(i=>i[1]).concat([1]));
-  const passo = iw/n, larg = Math.min(74, passo*0.56);
-  const y = v => pt + ih - (Math.max(v,0)/mx)*ih;
+  const vals = itens.map(i=>i[1]);
+  const e = _escalaY(Math.min.apply(null, vals.concat([0])),
+                     Math.max.apply(null, vals.concat([1])), pt, ih);
+  const passo = iw/n, larg = Math.min(112, passo*0.5);
   const b = itens.map(function(it,i){
-    const cx = pe + passo*i + passo/2, yy = y(it[1]);
-    return '<g><title>'+esc(it[0])+' · '+brl(it[1])+(it[2]!=null?' · '+it[2]+' lançamento(s)':'')+'</title>'+
+    const cx = pe + passo*i + passo/2, yy = Math.min(e.y(it[1]), e.zero);
+    const alturaBarra = Math.max(Math.abs(e.zero - e.y(it[1])), 1);
+    return '<g data-d="'+dica(it[0], ['<b style="display:inline">'+brl(it[1])+'</b>']
+        .concat(it[2]!=null ? [it[2]+' conta(s)'] : []))+'">'+
+      '<rect x="'+(pe+passo*i).toFixed(1)+'" y="'+pt+'" width="'+passo.toFixed(1)+'" height="'+ih+
+        '" fill="transparent"/>'+
       '<rect x="'+(cx-larg/2).toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+larg.toFixed(1)+
-      '" height="'+Math.max(pt+ih-yy,1).toFixed(1)+'" fill="'+(cores[i]||C.azul)+'" rx="3"/>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(yy-7).toFixed(1)+'" text-anchor="middle" fill="'+C.texto+
-      '" font-size="11.5" font-weight="700">'+curto(it[1]).replace('R$ ','')+'</text>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(h-21)+'" text-anchor="middle" fill="'+C.texto2+
-      '" font-size="10.5">'+esc(it[0])+'</text>'+
-      (it[2]!=null ? '<text x="'+cx.toFixed(1)+'" y="'+(h-8)+'" text-anchor="middle" fill="'+
-        C.texto3+'" font-size="9.5">'+it[2]+' lanç.</text>' : '')+'</g>';
+      '" height="'+alturaBarra.toFixed(1)+'" fill="'+(cores[i]||C.azul)+'" rx="3"/>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(yy-8).toFixed(1)+'" text-anchor="middle" fill="'+C.texto+
+      '" font-size="12.5" font-weight="700">'+curto(it[1]).replace('R$ ','')+'</text>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-24)+'" text-anchor="middle" fill="'+C.texto2+
+      '" font-size="11.5">'+esc(it[0])+'</text>'+
+      (it[2]!=null ? '<text x="'+cx.toFixed(1)+'" y="'+(h-9)+'" text-anchor="middle" fill="'+
+        C.texto3+'" font-size="10">'+it[2]+' contas</text>' : '')+'</g>';
   }).join('');
   return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="Valores por faixa">'+
-    _eixoY(pe,w,pd,pt,ih,mx)+b+'</svg>';
+    _grade(e,pe,w,pd,4)+b+'</svg>';
 }
 
-// Ranking horizontal. O valor vai DENTRO da barra quando cabe — jogado para
-// fora, a linha do olho quebra e a leitura vira busca. `alturaLinha` menor
-// quando a lista é longa, para caber sem virar rolagem infinita.
+// Ranking horizontal. Largura cheia do cartão, valor dentro da barra quando cabe.
 function ranking(itens, opts){
   opts = opts || {};
-  const alt = opts.alt || 27, w = 700, pe = opts.pe || 190, pd = 72;
+  const alt = opts.alt || 28, w = 1180, pe = opts.pe || 300, pd = 92;
   if(!itens.length) return '<div class="vazio">Nada no período.</div>';
   const h = itens.length*alt + 4;
   const mx = Math.max.apply(null, itens.map(i => i[1]).concat([1]));
+  const total = itens.reduce((s,i)=>s+i[1],0) || 1;
   return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" style="height:'+h+'px;max-height:none" '+
-    'preserveAspectRatio="xMinYMin meet" role="img" aria-label="Ranking de valores">' +
+    'preserveAspectRatio="none" role="img" aria-label="Ranking de valores">' +
     itens.map(function(it,i){
       const y = i*alt + 2, bw = Math.max(2, (it[1]/mx)*(w-pe-pd));
       const cor = opts.cor ? opts.cor(it,i) : RAMPA[Math.min(i, RAMPA.length-1)];
-      const dentro = bw > 76;
+      const dentro = bw > 120;
       const acao = opts.clique ? opts.clique(it,i) : null;
-      return '<g'+(acao ? ' onclick="'+acao+'" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'){'+
-          acao+'}" style="cursor:pointer"' : '')+'><title>'+esc(it[0])+' · '+brl(it[1])+
-          (it[2]!=null ? ' · '+it[2]+' lançamento(s)' : '')+'</title>'+
+      const d = dica(it[0], ['<b style="display:inline">'+brl(it[1])+'</b> · '+
+        (100*it[1]/total).toFixed(1)+'% deste nível']
+        .concat(it[2]!=null ? [it[2]+' lançamento(s) · ticket médio '+brl(it[1]/it[2])] : [])
+        .concat(acao ? ['<i>clique para abrir</i>'] : []));
+      return '<g data-d="'+d+'"'+(acao ? ' onclick="'+acao+'" role="button" tabindex="0" '+
+          'onkeydown="if(event.key===\'Enter\'){'+acao+'}" style="cursor:pointer"' : '')+'>'+
         '<rect x="0" y="'+(y-2)+'" width="'+w+'" height="'+alt+'" fill="transparent"/>'+
-        '<text x="'+(pe-10)+'" y="'+(y+alt/2-1).toFixed(1)+'" fill="'+C.texto2+'" font-size="11.5" '+
-          'text-anchor="end" dominant-baseline="middle">'+esc(cortar(it[0], opts.corte||30))+'</text>'+
+        '<text x="'+(pe-14)+'" y="'+(y+alt/2-1).toFixed(1)+'" fill="'+C.texto2+'" font-size="12" '+
+          'text-anchor="end" dominant-baseline="middle">'+esc(cortar(it[0], opts.corte||44))+'</text>'+
         '<rect x="'+pe+'" y="'+(y+3)+'" width="'+bw.toFixed(1)+'" height="'+(alt-9)+'" fill="'+cor+'" rx="3"/>'+
-        '<text x="'+(dentro ? pe+bw-9 : pe+bw+9).toFixed(1)+'" y="'+(y+alt/2-1).toFixed(1)+'" fill="'+
-          (dentro ? '#fff' : C.texto)+'" font-size="11" font-weight="700" text-anchor="'+
+        '<text x="'+(dentro ? pe+bw-12 : pe+bw+12).toFixed(1)+'" y="'+(y+alt/2-1).toFixed(1)+'" fill="'+
+          (dentro ? '#fff' : C.texto)+'" font-size="11.5" font-weight="700" text-anchor="'+
           (dentro?'end':'start')+'" dominant-baseline="middle">'+
           curto(it[1]).replace('R$ ','')+'</text></g>';
     }).join('') + '</svg>';
 }
 
-// Ranking de duas séries por linha. Nasceu porque a comparação receita × custo
-// por ambiente em colunas verticais fica ilegível: são 14 ambientes com nomes
-// longos, e o eixo horizontal vira uma sopa de letras cortadas.
+// Duas séries por linha — a comparação receita × custo por centro de custo em
+// colunas verticais fica ilegível: são muitos nomes longos disputando o eixo.
 function rankingDuplo(itens, s1, s2){
-  const w=700, pe=176, pd=86, alt=38;
+  const w=1180, pe=280, pd=120, alt=42;
   if(!itens.length) return '<div class="vazio">Nada no período.</div>';
   const h = itens.length*alt + 4;
   const mx = Math.max.apply(null, itens.map(i => Math.max(i[1],i[2])).concat([1]));
   return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" style="height:'+h+'px;max-height:none" '+
-    'preserveAspectRatio="xMinYMin meet" role="img" aria-label="Receita e custo por ambiente">' +
+    'preserveAspectRatio="none" role="img" aria-label="Receita e custo por centro de custo">' +
     itens.map(function(it,i){
       const y = i*alt + 3;
       const b1 = Math.max(1,(it[1]/mx)*(w-pe-pd)), b2 = Math.max(1,(it[2]/mx)*(w-pe-pd));
       const res = it[1]-it[2];
-      return '<g><title>'+esc(it[0])+' · '+s1.nome+' '+brl(it[1])+' · '+s2.nome+' '+brl(it[2])+
-        ' · resultado '+brl(res)+'</title>'+
-        '<text x="'+(pe-10)+'" y="'+(y+alt/2-1).toFixed(1)+'" fill="'+C.texto+'" font-size="11.5" '+
+      return '<g data-d="'+dica(it[0], [s1.nome+': '+brl(it[1]), s2.nome+': '+brl(it[2]),
+          '<b style="display:inline">resultado: '+brl(res)+'</b>'])+'">'+
+        '<rect x="0" y="'+(y-3)+'" width="'+w+'" height="'+alt+'" fill="transparent"/>'+
+        '<text x="'+(pe-14)+'" y="'+(y+alt/2-1).toFixed(1)+'" fill="'+C.texto+'" font-size="12" '+
           'font-weight="600" text-anchor="end" dominant-baseline="middle">'+
-          esc(cortar(it[0],26))+'</text>'+
-        '<rect x="'+pe+'" y="'+(y+3)+'" width="'+b1.toFixed(1)+'" height="12" fill="'+s1.cor+'" rx="2"/>'+
-        '<rect x="'+pe+'" y="'+(y+18)+'" width="'+b2.toFixed(1)+'" height="12" fill="'+s2.cor+'" rx="2"/>'+
-        '<text x="'+(pe+Math.max(b1,b2)+9)+'" y="'+(y+alt/2-1).toFixed(1)+'" fill="'+
-          (res>=0?C.verde:C.vermelho)+'" font-size="10.5" font-weight="700" '+
+          esc(cortar(it[0],36))+'</text>'+
+        '<rect x="'+pe+'" y="'+(y+4)+'" width="'+b1.toFixed(1)+'" height="14" fill="'+s1.cor+'" rx="2"/>'+
+        '<rect x="'+pe+'" y="'+(y+21)+'" width="'+b2.toFixed(1)+'" height="14" fill="'+s2.cor+'" rx="2"/>'+
+        '<text x="'+(pe+Math.max(b1,b2)+12)+'" y="'+(y+alt/2-1).toFixed(1)+'" fill="'+
+          (res>=0?C.verde:C.vermelho)+'" font-size="11.5" font-weight="700" '+
           'dominant-baseline="middle">'+(res>=0?'+':'')+curto(res).replace('R$ ','')+'</text></g>';
     }).join('') + '</svg>';
 }
 
-// Rosca grande, com a legenda montada em HTML ao lado (o SVG só desenha o anel).
 function rosca(fatias, tit, sub, tamanho){
-  const w = tamanho||250, cx=w/2, cy=w/2, R=w/2-6, r=w*0.29;
+  const w = tamanho||290, cx=w/2, cy=w/2, R=w/2-8, r=w*0.30;
   const tot = fatias.reduce((s,f)=>s+f[1],0) || 1;
   let ang=-Math.PI/2, p='';
   fatias.forEach(function(f){
     const a=(f[1]/tot)*Math.PI*2, fim=ang+a, gr=a>Math.PI?1:0;
     const P=(rr,t)=>[(cx+rr*Math.cos(t)).toFixed(2),(cy+rr*Math.sin(t)).toFixed(2)];
     const A=P(R,ang),B=P(R,fim),Cc=P(r,fim),Dd=P(r,ang);
-    p += '<g><title>'+esc(f[0])+' · '+brl(f[1])+' · '+(100*f[1]/tot).toFixed(1)+'%</title>'+
+    p += '<g data-d="'+dica(f[0], ['<b style="display:inline">'+brl(f[1])+'</b> · '+
+        (100*f[1]/tot).toFixed(1)+'% do custo'].concat(f[3]!=null?[f[3]+' lançamento(s)']:[]))+
+      '" style="cursor:default">'+
       '<path d="M'+A[0]+' '+A[1]+' A'+R+' '+R+' 0 '+gr+' 1 '+B[0]+' '+B[1]+' L'+Cc[0]+' '+Cc[1]+
-      ' A'+r+' '+r+' 0 '+gr+' 0 '+Dd[0]+' '+Dd[1]+' Z" fill="'+f[2]+'" stroke="#fff" stroke-width="2"/></g>';
+      ' A'+r+' '+r+' 0 '+gr+' 0 '+Dd[0]+' '+Dd[1]+' Z" fill="'+f[2]+'" stroke="#fff" stroke-width="2">'+
+      '<animate attributeName="opacity" begin="mouseover" end="mouseout" to="0.78" dur="0.12s" fill="freeze"/>'+
+      '<animate attributeName="opacity" begin="mouseout" to="1" dur="0.12s" fill="freeze"/>'+
+      '</path></g>';
     ang = fim;
   });
   return '<svg viewBox="0 0 '+w+' '+w+'" width="100%" style="max-width:'+w+'px" role="img" '+
     'aria-label="Composição do custo">'+p+
-    '<text x="'+cx+'" y="'+(cy-2)+'" text-anchor="middle" fill="'+C.navy+'" font-size="21" '+
+    '<text x="'+cx+'" y="'+(cy-2)+'" text-anchor="middle" fill="'+C.navy+'" font-size="24" '+
     'font-weight="700" font-family="Segoe UI,system-ui">'+esc(tit)+'</text>'+
-    '<text x="'+cx+'" y="'+(cy+17)+'" text-anchor="middle" fill="'+C.texto3+'" font-size="10" '+
+    '<text x="'+cx+'" y="'+(cy+18)+'" text-anchor="middle" fill="'+C.texto3+'" font-size="10.5" '+
     'letter-spacing="1">'+esc(sub)+'</text></svg>';
 }
 
 function cascata(passos, aoClicar){
-  const w=700,h=262,pt=30,pb=46,ih=h-pt-pb, passo=w/(passos.length||1);
+  const w=1180,h=300,pt=32,pb=50,ih=h-pt-pb, passo=w/(passos.length||1);
   let acc=0; const pontos=[];
   passos.forEach(function(p){
     const ini = p.total ? 0 : acc;
@@ -547,103 +613,96 @@ function cascata(passos, aoClicar){
     pontos.push({p:p, ini:ini, fim:fim});
     acc = p.total ? p.v : acc + p.delta;
   });
-  const mx = Math.max.apply(null, pontos.map(o=>Math.max(o.ini,o.fim)).concat([1]));
-  const y = v => pt + ih - (Math.max(v,0)/mx)*ih;
+  const vals = pontos.flatMap(o => [o.ini, o.fim]);
+  const e = _escalaY(Math.min.apply(null, vals.concat([0])),
+                     Math.max.apply(null, vals.concat([1])), pt, ih);
   let s='';
   pontos.forEach(function(o,i){
-    const cx = passo*i + passo/2, lw = Math.min(62, passo*0.56);
-    const y1 = y(Math.max(o.ini,o.fim)), y2 = y(Math.min(o.ini,o.fim));
+    const cx = passo*i + passo/2, lw = Math.min(96, passo*0.5);
+    const y1 = Math.min(e.y(o.ini), e.y(o.fim)), y2 = Math.max(e.y(o.ini), e.y(o.fim));
     const acao = aoClicar ? aoClicar(i) : null;
-    s += '<g'+(acao?' onclick="'+acao+'" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'){'+
-        acao+'}" style="cursor:pointer"':'')+'><title>'+esc(o.p.nome)+' · '+brl(o.p.v)+'</title>'+
-      '<rect x="'+(cx-passo/2).toFixed(1)+'" y="0" width="'+passo.toFixed(1)+'" height="'+h+'" fill="transparent"/>'+
+    s += '<g data-d="'+dica(o.p.nome, ['<b style="display:inline">'+brl(o.p.v)+'</b>']
+        .concat(acao?['<i>clique para ver o que tem dentro</i>']:[]))+'"'+
+      (acao?' onclick="'+acao+'" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'){'+
+        acao+'}" style="cursor:pointer"':'')+'>'+
+      '<rect x="'+(passo*i).toFixed(1)+'" y="0" width="'+passo.toFixed(1)+'" height="'+h+'" fill="transparent"/>'+
       '<rect x="'+(cx-lw/2).toFixed(1)+'" y="'+y1.toFixed(1)+'" width="'+lw.toFixed(1)+'" height="'+
         Math.max(y2-y1,2).toFixed(1)+'" fill="'+o.p.cor+'" rx="3"/>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(y1-8).toFixed(1)+'" text-anchor="middle" fill="'+C.texto+
-        '" font-size="11" font-weight="700">'+curto(o.p.v).replace('R$ ','')+'</text>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(h-26)+'" text-anchor="middle" fill="'+C.texto2+'" font-size="10.5">'+
-        esc(cortar(o.p.nome,16))+'</text>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(h-12)+'" text-anchor="middle" fill="'+C.texto3+'" font-size="9.5">'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(y1-9).toFixed(1)+'" text-anchor="middle" fill="'+C.texto+
+        '" font-size="12" font-weight="700">'+curto(o.p.v).replace('R$ ','')+'</text>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-28)+'" text-anchor="middle" fill="'+C.texto2+'" font-size="11.5">'+
+        esc(cortar(o.p.nome,22))+'</text>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-13)+'" text-anchor="middle" fill="'+C.texto3+'" font-size="10">'+
         esc(o.p.dica||'')+'</text></g>';
     if(i < pontos.length-1 && !o.p.total)
-      s += '<line x1="'+(cx+lw/2).toFixed(1)+'" y1="'+y(o.fim).toFixed(1)+'" x2="'+
-        (passo*(i+1)+passo/2-lw/2).toFixed(1)+'" y2="'+y(o.fim).toFixed(1)+
+      s += '<line x1="'+(cx+lw/2).toFixed(1)+'" y1="'+e.y(o.fim).toFixed(1)+'" x2="'+
+        (passo*(i+1)+passo/2-lw/2).toFixed(1)+'" y2="'+e.y(o.fim).toFixed(1)+
         '" stroke="'+C.borda2+'" stroke-width="1" stroke-dasharray="3 3"/>';
   });
   return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" '+
     'aria-label="Cascata do resultado do período">'+s+'</svg>';
 }
 
-// Fluxo de caixa: entradas para cima, saídas para baixo, e a linha do saldo
-// acumulado por cima. É o único gráfico com eixo dos dois lados do zero.
-function fluxo(rot, entradas, saidas){
-  const w=700,h=250,pe=56,pd=12,pt=16,pb=44;
+// Fluxo de caixa no formato do fechamento da CFO: entradas para cima, saídas
+// para baixo, resultado do mês escrito embaixo de cada par.
+function fluxoCaixa(rot, entradas, saidas){
+  const w=1180,h=310,pe=64,pd=14,pt=22,pb=58;
   const iw=w-pe-pd, ih=h-pt-pb, n=rot.length||1;
-  const acumulado = []; let a=0;
-  entradas.forEach((e,i) => { a += e - saidas[i]; acumulado.push(a); });
-  const mx = Math.max.apply(null, entradas.concat(saidas, acumulado.map(Math.abs), [1]));
-  const zero = pt + ih*0.58;
-  const escala = v => (v/mx) * Math.min(ih*0.58, ih*0.42);
-  const passo = iw/n, larg = Math.min(17, passo/2.9);
-  let g = '<line x1="'+pe+'" y1="'+zero+'" x2="'+(w-pd)+'" y2="'+zero+
-    '" stroke="'+C.borda2+'" stroke-width="1.5"/>';
-  for(const f of [0.5, 1]){
-    [zero-escala(mx*f), zero+escala(mx*f)].forEach(function(yy){
-      g += '<line x1="'+pe+'" y1="'+yy.toFixed(1)+'" x2="'+(w-pd)+'" y2="'+yy.toFixed(1)+
-        '" stroke="'+C.borda+'" stroke-width="1"/><text x="'+(pe-8)+'" y="'+(yy+3.5).toFixed(1)+
-        '" fill="'+C.texto3+'" font-size="9.5" text-anchor="end">'+
-        curto(mx*f).replace('R$ ','')+'</text>';
-    });
-  }
-  let b='';
-  rot.forEach(function(r,i){
+  const res = entradas.map((v,i) => v - saidas[i]);
+  const e = _escalaY(-Math.max.apply(null, saidas.concat([1])),
+                     Math.max.apply(null, entradas.concat([1])), pt, ih);
+  const passo = iw/n, larg = Math.min(30, passo/2.8);
+  const b = rot.map(function(r,i){
     const cx = pe + passo*i + passo/2;
-    const he = Math.max(escala(entradas[i]),1), hs = Math.max(escala(saidas[i]),1);
-    b += '<g><title>'+esc(r)+' · entrou '+brl(entradas[i])+' · saiu '+brl(saidas[i])+
-      ' · saldo acumulado '+brl(acumulado[i])+'</title>'+
-      '<rect x="'+(cx-larg-1.5).toFixed(1)+'" y="'+(zero-he).toFixed(1)+'" width="'+larg.toFixed(1)+
-      '" height="'+he.toFixed(1)+'" fill="'+C.verde+'" rx="2"/>'+
-      '<rect x="'+(cx+1.5).toFixed(1)+'" y="'+zero+'" width="'+larg.toFixed(1)+'" height="'+
-      hs.toFixed(1)+'" fill="'+C.vermelho+'" rx="2"/>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(h-8)+'" fill="'+C.texto2+'" font-size="10" '+
-      'text-anchor="middle">'+esc(r)+'</text></g>';
-  });
-  const pts = acumulado.map((v,i) => [pe+passo*i+passo/2, zero-escala(v)]);
-  const l = '<path d="'+pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+
-    '" fill="none" stroke="'+C.ouro+'" stroke-width="2.4"/>' +
-    pts.map(p=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3" fill="'+C.ouro+
-      '" stroke="#fff" stroke-width="1.2"/>').join('');
-  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" '+
-    'aria-label="Fluxo de caixa do período">'+g+b+l+'</svg>';
+    const ye = e.y(entradas[i]), ys = e.y(-saidas[i]);
+    return '<g data-d="'+dica(r, ['Entradas: '+brl(entradas[i]), 'Saídas: '+brl(saidas[i]),
+        '<b style="display:inline">Resultado: '+brl(res[i])+'</b>'])+'">'+
+      '<rect x="'+(pe+passo*i).toFixed(1)+'" y="'+pt+'" width="'+passo.toFixed(1)+'" height="'+ih+
+        '" fill="transparent"/>'+
+      '<rect x="'+(cx-larg-2).toFixed(1)+'" y="'+ye.toFixed(1)+'" width="'+larg.toFixed(1)+
+        '" height="'+Math.max(e.zero-ye,1).toFixed(1)+'" fill="'+C.verde+'" rx="2"/>'+
+      '<rect x="'+(cx+2).toFixed(1)+'" y="'+e.zero.toFixed(1)+'" width="'+larg.toFixed(1)+
+        '" height="'+Math.max(ys-e.zero,1).toFixed(1)+'" fill="'+C.vermelho+'" rx="2"/>'+
+      '<text x="'+(cx-larg/2-2).toFixed(1)+'" y="'+(ye-6).toFixed(1)+'" text-anchor="middle" fill="'+
+        C.verde+'" font-size="10" font-weight="700">'+curto(entradas[i]).replace('R$ ','')+'</text>'+
+      '<text x="'+(cx+larg/2+2).toFixed(1)+'" y="'+(ys+13).toFixed(1)+'" text-anchor="middle" fill="'+
+        C.vermelho+'" font-size="10" font-weight="700">'+curto(saidas[i]).replace('R$ ','')+'</text>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-26)+'" text-anchor="middle" fill="'+C.texto2+
+        '" font-size="11">'+esc(r)+'</text>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-10)+'" text-anchor="middle" fill="'+
+        (res[i]>=0?C.verde:C.vermelho)+'" font-size="11" font-weight="700">'+
+        (res[i]>=0?'+':'')+curto(res[i]).replace('R$ ','')+'</text></g>';
+  }).join('');
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="Fluxo de caixa">'+
+    _grade(e,pe,w,pd,4)+b+'</svg>';
 }
 
-/* ===================== cartões ===================== */
-// Duas funções porque a mesma seta significa coisas opostas: custo subindo é
-// ruim, receita subindo é boa. Um parâmetro "inverter" seria mais curto e leria
-// pior justamente no lugar onde importa.
+/* ===================== cartões de indicador ===================== */
+const ICONE_INFO = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>'+
+  '<line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
 function _kpi(rot, valor, cls, seta, texto, spark, ajuda){
   return '<div class="kpi">'+
-    (ajuda ? '<span class="ajuda" title="'+esc(ajuda)+'">?</span>' : '')+
+    (ajuda ? '<span class="info" data-d="'+dica(rot,[ajuda])+'">'+ICONE_INFO+'</span>' : '')+
     '<div class="rot">'+esc(rot)+'</div><div class="v num">'+esc(valor)+'</div>'+
     '<div class="d '+cls+'">'+seta+' '+esc(texto)+'</div>'+(spark||'')+'</div>';
 }
+// Duas funções porque a mesma seta significa coisas opostas: custo subindo é
+// ruim, receita subindo é boa. Um parâmetro "inverter" seria mais curto e leria
+// pior justamente no lugar onde importa.
 const kpiCusto = (r,v,d,t,s,a) => _kpi(r, v, d===null?'':(d>0?'desce':'sobe'),
   d===null?'':(d>0?'▲':'▼'), t, s, a);
 const kpiReceita = (r,v,d,t,s,a) => _kpi(r, v, d===null?'':(d>=0?'sobe':'desce'),
   d===null?'':(d>=0?'▲':'▼'), t, s, a);
 
 /* ===================== agrupamento ===================== */
-// As cinco maneiras de cortar o custo. Cada uma diz como achar a chave da linha
-// e como transformar essa chave em nome — é isso que permite a mesma tela
-// responder "por grupo", "por categoria" ou "por fornecedor" sem código repetido.
 const DIM = {
-  grupo: { rot:'Grupo',      chave: l => D.cat_grupo[l[CAT]], nome: k => D.grupo[k] || '—' },
-  cat:   { rot:'Categoria',  chave: l => l[CAT],              nome: k => D.cat[k]   || '—' },
-  forn:  { rot:'Fornecedor', chave: l => l[PES],              nome: k => D.forn[k]  || '—' },
-  amb:   { rot:'Ambiente',   chave: l => l[AMB],              nome: k => D.amb[k]   || '—' },
-  mes:   { rot:'Mês',        chave: l => l[COMP].slice(0,7),  nome: k => fMes(k) },
+  grupo: { rot:'Grupo',           chave: l => D.cat_grupo[l[CAT]], nome: k => D.grupo[k] || '—' },
+  cat:   { rot:'Categoria',       chave: l => l[CAT],              nome: k => D.cat[k]   || '—' },
+  forn:  { rot:'Fornecedor',      chave: l => l[PES],              nome: k => D.forn[k]  || '—' },
+  amb:   { rot:'Centro de custo', chave: l => l[AMB],              nome: k => D.amb[k]   || '—' },
+  mes:   { rot:'Mês',             chave: l => l[COMP].slice(0,7),  nome: k => fMes(k) },
 };
-// Do mais largo ao mais fino. Descer é ir para o próximo desta fila que ainda
+// Do mais macro ao mais micro. Descer é ir para o próximo desta fila que ainda
 // não foi usado — assim o caminho nunca repete a mesma dimensão.
 const ESCADA = ['grupo','cat','forn'];
 
@@ -659,27 +718,133 @@ function agrupar(linhas, dim){
     .sort((a,b) => b[1]-a[1]);
 }
 
+/* ===================== bloco de drill reaproveitável ===================== */
+// O mesmo componente aparece na Visão Geral e na Análise de Custos. Começa no
+// corte mais macro (grupo) e desce até o lançamento — foi o pedido: um gráfico
+// só que abre, em vez de 61 barras de uma vez.
+function novoDrill(id){ return { id:id, dim:'grupo', caminho:[] }; }
+const DRILLS = { geral: novoDrill('geral'), analise: novoDrill('analise') };
+
+function drDescer(id, dim, chave, rotulo){
+  DRILLS[id].caminho.push({dim:dim, chave:chave, rotulo:rotulo}); desenhar();
+}
+function drVoltar(id, n){ DRILLS[id].caminho = DRILLS[id].caminho.slice(0,n); desenhar(); }
+function drTrocar(id, d){ DRILLS[id].dim = d; DRILLS[id].caminho = []; desenhar(); }
+function abrirCategoria(k){
+  DRILLS.analise.dim = 'cat';
+  DRILLS.analise.caminho = [{dim:'cat', chave:k, rotulo:D.cat[k]}];
+  irPara('analise');
+}
+function proximaDim(dr, extra){
+  const usadas = [dr.dim].concat(dr.caminho.map(c => c.dim));
+  if(extra) usadas.push(extra);
+  for(let i=0;i<ESCADA.length;i++) if(usadas.indexOf(ESCADA[i]) < 0) return ESCADA[i];
+  return null;
+}
+function linhasDoCaminho(dr, lista){
+  let l = lista;
+  dr.caminho.forEach(c => { l = l.filter(x => DIM[c.dim].chave(x) === c.chave); });
+  return l;
+}
+function blocoDrill(id, titulo, legenda, comSeletor){
+  const dr = DRILLS[id];
+  const linhas = linhasDoCaminho(dr, filtrar(D.pagar, COMP));
+  const antes = soma(linhasDoCaminho(dr, doAnoAnterior(D.pagar)));
+  const total = soma(linhas);
+  const prox = dr.caminho.length ? proximaDim(dr) : dr.dim;
+
+  const migalha = '<div class="migalha">'+
+    '<button onclick="drVoltar(\''+id+'\',0)">Todo o custo</button>'+
+    dr.caminho.map((c,i) => '<span>›</span>' + (i === dr.caminho.length-1
+      ? '<b>'+esc(c.rotulo)+'</b>'
+      : '<button onclick="drVoltar(\''+id+'\','+(i+1)+')">'+esc(c.rotulo)+'</button>')).join('')+
+    '<span style="margin-left:auto;font-weight:700;color:var(--navy)">'+curto(total)+
+    (antes ? ' <span class="'+(total>antes?'desce':'sobe')+'" style="font-weight:600">'+
+      (total>antes?'▲ +':'▼ ')+pct(total,antes).toFixed(0)+'% vs '+rotuloAnoAnterior()+'</span>' : '')+
+    '</span></div>';
+
+  const seletor = comSeletor ? '<div class="dims"><span class="rot">Começar por</span>'+
+    Object.keys(DIM).map(d => '<button class="atalho" aria-pressed="'+
+      (dr.dim===d && !dr.caminho.length)+'" onclick="drTrocar(\''+id+'\',\''+d+'\')">'+
+      esc(DIM[d].rot)+'</button>').join('')+'</div>' : '';
+
+  let miolo, sub;
+  if(prox){
+    const itens = agrupar(linhas, prox);
+    const maisFundo = !!proximaDim(dr, prox);
+    const acao = it => 'drDescer(\''+id+'\',\''+prox+'\','+JSON.stringify(it[3])+',&quot;'+
+      esc(String(it[0])).replace(/'/g,'&#39;')+'&quot;)';
+    sub = 'Mostrando por <b>'+esc(DIM[prox].rot.toLowerCase())+'</b> · '+itens.length+' no período. '+
+      (maisFundo ? 'Clique numa barra para descer um nível.'
+                 : 'Último corte — clicar abre os lançamentos, um a um.');
+    miolo = ranking(itens, {corte:46, pe:320, alt:29, clique:acao});
+  } else {
+    const ord = linhas.slice().sort((a,b) => b[TOTAL]-a[TOTAL]).slice(0,150);
+    sub = 'Fim do caminho: '+linhas.length+' lançamento(s). Cada linha é uma conta no Conta Azul.';
+    miolo = '<div class="rolar"><table><thead><tr><th>Competência</th><th>Vencimento</th>'+
+      '<th>Descrição</th><th>Fornecedor</th><th>Centro de custo</th><th class="r">Valor</th>'+
+      '</tr></thead><tbody>'+
+      (ord.length ? ord.map(l =>
+        '<tr><td class="num">'+fMes(l[COMP].slice(0,7))+'</td><td class="num">'+fData(l[VENC])+'</td>'+
+        '<td style="color:var(--texto2)">'+esc(D.pagar_desc[l.i]||'')+'</td>'+
+        '<td>'+esc(cortar(D.forn[l[PES]]||'—',30))+'</td>'+
+        '<td>'+esc(cortar(D.amb[l[AMB]],22))+'</td>'+
+        '<td class="r num">'+brl(l[TOTAL])+'</td></tr>').join('')
+       : '<tr><td colspan="6" class="vazio">Nada aqui.</td></tr>')+'</tbody></table></div>'+
+      (linhas.length > 150 ? '<div class="nota">Mostrando os 150 maiores de '+linhas.length+'.</div>' : '');
+  }
+  return '<div class="card"><h2>'+esc(titulo)+'</h2>'+
+    '<div class="leg">'+legenda+'</div>'+seletor+migalha+
+    '<div class="leg" style="margin-bottom:10px">'+sub+'</div>'+miolo+'</div>';
+}
+
+/* ===================== ícones da barra lateral ===================== */
+// Traço fino, do mesmo peso, desenhados aqui em vez de emoji: emoji muda de
+// desenho conforme o sistema e nunca fica alinhado com o texto.
+const IC = {
+  geral:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>'+
+        '<rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  pagar:'<rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>'+
+        '<line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  analise:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>'+
+        '<line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="21" x2="21" y2="21"/>',
+  centros:'<path d="M3 21h18"/><path d="M6 21V6a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v15"/>'+
+        '<path d="M13 21V11a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v10"/><line x1="9" y1="9" x2="9.01" y2="9"/>'+
+        '<line x1="9" y1="13" x2="9.01" y2="13"/><line x1="16" y1="14" x2="16.01" y2="14"/>',
+  dre:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>'+
+        '<polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>'+
+        '<line x1="16" y1="17" x2="8" y2="17"/>',
+  compras:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>'+
+        '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  ajustes:'<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>'+
+        '<line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>'+
+        '<line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>'+
+        '<line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>'+
+        '<line x1="17" y1="16" x2="23" y2="16"/>',
+};
+const icone = k => '<svg viewBox="0 0 24 24" aria-hidden="true">'+(IC[k]||'')+'</svg>';
+
 /* ===================== seções ===================== */
 const SECOES = [
-  ['Visão', [['geral','◉ Visão Geral'], ['pagar','◷ Contas a pagar'],
-             ['analise','▦ Análise de Custos'], ['ambientes','⚖ Ambientes']]],
-  ['Cruzamentos', [['dre','▤ DRE do período'], ['compras','⇄ Compras × financeiro']]],
-  ['Ajustes', [['ajustes','⚙ O que entra na conta']]],
+  ['Visão', [['geral','Visão Geral'], ['pagar','Contas a pagar'],
+             ['analise','Análise de Custos'], ['centros','Centros de Custo']]],
+  ['Cruzamentos', [['dre','DRE e Fluxo de Caixa'], ['compras','Compras × financeiro']]],
+  ['Ajustes', [['ajustes','O que entra na conta']]],
 ];
 const TITULO = {
   geral:['Visão Geral','O retrato do período: quanto entrou, quanto saiu e o que precisa de atenção.'],
   pagar:['Contas a pagar','Tudo que ainda tem saldo em aberto, na ordem em que chega.'],
-  analise:['Análise de Custos','Desça do grupo até o lançamento: grupo → categoria → quem recebeu → nota a nota.'],
-  ambientes:['Ambientes','Cada ambiente se paga? Receita e custo lado a lado.'],
-  dre:['DRE do período','Entrou tanto, saiu por aqui, sobrou isto.'],
+  analise:['Análise de Custos','Comece no corte mais macro e desça até o lançamento.'],
+  centros:['Centros de Custo','Cada centro de custo se paga? Receita e custo lado a lado.'],
+  dre:['DRE e Fluxo de Caixa','Base caixa — o mesmo critério do fechamento mensal da CFO de Consultório.'],
   compras:['Compras × financeiro','O que foi comprado no portal de Compras já virou conta a pagar?'],
-  ajustes:['O que entra na conta','As regras por trás de cada número desta tela.'],
+  ajustes:['O que entra na conta','As regras por trás de cada número deste portal.'],
 };
 function montarRail(){
   document.getElementById('rail').innerHTML = SECOES.map(s =>
     '<div class="rot gr">'+esc(s[0])+'</div>' + s[1].map(v =>
       '<button aria-current="'+(VISTA===v[0]?'page':'false')+'" onclick="irPara(\''+v[0]+'\')">'+
-      esc(v[1])+'</button>').join('')).join('');
+      icone(v[0])+'<span>'+esc(v[1])+'</span></button>').join('')).join('');
 }
 function irPara(v){
   VISTA = v;
@@ -692,8 +857,8 @@ function irPara(v){
 /* ===================== período ===================== */
 // Os meses do seletor vêm do intervalo que o gerador puxou por competência, não
 // dos meses que aparecem nas linhas: a lista de contas em aberto arrasta
-// parcelas de compras antigas e vencimentos lá na frente, e essas datas soltas
-// enchiam o seletor de meses (2024, 2028) que não têm base nenhuma por trás.
+// parcelas antigas e vencimentos lá na frente, e essas datas soltas enchiam o
+// seletor de meses sem base nenhuma por trás.
 function mesesDisponiveis(){
   const out = [];
   let a = +D.de.slice(0,4), m = +D.de.slice(5,7);
@@ -705,9 +870,6 @@ function mesesDisponiveis(){
   }
   return out;
 }
-// O último mês que faz sentido mostrar é o corrente: compra parcelada nasce com
-// as parcelas lançadas à frente e a receita dos meses futuros ainda não existe,
-// então esticar até dezembro mostraria um prejuízo que é só do calendário.
 function ultimoMes(){
   const ms = mesesDisponiveis();
   return ms.filter(m => m <= hoje.slice(0,7)).pop() || ms[ms.length-1];
@@ -716,7 +878,7 @@ function janela(tipo){
   const ms = mesesDisponiveis(), fim = ultimoMes();
   if(tipo === 'mes') return { de:fim, ate:fim };
   if(tipo === 'ano') return { de: fim.slice(0,4)+'-01', ate: fim };
-  const i = ms.indexOf(fim);                       // 12m
+  const i = ms.indexOf(fim);
   return { de: ms[Math.max(0, i-11)], ate: fim };
 }
 function aplicarPadraoDaVista(){
@@ -731,7 +893,7 @@ function montarFiltros(){
     fMes(m)+'</option>').join('');
   const s = {};
   D.pagar.forEach(l => { if(!l[MOV]) s[l[AMB]] = (s[l[AMB]]||0) + l[TOTAL]; });
-  const ambientes = D.amb.map((n,i) => [i,n]).sort((a,b) => (s[b[0]]||0)-(s[a[0]]||0))
+  const centros = D.amb.map((n,i) => [i,n]).sort((a,b) => (s[b[0]]||0)-(s[a[0]]||0))
     .map(x => '<option value="'+x[0]+'"'+(F.amb===String(x[0])?' selected':'')+'>'+
       esc(x[1])+'</option>').join('');
   const atual = j => (F.de === j.de && F.ate === j.ate);
@@ -747,36 +909,36 @@ function montarFiltros(){
       '<button class="atalho" aria-pressed="'+atual(janela('12m'))+'" onclick="atalho(\'12m\')">Últimos 12 meses</button>'+
     '</div>'+
     '<div class="f-sep"></div>'+
-    '<div class="f-grp"><span class="rot">Ambiente</span>'+
+    '<div class="f-grp"><span class="rot">Centro de custo</span>'+
       '<select class="sel" id="f-amb" onchange="aplicar()">'+
       '<option value="todos"'+(F.amb==='todos'?' selected':'')+'>— Todos —</option>'+
-      ambientes+'</select></div>'+
+      centros+'</select></div>'+
     '<div class="f-sep"></div>'+
     '<button class="atalho chave" id="f-mov" aria-pressed="'+F.mov+'" onclick="alternarMov()" '+
-      'title="Transferência entre contas e empréstimo é dinheiro andando entre contas da própria casa — '+
-      'entra como despesa numa ponta e receita na outra.">'+
+      'data-d="'+dica('Transferências e empréstimos',['Dinheiro andando entre contas da própria casa: '+
+      'entra como despesa numa ponta e receita na outra. Fora da conta por padrão.'])+'">'+
       (F.mov ? 'Transferências à vista' : 'Transferências fora')+'</button>'+
     '<button class="limpar" onclick="limpar()">restaurar padrão da tela</button>';
 }
 function aplicar(){
   F.de = document.getElementById('f-de').value;
   F.ate = document.getElementById('f-ate').value;
-  if(F.de > F.ate){                       // período invertido: corrige em vez de mostrar tela vazia
-    const t = F.de; F.de = F.ate; F.ate = t;
-  }
+  if(F.de > F.ate){ const t = F.de; F.de = F.ate; F.ate = t; }
   F.amb = document.getElementById('f-amb').value;
-  guardarEscolha(); drCaminho = [];
+  guardarEscolha(); DRILLS.geral.caminho = []; DRILLS.analise.caminho = [];
   montarFiltros(); desenhar();
 }
 function atalho(tipo){
   const j = janela(tipo); F.de = j.de; F.ate = j.ate;
-  guardarEscolha(); drCaminho = [];
+  guardarEscolha(); DRILLS.geral.caminho = []; DRILLS.analise.caminho = [];
   montarFiltros(); desenhar();
 }
 function alternarMov(){ F.mov = !F.mov; montarFiltros(); desenhar(); }
 function limpar(){
   delete escolhido[VISTA];
-  F.amb = 'todos'; F.mov = false; drCaminho = []; drDim = 'grupo';
+  F.amb = 'todos'; F.mov = false;
+  DRILLS.geral = novoDrill('geral'); DRILLS.analise = novoDrill('analise');
+  TAB = { venc:'', sit:'', forn:'', cat:'', amb:'' };
   aplicarPadraoDaVista(); montarFiltros(); desenhar();
 }
 function escolherAmb(i){
@@ -790,24 +952,17 @@ function mesesNoFiltro(){
   while(a < af || (a === af && m <= mf)){
     out.push(a+'-'+String(m).padStart(2,'0'));
     if(m === 12){ a++; m = 1; } else { m++; }
-    if(out.length > 60) break;            // trava contra período absurdo
+    if(out.length > 60) break;
   }
   return out;
 }
 const rotuloPeriodo = () => F.de === F.ate ? fMes(F.de) : fMes(F.de)+' a '+fMes(F.ate);
-// Quando a janela cabe dentro de um ano só, o rótulo é o ano — mais concreto.
-// Quando ela atravessa a virada (set/25 a ago/26), "2025" seria errado: o
-// intervalo comparado é set/24 a ago/25, e aí o nome honesto é "o ano anterior".
 const rotuloAnoAnterior = () => F.de.slice(0,4) === F.ate.slice(0,4)
   ? String(+F.ate.slice(0,4) - 1) : 'o ano anterior';
-// A mesma ideia, mas para caber num cabeçalho de coluna.
 const rotuloColuna = () => F.de.slice(0,4) === F.ate.slice(0,4)
   ? String(+F.ate.slice(0,4) - 1) : 'Ano anterior';
 
 /* ===================== contas em aberto ===================== */
-// Sem recorte de período: uma parcela de uma compra antiga que vence semana que
-// vem continua saindo do caixa. O período responde "quanto custou"; esta lista
-// responde "quanto ainda temos para pagar", e uma coisa não apaga a outra.
 function emAberto(){
   return D.pagar.filter(l => l[TOTAL]-l[PAGO] > 0.005 && passa(l, VENC, true))
                 .sort((a,b) => a[VENC] < b[VENC] ? -1 : 1);
@@ -834,8 +989,6 @@ function graficoFaixas(fx){
 }
 
 /* ===================== insights ===================== */
-// Cada insight é uma regra fixa que olha os números e some sozinha quando o
-// número volta ao normal. Nada aqui é escrito à mão para um mês específico.
 function insights(){
   const p = filtrar(D.pagar, COMP), pa = doAnoAnterior(D.pagar);
   const total = soma(p), fx = faixas(), saida = [];
@@ -854,7 +1007,7 @@ function insights(){
     if(!antes) return;
     const d = pct(c[1], antes);
     if(c[1] > 40000 && d > 35)
-      saida.push([C.laranja, c[0]+' subiu '+d.toFixed(0)+'% contra o ano passado',
+      saida.push([C.laranja, c[0]+' subiu '+d.toFixed(0)+'% contra '+rotuloAnoAnterior(),
         curto(c[1])+' agora contra '+curto(antes)+' no mesmo intervalo. '+
         'Vale conferir se é reajuste, volume novo ou lançamento em duplicidade.']);
     else if(antes > 40000 && d < -35)
@@ -865,10 +1018,10 @@ function insights(){
 
   if(fx.vencido[0] > 0)
     saida.push([C.vermelho, curto(fx.vencido[0])+' já venceram e continuam em aberto',
-      fx.vencido[1]+' lançamento(s). Ou é pagamento atrasado, ou é baixa que ninguém deu no sistema.']);
+      fx.vencido[1]+' conta(s). Ou é pagamento atrasado, ou é baixa que ninguém deu no sistema.']);
   if(fx.ate30[0] > 0)
     saida.push([C.laranja, curto(fx.ate30[0])+' vencem nos próximos 30 dias',
-      fx.ate30[1]+' lançamento(s) — é a conta que chega antes do próximo fechamento.']);
+      fx.ate30[1]+' conta(s) — é o que chega antes do próximo fechamento.']);
 
   const sg = agrupar(p,'grupo').filter(g => g[0] === 'Sem grupo definido')[0];
   if(sg && sg[1]/total > 0.08)
@@ -894,32 +1047,24 @@ function vistaGeral(){
   const ms = mesesNoFiltro();
   const porMes = lista => ms.map(m => soma(lista.filter(l => l[COMP].slice(0,7)===m)));
   const sc = porMes(p), sr = porMes(r), sres = sc.map((c,i) => sr[i]-c);
-
-  // Fluxo de caixa: o que foi efetivamente pago/recebido, posicionado pela data
-  // de vencimento. A API não devolve a data em que o dinheiro andou, então o
-  // vencimento é a melhor aproximação — e isso está escrito na legenda.
-  const pagoNoMes = (lista, m) => lista.filter(l => l[VENC].slice(0,7) === m)
-    .reduce((s,l) => s + l[PAGO], 0);
-  const ent = ms.map(m => pagoNoMes(filtrar(D.receber, VENC, true), m));
-  const sai = ms.map(m => pagoNoMes(filtrar(D.pagar, VENC, true), m));
+  const fc = fluxoMensal(ms, 'real');
 
   const grupos = agrupar(p,'grupo');
-  const fatias = grupos.slice(0,6).map((x,i) => [x[0], x[1], RAMPA[i*2] || RAMPA[9]]);
-  const outros = grupos.slice(6).reduce((s,x)=>s+x[1],0);
-  if(outros > 0) fatias.push(['Demais grupos', outros, '#B4D5F0']);
+  const fatias = grupos.slice(0,6).map((x,i) => [x[0], x[1], RAMPA[i*2] || RAMPA[9], x[2]]);
+  const outros = grupos.slice(6);
+  if(outros.length) fatias.push(['Demais grupos', outros.reduce((s,x)=>s+x[1],0), '#B4D5F0',
+    outros.reduce((s,x)=>s+x[2],0)]);
   const totFatias = fatias.reduce((s,f)=>s+f[1],0) || 1;
-
-  const cats = agrupar(p,'cat');
   const ins = insights();
 
   return '<div class="kpi-row">'+
     kpiReceita('Receita no período', curto(receita), receitaA ? pct(receita,receitaA) : null,
       receitaA ? Math.abs(pct(receita,receitaA)).toFixed(1)+'% vs '+rotuloAnoAnterior()+' ('+curto(receitaA)+')'
-               : 'sem comparação disponível', sparkline(sr, '#7BE0A0'),
+               : 'sem base de comparação', sparkline(sr, '#7BE0A0'),
       'Tudo que entrou no período, por competência — o mês em que o serviço aconteceu.') +
     kpiCusto('Custo no período', curto(custo), custoA ? pct(custo,custoA) : null,
       custoA ? Math.abs(pct(custo,custoA)).toFixed(1)+'% vs '+rotuloAnoAnterior()+' ('+curto(custoA)+')'
-             : 'sem comparação disponível', sparkline(sc, '#7FB3E0'),
+             : 'sem base de comparação', sparkline(sc, '#7FB3E0'),
       'Tudo que saiu no período, por competência. Transferência entre contas e empréstimo ficam fora.') +
     kpiReceita('Resultado', curto(resultado), (receitaA||custoA) ? resultado-resultadoA : null,
       (receitaA||custoA) ? curto(Math.abs(resultado-resultadoA))+
@@ -927,53 +1072,50 @@ function vistaGeral(){
         : 'receita menos custo', '',
       'Receita menos custo do período. Não é lucro contábil: é o que sobrou do que passou por aqui.') +
     kpiCusto('Contas ainda não pagas', curto(aberto), null, nAberto+' contas em aberto', '',
-      'Contas já lançadas no Conta Azul que ainda têm saldo a pagar, incluindo as que vencem '+
-      'depois do período filtrado. É o quanto a clínica ainda deve, não o quanto gastou.') +
+      'Contas já lançadas no Conta Azul que ainda têm saldo a pagar, incluindo as que vencem depois '+
+      'do período filtrado. É o quanto a clínica ainda deve, não o quanto gastou.') +
     kpiCusto('Dependência de fornecedores', conc.toFixed(0)+'%', null,
       'do custo está em 10 dos '+forn.length+' fornecedores', '',
-      'Quanto do custo do período está concentrado nos 10 maiores fornecedores. Quanto mais alto, '+
-      'mais o resultado da clínica depende de poucas relações.') +
+      'Quanto do custo do período se concentra nos 10 maiores fornecedores. Quanto mais alto, mais o '+
+      'resultado depende de poucas relações.') +
   '</div>'+
 
-  '<div class="grade" style="grid-template-columns:1.3fr 1fr">'+
-    '<div class="card"><h2>Receita vs Custos</h2>'+
-      '<div class="leg">Por competência — o mês em que aconteceu. A linha tracejada é o resultado do mês.</div>'+
-      colunas(ms.map(fMes), {nome:'Receita',dados:sr,cor:C.verde},
-        {nome:'Custo',dados:sc,cor:C.azul}, {nome:'Resultado',dados:sres,cor:C.ouro})+
-      '<div class="cores"><span><i style="background:'+C.verde+'"></i>receita</span>'+
-      '<span><i style="background:'+C.azul+'"></i>custo</span>'+
-      '<span><i class="tracejada"></i>resultado do mês</span></div></div>'+
-    '<div class="card"><h2>Fluxo de caixa no período</h2>'+
-      '<div class="leg">O que efetivamente <b>entrou e saiu</b> — só a parte já paga de cada conta. '+
-      'A linha dourada é o saldo acumulado do período.</div>'+
-      fluxo(ms.map(fMes), ent, sai)+
-      '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
-      '<span><i style="background:'+C.vermelho+'"></i>saídas</span>'+
-      '<span><i style="background:'+C.ouro+'"></i>saldo acumulado</span></div>'+
-      '<div class="nota">O Conta Azul não devolve a data em que o dinheiro andou, só a de '+
-      'vencimento — é ela que posiciona cada barra aqui. Para contas pagas em dia, dá no mesmo.</div></div>'+
-  '</div>'+
+  '<div class="card"><h2>Receita vs Custos</h2>'+
+    '<div class="leg">Por competência — o mês em que aconteceu. A linha tracejada é o resultado do mês, '+
+    'e ela <b>desce abaixo do zero</b> quando o mês fecha no vermelho.</div>'+
+    colunas(ms.map(fMes), {nome:'Receita',dados:sr,cor:C.verde},
+      {nome:'Custo',dados:sc,cor:C.azul}, {nome:'Resultado',dados:sres,cor:C.ouro})+
+    '<div class="cores"><span><i style="background:'+C.verde+'"></i>receita</span>'+
+    '<span><i style="background:'+C.azul+'"></i>custo</span>'+
+    '<span><i class="tracejada"></i>resultado do mês</span></div></div>'+
 
-  '<div class="grade" style="grid-template-columns:1fr 1.15fr">'+
-    '<div class="card"><h2>Natureza do gasto</h2>'+
-      '<div class="leg">Pelos grupos que o próprio Conta Azul já classifica.</div>'+
-      '<div style="display:grid;grid-template-columns:250px 1fr;gap:22px;align-items:center">'+
-        rosca(fatias, curto(custo).replace('R$ ',''), rotuloPeriodo().toUpperCase(), 250)+
-        '<div class="legenda-lado">'+fatias.map(f =>
-          '<div><i style="background:'+f[2]+'"></i><div><b>'+esc(f[0])+'</b>'+
-          '<span>'+brl(f[1])+' · '+(100*f[1]/totFatias).toFixed(1)+'%</span></div></div>').join('')+
-        '</div></div></div>'+
-    '<div class="card"><h2>Contas a pagar por faixa de vencimento</h2>'+
-      '<div class="leg">Quanto já venceu e quanto está chegando. Considera todas as contas em aberto, '+
-      'inclusive as que vencem depois do período filtrado.</div>'+
-      graficoFaixas(fx)+'</div>'+
-  '</div>'+
+  '<div class="card"><h2>Fluxo de caixa no período</h2>'+
+    '<div class="leg">O que efetivamente <b>entrou e saiu</b> — só a parte já paga de cada conta. '+
+    'Mesmo critério do fluxo de caixa do fechamento mensal da CFO de Consultório.</div>'+
+    fluxoCaixa(ms.map(fMes), fc.entradas, fc.saidas)+
+    '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
+    '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div>'+
+    '<div class="nota">O Conta Azul não devolve a data em que o dinheiro andou, só a de vencimento — '+
+    'é ela que posiciona cada barra. Para contas pagas em dia, dá no mesmo.</div></div>'+
 
-  '<div class="card"><h2>Custos por Categoria</h2>'+
-    '<div class="leg">Todas as '+cats.length+' categorias com lançamento no período, da maior para a menor. '+
-    'Clique numa barra para abrir a categoria em <b>Análise de Custos</b>.</div>'+
-    '<div class="rolar-y">'+ranking(cats, {corte:34, pe:230, alt:23,
-      clique: it => 'abrirCategoria('+it[3]+')'})+'</div></div>'+
+  '<div class="card"><h2>Custos por categoria</h2>'+
+    '<div class="leg">Pela natureza do gasto, usando os grupos que o próprio Conta Azul classifica. '+
+    'Passe o mouse sobre uma fatia para ver valor, percentual e quantidade.</div>'+
+    '<div class="rosca-linha">'+
+      rosca(fatias, curto(custo).replace('R$ ',''), rotuloPeriodo().toUpperCase(), 290)+
+      '<div class="legenda-lado">'+fatias.map(f =>
+        '<div data-d="'+dica(f[0],[brl(f[1])+' · '+(100*f[1]/totFatias).toFixed(1)+'%'])+'">'+
+        '<i style="background:'+f[2]+'"></i><div><b>'+esc(f[0])+'</b>'+
+        '<span>'+brl(f[1])+' · '+(100*f[1]/totFatias).toFixed(1)+'%</span></div></div>').join('')+
+      '</div></div></div>'+
+
+  blocoDrill('geral', 'Análise de custos',
+    'Começa no corte mais macro e desce até o lançamento. Clique numa barra para abrir.', false)+
+
+  '<div class="card"><h2>Contas a pagar por faixa de vencimento</h2>'+
+    '<div class="leg">Quanto já venceu e quanto está chegando. Considera todas as contas em aberto, '+
+    'inclusive as que vencem depois do período filtrado.</div>'+
+    graficoFaixas(fx)+'</div>'+
 
   '<div class="card"><h2>Insights</h2>'+
     '<div class="leg">Escrito pela própria tela a partir dos números. Cada linha some sozinha quando '+
@@ -985,6 +1127,26 @@ function vistaGeral(){
 }
 
 /* ===================== VISTA: contas a pagar ===================== */
+// Filtros de coluna da tabela. Ficam à parte do filtro global porque servem para
+// achar uma conta específica, não para recortar o período de análise.
+let TAB = { venc:'', sit:'', forn:'', cat:'', amb:'' };
+function filtroTabela(campo, valor){ TAB[campo] = valor; desenhar(); }
+function limparTabela(){ TAB = { venc:'', sit:'', forn:'', cat:'', amb:'' }; desenhar(); }
+
+function situacaoDe(l){
+  return l[VENC] < hoje ? 'vencido' : l[VENC] <= somarDias(hoje,7) ? 'semana' : 'emdia';
+}
+function aplicarFiltrosTabela(lista){
+  return lista.filter(function(l){
+    if(TAB.venc && l[VENC].slice(0,7) !== TAB.venc) return false;
+    if(TAB.sit && situacaoDe(l) !== TAB.sit) return false;
+    if(TAB.forn && String(l[PES]) !== TAB.forn) return false;
+    if(TAB.cat && String(l[CAT]) !== TAB.cat) return false;
+    if(TAB.amb && String(l[AMB]) !== TAB.amb) return false;
+    return true;
+  });
+}
+
 function vistaPagar(){
   const ab = emAberto(), fx = faixas();
   const falta = ab.reduce((s,l)=>s+(l[TOTAL]-l[PAGO]),0);
@@ -992,7 +1154,23 @@ function vistaPagar(){
   const porForn = new Map();
   ab.forEach(l => porForn.set(l[PES], (porForn.get(l[PES])||0) + (l[TOTAL]-l[PAGO])));
   const rankForn = Array.from(porForn.entries()).map(e => [D.forn[e[0]]||'—', e[1]])
-    .sort((a,b)=>b[1]-a[1]).slice(0,10);
+    .sort((a,b)=>b[1]-a[1]).slice(0,12);
+
+  // As opções de cada filtro saem da própria lista em aberto: oferecer categoria
+  // que não tem nenhuma conta em aberto só produz tela vazia.
+  const unicos = (campo, nomes) => {
+    const m = new Map();
+    ab.forEach(l => m.set(l[campo], (m.get(l[campo])||0)+1));
+    return Array.from(m.keys()).map(k => [String(k), nomes[k]||'—'])
+      .sort((a,b) => a[1].localeCompare(b[1],'pt-BR'));
+  };
+  const mesesVenc = Array.from(new Set(ab.map(l => l[VENC].slice(0,7)))).sort();
+  const opc = (lista, sel) => lista.map(x =>
+    '<option value="'+esc(x[0])+'"'+(sel===x[0]?' selected':'')+'>'+esc(x[1])+'</option>').join('');
+
+  const visiveis = aplicarFiltrosTabela(ab);
+  const somaVisivel = visiveis.reduce((s,l)=>s+(l[TOTAL]-l[PAGO]),0);
+  const temFiltro = Object.keys(TAB).some(k => TAB[k]);
 
   return '<div class="kpi-row">'+
     kpiCusto('Falta pagar', curto(falta), null, ab.length+' contas em aberto', '',
@@ -1005,130 +1183,63 @@ function vistaPagar(){
     kpiCusto('Vence em 30 dias', curto(fx.ate30[0]), null, fx.ate30[1]+' conta(s)', '',
       'O que chega antes do próximo fechamento.') +
   '</div>'+
-  '<div class="grade" style="grid-template-columns:1.25fr 1fr">'+
-    '<div class="card"><h2>Como a dívida se distribui no tempo</h2>'+
-      '<div class="leg">Tudo que ainda tem saldo em aberto, na ordem em que chega.</div>'+
-      graficoFaixas(fx)+'</div>'+
-    '<div class="card"><h2>Para quem se deve mais</h2>'+
-      '<div class="leg">Somando só o que está em aberto.</div>'+
-      ranking(rankForn, {corte:26, pe:190, alt:26})+'</div>'+
-  '</div>'+
+  '<div class="card"><h2>Como a dívida se distribui no tempo</h2>'+
+    '<div class="leg">Tudo que ainda tem saldo em aberto, na ordem em que chega.</div>'+
+    graficoFaixas(fx)+'</div>'+
+  '<div class="card"><h2>Para quem se deve mais</h2>'+
+    '<div class="leg">Somando só o que está em aberto. Os 12 maiores credores.</div>'+
+    ranking(rankForn, {corte:44, pe:320, alt:28})+'</div>'+
   '<div class="card"><h2>Contas em aberto</h2>'+
-    '<div class="leg">Por data de vencimento. Conta paga sai da lista sozinha.</div>'+
+    '<div class="leg">Por data de vencimento. Use os filtros abaixo para achar uma conta específica — '+
+    'eles valem só para esta tabela.</div>'+
+    '<div class="filtro-col">'+
+      '<div><label>Vencimento</label><select onchange="filtroTabela(\'venc\',this.value)">'+
+        '<option value="">Todos os meses</option>'+
+        opc(mesesVenc.map(m=>[m,fMes(m)]), TAB.venc)+'</select></div>'+
+      '<div><label>Situação</label><select onchange="filtroTabela(\'sit\',this.value)">'+
+        '<option value="">Todas</option>'+
+        opc([['vencido','Vencido'],['semana','Vence esta semana'],['emdia','Em dia']], TAB.sit)+
+        '</select></div>'+
+      '<div><label>Fornecedor</label><select onchange="filtroTabela(\'forn\',this.value)">'+
+        '<option value="">Todos</option>'+opc(unicos(PES, D.forn), TAB.forn)+'</select></div>'+
+      '<div><label>Categoria</label><select onchange="filtroTabela(\'cat\',this.value)">'+
+        '<option value="">Todas</option>'+opc(unicos(CAT, D.cat), TAB.cat)+'</select></div>'+
+      '<div><label>Centro de custo</label><select onchange="filtroTabela(\'amb\',this.value)">'+
+        '<option value="">Todos</option>'+opc(unicos(AMB, D.amb), TAB.amb)+'</select></div>'+
+    '</div>'+
+    (temFiltro ? '<div class="leg" style="margin-bottom:10px">Mostrando <b>'+visiveis.length+
+      '</b> de '+ab.length+' contas · <b>'+brl(somaVisivel)+'</b> em aberto · '+
+      '<a href="#" onclick="limparTabela();return false">limpar filtros da tabela</a></div>' : '')+
     '<div class="rolar"><table><thead><tr><th>Vencimento</th><th>Situação</th><th>Fornecedor</th>'+
-    '<th>Descrição</th><th>Categoria</th><th>Ambiente</th><th class="r">Total</th>'+
+    '<th>Descrição</th><th>Categoria</th><th>Centro de custo</th><th class="r">Total</th>'+
     '<th class="r">Falta pagar</th></tr></thead><tbody>'+
-    (ab.length ? ab.slice(0,250).map(function(l){
-      const sit = l[VENC] < hoje ? '<span class="tag venc">vencido</span>'
-        : l[VENC] <= somarDias(hoje,7) ? '<span class="tag perto">esta semana</span>'
+    (visiveis.length ? visiveis.slice(0,300).map(function(l){
+      const s = situacaoDe(l);
+      const sit = s==='vencido' ? '<span class="tag venc">vencido</span>'
+        : s==='semana' ? '<span class="tag perto">esta semana</span>'
         : '<span class="tag ok">em dia</span>';
       return '<tr><td class="num">'+fData(l[VENC])+'</td>'+
         '<td>'+sit+(l[MOV]?' <span class="tag mov">movimentação</span>':'')+'</td>'+
         '<td>'+esc(cortar(D.forn[l[PES]]||'—',26))+'</td>'+
         '<td style="color:var(--texto2)">'+esc(D.pagar_desc[l.i]||'')+'</td>'+
-        '<td>'+esc(cortar(D.cat[l[CAT]],20))+'</td><td>'+esc(cortar(D.amb[l[AMB]],16))+'</td>'+
+        '<td>'+esc(cortar(D.cat[l[CAT]],20))+'</td><td>'+esc(cortar(D.amb[l[AMB]],18))+'</td>'+
         '<td class="r num">'+brl(l[TOTAL])+'</td>'+
         '<td class="r num" style="color:var(--laranja);font-weight:700">'+brl(l[TOTAL]-l[PAGO])+'</td></tr>';
-    }).join('') : '<tr><td colspan="8" class="vazio">Nada em aberto.</td></tr>')+
+    }).join('') : '<tr><td colspan="8" class="vazio">Nenhuma conta com esses filtros.</td></tr>')+
     '</tbody></table></div>'+
-    (ab.length > 250 ? '<div class="nota">Mostrando as 250 primeiras de '+ab.length+
-      ' contas. Use o filtro de ambiente para estreitar.</div>' : '')+'</div>';
+    (visiveis.length > 300 ? '<div class="nota">Mostrando as 300 primeiras de '+visiveis.length+
+      ' contas. Use os filtros acima para estreitar.</div>' : '')+'</div>';
 }
 
 /* ===================== VISTA: análise de custos ===================== */
-let drDim = 'grupo';
-let drCaminho = [];        // [{dim, chave, rotulo}]
-
-function drDescer(dim, chave, rotulo){
-  drCaminho.push({dim:dim, chave:chave, rotulo:rotulo});
-  desenhar();
-}
-function drVoltar(n){ drCaminho = drCaminho.slice(0, n); desenhar(); }
-function drTrocar(d){ drDim = d; drCaminho = []; desenhar(); }
-function abrirCategoria(k){
-  drDim = 'cat'; drCaminho = [{dim:'cat', chave:k, rotulo:D.cat[k]}];
-  irPara('analise');
-}
-// A próxima dimensão é a primeira da escada que ainda não foi usada no caminho.
-function proximaDim(extra){
-  const usadas = [drDim].concat(drCaminho.map(c => c.dim));
-  if(extra) usadas.push(extra);
-  for(let i=0;i<ESCADA.length;i++) if(usadas.indexOf(ESCADA[i]) < 0) return ESCADA[i];
-  return null;
-}
-function linhasDoCaminho(lista){
-  let l = lista;
-  drCaminho.forEach(c => { l = l.filter(x => DIM[c.dim].chave(x) === c.chave); });
-  return l;
-}
-
 function vistaAnalise(){
-  const linhas = linhasDoCaminho(filtrar(D.pagar, COMP));
-  const antes = soma(linhasDoCaminho(doAnoAnterior(D.pagar)));
-  const total = soma(linhas);
-  const prox = drCaminho.length ? proximaDim() : drDim;
-
-  let miolo;
-  if(prox){
-    const itens = agrupar(linhas, prox);
-    const maisFundo = !!proximaDim(prox);
-    const acao = it => 'drDescer(\''+prox+'\','+JSON.stringify(it[3])+',&quot;'+
-      esc(String(it[0])).replace(/'/g,'&#39;')+'&quot;)';
-    miolo =
-      '<div class="card"><h2>Custo por '+esc(DIM[prox].rot.toLowerCase())+'</h2>'+
-        '<div class="leg">'+(maisFundo ? 'Clique numa barra para descer mais um nível.'
-          : 'Último corte — abaixo daqui já são os lançamentos, um a um.')+
-        ' São '+itens.length+' no período.</div>'+
-        '<div class="rolar-y">'+ranking(itens, {corte:34, pe:230, alt:24, clique:acao})+'</div></div>'+
-      '<div class="card"><h2>Em números</h2>'+
-        '<div class="leg">A coluna % é a fatia deste nível, não do total geral.</div>'+
-        '<div class="rolar"><table><thead><tr><th>'+esc(DIM[prox].rot)+'</th>'+
-        '<th class="r">Valor</th><th class="r">%</th><th class="r">Lançamentos</th>'+
-        '<th class="r">Ticket médio</th></tr></thead><tbody>'+
-        itens.slice(0,30).map(it =>
-          '<tr class="cl" onclick="'+acao(it)+'">'+
-          '<td style="color:var(--azul);font-weight:600">'+esc(cortar(it[0],40))+'</td>'+
-          '<td class="r num">'+brl(it[1])+'</td>'+
-          '<td class="r num" style="color:var(--texto3)">'+(100*it[1]/(total||1)).toFixed(1)+'%</td>'+
-          '<td class="r num" style="color:var(--texto3)">'+it[2]+'</td>'+
-          '<td class="r num" style="color:var(--texto3)">'+brl(it[1]/it[2])+'</td></tr>').join('')+
-        '</tbody></table></div>'+
-        (itens.length > 30 ? '<div class="nota">Mostrando os 30 maiores de '+itens.length+
-          ' — o gráfico acima tem todos.</div>' : '')+'</div>';
-  } else {
-    const ord = linhas.slice().sort((a,b) => b[TOTAL]-a[TOTAL]).slice(0,150);
-    miolo = '<div class="card"><h2>Lançamentos</h2>'+
-      '<div class="leg">Fim do caminho — cada linha é uma conta lançada no Conta Azul.</div>'+
-      '<div class="rolar"><table><thead><tr><th>Competência</th><th>Vencimento</th>'+
-      '<th>Descrição</th><th>Fornecedor</th><th>Ambiente</th><th class="r">Valor</th></tr></thead><tbody>'+
-      (ord.length ? ord.map(l =>
-        '<tr><td class="num">'+fMes(l[COMP].slice(0,7))+'</td><td class="num">'+fData(l[VENC])+'</td>'+
-        '<td style="color:var(--texto2)">'+esc(D.pagar_desc[l.i]||'')+'</td>'+
-        '<td>'+esc(cortar(D.forn[l[PES]]||'—',26))+'</td>'+
-        '<td>'+esc(cortar(D.amb[l[AMB]],18))+'</td>'+
-        '<td class="r num">'+brl(l[TOTAL])+'</td></tr>').join('')
-       : '<tr><td colspan="6" class="vazio">Nada aqui.</td></tr>')+
-      '</tbody></table></div></div>';
-  }
-
-  return '<div class="dims"><span class="rot">Cortar por</span>'+
-      Object.keys(DIM).map(d => '<button class="atalho" aria-pressed="'+
-        (drDim===d && !drCaminho.length)+'" onclick="drTrocar(\''+d+'\')">'+
-        esc(DIM[d].rot)+'</button>').join('')+
-    '</div>'+
-    '<div class="migalha"><button onclick="drVoltar(0)">Todo o custo</button>'+
-      drCaminho.map((c,i) => '<span>›</span>' + (i === drCaminho.length-1
-        ? '<b>'+esc(c.rotulo)+'</b>'
-        : '<button onclick="drVoltar('+(i+1)+')">'+esc(c.rotulo)+'</button>')).join('')+
-      '<span style="margin-left:auto;font-weight:700;color:var(--navy)">'+curto(total)+
-      (antes ? ' <span class="'+(total>antes?'desce':'sobe')+'" style="font-weight:600">'+
-        (total>antes?'▲ +':'▼ ')+pct(total,antes).toFixed(0)+'% vs '+rotuloAnoAnterior()+'</span>' : '')+
-      '</span></div>'+
-    miolo;
+  return blocoDrill('analise', 'Custo por '+
+    (DRILLS.analise.caminho.length ? 'nível' : DIM[DRILLS.analise.dim].rot.toLowerCase()),
+    'Escolha por onde começar e vá descendo: grupo → categoria → quem recebeu → nota a nota.', true);
 }
 
-/* ===================== VISTA: ambientes ===================== */
-function vistaAmbientes(){
+/* ===================== VISTA: centros de custo ===================== */
+function vistaCentros(){
   const p = filtrar(D.pagar, COMP), r = filtrar(D.receber, COMP);
   const pa = doAnoAnterior(D.pagar), ra = doAnoAnterior(D.receber);
   const mapa = new Map();
@@ -1150,15 +1261,15 @@ function vistaAmbientes(){
       'do que entrou, sobrou isto', '',
       'Resultado dividido pela receita. Não é margem contábil: é o que sobrou do que passou por aqui.') +
   '</div>'+
-  '<div class="card"><h2>Cada ambiente se paga?</h2>'+
+  '<div class="card"><h2>Cada centro de custo se paga?</h2>'+
     '<div class="leg">Receita e custo lado a lado, por competência. O número à direita é o resultado.</div>'+
     rankingDuplo(linhas, {nome:'Receita',cor:C.verde}, {nome:'Custo',cor:C.azul})+
     '<div class="cores"><span><i style="background:'+C.verde+'"></i>receita</span>'+
     '<span><i style="background:'+C.azul+'"></i>custo</span></div></div>'+
-  '<div class="card"><h2>Números por ambiente</h2>'+
-    '<div class="leg">Clique numa linha para filtrar a tela inteira por aquele ambiente. '+
-    'A última coluna é o mesmo intervalo do ano passado — é ali que mora a decisão.</div>'+
-    '<div class="rolar"><table><thead><tr><th>Ambiente</th><th class="r">Receita</th>'+
+  '<div class="card"><h2>Números por centro de custo</h2>'+
+    '<div class="leg">Clique numa linha para filtrar o portal inteiro por aquele centro de custo. '+
+    'A última coluna é o mesmo intervalo do ano passado.</div>'+
+    '<div class="rolar"><table><thead><tr><th>Centro de custo</th><th class="r">Receita</th>'+
     '<th class="r">Custo</th><th class="r">Resultado</th><th class="r">Margem</th>'+
     '<th class="r">Resultado — '+rotuloColuna().toLowerCase()+'</th></tr></thead><tbody>'+
     (linhas.length ? linhas.map(function(x){
@@ -1175,95 +1286,175 @@ function vistaAmbientes(){
     '</tbody></table></div></div>';
 }
 
-/* ===================== VISTA: DRE ===================== */
-// A ordem é a da demonstração de resultado, não a do tamanho: quem lê espera
-// custo do serviço antes de despesa administrativa, mesmo que uma seja maior.
-const ORDEM_DRE = ['Custo dos serviços','Administrativas','Operacionais','Impostos sobre vendas',
-                   'Comerciais','Comissões','Financeiras','Não operacionais','Investimentos',
-                   'Empréstimos e dívidas','Descontos concedidos','Sem grupo definido'];
-let dreAberto = 1;
+/* ===================== DRE base caixa =====================
+   Reproduz o fechamento mensal da CFO de Consultório: base CAIXA (o que
+   efetivamente foi pago/recebido), posicionado pela data de vencimento, que é a
+   única data de movimento que a API devolve.
+
+   O mapa abaixo é a única parte opinativa do portal: traduz os grupos do Conta
+   Azul para as linhas da DRE. "Despesas com pessoal" não existe como grupo lá —
+   ela é recortada por categoria, e a lista de palavras está logo abaixo, à vista,
+   para poder ser corrigida sem caçar código. */
+const PESSOAL = ['salario','salário','13º','13o','ferias','férias','fgts','rescis',
+                 'beneficio','benefício','vr, va e vt','vale transporte','vale refeicao',
+                 'insalubr','adiantamento salarial','recesso','ajuda de custo',
+                 'plano de saude','seguro saude','inss sobre sal','irrf s/ sal',
+                 'medicina e seguranca','medicina e segurança','sistema rh'];
+// Tributo pega o que o Conta Azul não pôs no grupo de impostos mas é imposto do
+// mesmo jeito (DARF, IRRF, PIS/COFINS/CSLL, ISS, INSS patronal). A ordem
+// importa: pessoal é testado ANTES, senão "INSS sobre Salários" cairia aqui.
+const TRIBUTO = ['darf','irrf','pis/','cofins','csll','iss','imposto','tributo',
+                 'retencao','retenção','simples nacional','icms','inss'];
+const bate = (nome, lista) => {
+  const k = chaveTexto(nome);
+  return lista.some(t => k.indexOf(chaveTexto(t)) >= 0);
+};
+const ePessoal = n => bate(n, PESSOAL);
+const eTributo = n => bate(n, TRIBUTO);
+const GRUPO_DRE = {
+  'Receita de serviços':'receita', 'Impostos sobre vendas':'tributos',
+  'Descontos concedidos':'deducoes', 'Custo dos serviços':'custo',
+  'Administrativas':'admin', 'Operacionais':'admin', 'Sem grupo definido':'semGrupo',
+  'Comerciais':'marketing', 'Comissões':'marketing',
+  'Financeiras':'financeiras', 'Rendimentos financeiros':'recFinanceiras',
+  'Empréstimos e dívidas':'emprestimos', 'Investimentos':'investimentos',
+  'Não operacionais':'naoOperacional', 'Outras receitas':'recNaoOperacional',
+};
+// Grupos que entram no fluxo OPERACIONAL — o resto (empréstimo, investimento,
+// financeiro, não operacional) só aparece no fluxo real.
+const OPERACIONAL = ['receita','tributos','deducoes','custo','admin','marketing','pessoal','semGrupo'];
+// Linhas de receita não passam pelo recorte de pessoal/tributo: "Receitas a
+// Identificar" contém a palavra imposto em nenhum caso, mas a regra existe para
+// deixar explícito que o recorte só vale para despesa.
+const RECEITAS = ['receita','recFinanceiras','recNaoOperacional'];
+
+function linhaDre(l){
+  const g = D.grupo[D.cat_grupo[l[CAT]]];
+  const destino = GRUPO_DRE[g] || 'semGrupo';
+  if(RECEITAS.indexOf(destino) >= 0) return destino;
+  const cat = D.cat[l[CAT]];
+  if(ePessoal(cat)) return 'pessoal';
+  if(eTributo(cat)) return 'tributos';
+  return destino;
+}
+// Base caixa: só a parte paga, no mês do vencimento.
+function dreDoMes(mes){
+  const z = { receita:0, tributos:0, deducoes:0, custo:0, admin:0, marketing:0, pessoal:0,
+              semGrupo:0, financeiras:0, recFinanceiras:0, emprestimos:0, investimentos:0,
+              naoOperacional:0, recNaoOperacional:0 };
+  const conta = lista => lista.forEach(function(l){
+    if(l[VENC].slice(0,7) !== mes) return;
+    const k = linhaDre(l);
+    if(z[k] === undefined) return;
+    z[k] += l[PAGO];
+  });
+  conta(filtrar(D.receber, VENC, true));
+  conta(filtrar(D.pagar, VENC, true));
+  z.receitaLiquida = z.receita - z.tributos - z.deducoes;
+  z.lucroBruto = z.receitaLiquida - z.custo;
+  z.operacional = z.lucroBruto - z.admin - z.marketing - z.pessoal - z.semGrupo;
+  z.lucroLiquido = z.operacional + z.recFinanceiras - z.financeiras - z.emprestimos
+                 - z.investimentos + z.recNaoOperacional - z.naoOperacional;
+  return z;
+}
+function fluxoMensal(meses, tipo){
+  const entradas = [], saidas = [];
+  meses.forEach(function(m){
+    const z = dreDoMes(m);
+    if(tipo === 'operacional'){
+      entradas.push(z.receita);
+      saidas.push(z.tributos + z.deducoes + z.custo + z.admin + z.marketing + z.pessoal + z.semGrupo);
+    } else {
+      entradas.push(z.receita + z.recFinanceiras + z.recNaoOperacional);
+      saidas.push(z.tributos + z.deducoes + z.custo + z.admin + z.marketing + z.pessoal +
+                  z.semGrupo + z.financeiras + z.emprestimos + z.investimentos + z.naoOperacional);
+    }
+  });
+  return { entradas:entradas, saidas:saidas };
+}
+
+const LINHAS_DRE = [
+  ['Receita bruta','receita',+1,'forte'],
+  ['Despesas tributárias','tributos',-1,''],
+  ['Deduções de receita','deducoes',-1,''],
+  ['Receita líquida','receitaLiquida',+1,'forte'],
+  ['Custo dos serviços','custo',-1,''],
+  ['% Custo sobre receita líquida','%custo',0,'pct'],
+  ['Lucro bruto','lucroBruto',+1,'forte'],
+  ['% Lucro bruto','%lucroBruto',0,'pct'],
+  ['Despesas administrativas','admin',-1,''],
+  ['Despesas com marketing','marketing',-1,''],
+  ['Despesas com pessoal','pessoal',-1,''],
+  ['Sem classificação no Conta Azul','semGrupo',-1,''],
+  ['Resultado operacional','operacional',+1,'forte'],
+  ['EBITDA (% da receita líquida)','%operacional',0,'pct'],
+  ['Receitas financeiras','recFinanceiras',+1,''],
+  ['Despesas financeiras','financeiras',-1,''],
+  ['Empréstimos e financiamentos','emprestimos',-1,''],
+  ['Investimentos','investimentos',-1,''],
+  ['Receitas não operacionais','recNaoOperacional',+1,''],
+  ['Outras despesas não operacionais','naoOperacional',-1,''],
+  ['Lucro líquido','lucroLiquido',+1,'total'],
+  ['% Lucro líquido','%lucroLiquido',0,'pct'],
+];
 
 function vistaDre(){
-  const p = filtrar(D.pagar, COMP), r = filtrar(D.receber, COMP);
-  const receita = soma(r), custo = soma(p);
-  const porGrupo = {};
-  agrupar(p,'grupo').forEach(g => porGrupo[g[0]] = g[1]);
-
-  const usados = ORDEM_DRE.filter(g => porGrupo[g] > 0)
-    .concat(Object.keys(porGrupo).filter(g => ORDEM_DRE.indexOf(g) < 0));
-  const grandes = usados.slice(0,5), resto = usados.slice(5);
-  const restoTotal = resto.reduce((s,g)=>s+(porGrupo[g]||0),0);
-
-  const passos = [{nome:'Receita', v:receita, delta:receita, total:true, cor:C.verde,
-                   dica:'entrou', tipo:'rec'}];
-  grandes.forEach(g => passos.push({nome:g, v:porGrupo[g], delta:-porGrupo[g], cor:C.azul,
-    dica:'saiu', tipo:'grupo', grupo:g}));
-  if(restoTotal > 0) passos.push({nome:'Outras saídas', v:restoTotal, delta:-restoTotal,
-    cor:C.azulCl, dica:resto.length+' grupos', tipo:'resto'});
-  passos.push({nome:'Resultado', v:receita-custo, delta:0, total:true, cor:C.ouro,
-    dica:'sobrou', tipo:'res'});
-
-  if(dreAberto >= passos.length) dreAberto = 0;
-  const alvo = passos[dreAberto];
-  let dentro, titulo, legenda, corFn = null;
-  if(alvo.tipo === 'rec'){
-    dentro = agrupar(r,'cat');
-    titulo = 'Dentro de Receita'; legenda = 'Tudo que entrou no período, por categoria.';
-    corFn = function(){ return C.verde; };
-  } else if(alvo.tipo === 'res'){
-    dentro = [['Receita',receita],['Custo',custo],['Resultado',receita-custo]];
-    titulo = 'O que sobrou';
-    legenda = curto(receita)+' entraram, '+curto(custo)+' saíram. Margem de '+
-      (receita ? (100*(receita-custo)/receita).toFixed(1) : '0')+'%.';
-    corFn = function(it){ return it[0]==='Receita'?C.verde:it[0]==='Custo'?C.azul:C.ouro; };
-  } else if(alvo.tipo === 'resto'){
-    dentro = agrupar(p.filter(l => resto.indexOf(D.grupo[D.cat_grupo[l[CAT]]]) >= 0),'cat');
-    titulo = 'Dentro de Outras saídas'; legenda = 'Reúne: '+resto.join(', ')+'.';
-  } else {
-    dentro = agrupar(p.filter(l => D.grupo[D.cat_grupo[l[CAT]]] === alvo.grupo),'cat');
-    titulo = 'Dentro de '+alvo.nome; legenda = 'As categorias que formam este degrau.';
-  }
-
   const ms = mesesNoFiltro();
-  const pa = doAnoAnterior(D.pagar);
-  const sc = ms.map(m => soma(p.filter(l => l[COMP].slice(0,7)===m)));
-  const scA = ms.map(m => soma(pa.filter(l => l[COMP].slice(0,7) === anoAntes(m))));
-  const tm = sc.reduce((s,v)=>s+v,0), tmA = scA.reduce((s,v)=>s+v,0);
+  const dados = ms.map(dreDoMes);
+  const tot = {};
+  Object.keys(dados[0] || {}).forEach(k => { tot[k] = dados.reduce((s,d)=>s+d[k],0); });
 
-  return '<div class="card"><h2>De onde saiu o resultado — '+esc(rotuloPeriodo())+'</h2>'+
-    '<div class="leg">Entrou tanto, saiu por aqui, sobrou isto. Clique num degrau para ver as '+
-    'categorias que o formam.</div>'+
-    cascata(passos, i => 'dreVer('+i+')')+
-    '<div class="cores"><span><i style="background:'+C.verde+'"></i>o que entrou</span>'+
-    '<span><i style="background:'+C.azul+'"></i>o que saiu</span>'+
-    '<span><i style="background:'+C.ouro+'"></i>o que sobrou</span></div></div>'+
-  '<div class="grade" style="grid-template-columns:1fr 1.2fr">'+
-    '<div class="card"><h2>'+esc(titulo)+'</h2><div class="leg">'+esc(legenda)+'</div>'+
-      '<div class="rolar-y" style="max-height:420px">'+
-      ranking(dentro, {corte:30, pe:210, alt:24, cor:corFn})+'</div></div>'+
-    '<div class="card"><h2>Mês a mês, contra o ano passado</h2>'+
-      '<div class="leg">A coluna <b>peso</b> é quanto o mês representa do custo do período — a leitura '+
-      'vertical que a contabilidade pede.</div>'+
-      '<div class="rolar"><table><thead><tr><th>Mês</th><th class="r">Custo</th>'+
-      '<th class="r">'+rotuloColuna()+'</th><th class="r">Variação</th>'+
-      '<th class="r">Peso</th></tr></thead><tbody>'+
-      ms.map(function(m,i){
-        const d = pct(sc[i], scA[i]);
-        return '<tr><td>'+fMes(m)+'</td><td class="r num">'+brl(sc[i])+'</td>'+
-          '<td class="r num" style="color:var(--texto3)">'+(scA[i]?brl(scA[i]):'—')+'</td>'+
-          '<td class="r num" style="color:'+(d>0?'var(--vermelho)':'var(--verde)')+'">'+
-            (scA[i]?(d>0?'+':'')+d.toFixed(0)+'%':'—')+'</td>'+
-          '<td class="r num" style="color:var(--texto3)">'+(tm?(100*sc[i]/tm).toFixed(0):'0')+'%</td></tr>';
-      }).join('')+
-      '<tr style="border-top:2px solid var(--borda2)"><td><b>Total</b></td>'+
-      '<td class="r num"><b>'+brl(tm)+'</b></td>'+
-      '<td class="r num" style="color:var(--texto3)">'+(tmA?brl(tmA):'—')+'</td>'+
-      '<td class="r num" style="color:'+(pct(tm,tmA)>0?'var(--vermelho)':'var(--verde)')+'">'+
-        (tmA?(pct(tm,tmA)>0?'+':'')+pct(tm,tmA).toFixed(0)+'%':'—')+'</td>'+
-      '<td class="r num" style="color:var(--texto3)">100%</td></tr>'+
-      '</tbody></table></div></div></div>';
+  const real = fluxoMensal(ms,'real'), oper = fluxoMensal(ms,'operacional');
+  const negReal = real.entradas.filter((e,i)=>e-real.saidas[i] < 0).length;
+  const negOper = oper.entradas.filter((e,i)=>e-oper.saidas[i] < 0).length;
+
+  const celula = (d, chave, sinal) => {
+    if(chave.charAt(0) === '%'){
+      const base = d.receitaLiquida;
+      const v = base ? 100*d[chave.slice(1)]/base : 0;
+      return '<td class="r num">'+(base ? (v<0?'':'')+v.toFixed(0)+'%' : '—')+'</td>';
+    }
+    const v = d[chave] * (sinal < 0 ? -1 : 1);
+    return '<td class="r num">'+(d[chave] ? brl(v) : '—')+'</td>';
+  };
+
+  return '<div class="card"><h2>Fluxo de caixa — real</h2>'+
+    '<div class="leg">Todas as movimentações do período: entradas menos saídas, mês a mês. '+
+    (negReal ? '<b>'+negReal+' de '+ms.length+' meses fecharam negativos.</b>' : 'Todos os meses positivos.')+
+    '</div>'+ fluxoCaixa(ms.map(fMes), real.entradas, real.saidas)+
+    '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
+    '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div></div>'+
+
+  '<div class="card"><h2>Fluxo de caixa — operacional</h2>'+
+    '<div class="leg">Só a operação: tira empréstimo, investimento, resultado financeiro e receita não '+
+    'operacional. É onde se vê se o serviço se paga sozinho. '+
+    (negOper ? '<b>A operação foi negativa em '+negOper+' de '+ms.length+' meses.</b>' : '')+
+    '</div>'+ fluxoCaixa(ms.map(fMes), oper.entradas, oper.saidas)+
+    '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
+    '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div></div>'+
+
+  '<div class="card"><h2>DRE base caixa — '+esc(rotuloPeriodo())+
+    (F.amb==='todos' ? '' : ' · '+esc(D.amb[+F.amb]))+'</h2>'+
+    '<div class="leg">Mesma estrutura do fechamento mensal da CFO de Consultório. <b>Base caixa</b>: '+
+    'conta o que foi efetivamente pago e recebido, não o que foi lançado. Troque o centro de custo no '+
+    'filtro acima para ver a DRE de um centro de custo só.</div>'+
+    '<div class="rolar"><table class="dre"><thead><tr><th>DRE</th><th class="r">Total</th>'+
+    ms.map(m => '<th class="r mes">'+fMes(m)+'</th>').join('')+'</tr></thead><tbody>'+
+    LINHAS_DRE.map(function(L){
+      const classe = L[3] === 'pct' ? 'pct' : L[3] === 'total' ? 'total' : L[3] === 'forte' ? 'forte' : '';
+      return '<tr class="'+classe+'"><td class="rotulo">'+esc(L[0])+'</td>'+
+        celula(tot, L[1], L[2]) + ms.map((m,i) => celula(dados[i], L[1], L[2])).join('')+'</tr>';
+    }).join('')+
+    '</tbody></table></div>'+
+    '<div class="nota"><b>Comparando com o PDF da CFO de Consultório:</b> receita bruta, despesas '+
+    'tributárias e receita líquida batem (diferença de 0 a 2%), o que confirma que o critério de caixa '+
+    'e a data usada são os mesmos. <b>Da linha de custo para baixo a classificação diverge</b>, porque '+
+    'a CFO distribui manualmente categorias que o Conta Azul deixou sem grupo — aqui elas aparecem numa '+
+    'linha própria, <b>Sem classificação</b>, em vez de serem espalhadas. Duas linhas do PDF não existem '+
+    'aqui, "Aportes" e "Despesas com sócios", porque não têm grupo no Conta Azul para separá-las. '+
+    'E <b>Despesas com pessoal</b> é recortada por nome de categoria; a lista está em '+
+    '<b>O que entra na conta</b>.</div></div>';
 }
-function dreVer(i){ dreAberto = i; desenhar(); }
 
 /* ===================== VISTA: compras ===================== */
 let COMPRAS = null;
@@ -1328,11 +1519,10 @@ function vistaCompras(){
         : '<span class="tag venc">não encontrado</span>')+'</td></tr>').join('')
      : '<tr><td colspan="7" class="vazio">Nenhum pedido comprado no portal de Compras ainda.</td></tr>')+
     '</tbody></table></div>'+
-    '<div class="nota">Esta seção <b>ignora os filtros de período e ambiente</b> de propósito: um pedido '+
-    'comprado em maio pode vencer em agosto, e filtrar por mês esconderia justamente o par que se procura. '+
-    'O cruzamento é por valor e prazo — se dois pedidos tiverem o mesmo valor no mesmo período, o par pode '+
-    'ser trocado. Quando o pedido tem a referência anotada na etapa "Inclusão no Conta Azul", ela vale mais '+
-    'que o cruzamento.</div></div>';
+    '<div class="nota">Esta seção <b>ignora os filtros de período e centro de custo</b> de propósito: um '+
+    'pedido comprado em maio pode vencer em agosto, e filtrar por mês esconderia justamente o par que se '+
+    'procura. O cruzamento é por valor e prazo — se dois pedidos tiverem o mesmo valor no mesmo período, '+
+    'o par pode ser trocado.</div></div>';
 }
 async function carregarCompras(){
   const { data, error } = await sb.from('compras_solicitacoes')
@@ -1347,22 +1537,25 @@ async function carregarCompras(){
 function vistaAjustes(){
   const mov = D.pagar.filter(l => l[MOV]), movR = D.receber.filter(l => l[MOV]);
   const cats = agrupar(mov.concat(movR), 'cat');
+  const pessoais = D.cat.filter(ePessoal).sort();
   const explicacoes = [
     ['Origem dos dados', 'Conta Azul, pela API. Atualizado em '+esc(D.gerado_em)+'.'],
     ['Custo de quando?', 'Por <b>competência</b> — o mês em que o gasto aconteceu. Uma compra em 12x '+
       'custou o mês da compra, não os doze meses das parcelas.'],
     ['E as contas a pagar?', 'Por <b>vencimento</b>, e sem recorte de período: uma parcela antiga que '+
       'vence semana que vem continua saindo do caixa.'],
-    ['Fluxo de caixa', 'Usa a parte já <b>paga</b> de cada conta, posicionada pela data de vencimento — '+
-      'o Conta Azul não devolve a data em que o dinheiro andou.'],
+    ['DRE e fluxo de caixa', 'São <b>base caixa</b>: contam só a parte já paga de cada conta, no mês do '+
+      'vencimento — o Conta Azul não devolve a data em que o dinheiro andou. É o mesmo critério do '+
+      'fechamento mensal da CFO de Consultório, para os dois poderem ser postos lado a lado.'],
     ['Transferências e empréstimos', 'Ficam <b>fora</b> por padrão. É dinheiro andando entre contas da '+
-      'própria casa — entra como despesa numa ponta e receita na outra. O botão nos filtros mostra tudo.'],
+      'própria casa — entra como despesa numa ponta e receita na outra.'],
     ['Comparação com o ano passado', 'Sempre o <b>mesmo intervalo</b> do ano anterior, nunca o ano '+
-      'fechado: comparar oito meses com doze é o erro clássico deste tipo de tela.'],
-    ['Período de cada tela', 'A Visão Geral abre nos <b>últimos 12 meses</b> (é onde tendência aparece); '+
-      'Contas a pagar, Análise de Custos e Ambientes abrem no <b>mês vigente</b>.'],
-    ['Ambientes', 'Vêm do centro de custo do Conta Azul. "ENDOVASCULAR SP" está cadastrado duas vezes '+
-      'lá; aqui os dois viram um só.'],
+      'fechado. Se não houver base para o intervalo inteiro, a tela diz que não há comparação em vez '+
+      'de mostrar um número errado.'],
+    ['Período de cada tela', 'Visão Geral: <b>últimos 12 meses</b>. Contas a pagar, Análise de Custos e '+
+      'Centros de Custo: <b>mês vigente</b>. DRE: <b>ano corrente</b>.'],
+    ['Centros de custo', 'Vêm do Conta Azul. "ENDOVASCULAR SP" está cadastrado duas vezes lá; aqui os '+
+      'dois viram um só.'],
     ['Grupos (DRE)', 'Vêm da classificação do próprio Conta Azul. O que não tem grupo aparece como '+
       '<b>Sem grupo definido</b> em vez de sumir dentro de um "outros".'],
   ];
@@ -1372,6 +1565,12 @@ function vistaAjustes(){
       '<tr><td style="width:230px;color:var(--texto3);font-weight:600">'+x[0]+'</td>'+
       '<td>'+x[1]+'</td></tr>').join('')+
     '</tbody></table></div>'+
+  '<div class="card"><h2>O que a DRE conta como "Despesas com pessoal"</h2>'+
+    '<div class="leg">O Conta Azul não tem esse grupo — ele é recortado por nome de categoria. '+
+    'Se alguma categoria estiver no lugar errado, é aqui que se vê.</div>'+
+    (pessoais.length ? '<div class="legenda-lado">'+pessoais.map(c =>
+      '<div><i style="background:'+C.azul+'"></i><div><b>'+esc(c)+'</b></div></div>').join('')+'</div>'
+     : '<div class="vazio">Nenhuma categoria caiu nesta regra.</div>')+'</div>'+
   '<div class="card"><h2>O que está marcado como movimentação</h2>'+
     '<div class="leg">Estas categorias não contam como custo nem como receita. Somam '+
     curto(soma(mov))+' de saída e '+curto(soma(movR))+' de entrada em toda a base.</div>'+
@@ -1385,7 +1584,7 @@ function vistaAjustes(){
 
 /* ===================== montagem ===================== */
 const VISTAS = { geral:vistaGeral, pagar:vistaPagar, analise:vistaAnalise,
-                 ambientes:vistaAmbientes, dre:vistaDre, compras:vistaCompras, ajustes:vistaAjustes };
+                 centros:vistaCentros, dre:vistaDre, compras:vistaCompras, ajustes:vistaAjustes };
 function desenhar(){
   const t = TITULO[VISTA] || TITULO.geral;
   document.getElementById('cabecalho').innerHTML =
