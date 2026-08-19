@@ -572,6 +572,84 @@ function ranking(itens, opts){
     }).join('') + '</svg>';
 }
 
+// Colunas em pé com o valor e a variação contra o ano anterior ESCRITOS acima de
+// cada uma. É o desenho que se lê sem passar o mouse — e, portanto, o único que
+// funciona impresso, na reunião. Cabem oito; o resto vira uma coluna "Demais",
+// e a tabela logo abaixo do gráfico traz a lista inteira.
+function colunasVariacao(itens, antesPorNome, opts){
+  opts = opts || {};
+  const TETO = 8;
+  const grandes = itens.slice(0, TETO), cauda = itens.slice(TETO);
+  const mostra = cauda.length
+    ? grandes.concat([['Demais ('+cauda.length+')', cauda.reduce((s,x)=>s+x[1],0),
+        cauda.reduce((s,x)=>s+x[2],0), null]])
+    : grandes;
+  if(!mostra.length) return '<div class="vazio">Nada no período.</div>';
+
+  const w=1180, h=430, pe=66, pd=14, pt=56, pb=78;
+  const iw=w-pe-pd, ih=h-pt-pb, n=mostra.length;
+  const mx = Math.max.apply(null, mostra.map(i=>i[1]).concat([1]));
+  const passo = iw/n, larg = Math.min(100, passo*0.52);
+  const y = v => pt + ih - (Math.max(v,0)/mx)*ih;
+  const total = itens.reduce((s,x)=>s+x[1],0) || 1;
+
+  let g = '';
+  for(let i=0;i<=4;i++){
+    const v = mx*(1-i/4), yy = y(v);
+    g += '<line x1="'+pe+'" y1="'+yy.toFixed(1)+'" x2="'+(w-pd)+'" y2="'+yy.toFixed(1)+
+      '" stroke="'+(i===4?C.texto2:C.borda)+'" stroke-width="'+(i===4?1.6:1)+'"/>'+
+      '<text x="'+(pe-9)+'" y="'+(yy+3.5).toFixed(1)+'" fill="'+(i===4?C.texto2:C.texto3)+
+      '" font-size="10"'+(i===4?' font-weight="700"':'')+' text-anchor="end">'+
+      (i===4 ? '0' : curto(v).replace('R$ ',''))+'</text>';
+  }
+
+  const b = mostra.map(function(it,i){
+    const cx = pe + passo*i + passo/2, yy = y(it[1]);
+    const antes = (antesPorNome||{})[it[0]] || 0;
+    const v = antes ? pct(it[1], antes) : null;
+    const ehCauda = it[3] === null && cauda.length && i === mostra.length-1;
+    const acao = (opts.clique && !ehCauda) ? opts.clique(it) : null;
+    // Nome em até duas linhas: cortar num traço só some com metade do rótulo,
+    // e categoria de despesa quase sempre tem nome comprido.
+    const nome = cortar(it[0], 38);
+    const corte = nome.length > 18 ? nome.lastIndexOf(' ', 18) : -1;
+    const l1 = corte > 0 ? nome.slice(0, corte) : nome;
+    const l2 = corte > 0 ? cortar(nome.slice(corte+1), 20) : '';
+    const d = dica(it[0], ['<b style="display:inline">'+brl(it[1])+'</b> · '+
+        (100*it[1]/total).toFixed(1)+'% deste nível',
+        antes ? rotuloColuna()+': '+brl(antes)+' ('+(v>0?'+':'')+v.toFixed(0)+'%)'
+              : 'Sem base de comparação',
+        it[2]+' lançamento(s) · ticket médio '+brl(it[1]/(it[2]||1))]
+      .concat(acao ? ['<i>clique para abrir</i>'] : [])
+      .concat(ehCauda ? ['<i>a lista completa está na tabela abaixo</i>'] : []));
+    return '<g data-d="'+d+'"'+(acao ? ' onclick="'+acao+'" role="button" tabindex="0" '+
+        'onkeydown="if(event.key===\'Enter\'){'+acao+'}" style="cursor:pointer"' : '')+'>'+
+      '<rect x="'+(pe+passo*i).toFixed(1)+'" y="'+pt+'" width="'+passo.toFixed(1)+'" height="'+ih+
+        '" fill="transparent"/>'+
+      '<rect x="'+(cx-larg/2).toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+larg.toFixed(1)+
+        '" height="'+Math.max(pt+ih-yy,1).toFixed(1)+'" fill="'+
+        (ehCauda ? C.borda2 : RAMPA[Math.min(i,9)])+'" rx="3"/>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(yy-27).toFixed(1)+'" text-anchor="middle" fill="'+C.texto+
+        '" font-size="14" font-weight="700">'+curto(it[1]).replace('R$ ','')+'</text>'+
+      (v!==null ? '<text x="'+cx.toFixed(1)+'" y="'+(yy-10).toFixed(1)+'" text-anchor="middle" fill="'+
+        (v>0?C.vermelho:C.verde)+'" font-size="11.5" font-weight="700">'+
+        (v>0?'▲ +':'▼ ')+v.toFixed(0)+'%</text>' : '')+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-48)+'" text-anchor="middle" fill="'+C.texto2+
+        '" font-size="12">'+esc(l1)+'</text>'+
+      (l2 ? '<text x="'+cx.toFixed(1)+'" y="'+(h-33)+'" text-anchor="middle" fill="'+C.texto2+
+        '" font-size="12">'+esc(l2)+'</text>' : '')+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-15)+'" text-anchor="middle" fill="'+C.texto3+
+        '" font-size="10.5">'+(100*it[1]/total).toFixed(0)+'% · '+it[2]+' lanç.</text></g>';
+  }).join('');
+
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" '+
+    'aria-label="Custo por nível, com a variação contra o ano anterior">'+g+b+'</svg>'+
+    '<div class="cores"><span><i style="background:'+C.azul+'"></i>custo do período</span>'+
+    (cauda.length ? '<span><i style="background:'+C.borda2+'"></i>demais, somados</span>' : '')+
+    '<span style="color:'+C.vermelho+'">▲ subiu vs '+esc(rotuloAnoAnterior())+'</span>'+
+    '<span style="color:'+C.verde+'">▼ caiu</span></div>';
+}
+
 // Duas séries por linha — a comparação receita × custo por centro de custo em
 // colunas verticais fica ilegível: são muitos nomes longos disputando o eixo.
 function rankingDuplo(itens, s1, s2){
@@ -767,6 +845,13 @@ function linhasDoCaminho(dr, lista){
   dr.caminho.forEach(c => { l = l.filter(x => DIM[c.dim].chave(x) === c.chave); });
   return l;
 }
+// Um valor virando argumento dentro de onclick="...". Número vai cru; texto
+// precisa das aspas em ENTIDADE, senão a aspa fecha o atributo antes da hora e o
+// clique morre — era o que acontecia ao cortar por Mês, cuja chave é "2026-08"
+// e não um índice.
+const argHtml = v => typeof v === 'number' ? String(v)
+  : '&quot;' + esc(String(v)).replace(/'/g, '&#39;') + '&quot;';
+
 function blocoDrill(id, titulo, legenda, comSeletor){
   const dr = DRILLS[id];
   const linhas = linhasDoCaminho(dr, filtrar(D.pagar, COMP));
@@ -793,12 +878,37 @@ function blocoDrill(id, titulo, legenda, comSeletor){
   if(prox){
     const itens = agrupar(linhas, prox);
     const maisFundo = !!proximaDim(dr, prox);
-    const acao = it => 'drDescer(\''+id+'\',\''+prox+'\','+JSON.stringify(it[3])+',&quot;'+
-      esc(String(it[0])).replace(/'/g,'&#39;')+'&quot;)';
+    const acao = it => 'drDescer(\''+id+'\',\''+prox+'\','+argHtml(it[3])+','+argHtml(it[0])+')';
+    // O mesmo intervalo do ano anterior, cortado pelo mesmo caminho — é a
+    // variação que vai escrita em cima de cada coluna.
+    const antesPorNome = {};
+    agrupar(linhasDoCaminho(dr, doAnoAnterior(D.pagar)), prox)
+      .forEach(x => { antesPorNome[x[0]] = x[1]; });
     sub = 'Mostrando por <b>'+esc(DIM[prox].rot.toLowerCase())+'</b> · '+itens.length+' no período. '+
-      (maisFundo ? 'Clique numa barra para descer um nível.'
+      (maisFundo ? 'Clique numa coluna para descer um nível.'
                  : 'Último corte — clicar abre os lançamentos, um a um.');
-    miolo = ranking(itens, {corte:46, pe:320, alt:29, clique:acao});
+    // O gráfico mostra os maiores e junta a cauda; a tabela logo abaixo tem
+    // TODOS os itens, também clicáveis — assim a cauda nunca fica inalcançável.
+    miolo = colunasVariacao(itens, antesPorNome, {clique:acao}) +
+      '<div class="leg" style="margin:20px 0 8px">Todos os '+itens.length+' itens deste nível, '+
+      'do maior para o menor. Clique numa linha para abrir.</div>'+
+      '<div class="'+(itens.length > 14 ? 'tabela-rolante' : 'rolar')+'">'+
+      '<table class="presa"><thead><tr><th>'+esc(DIM[prox].rot)+'</th><th class="r">Valor</th>'+
+      '<th class="r">% do nível</th><th class="r">'+esc(rotuloColuna())+'</th>'+
+      '<th class="r">Variação</th><th class="r">Lançamentos</th>'+
+      '<th class="r">Ticket médio</th></tr></thead><tbody>'+
+      itens.map(function(it){
+        const a = antesPorNome[it[0]] || 0, v = a ? pct(it[1], a) : null;
+        return '<tr class="cl" onclick="'+acao(it)+'">'+
+          '<td style="color:var(--azul);font-weight:600">'+esc(it[0])+'</td>'+
+          '<td class="r num">'+brl(it[1])+'</td>'+
+          '<td class="r num" style="color:var(--texto3)">'+(100*it[1]/(total||1)).toFixed(1)+'%</td>'+
+          '<td class="r num" style="color:var(--texto3)">'+(a ? brl(a) : '—')+'</td>'+
+          '<td class="r num" style="color:'+(v===null?'var(--texto3)':v>0?'var(--vermelho)':'var(--verde)')+
+            ';font-weight:600">'+(v===null ? '—' : (v>0?'+':'')+v.toFixed(0)+'%')+'</td>'+
+          '<td class="r num" style="color:var(--texto3)">'+it[2]+'</td>'+
+          '<td class="r num" style="color:var(--texto3)">'+brl(it[1]/it[2])+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
   } else {
     const ord = linhas.slice().sort((a,b) => b[TOTAL]-a[TOTAL]).slice(0,150);
     sub = 'Fim do caminho: '+linhas.length+' lançamento(s). Cada linha é uma conta no Conta Azul.';
