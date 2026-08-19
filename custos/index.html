@@ -180,8 +180,16 @@
     box-shadow:inset 0 -1.5px 0 var(--borda2)}
   .tabela-rolante table.presa td:first-child,
   .tabela-rolante table.presa th:first-child{padding-left:12px}
-  .grade2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-  .grade2 > .card{margin-bottom:18px}
+  /* Os dois cartões do par ficam com a MESMA altura, e o gráfico se centra no
+     espaço que sobrar — alturas desencontradas davam a impressão de que um
+     deles tinha faltado carregar. */
+  .grade2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}
+  .grade2 > .card{margin-bottom:18px;display:flex;flex-direction:column}
+  .grade2 > .card > .grafico,
+  .grade2 > .card > .rosca-linha{flex:1;display:flex;align-items:center;justify-content:center}
+  .grade2 > .card > .rosca-linha{display:grid}
+  .grafico{width:100%;overflow-x:auto}
+  .grafico svg{margin:0 auto}
   .legenda-lado.uma-coluna{grid-template-columns:1fr}
   .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.3px;padding:3px 9px;
     border-radius:20px;white-space:nowrap;text-transform:uppercase}
@@ -240,6 +248,12 @@
   .dre tr.total td{background:var(--navy);color:#fff;font-weight:700}
   .dre tr.pct td{font-size:11px;color:var(--texto3)}
   .dre td{white-space:nowrap}
+  .dre tr.abrivel{cursor:pointer}
+  .dre tr.abrivel:hover td{background:var(--azul-fundo)}
+  .dre .seta{display:inline-block;width:14px;color:var(--azul);font-size:10px}
+  .dre tr.filha td{background:#FAFCFE;font-size:11.5px;color:var(--texto2)}
+  .dre tr.filha td.rotulo{padding-left:30px;font-weight:500}
+  .dre tr.filha:hover td{background:#F4F8FC}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   @media(max-width:980px){
@@ -431,7 +445,22 @@ function doAnoAnterior(lista){
 const soma = l => l.reduce((s,x) => s + x[TOTAL], 0);
 const somaPago = l => l.reduce((s,x) => s + x[PAGO], 0);
 
-/* ===================== desenho ===================== */
+/* ===================== desenho =====================
+   Todo gráfico é desenhado DEPOIS de saber a largura real do cartão onde vai
+   morar. A função é guardada, o contêiner é medido, e só então o SVG é gerado
+   no tamanho certo: uma unidade do desenho = um pixel na tela, sempre. */
+let _graficos = [];
+function grafico(desenhar){
+  const id = _graficos.push(desenhar) - 1;
+  return '<div class="grafico" data-g="' + id + '"></div>';
+}
+function renderizarGraficos(){
+  document.querySelectorAll('.grafico[data-g]').forEach(function(el){
+    const largura = Math.max(360, Math.round(el.clientWidth));
+    el.innerHTML = _graficos[+el.getAttribute('data-g')](largura);
+  });
+}
+
 function sparkline(vals, cor){
   const w=200, h=34;
   if(!vals.length) return '';
@@ -475,8 +504,8 @@ function _grade(e, pe, w, pd, passos){
 }
 
 // Colunas de até duas séries com uma linha por cima.
-function colunas(rot, s1, s2, linha, alt){
-  const w=1180, h=alt||300, pe=62, pd=14, pt=16, pb=26;
+function colunas(w, rot, s1, s2, linha, alt){
+  const h=alt||300, pe=62, pd=14, pt=16, pb=26;
   const iw=w-pe-pd, ih=h-pt-pb, n=rot.length || 1;
   const todos = s1.dados.concat(s2?s2.dados:[], linha?linha.dados:[]);
   const e = _escalaY(Math.min.apply(null, todos.concat([0])),
@@ -508,13 +537,13 @@ function colunas(rot, s1, s2, linha, alt){
       pts.map((p,i)=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.4" fill="'+
         (linha.dados[i]<0?C.vermelho:linha.cor)+'" stroke="#fff" stroke-width="1.4"/>').join('');
   }
-  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="Valores por período">'+
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" aria-label="Valores por período">'+
     _grade(e,pe,w,pd,4)+b+l+'</svg>';
 }
 
 // Colunas de uma série só, com o valor escrito em cima de cada barra.
-function colunasRotuladas(itens, cores, alt){
-  const w=1180, h=alt||270, pe=62, pd=14, pt=30, pb=44;
+function colunasRotuladas(w, itens, cores, alt){
+  const h=alt||270, pe=62, pd=14, pt=30, pb=44;
   const iw=w-pe-pd, ih=h-pt-pb, n=itens.length||1;
   const vals = itens.map(i=>i[1]);
   const e = _escalaY(Math.min.apply(null, vals.concat([0])),
@@ -536,20 +565,23 @@ function colunasRotuladas(itens, cores, alt){
       (it[2]!=null ? '<text x="'+cx.toFixed(1)+'" y="'+(h-9)+'" text-anchor="middle" fill="'+
         C.texto3+'" font-size="10">'+it[2]+' contas</text>' : '')+'</g>';
   }).join('');
-  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="Valores por faixa">'+
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" aria-label="Valores por faixa">'+
     _grade(e,pe,w,pd,4)+b+'</svg>';
 }
 
 // Ranking horizontal. Largura cheia do cartão, valor dentro da barra quando cabe.
-function ranking(itens, opts){
+function ranking(w, itens, opts){
   opts = opts || {};
-  const alt = opts.alt || 28, w = 1180, pe = opts.pe || 300, pd = 92;
+  const alt = opts.alt || 28, pd = 84;
+  // A coluna dos nomes acompanha a largura: fixa em 300px, num cartão estreito
+  // ela comeria metade do espaço e não sobraria barra para enxergar.
+  const pe = Math.min(opts.pe || 300, Math.round(w * 0.42));
   if(!itens.length) return '<div class="vazio">Nada no período.</div>';
   const h = itens.length*alt + 4;
   const mx = Math.max.apply(null, itens.map(i => i[1]).concat([1]));
   const total = itens.reduce((s,i)=>s+i[1],0) || 1;
-  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" style="height:'+h+'px;max-height:none" '+
-    'preserveAspectRatio="none" role="img" aria-label="Ranking de valores">' +
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" '+
+    'role="img" aria-label="Ranking de valores">' +
     itens.map(function(it,i){
       const y = i*alt + 2, bw = Math.max(2, (it[1]/mx)*(w-pe-pd));
       const cor = opts.cor ? opts.cor(it,i) : RAMPA[Math.min(i, RAMPA.length-1)];
@@ -576,7 +608,7 @@ function ranking(itens, opts){
 // cada uma. É o desenho que se lê sem passar o mouse — e, portanto, o único que
 // funciona impresso, na reunião. Cabem oito; o resto vira uma coluna "Demais",
 // e a tabela logo abaixo do gráfico traz a lista inteira.
-function colunasVariacao(itens, antesPorNome, opts){
+function colunasVariacao(w, itens, antesPorNome, opts){
   opts = opts || {};
   const TETO = 8;
   const grandes = itens.slice(0, TETO), cauda = itens.slice(TETO);
@@ -586,7 +618,7 @@ function colunasVariacao(itens, antesPorNome, opts){
     : grandes;
   if(!mostra.length) return '<div class="vazio">Nada no período.</div>';
 
-  const w=1180, h=430, pe=66, pd=14, pt=56, pb=78;
+  const h=430, pe=66, pd=14, pt=56, pb=78;
   const iw=w-pe-pd, ih=h-pt-pb, n=mostra.length;
   const mx = Math.max.apply(null, mostra.map(i=>i[1]).concat([1]));
   const passo = iw/n, larg = Math.min(100, passo*0.52);
@@ -642,7 +674,7 @@ function colunasVariacao(itens, antesPorNome, opts){
         '" font-size="10.5">'+(100*it[1]/total).toFixed(0)+'% · '+it[2]+' lanç.</text></g>';
   }).join('');
 
-  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" '+
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" '+
     'aria-label="Custo por nível, com a variação contra o ano anterior">'+g+b+'</svg>'+
     '<div class="cores"><span><i style="background:'+C.azul+'"></i>custo do período</span>'+
     (cauda.length ? '<span><i style="background:'+C.borda2+'"></i>demais, somados</span>' : '')+
@@ -650,15 +682,53 @@ function colunasVariacao(itens, antesPorNome, opts){
     '<span style="color:'+C.verde+'">▼ caiu</span></div>';
 }
 
+// Um grupo de colunas por mês, uma cor por ano. Serve para a pergunta que só
+// esta forma responde: "março sempre é caro, ou foi este março?"
+function colunasAno(w, series, alt){
+  const h=alt||330, pe=66, pd=14, pt=20, pb=44;
+  const iw=w-pe-pd, ih=h-pt-pb;
+  const todos = series.reduce((s,x) => s.concat(x.dados), []);
+  const mx = Math.max.apply(null, todos.concat([1]));
+  const passo = iw/12, larg = Math.min(20, (passo-8)/series.length);
+  const y = v => pt + ih - (Math.max(v,0)/mx)*ih;
+  let g = '';
+  for(let i=0;i<=4;i++){
+    const v = mx*(1-i/4), yy = y(v);
+    g += '<line x1="'+pe+'" y1="'+yy.toFixed(1)+'" x2="'+(w-pd)+'" y2="'+yy.toFixed(1)+
+      '" stroke="'+(i===4?C.texto2:C.borda)+'" stroke-width="'+(i===4?1.6:1)+'"/>'+
+      '<text x="'+(pe-9)+'" y="'+(yy+3.5).toFixed(1)+'" fill="'+(i===4?C.texto2:C.texto3)+
+      '" font-size="10"'+(i===4?' font-weight="700"':'')+' text-anchor="end">'+
+      (i===4 ? '0' : curto(v).replace('R$ ',''))+'</text>';
+  }
+  let b = '';
+  for(let m=0;m<12;m++){
+    const cx = pe + passo*m + passo/2;
+    const larguraTotal = larg*series.length + 2*(series.length-1);
+    const linhas = series.map(s => s.nome+': '+(s.dados[m] ? brl(s.dados[m]) : 'sem lançamento'));
+    b += '<g data-d="'+dica(MES[m], linhas)+'">'+
+      '<rect x="'+(pe+passo*m).toFixed(1)+'" y="'+pt+'" width="'+passo.toFixed(1)+'" height="'+ih+
+        '" fill="transparent"/>'+
+      series.map(function(s,i){
+        const x = cx - larguraTotal/2 + i*(larg+2), yy = y(s.dados[m]);
+        return s.dados[m] ? '<rect x="'+x.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+larg.toFixed(1)+
+          '" height="'+Math.max(pt+ih-yy,1).toFixed(1)+'" fill="'+s.cor+'" rx="2"/>' : '';
+      }).join('')+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-24)+'" text-anchor="middle" fill="'+C.texto2+
+        '" font-size="11.5">'+MES[m]+'</text></g>';
+  }
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" '+
+    'aria-label="Custo mês a mês, um ano por cor">'+g+b+'</svg>';
+}
+
 // Duas séries por linha — a comparação receita × custo por centro de custo em
 // colunas verticais fica ilegível: são muitos nomes longos disputando o eixo.
-function rankingDuplo(itens, s1, s2){
-  const w=1180, pe=280, pd=120, alt=42;
+function rankingDuplo(w, itens, s1, s2){
+  const pe=Math.min(280, Math.round(w*0.30)), pd=110, alt=42;
   if(!itens.length) return '<div class="vazio">Nada no período.</div>';
   const h = itens.length*alt + 4;
   const mx = Math.max.apply(null, itens.map(i => Math.max(i[1],i[2])).concat([1]));
-  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" style="height:'+h+'px;max-height:none" '+
-    'preserveAspectRatio="none" role="img" aria-label="Receita e custo por centro de custo">' +
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" '+
+    'role="img" aria-label="Receita e custo por centro de custo">' +
     itens.map(function(it,i){
       const y = i*alt + 3;
       const b1 = Math.max(1,(it[1]/mx)*(w-pe-pd)), b2 = Math.max(1,(it[2]/mx)*(w-pe-pd));
@@ -703,49 +773,10 @@ function rosca(fatias, tit, sub, tamanho){
     'letter-spacing="1">'+esc(sub)+'</text></svg>';
 }
 
-function cascata(passos, aoClicar){
-  const w=1180,h=300,pt=32,pb=50,ih=h-pt-pb, passo=w/(passos.length||1);
-  let acc=0; const pontos=[];
-  passos.forEach(function(p){
-    const ini = p.total ? 0 : acc;
-    const fim = p.total ? p.v : acc + p.delta;
-    pontos.push({p:p, ini:ini, fim:fim});
-    acc = p.total ? p.v : acc + p.delta;
-  });
-  const vals = pontos.flatMap(o => [o.ini, o.fim]);
-  const e = _escalaY(Math.min.apply(null, vals.concat([0])),
-                     Math.max.apply(null, vals.concat([1])), pt, ih);
-  let s='';
-  pontos.forEach(function(o,i){
-    const cx = passo*i + passo/2, lw = Math.min(96, passo*0.5);
-    const y1 = Math.min(e.y(o.ini), e.y(o.fim)), y2 = Math.max(e.y(o.ini), e.y(o.fim));
-    const acao = aoClicar ? aoClicar(i) : null;
-    s += '<g data-d="'+dica(o.p.nome, ['<b style="display:inline">'+brl(o.p.v)+'</b>']
-        .concat(acao?['<i>clique para ver o que tem dentro</i>']:[]))+'"'+
-      (acao?' onclick="'+acao+'" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'){'+
-        acao+'}" style="cursor:pointer"':'')+'>'+
-      '<rect x="'+(passo*i).toFixed(1)+'" y="0" width="'+passo.toFixed(1)+'" height="'+h+'" fill="transparent"/>'+
-      '<rect x="'+(cx-lw/2).toFixed(1)+'" y="'+y1.toFixed(1)+'" width="'+lw.toFixed(1)+'" height="'+
-        Math.max(y2-y1,2).toFixed(1)+'" fill="'+o.p.cor+'" rx="3"/>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(y1-9).toFixed(1)+'" text-anchor="middle" fill="'+C.texto+
-        '" font-size="12" font-weight="700">'+curto(o.p.v).replace('R$ ','')+'</text>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(h-28)+'" text-anchor="middle" fill="'+C.texto2+'" font-size="11.5">'+
-        esc(cortar(o.p.nome,22))+'</text>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(h-13)+'" text-anchor="middle" fill="'+C.texto3+'" font-size="10">'+
-        esc(o.p.dica||'')+'</text></g>';
-    if(i < pontos.length-1 && !o.p.total)
-      s += '<line x1="'+(cx+lw/2).toFixed(1)+'" y1="'+e.y(o.fim).toFixed(1)+'" x2="'+
-        (passo*(i+1)+passo/2-lw/2).toFixed(1)+'" y2="'+e.y(o.fim).toFixed(1)+
-        '" stroke="'+C.borda2+'" stroke-width="1" stroke-dasharray="3 3"/>';
-  });
-  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" '+
-    'aria-label="Cascata do resultado do período">'+s+'</svg>';
-}
-
 // Fluxo de caixa no formato do fechamento da CFO: entradas para cima, saídas
 // para baixo, resultado do mês escrito embaixo de cada par.
-function fluxoCaixa(rot, entradas, saidas){
-  const w=1180,h=310,pe=64,pd=14,pt=22,pb=58;
+function fluxoCaixa(w, rot, entradas, saidas){
+  const h=310,pe=64,pd=14,pt=22,pb=58;
   const iw=w-pe-pd, ih=h-pt-pb, n=rot.length||1;
   const res = entradas.map((v,i) => v - saidas[i]);
   const e = _escalaY(-Math.max.apply(null, saidas.concat([1])),
@@ -772,7 +803,7 @@ function fluxoCaixa(rot, entradas, saidas){
         (res[i]>=0?C.verde:C.vermelho)+'" font-size="11" font-weight="700">'+
         (res[i]>=0?'+':'')+curto(res[i]).replace('R$ ','')+'</text></g>';
   }).join('');
-  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="Fluxo de caixa">'+
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" aria-label="Fluxo de caixa">'+
     _grade(e,pe,w,pd,4)+b+'</svg>';
 }
 
@@ -889,7 +920,7 @@ function blocoDrill(id, titulo, legenda, comSeletor){
                  : 'Último corte — clicar abre os lançamentos, um a um.');
     // O gráfico mostra os maiores e junta a cauda; a tabela logo abaixo tem
     // TODOS os itens, também clicáveis — assim a cauda nunca fica inalcançável.
-    miolo = colunasVariacao(itens, antesPorNome, {clique:acao}) +
+    miolo = grafico(w => colunasVariacao(w, itens, antesPorNome, {clique:acao})) +
       '<div class="leg" style="margin:20px 0 8px">Todos os '+itens.length+' itens deste nível, '+
       'do maior para o menor. Clique numa linha para abrir.</div>'+
       '<div class="'+(itens.length > 14 ? 'tabela-rolante' : 'rolar')+'">'+
@@ -1109,8 +1140,8 @@ function faixas(){
   });
   return f;
 }
-function graficoFaixas(fx, alt){
-  return colunasRotuladas([
+function graficoFaixas(w, fx, alt){
+  return colunasRotuladas(w, [
     ['Vencido', fx.vencido[0], fx.vencido[1]],
     ['Até 30 dias', fx.ate30[0], fx.ate30[1]],
     ['31 a 60 dias', fx.d3160[0], fx.d3160[1]],
@@ -1214,8 +1245,8 @@ function vistaGeral(){
   '<div class="card"><h2>Receita vs Custos</h2>'+
     '<div class="leg">Por competência — o mês em que aconteceu. A linha tracejada é o resultado do mês, '+
     'e ela <b>desce abaixo do zero</b> quando o mês fecha no vermelho.</div>'+
-    colunas(ms.map(fMes), {nome:'Receita',dados:sr,cor:C.verde},
-      {nome:'Custo',dados:sc,cor:C.azul}, {nome:'Resultado',dados:sres,cor:C.ouro})+
+    grafico(w => colunas(w, ms.map(fMes), {nome:'Receita',dados:sr,cor:C.verde},
+      {nome:'Custo',dados:sc,cor:C.azul}, {nome:'Resultado',dados:sres,cor:C.ouro}))+
     '<div class="cores"><span><i style="background:'+C.verde+'"></i>receita</span>'+
     '<span><i style="background:'+C.azul+'"></i>custo</span>'+
     '<span><i class="tracejada"></i>resultado do mês</span></div></div>'+
@@ -1223,7 +1254,7 @@ function vistaGeral(){
   '<div class="card"><h2>Fluxo de caixa no período</h2>'+
     '<div class="leg">O que efetivamente <b>entrou e saiu</b> — só a parte já paga de cada conta. '+
     'Mesmo critério do fluxo de caixa do fechamento mensal da CFO de Consultório.</div>'+
-    fluxoCaixa(ms.map(fMes), fc.entradas, fc.saidas)+
+    grafico(w => fluxoCaixa(w, ms.map(fMes), fc.entradas, fc.saidas))+
     '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
     '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div>'+
     '<div class="nota">O Conta Azul não devolve a data em que o dinheiro andou, só a de vencimento — '+
@@ -1244,7 +1275,7 @@ function vistaGeral(){
     '<div class="card"><h2>Contas a pagar por faixa de vencimento</h2>'+
       '<div class="leg">Quanto já venceu e quanto está chegando. Considera todas as contas em aberto, '+
       'inclusive as que vencem depois do período filtrado.</div>'+
-      graficoFaixas(fx, 460)+'</div>'+
+      grafico(w => graficoFaixas(w, fx, 330))+'</div>'+
   '</div>'+
 
   '<div class="card"><h2>Insights</h2>'+
@@ -1284,7 +1315,7 @@ function vistaPagar(){
   const porForn = new Map();
   ab.forEach(l => porForn.set(l[PES], (porForn.get(l[PES])||0) + (l[TOTAL]-l[PAGO])));
   const rankForn = Array.from(porForn.entries()).map(e => [D.forn[e[0]]||'—', e[1]])
-    .sort((a,b)=>b[1]-a[1]).slice(0,12);
+    .sort((a,b)=>b[1]-a[1]).slice(0,10);
 
   // As opções de cada filtro saem da própria lista em aberto: oferecer categoria
   // que não tem nenhuma conta em aberto só produz tela vazia.
@@ -1316,10 +1347,10 @@ function vistaPagar(){
   '<div class="grade2">'+
     '<div class="card"><h2>Como a dívida se distribui no tempo</h2>'+
       '<div class="leg">Tudo que ainda tem saldo em aberto, na ordem em que chega.</div>'+
-      graficoFaixas(fx, 460)+'</div>'+
+      grafico(w => graficoFaixas(w, fx, 330))+'</div>'+
     '<div class="card"><h2>Para quem se deve mais</h2>'+
-      '<div class="leg">Somando só o que está em aberto. Os 12 maiores credores.</div>'+
-      ranking(rankForn, {corte:34, pe:400, alt:34})+'</div>'+
+      '<div class="leg">Somando só o que está em aberto. Os 10 maiores credores.</div>'+
+      grafico(w => ranking(w, rankForn, {corte:30, alt:30}))+'</div>'+
   '</div>'+
   '<div class="card"><h2>Contas em aberto</h2>'+
     '<div class="leg">Por data de vencimento. Use os filtros abaixo para achar uma conta específica — '+
@@ -1368,7 +1399,49 @@ function vistaPagar(){
 function vistaAnalise(){
   return blocoDrill('analise', 'Custo por '+
     (DRILLS.analise.caminho.length ? 'nível' : DIM[DRILLS.analise.dim].rot.toLowerCase()),
-    'Escolha por onde começar e vá descendo: grupo → categoria → quem recebeu → nota a nota.', true);
+    'Escolha por onde começar e vá descendo: grupo → categoria → quem recebeu → nota a nota.', true) +
+    cartaoComparativo();
+}
+
+// Mês a mês, um ano por cor. Acompanha o caminho do drill: se você desceu até
+// "Honorários médicos", o comparativo é dos honorários — não do custo inteiro.
+// E ignora o filtro de período de propósito: o gráfico É a comparação entre
+// anos, e recortá-lo a um mês esvaziaria a única coisa que ele tem a dizer.
+function cartaoComparativo(){
+  const dr = DRILLS.analise;
+  const anos = [];
+  for(let a = +D.de.slice(0,4); a <= +D.ate.slice(0,4); a++) anos.push(String(a));
+  const CORES_ANO = [C.azulPal, C.azulCl, C.navy, C.ouro];
+
+  const base = linhasDoCaminho(dr, D.pagar.filter(l => passa(l, COMP, true)));
+  const series = anos.map(function(ano, i){
+    const dados = [];
+    for(let m=1;m<=12;m++){
+      const chave = ano+'-'+String(m).padStart(2,'0');
+      dados.push(base.filter(l => l[COMP].slice(0,7) === chave).reduce((s,l)=>s+l[TOTAL],0));
+    }
+    return { nome: ano, dados: dados, cor: CORES_ANO[i % CORES_ANO.length],
+             total: dados.reduce((s,v)=>s+v,0) };
+  }).filter(s => s.total > 0);
+
+  const doCaminho = dr.caminho.length ? dr.caminho[dr.caminho.length-1].rotulo : null;
+  return '<div class="card"><h2>Mês a mês, ano contra ano</h2>'+
+    '<div class="leg">'+(doCaminho
+      ? 'Só <b>'+esc(doCaminho)+'</b>, acompanhando o caminho aberto acima. '
+      : 'Todo o custo. Desça um nível acima e este gráfico desce junto. ')+
+    'Por competência, ano civil inteiro — <b>não usa o filtro de período</b>, porque a comparação '+
+    'entre anos é justamente o que ele tem para dizer.</div>'+
+    (series.length ? grafico(w => colunasAno(w, series)) +
+      '<div class="cores">'+series.map(s => '<span><i style="background:'+s.cor+'"></i>'+
+        s.nome+' · '+curto(s.total)+'</span>').join('')+'</div>'+
+      '<div class="rolar" style="margin-top:16px"><table><thead><tr><th>Ano</th>'+
+      MES.map(m => '<th class="r">'+m+'</th>').join('')+'<th class="r">Total</th>'+
+      '</tr></thead><tbody>'+
+      series.map(s => '<tr><td style="font-weight:700;color:'+s.cor+'">'+s.nome+'</td>'+
+        s.dados.map(v => '<td class="r num">'+(v ? curto(v).replace('R$ ','') : '—')+'</td>').join('')+
+        '<td class="r num" style="font-weight:700">'+curto(s.total).replace('R$ ','')+'</td></tr>').join('')+
+      '</tbody></table></div>'
+     : '<div class="vazio">Sem lançamentos para comparar.</div>')+'</div>';
 }
 
 /* ===================== VISTA: centros de custo ===================== */
@@ -1396,7 +1469,8 @@ function vistaCentros(){
   '</div>'+
   '<div class="card"><h2>Cada centro de custo se paga?</h2>'+
     '<div class="leg">Receita e custo lado a lado, por competência. O número à direita é o resultado.</div>'+
-    rankingDuplo(linhas, {nome:'Receita',cor:C.verde}, {nome:'Custo',cor:C.azul})+
+    grafico(w => rankingDuplo(w, linhas, {nome:'Receita',cor:C.verde},
+      {nome:'Custo',cor:C.azul}))+
     '<div class="cores"><span><i style="background:'+C.verde+'"></i>receita</span>'+
     '<span><i style="background:'+C.azul+'"></i>custo</span></div></div>'+
   '<div class="card"><h2>Números por centro de custo</h2>'+
@@ -1531,6 +1605,32 @@ const LINHAS_DRE = [
   ['% Lucro líquido','%lucroLiquido',0,'pct'],
 ];
 
+// As linhas da DRE que são SOMA de lançamentos (as outras são subtotais
+// calculados: receita líquida, lucro bruto, resultado, e as de percentual).
+// Só estas podem abrir e mostrar o que tem dentro.
+const SOMADAS = ['receita','tributos','deducoes','custo','admin','marketing','pessoal',
+                 'semGrupo','recFinanceiras','financeiras','emprestimos','investimentos',
+                 'recNaoOperacional','naoOperacional'];
+const DRE_ABERTAS = {};
+function dreAbrir(chave){ DRE_ABERTAS[chave] = !DRE_ABERTAS[chave]; desenhar(); }
+
+// As categorias que formam uma linha da DRE, com o valor de cada mês — o mesmo
+// caminho que a linha-mãe faz, só que sem somar tudo num número.
+function categoriasDaLinha(chave, meses){
+  const porCat = new Map();
+  const conta = lista => lista.forEach(function(l){
+    if(linhaDre(l) !== chave) return;
+    const m = meses.indexOf(l[VENC].slice(0,7));
+    if(m < 0 || !l[PAGO]) return;
+    let c = porCat.get(l[CAT]);
+    if(!c){ c = { nome: D.cat[l[CAT]], total:0, meses: meses.map(() => 0) }; porCat.set(l[CAT], c); }
+    c.total += l[PAGO]; c.meses[m] += l[PAGO];
+  });
+  conta(filtrar(D.receber, VENC, true));
+  conta(filtrar(D.pagar, VENC, true));
+  return Array.from(porCat.values()).sort((a,b) => b.total - a.total);
+}
+
 function vistaDre(){
   const ms = mesesNoFiltro();
   const dados = ms.map(dreDoMes);
@@ -1554,7 +1654,7 @@ function vistaDre(){
   return '<div class="card"><h2>Fluxo de caixa — real</h2>'+
     '<div class="leg">Todas as movimentações do período: entradas menos saídas, mês a mês. '+
     (negReal ? '<b>'+negReal+' de '+ms.length+' meses fecharam negativos.</b>' : 'Todos os meses positivos.')+
-    '</div>'+ fluxoCaixa(ms.map(fMes), real.entradas, real.saidas)+
+    '</div>'+ grafico(w => fluxoCaixa(w, ms.map(fMes), real.entradas, real.saidas))+
     '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
     '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div></div>'+
 
@@ -1562,7 +1662,7 @@ function vistaDre(){
     '<div class="leg">Só a operação: tira empréstimo, investimento, resultado financeiro e receita não '+
     'operacional. É onde se vê se o serviço se paga sozinho. '+
     (negOper ? '<b>A operação foi negativa em '+negOper+' de '+ms.length+' meses.</b>' : '')+
-    '</div>'+ fluxoCaixa(ms.map(fMes), oper.entradas, oper.saidas)+
+    '</div>'+ grafico(w => fluxoCaixa(w, ms.map(fMes), oper.entradas, oper.saidas))+
     '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
     '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div></div>'+
 
@@ -1575,8 +1675,27 @@ function vistaDre(){
     ms.map(m => '<th class="r mes">'+fMes(m)+'</th>').join('')+'</tr></thead><tbody>'+
     LINHAS_DRE.map(function(L){
       const classe = L[3] === 'pct' ? 'pct' : L[3] === 'total' ? 'total' : L[3] === 'forte' ? 'forte' : '';
-      return '<tr class="'+classe+'"><td class="rotulo">'+esc(L[0])+'</td>'+
+      // Linha somada (não é % e não é subtotal calculado) pode abrir e mostrar
+      // as categorias que a formam, uma por linha, com os mesmos meses.
+      const abrivel = SOMADAS.indexOf(L[1]) >= 0;
+      const aberta = DRE_ABERTAS[L[1]];
+      const seta = abrivel ? '<span class="seta">'+(aberta?'▾':'▸')+'</span>' : '<span class="seta"></span>';
+      let html = '<tr class="'+classe+(abrivel?' abrivel':'')+'"'+
+        (abrivel ? ' onclick="dreAbrir(\''+L[1]+'\')" title="Ver as categorias desta linha"' : '')+'>'+
+        '<td class="rotulo">'+seta+esc(L[0])+'</td>'+
         celula(tot, L[1], L[2]) + ms.map((m,i) => celula(dados[i], L[1], L[2])).join('')+'</tr>';
+      if(abrivel && aberta){
+        const sub = categoriasDaLinha(L[1], ms);
+        html += sub.length ? sub.map(function(c){
+          return '<tr class="filha"><td class="rotulo">'+esc(c.nome)+'</td>'+
+            '<td class="r num">'+brl(c.total * (L[2]<0?-1:1))+'</td>'+
+            c.meses.map(v => '<td class="r num">'+(v ? brl(v*(L[2]<0?-1:1)) : '—')+'</td>').join('')+
+            '</tr>';
+        }).join('')
+        : '<tr class="filha"><td colspan="'+(ms.length+2)+'" style="color:var(--texto3)">'+
+          'Nenhum lançamento pago nesta linha no período.</td></tr>';
+      }
+      return html;
     }).join('')+
     '</tbody></table></div>'+
     '<div class="nota"><b>Comparando com o PDF da CFO de Consultório:</b> receita bruta, despesas '+
@@ -1723,8 +1842,17 @@ function desenhar(){
   document.getElementById('cabecalho').innerHTML =
     '<div class="titulo-tela">'+esc(t[0])+'</div><div class="sub-tela">'+esc(t[1])+
     ' · <b>'+esc(rotuloPeriodo())+'</b></div>';
+  _graficos = [];
   document.getElementById('vistas').innerHTML = (VISTAS[VISTA] || vistaGeral)();
+  renderizarGraficos();
 }
+// Redesenhar ao mudar a largura da janela: o SVG agora tem tamanho fixo em
+// pixels, então sem isto ele ficaria com a medida da largura antiga.
+let _redimensionando;
+window.addEventListener('resize', function(){
+  clearTimeout(_redimensionando);
+  _redimensionando = setTimeout(function(){ if(me) renderizarGraficos(); }, 180);
+});
 function iniciar(){
   if(!D.pagar.length && !D.receber.length){
     document.querySelector('.tela').innerHTML =
