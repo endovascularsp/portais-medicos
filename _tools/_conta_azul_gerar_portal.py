@@ -229,8 +229,12 @@ def injetar(caminho: Path, dados: dict) -> None:
 def main() -> int:
     hoje = date.today()
     ap = argparse.ArgumentParser()
-    ap.add_argument("--de", default=f"{hoje.year-1}-01-01",
-                    help="início da competência (o ano anterior entra para a comparação)")
+    # Dois anos para trás, não um. A Visão Geral abre nos últimos 12 meses, e
+    # comparar essa janela com a de um ano antes precisa de 24 meses de base —
+    # com só um ano, a tela teria de desistir da comparação justamente na tela
+    # em que ela mais importa.
+    ap.add_argument("--de", default=f"{hoje.year-2}-01-01",
+                    help="início da competência (os dois anos anteriores entram para a comparação)")
     ap.add_argument("--ate", default=f"{hoje.year}-12-31")
     ap.add_argument("--simular", action="store_true")
     a = ap.parse_args()
