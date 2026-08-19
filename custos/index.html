@@ -323,13 +323,28 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Sobre fundo branco: azul mede tamanho, verde e vermelho só dizem direção,
 // ouro marca o resultado.
+//
+// O SISTEMA DE CORES, e ele tem uma regra só: cada cor significa UMA coisa em
+// todo o portal.
+//   AZUL    = dinheiro que entra (receita, entradas de caixa)
+//   LARANJA = dinheiro que sai   (custo, saídas, contas a pagar)
+//   VERDE e VERMELHO = veredito, nunca categoria (sobrou/faltou, subiu/caiu)
+//   OURO    = o resultado, o que sobrou depois de tudo
+//
+// Antes disso o verde significava duas coisas: "receita" num gráfico e "mês
+// positivo" no outro. Cor com dois sentidos não ensina nada — só obriga a ler
+// a legenda toda vez.
 const C = { navy:'#0B1F3A', azul:'#1A5296', azulCl:'#3A8DD4', azulPal:'#7FB3E0',
             azulFundo:'#D6E8F7', ouro:'#A18960', ouroCl:'#C7AD82',
             verde:'#2D7A3C', verdeCl:'#4FA463', vermelho:'#C0392B', laranja:'#D4621A',
             borda:'#DDE4ED', borda2:'#C4D4E8', texto:'#0D1E30', texto2:'#4A6278',
             texto3:'#7E93A8' };
-const RAMPA = ['#0B1F3A','#12365F','#1A5296','#2670BC','#3A8DD4','#5AA3DE','#7FB3E0',
-               '#9AC5E9','#B4D5F0','#C9E0F5'];
+C.entra = C.azul;      // receita, entradas
+C.sai   = C.laranja;   // custo, saídas
+// Escala de tamanho para composição de custo: tudo aqui é dinheiro saindo, então
+// a escala é quente. Do mais escuro (maior) ao mais claro (menor).
+const RAMPA = ['#7A3609','#9C4610','#BE5717','#D4621A','#DE7C3C','#E6955F','#EDAC83',
+               '#F2C2A6','#F7D8C6','#FAE9DF'];
 const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const hoje = new Date().toISOString().slice(0,10);
 
@@ -681,7 +696,7 @@ function colunasVariacao(w, itens, antesPorNome, opts){
 
   return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" '+
     'aria-label="Custo por nível, com a variação contra o ano anterior">'+g+b+'</svg>'+
-    '<div class="cores"><span><i style="background:'+C.azul+'"></i>custo do período</span>'+
+    '<div class="cores"><span><i style="background:'+C.sai+'"></i>custo do período</span>'+
     (cauda.length ? '<span><i style="background:'+C.borda2+'"></i>demais, somados</span>' : '')+
     '<span style="color:'+C.vermelho+'">▲ subiu vs '+esc(rotuloAnoAnterior())+'</span>'+
     '<span style="color:'+C.verde+'">▼ caiu</span></div>';
@@ -840,6 +855,51 @@ function rosca(fatias, tit, sub, tamanho){
     'letter-spacing="1">'+esc(sub)+'</text></svg>';
 }
 
+// "Sobrou ou faltou": uma barra por mês, verde acima da linha do zero, vermelha
+// abaixo. A resposta é a DIREÇÃO da barra — não é preciso comparar duas barras
+// opostas nem ler número nenhum. A linha dourada é o caixa acumulado no período,
+// que mostra quando a empresa passou do ponto de equilíbrio e quando voltou.
+//
+// Aqui verde e vermelho são veredito, não categoria: a barra não é "entrada" nem
+// "saída", é o saldo do mês.
+function resultadoMensal(w, rot, entradas, saidas, alt){
+  const h=alt||350, pe=70, pd=16, pt=28, pb=46;
+  const iw=w-pe-pd, ih=h-pt-pb, n=rot.length||1;
+  const res = entradas.map((v,i) => v - saidas[i]);
+  const acc = []; res.reduce((s,v,i) => (acc[i] = s + v), 0);
+  const todos = res.concat(acc, [0]);
+  const e = _escalaY(Math.min.apply(null, todos), Math.max.apply(null, todos), pt, ih);
+  const passo = iw/n, larg = Math.min(40, passo*0.5);
+
+  const b = rot.map(function(r,i){
+    const cx = pe + passo*i + passo/2;
+    const y = e.y(res[i]);
+    const topo = Math.min(y, e.zero), altura = Math.max(Math.abs(e.zero - y), 1);
+    const cor = res[i] >= 0 ? C.verde : C.vermelho;
+    return '<g data-d="'+dica(r, ['Entrou: '+brl(entradas[i]), 'Saiu: '+brl(saidas[i]),
+        '<b style="display:inline">'+(res[i]>=0?'Sobrou: ':'Faltou: ')+brl(Math.abs(res[i]))+'</b>',
+        'Caixa acumulado no período: '+brl(acc[i])])+'">'+
+      '<rect x="'+(pe+passo*i).toFixed(1)+'" y="'+pt+'" width="'+passo.toFixed(1)+'" height="'+ih+
+        '" fill="transparent"/>'+
+      '<rect x="'+(cx-larg/2).toFixed(1)+'" y="'+topo.toFixed(1)+'" width="'+larg.toFixed(1)+
+        '" height="'+altura.toFixed(1)+'" fill="'+cor+'" rx="3"/>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(res[i]>=0 ? topo-8 : topo+altura+15).toFixed(1)+
+        '" text-anchor="middle" fill="'+cor+'" font-size="11" font-weight="700">'+
+        curto(res[i]).replace('R$ ','')+'</text>'+
+      '<text x="'+cx.toFixed(1)+'" y="'+(h-14)+'" text-anchor="middle" fill="'+C.texto2+
+        '" font-size="11">'+esc(r)+'</text></g>';
+  }).join('');
+
+  const pts = acc.map((v,i) => [pe+passo*i+passo/2, e.y(v)]);
+  const linha = '<path d="'+pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+
+    '" fill="none" stroke="'+C.ouro+'" stroke-width="2.8" stroke-linejoin="round"/>' +
+    pts.map(p=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.4" fill="'+C.ouro+
+      '" stroke="#fff" stroke-width="1.5"/>').join('');
+
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" '+
+    'aria-label="Quanto sobrou em caixa a cada mês">'+_grade(e,pe,w,pd,4)+b+linha+'</svg>';
+}
+
 // Fluxo de caixa no formato do fechamento da CFO: entradas para cima, saídas
 // para baixo, resultado do mês escrito embaixo de cada par.
 function fluxoCaixa(w, rot, entradas, saidas){
@@ -857,13 +917,13 @@ function fluxoCaixa(w, rot, entradas, saidas){
       '<rect x="'+(pe+passo*i).toFixed(1)+'" y="'+pt+'" width="'+passo.toFixed(1)+'" height="'+ih+
         '" fill="transparent"/>'+
       '<rect x="'+(cx-larg-2).toFixed(1)+'" y="'+ye.toFixed(1)+'" width="'+larg.toFixed(1)+
-        '" height="'+Math.max(e.zero-ye,1).toFixed(1)+'" fill="'+C.verde+'" rx="2"/>'+
+        '" height="'+Math.max(e.zero-ye,1).toFixed(1)+'" fill="'+C.entra+'" rx="2"/>'+
       '<rect x="'+(cx+2).toFixed(1)+'" y="'+e.zero.toFixed(1)+'" width="'+larg.toFixed(1)+
-        '" height="'+Math.max(ys-e.zero,1).toFixed(1)+'" fill="'+C.vermelho+'" rx="2"/>'+
+        '" height="'+Math.max(ys-e.zero,1).toFixed(1)+'" fill="'+C.sai+'" rx="2"/>'+
       '<text x="'+(cx-larg/2-2).toFixed(1)+'" y="'+(ye-6).toFixed(1)+'" text-anchor="middle" fill="'+
-        C.verde+'" font-size="10" font-weight="700">'+curto(entradas[i]).replace('R$ ','')+'</text>'+
+        C.entra+'" font-size="10" font-weight="700">'+curto(entradas[i]).replace('R$ ','')+'</text>'+
       '<text x="'+(cx+larg/2+2).toFixed(1)+'" y="'+(ys+13).toFixed(1)+'" text-anchor="middle" fill="'+
-        C.vermelho+'" font-size="10" font-weight="700">'+curto(saidas[i]).replace('R$ ','')+'</text>'+
+        C.sai+'" font-size="10" font-weight="700">'+curto(saidas[i]).replace('R$ ','')+'</text>'+
       '<text x="'+cx.toFixed(1)+'" y="'+(h-26)+'" text-anchor="middle" fill="'+C.texto2+
         '" font-size="11">'+esc(r)+'</text>'+
       '<text x="'+cx.toFixed(1)+'" y="'+(h-10)+'" text-anchor="middle" fill="'+
@@ -1214,7 +1274,7 @@ function graficoFaixas(w, fx, alt){
     ['31 a 60 dias', fx.d3160[0], fx.d3160[1]],
     ['61 a 90 dias', fx.d6190[0], fx.d6190[1]],
     ['Mais de 90', fx.mais90[0], fx.mais90[1]],
-  ], [C.vermelho, C.laranja, C.azul, C.azulCl, C.azulPal], alt);
+  ], [C.vermelho, RAMPA[2], RAMPA[4], RAMPA[6], RAMPA[8]], alt);
 }
 
 /* ===================== insights ===================== */
@@ -1289,11 +1349,11 @@ function vistaGeral(){
   return '<div class="kpi-row">'+
     kpiReceita('Receita no período', curto(receita), receitaA ? pct(receita,receitaA) : null,
       receitaA ? Math.abs(pct(receita,receitaA)).toFixed(1)+'% vs '+rotuloAnoAnterior()+' ('+curto(receitaA)+')'
-               : 'sem base de comparação', sparkline(sr, '#7BE0A0'),
+               : 'sem base de comparação', sparkline(sr, '#8FC2EE'),
       'Tudo que entrou no período, por competência — o mês em que o serviço aconteceu.') +
     kpiCusto('Custo no período', curto(custo), custoA ? pct(custo,custoA) : null,
       custoA ? Math.abs(pct(custo,custoA)).toFixed(1)+'% vs '+rotuloAnoAnterior()+' ('+curto(custoA)+')'
-             : 'sem base de comparação', sparkline(sc, '#7FB3E0'),
+             : 'sem base de comparação', sparkline(sc, '#F0A46A'),
       'Tudo que saiu no período, por competência. Transferência entre contas e empréstimo ficam fora.') +
     kpiReceita('Resultado', curto(resultado), (receitaA||custoA) ? resultado-resultadoA : null,
       (receitaA||custoA) ? curto(Math.abs(resultado-resultadoA))+
@@ -1312,20 +1372,23 @@ function vistaGeral(){
   '<div class="card"><h2>Receita vs Custos</h2>'+
     '<div class="leg">Por competência — o mês em que aconteceu. A linha tracejada é o resultado do mês, '+
     'e ela <b>desce abaixo do zero</b> quando o mês fecha no vermelho.</div>'+
-    grafico(w => colunas(w, ms.map(fMes), {nome:'Receita',dados:sr,cor:C.verde},
-      {nome:'Custo',dados:sc,cor:C.azul}, {nome:'Resultado',dados:sres,cor:C.ouro}))+
-    '<div class="cores"><span><i style="background:'+C.verde+'"></i>receita</span>'+
-    '<span><i style="background:'+C.azul+'"></i>custo</span>'+
+    grafico(w => colunas(w, ms.map(fMes), {nome:'Receita',dados:sr,cor:C.entra},
+      {nome:'Custo',dados:sc,cor:C.sai}, {nome:'Resultado',dados:sres,cor:C.ouro}))+
+    '<div class="cores"><span><i style="background:'+C.entra+'"></i>receita (entra)</span>'+
+    '<span><i style="background:'+C.sai+'"></i>custo (sai)</span>'+
     '<span><i class="tracejada"></i>resultado do mês</span></div></div>'+
 
-  '<div class="card"><h2>Fluxo de caixa no período</h2>'+
-    '<div class="leg">O que efetivamente <b>entrou e saiu</b> — só a parte já paga de cada conta. '+
-    'Mesmo critério do fluxo de caixa do fechamento mensal da CFO de Consultório.</div>'+
-    grafico(w => fluxoCaixa(w, ms.map(fMes), fc.entradas, fc.saidas))+
-    '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
-    '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div>'+
-    '<div class="nota">O Conta Azul não devolve a data em que o dinheiro andou, só a de vencimento — '+
-    'é ela que posiciona cada barra. Para contas pagas em dia, dá no mesmo.</div></div>'+
+  '<div class="card"><h2>Sobrou ou faltou em caixa</h2>'+
+    '<div class="leg">Entradas menos saídas de cada mês, contando só o que foi efetivamente pago. '+
+    'A linha dourada é o <b>caixa acumulado no período</b>: quando ela cruza o zero para cima, o '+
+    'período passou do ponto de equilíbrio.</div>'+
+    grafico(w => resultadoMensal(w, ms.map(fMes), fc.entradas, fc.saidas))+
+    '<div class="cores"><span><i style="background:'+C.verde+'"></i>mês que sobrou</span>'+
+    '<span><i style="background:'+C.vermelho+'"></i>mês que faltou</span>'+
+    '<span><i class="tracejada" style="border-top-style:solid"></i>caixa acumulado no período</span></div>'+
+    '<div class="nota">O acumulado é a <b>variação</b> do caixa desde o início do período, não o '+
+    'saldo do banco — a API do Conta Azul não devolve saldo. E as datas são as de vencimento: o '+
+    'sistema não guarda a data em que o dinheiro andou. Para contas pagas em dia, dá no mesmo.</div></div>'+
 
   // Estes dois são leituras rápidas, não análises: cabem lado a lado sem apertar.
   '<div class="grade2">'+
@@ -1485,7 +1548,9 @@ function cartaoComparativo(){
   const dr = DRILLS.analise;
   const anos = [];
   for(let a = +D.de.slice(0,4); a <= +D.ate.slice(0,4); a++) anos.push(String(a));
-  const CORES_ANO = [C.azulPal, C.azulCl, C.navy, C.ouro, C.verde];
+  // Anos não são entrada nem saída: usam a escala quente do custo, do mais
+  // claro (ano antigo) ao mais escuro (ano corrente).
+  const CORES_ANO = [RAMPA[7], RAMPA[5], RAMPA[2], C.navy, C.ouro];
 
   // O centro de custo e o botão de transferências continuam valendo — são
   // decisões sobre O QUE É CUSTO, não sobre o recorte de tempo.
@@ -1598,10 +1663,10 @@ function vistaCentros(){
   '</div>'+
   '<div class="card"><h2>Cada centro de custo se paga?</h2>'+
     '<div class="leg">Receita e custo lado a lado, por competência. O número à direita é o resultado.</div>'+
-    grafico(w => rankingDuplo(w, linhas, {nome:'Receita',cor:C.verde},
-      {nome:'Custo',cor:C.azul}))+
-    '<div class="cores"><span><i style="background:'+C.verde+'"></i>receita</span>'+
-    '<span><i style="background:'+C.azul+'"></i>custo</span></div></div>'+
+    grafico(w => rankingDuplo(w, linhas, {nome:'Receita',cor:C.entra},
+      {nome:'Custo',cor:C.sai}))+
+    '<div class="cores"><span><i style="background:'+C.entra+'"></i>receita (entra)</span>'+
+    '<span><i style="background:'+C.sai+'"></i>custo (sai)</span></div></div>'+
   '<div class="card"><h2>Números por centro de custo</h2>'+
     '<div class="leg">Clique numa linha para filtrar o portal inteiro por aquele centro de custo. '+
     'A última coluna é o mesmo intervalo do ano passado.</div>'+
@@ -1612,8 +1677,8 @@ function vistaCentros(){
       const res = x[1]-x[2], resA = x[4]-x[5];
       return '<tr class="cl" onclick="escolherAmb('+x[3]+')">'+
         '<td'+(F.amb===String(x[3])?' style="color:var(--azul);font-weight:700"':'')+'>'+esc(x[0])+'</td>'+
-        '<td class="r num" style="color:var(--verde)">'+brl(x[1])+'</td>'+
-        '<td class="r num" style="color:var(--azul)">'+brl(x[2])+'</td>'+
+        '<td class="r num" style="color:var(--azul)">'+brl(x[1])+'</td>'+
+        '<td class="r num" style="color:var(--laranja)">'+brl(x[2])+'</td>'+
         '<td class="r num" style="font-weight:700;color:'+(res>=0?'var(--verde)':'var(--vermelho)')+'">'+
           brl(res)+'</td>'+
         '<td class="r num">'+(x[1] ? (100*res/x[1]).toFixed(1)+'%' : '—')+'</td>'+
@@ -1784,16 +1849,16 @@ function vistaDre(){
     '<div class="leg">Todas as movimentações do período: entradas menos saídas, mês a mês. '+
     (negReal ? '<b>'+negReal+' de '+ms.length+' meses fecharam negativos.</b>' : 'Todos os meses positivos.')+
     '</div>'+ grafico(w => fluxoCaixa(w, ms.map(fMes), real.entradas, real.saidas))+
-    '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
-    '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div></div>'+
+    '<div class="cores"><span><i style="background:'+C.entra+'"></i>entradas</span>'+
+    '<span><i style="background:'+C.sai+'"></i>saídas</span></div></div>'+
 
   '<div class="card"><h2>Fluxo de caixa — operacional</h2>'+
     '<div class="leg">Só a operação: tira empréstimo, investimento, resultado financeiro e receita não '+
     'operacional. É onde se vê se o serviço se paga sozinho. '+
     (negOper ? '<b>A operação foi negativa em '+negOper+' de '+ms.length+' meses.</b>' : '')+
     '</div>'+ grafico(w => fluxoCaixa(w, ms.map(fMes), oper.entradas, oper.saidas))+
-    '<div class="cores"><span><i style="background:'+C.verde+'"></i>entradas</span>'+
-    '<span><i style="background:'+C.vermelho+'"></i>saídas</span></div></div>'+
+    '<div class="cores"><span><i style="background:'+C.entra+'"></i>entradas</span>'+
+    '<span><i style="background:'+C.sai+'"></i>saídas</span></div></div>'+
 
   '<div class="card"><h2>DRE base caixa — '+esc(rotuloPeriodo())+
     (F.amb==='todos' ? '' : ' · '+esc(D.amb[+F.amb]))+'</h2>'+
