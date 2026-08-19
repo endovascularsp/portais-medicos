@@ -715,6 +715,26 @@ function colunasVariacao(w, itens, antesPorNome, opts){
     '<span style="color:'+C.verde+'">▼ caiu</span></div>';
 }
 
+// Curva suave passando pelos pontos, em vez de segmentos retos. É o mesmo
+// `tension` do Chart.js usado no gráfico de evolução da Produtividade: cada
+// trecho vira uma bézier cujos pontos de controle apontam na direção dos
+// vizinhos. A tensão é baixa de propósito — alta demais faz a curva
+// ultrapassar os pontos e inventar meses que não existem.
+function caminhoSuave(pts, tensao){
+  const t = tensao == null ? 0.16 : tensao;
+  if(pts.length < 3)
+    return pts.map((p,i) => (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  let d = 'M'+pts[0][0].toFixed(1)+' '+pts[0][1].toFixed(1);
+  for(let i=0;i<pts.length-1;i++){
+    const p0 = pts[i-1] || pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2] || p2;
+    const c1x = p1[0] + (p2[0]-p0[0])*t, c1y = p1[1] + (p2[1]-p0[1])*t;
+    const c2x = p2[0] - (p3[0]-p1[0])*t, c2y = p2[1] - (p3[1]-p1[1])*t;
+    d += ' C'+c1x.toFixed(1)+' '+c1y.toFixed(1)+','+c2x.toFixed(1)+' '+c2y.toFixed(1)+
+         ','+p2[0].toFixed(1)+' '+p2[1].toFixed(1);
+  }
+  return d;
+}
+
 // Uma linha por ano, doze pontos. Para comparar anos a linha ganha da barra:
 // o olho segue a curva e vê o formato do ano (o pico de março, a queda do
 // segundo semestre) sem precisar medir barra a barra.
@@ -745,16 +765,10 @@ function linhasAno(w, series, alt){
       '" font-size="11.5">'+MES[m]+'</text>';
   }
 
-  // Hachura sob cada curva. Com três anos sobrepostos, área sólida esconderia
-  // quem está atrás; a hachura deixa ver através, e cada ano ganha um ângulo
-  // diferente de risco — assim dá para separar as áreas até no preto e branco.
-  const ANG = [45, -45, 0, 90, 20];
-  const padroes = series.map(function(s,i){
-    return '<pattern id="hachura'+i+'" patternUnits="userSpaceOnUse" width="7" height="7" '+
-      'patternTransform="rotate('+ANG[i % ANG.length]+')">'+
-      '<line x1="0" y1="0" x2="0" y2="7" stroke="'+s.cor+'" stroke-width="2.2" opacity="0.42"/>'+
-      '</pattern>';
-  }).join('');
+  // Área preenchida sob a curva, translúcida — o mesmo tratamento do gráfico de
+  // evolução no portal de Produtividade (`fill:true` com a cor a 14%). Com três
+  // anos sobrepostos a transparência baixa deixa ver as camadas de trás.
+  const OPACIDADE = 0.14;
 
   // Mês sem lançamento CORTA a linha em vez de puxá-la até o zero: nos meses
   // futuros de 2026 não há gasto ainda, e uma linha despencando para zero
@@ -771,9 +785,9 @@ function linhasAno(w, series, alt){
     return trechos.map(function(pts){
       if(pts.length === 1)
         return '<circle cx="'+pts[0][0].toFixed(1)+'" cy="'+pts[0][1].toFixed(1)+'" r="4" fill="'+s.cor+'"/>';
-      const d = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+      const d = caminhoSuave(pts);
       return '<path d="'+d+' L'+pts[pts.length-1][0].toFixed(1)+' '+base+' L'+pts[0][0].toFixed(1)+
-        ' '+base+' Z" fill="url(#hachura'+idx+')" stroke="none"/>'+
+        ' '+base+' Z" fill="'+s.cor+'" opacity="'+OPACIDADE+'" stroke="none"/>'+
         '<path d="'+d+'" fill="none" stroke="'+s.cor+'" stroke-width="2.6" stroke-linejoin="round" '+
         'stroke-linecap="round"/>';
     }).join('') + s.dados.map(function(v,i){
@@ -793,8 +807,7 @@ function linhasAno(w, series, alt){
       '" fill="transparent"/></g>';
   }
   return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" '+
-    'aria-label="Custo mês a mês, uma linha por ano"><defs>'+padroes+'</defs>'+
-    g+linhas+alvos+'</svg>';
+    'aria-label="Custo mês a mês, uma linha por ano">'+g+linhas+alvos+'</svg>';
 }
 
 // Um grupo de colunas por mês, uma cor por ano. Serve para a pergunta que só
