@@ -216,6 +216,11 @@
   .migalha span{color:var(--texto3)}
   .migalha b{font-weight:700;color:var(--navy)}
   .dims{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  /* Barra de filtros que pertence a UM gráfico. Fica dentro do cartão e com
+     fundo cinza para não ser confundida com a barra de filtros da tela. */
+  .filtro-grafico{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--fundo);
+    border:1px solid var(--borda);border-radius:10px;padding:11px 14px;margin-bottom:16px}
+  .filtro-grafico .limpar{margin-left:auto}
 
   .vazio{text-align:center;color:var(--texto3);padding:36px 18px;font-size:13px}
   .nota{font-size:12px;color:var(--texto2);line-height:1.65;margin-top:14px;padding:11px 14px;
@@ -680,6 +685,68 @@ function colunasVariacao(w, itens, antesPorNome, opts){
     (cauda.length ? '<span><i style="background:'+C.borda2+'"></i>demais, somados</span>' : '')+
     '<span style="color:'+C.vermelho+'">▲ subiu vs '+esc(rotuloAnoAnterior())+'</span>'+
     '<span style="color:'+C.verde+'">▼ caiu</span></div>';
+}
+
+// Uma linha por ano, doze pontos. Para comparar anos a linha ganha da barra:
+// o olho segue a curva e vê o formato do ano (o pico de março, a queda do
+// segundo semestre) sem precisar medir barra a barra.
+function linhasAno(w, series, alt){
+  const h=alt||340, pe=66, pd=18, pt=22, pb=44;
+  const iw=w-pe-pd, ih=h-pt-pb;
+  const comValor = series.reduce((s,x) => s.concat(x.dados.filter(v => v > 0)), []);
+  const mx = Math.max.apply(null, comValor.concat([1]));
+  const passo = iw/11;                       // doze pontos, onze intervalos
+  const px = i => pe + passo*i;
+  const py = v => pt + ih - (v/mx)*ih;
+
+  let g = '';
+  for(let i=0;i<=4;i++){
+    const v = mx*(1-i/4), yy = py(v);
+    g += '<line x1="'+pe+'" y1="'+yy.toFixed(1)+'" x2="'+(w-pd)+'" y2="'+yy.toFixed(1)+
+      '" stroke="'+(i===4?C.texto2:C.borda)+'" stroke-width="'+(i===4?1.6:1)+'"/>'+
+      '<text x="'+(pe-9)+'" y="'+(yy+3.5).toFixed(1)+'" fill="'+(i===4?C.texto2:C.texto3)+
+      '" font-size="10"'+(i===4?' font-weight="700"':'')+' text-anchor="end">'+
+      (i===4 ? '0' : curto(v).replace('R$ ',''))+'</text>';
+  }
+  for(let m=0;m<12;m++)
+    g += '<text x="'+px(m).toFixed(1)+'" y="'+(h-24)+'" text-anchor="middle" fill="'+C.texto2+
+      '" font-size="11.5">'+MES[m]+'</text>';
+
+  // Mês sem lançamento CORTA a linha em vez de puxá-la até o zero: nos meses
+  // futuros de 2026 não há gasto ainda, e uma linha despencando para zero
+  // pareceria queda de custo quando é só ausência de dado.
+  const linhas = series.map(function(s){
+    const trechos = [];
+    let atual = [];
+    s.dados.forEach(function(v,i){
+      if(v > 0){ atual.push([px(i), py(v)]); }
+      else { if(atual.length) trechos.push(atual); atual = []; }
+    });
+    if(atual.length) trechos.push(atual);
+    return trechos.map(function(pts){
+      if(pts.length === 1)
+        return '<circle cx="'+pts[0][0].toFixed(1)+'" cy="'+pts[0][1].toFixed(1)+'" r="4" fill="'+s.cor+'"/>';
+      return '<path d="'+pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+
+        '" fill="none" stroke="'+s.cor+'" stroke-width="2.6" stroke-linejoin="round" '+
+        'stroke-linecap="round"/>';
+    }).join('') + s.dados.map(function(v,i){
+      return v > 0 ? '<circle cx="'+px(i).toFixed(1)+'" cy="'+py(v).toFixed(1)+'" r="3.6" fill="'+
+        s.cor+'" stroke="#fff" stroke-width="1.6"/>' : '';
+    }).join('');
+  }).join('');
+
+  // Faixa invisível por mês: mostra todos os anos daquele mês de uma vez, que é
+  // a leitura que interessa ("como foi março em cada ano").
+  let alvos = '';
+  for(let m=0;m<12;m++){
+    const linhasDica = series.map(s => '<b style="display:inline;color:'+s.cor+'">■</b> '+s.nome+
+      ': '+(s.dados[m] ? brl(s.dados[m]) : 'sem lançamento'));
+    alvos += '<g data-d="'+dica(MES[m], linhasDica)+'">'+
+      '<rect x="'+(px(m)-passo/2).toFixed(1)+'" y="'+pt+'" width="'+passo.toFixed(1)+'" height="'+ih+
+      '" fill="transparent"/></g>';
+  }
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" '+
+    'aria-label="Custo mês a mês, uma linha por ano">'+g+linhas+alvos+'</svg>';
 }
 
 // Um grupo de colunas por mês, uma cor por ano. Serve para a pergunta que só
@@ -1403,45 +1470,107 @@ function vistaAnalise(){
     cartaoComparativo();
 }
 
-// Mês a mês, um ano por cor. Acompanha o caminho do drill: se você desceu até
-// "Honorários médicos", o comparativo é dos honorários — não do custo inteiro.
-// E ignora o filtro de período de propósito: o gráfico É a comparação entre
-// anos, e recortá-lo a um mês esvaziaria a única coisa que ele tem a dizer.
+// Mês a mês, um ano por cor. Tem FILTROS PRÓPRIOS porque não obedece ao período
+// de cima: o gráfico É a comparação entre anos, e recortá-lo a um mês esvaziaria
+// a única coisa que ele tem a dizer. Sem um corte escolhido aqui, ele acompanha
+// o caminho aberto no drill acima.
+let CMP = { escondidos:{}, dim:'cat', chave:'', tipo:'linha' };
+function cmpAno(a){ CMP.escondidos[a] = !CMP.escondidos[a]; desenhar(); }
+function cmpDim(d){ CMP.dim = d; CMP.chave = ''; desenhar(); }
+function cmpChave(v){ CMP.chave = v; desenhar(); }
+function cmpTipo(t){ CMP.tipo = t; desenhar(); }
+function cmpLimpar(){ CMP = { escondidos:{}, dim:'cat', chave:'', tipo:CMP.tipo }; desenhar(); }
+
 function cartaoComparativo(){
   const dr = DRILLS.analise;
   const anos = [];
   for(let a = +D.de.slice(0,4); a <= +D.ate.slice(0,4); a++) anos.push(String(a));
-  const CORES_ANO = [C.azulPal, C.azulCl, C.navy, C.ouro];
+  const CORES_ANO = [C.azulPal, C.azulCl, C.navy, C.ouro, C.verde];
 
-  const base = linhasDoCaminho(dr, D.pagar.filter(l => passa(l, COMP, true)));
+  // O centro de custo e o botão de transferências continuam valendo — são
+  // decisões sobre O QUE É CUSTO, não sobre o recorte de tempo.
+  const universo = D.pagar.filter(l => passa(l, COMP, true));
+  const proprio = CMP.chave !== '';
+  const base = proprio
+    ? universo.filter(l => String(DIM[CMP.dim].chave(l)) === CMP.chave)
+    : linhasDoCaminho(dr, universo);
+
   const series = anos.map(function(ano, i){
     const dados = [];
     for(let m=1;m<=12;m++){
-      const chave = ano+'-'+String(m).padStart(2,'0');
-      dados.push(base.filter(l => l[COMP].slice(0,7) === chave).reduce((s,l)=>s+l[TOTAL],0));
+      const mes = ano+'-'+String(m).padStart(2,'0');
+      dados.push(base.filter(l => l[COMP].slice(0,7) === mes).reduce((s,l)=>s+l[TOTAL],0));
     }
     return { nome: ano, dados: dados, cor: CORES_ANO[i % CORES_ANO.length],
              total: dados.reduce((s,v)=>s+v,0) };
   }).filter(s => s.total > 0);
+  const visiveis = series.filter(s => !CMP.escondidos[s.nome]);
+
+  // Opções do corte: só valores que têm gasto, do maior para o menor — uma
+  // lista alfabética de 840 fornecedores enterraria os que importam.
+  const totais = new Map();
+  universo.forEach(function(l){
+    const k = DIM[CMP.dim].chave(l);
+    totais.set(k, (totais.get(k)||0) + l[TOTAL]);
+  });
+  const opcoes = Array.from(totais.entries()).filter(e => e[1] > 0)
+    .sort((a,b) => b[1]-a[1])
+    .map(e => '<option value="'+esc(String(e[0]))+'"'+(CMP.chave===String(e[0])?' selected':'')+'>'+
+      esc(cortar(DIM[CMP.dim].nome(e[0]), 44))+' — '+curto(e[1])+'</option>').join('');
 
   const doCaminho = dr.caminho.length ? dr.caminho[dr.caminho.length-1].rotulo : null;
+  const oQueMostra = proprio ? DIM[CMP.dim].nome(
+      CMP.dim === 'mes' ? CMP.chave : +CMP.chave)
+    : (doCaminho || 'todo o custo');
+
+  const filtros =
+    '<div class="filtro-grafico">'+
+      '<div class="fg"><span class="rot">Anos</span>'+
+        series.map(s => '<button class="atalho" aria-pressed="'+(!CMP.escondidos[s.nome])+
+          '" style="'+(!CMP.escondidos[s.nome] ? 'border-color:'+s.cor+';color:'+s.cor : '')+
+          '" onclick="cmpAno(\''+s.nome+'\')">'+s.nome+'</button>').join('')+'</div>'+
+      '<div class="f-sep"></div>'+
+      '<div class="fg"><span class="rot">Comparar</span>'+
+        '<select class="sel" onchange="cmpDim(this.value)">'+
+          ['grupo','cat','forn','amb'].map(d => '<option value="'+d+'"'+
+            (CMP.dim===d?' selected':'')+'>'+esc(DIM[d].rot)+'</option>').join('')+
+        '</select>'+
+        '<select class="sel" style="max-width:330px" onchange="cmpChave(this.value)">'+
+          '<option value="">'+(doCaminho ? '— acompanhar o caminho acima —' : '— todo o custo —')+
+          '</option>'+opcoes+'</select></div>'+
+      '<div class="f-sep"></div>'+
+      '<div class="fg"><span class="rot">Desenho</span>'+
+        '<button class="atalho" aria-pressed="'+(CMP.tipo==='linha')+'" onclick="cmpTipo(\'linha\')">Linhas</button>'+
+        '<button class="atalho" aria-pressed="'+(CMP.tipo==='barra')+'" onclick="cmpTipo(\'barra\')">Barras</button>'+
+      '</div>'+
+      (proprio || Object.keys(CMP.escondidos).some(k => CMP.escondidos[k])
+        ? '<button class="limpar" onclick="cmpLimpar()">limpar filtros do gráfico</button>' : '')+
+    '</div>';
+
   return '<div class="card"><h2>Mês a mês, ano contra ano</h2>'+
-    '<div class="leg">'+(doCaminho
-      ? 'Só <b>'+esc(doCaminho)+'</b>, acompanhando o caminho aberto acima. '
-      : 'Todo o custo. Desça um nível acima e este gráfico desce junto. ')+
-    'Por competência, ano civil inteiro — <b>não usa o filtro de período</b>, porque a comparação '+
-    'entre anos é justamente o que ele tem para dizer.</div>'+
-    (series.length ? grafico(w => colunasAno(w, series)) +
-      '<div class="cores">'+series.map(s => '<span><i style="background:'+s.cor+'"></i>'+
-        s.nome+' · '+curto(s.total)+'</span>').join('')+'</div>'+
-      '<div class="rolar" style="margin-top:16px"><table><thead><tr><th>Ano</th>'+
-      MES.map(m => '<th class="r">'+m+'</th>').join('')+'<th class="r">Total</th>'+
-      '</tr></thead><tbody>'+
-      series.map(s => '<tr><td style="font-weight:700;color:'+s.cor+'">'+s.nome+'</td>'+
-        s.dados.map(v => '<td class="r num">'+(v ? curto(v).replace('R$ ','') : '—')+'</td>').join('')+
-        '<td class="r num" style="font-weight:700">'+curto(s.total).replace('R$ ','')+'</td></tr>').join('')+
-      '</tbody></table></div>'
-     : '<div class="vazio">Sem lançamentos para comparar.</div>')+'</div>';
+    '<div class="leg">Mostrando <b>'+esc(oQueMostra)+'</b>, por competência, ano civil inteiro. '+
+    '<b>Este gráfico não usa o filtro de período</b> lá de cima — o centro de custo, sim.</div>'+
+    filtros+
+    (visiveis.length
+      ? (CMP.tipo === 'linha' ? grafico(w => linhasAno(w, visiveis))
+                              : grafico(w => colunasAno(w, visiveis))) +
+        '<div class="cores">'+visiveis.map(s => '<span><i style="background:'+s.cor+'"></i>'+
+          s.nome+' · '+curto(s.total)+'</span>').join('')+'</div>'+
+        '<div class="rolar" style="margin-top:16px"><table><thead><tr><th>Ano</th>'+
+        MES.map(m => '<th class="r">'+m+'</th>').join('')+'<th class="r">Total</th>'+
+        '<th class="r">vs anterior</th></tr></thead><tbody>'+
+        visiveis.map(function(s,i){
+          const antes = visiveis[i-1];
+          const v = antes ? pct(s.total, antes.total) : null;
+          return '<tr><td style="font-weight:700;color:'+s.cor+'">'+s.nome+'</td>'+
+            s.dados.map(x => '<td class="r num">'+(x ? curto(x).replace('R$ ','') : '—')+'</td>').join('')+
+            '<td class="r num" style="font-weight:700">'+curto(s.total).replace('R$ ','')+'</td>'+
+            '<td class="r num" style="color:'+(v===null?'var(--texto3)':v>0?'var(--vermelho)':'var(--verde)')+
+              ';font-weight:600">'+(v===null?'—':(v>0?'+':'')+v.toFixed(0)+'%')+'</td></tr>';
+        }).join('')+
+        '</tbody></table></div>'
+      : '<div class="vazio">Nenhum ano selecionado, ou sem lançamentos para comparar.</div>')+
+    '</div>';
 }
 
 /* ===================== VISTA: centros de custo ===================== */
