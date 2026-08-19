@@ -171,6 +171,18 @@
   tr.cl:hover td{background:var(--azul-fundo)}
   .rolar{overflow-x:auto}
   .rolar-y{overflow-y:auto;max-height:620px;padding-right:6px}
+  /* Tabela comprida dentro do cartão, com rolagem própria e cabeçalho preso no
+     topo — sem isso a pessoa rola a página inteira e perde de vista qual coluna
+     é qual justamente quando mais precisa. */
+  .tabela-rolante{max-height:540px;overflow:auto;border:1px solid var(--borda);
+    border-radius:8px}
+  .tabela-rolante table.presa thead th{position:sticky;top:0;z-index:2;background:var(--branco);
+    box-shadow:inset 0 -1.5px 0 var(--borda2)}
+  .tabela-rolante table.presa td:first-child,
+  .tabela-rolante table.presa th:first-child{padding-left:12px}
+  .grade2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .grade2 > .card{margin-bottom:18px}
+  .legenda-lado.uma-coluna{grid-template-columns:1fr}
   .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.3px;padding:3px 9px;
     border-radius:20px;white-space:nowrap;text-transform:uppercase}
   .tag.venc{background:#FBEAE8;color:var(--vermelho)}
@@ -237,7 +249,9 @@
       background:none;border:1.5px solid rgba(255,255,255,.35);border-radius:8px;
       padding:6px 11px;cursor:pointer}
     .rosca-linha{grid-template-columns:1fr}
+    .grade2{grid-template-columns:1fr}
   }
+  @media(max-width:1320px){ .rosca-linha{grid-template-columns:200px 1fr;gap:18px} }
 </style>
 </head>
 <body>
@@ -444,12 +458,19 @@ function _grade(e, pe, w, pd, passos){
   let g = '';
   for(let i=0;i<=passos;i++){
     const v = e.alto - (e.faixa*i/passos), yy = e.y(v);
-    const zeroAqui = Math.abs(v) < e.faixa/1000;
+    if(Math.abs(v) < e.faixa/1000) continue;      // o zero é desenhado à parte, mais forte
     g += '<line x1="'+pe+'" y1="'+yy.toFixed(1)+'" x2="'+(w-pd)+'" y2="'+yy.toFixed(1)+
-      '" stroke="'+(zeroAqui?C.borda2:C.borda)+'" stroke-width="'+(zeroAqui?1.5:1)+'"/>'+
+      '" stroke="'+C.borda+'" stroke-width="1"/>'+
       '<text x="'+(pe-8)+'" y="'+(yy+3.5).toFixed(1)+'" fill="'+C.texto3+
       '" font-size="9.5" text-anchor="end">'+curto(v).replace('R$ ','')+'</text>';
   }
+  // A linha do zero é sempre desenhada, e mais escura que as outras: sem ela não
+  // dá para ver de bate-pronto qual mês fechou no vermelho — o olho precisa de
+  // uma referência fixa para saber de que lado da conta cada barra está.
+  g += '<line x1="'+pe+'" y1="'+e.zero.toFixed(1)+'" x2="'+(w-pd)+'" y2="'+e.zero.toFixed(1)+
+    '" stroke="'+C.texto2+'" stroke-width="1.6"/>'+
+    '<text x="'+(pe-8)+'" y="'+(e.zero+3.5).toFixed(1)+'" fill="'+C.texto2+
+    '" font-size="10" font-weight="700" text-anchor="end">0</text>';
   return g;
 }
 
@@ -723,7 +744,7 @@ function agrupar(linhas, dim){
 // corte mais macro (grupo) e desce até o lançamento — foi o pedido: um gráfico
 // só que abre, em vez de 61 barras de uma vez.
 function novoDrill(id){ return { id:id, dim:'grupo', caminho:[] }; }
-const DRILLS = { geral: novoDrill('geral'), analise: novoDrill('analise') };
+const DRILLS = { analise: novoDrill('analise') };
 
 function drDescer(id, dim, chave, rotulo){
   DRILLS[id].caminho.push({dim:dim, chave:chave, rotulo:rotulo}); desenhar();
@@ -925,19 +946,19 @@ function aplicar(){
   F.ate = document.getElementById('f-ate').value;
   if(F.de > F.ate){ const t = F.de; F.de = F.ate; F.ate = t; }
   F.amb = document.getElementById('f-amb').value;
-  guardarEscolha(); DRILLS.geral.caminho = []; DRILLS.analise.caminho = [];
+  guardarEscolha(); DRILLS.analise.caminho = [];
   montarFiltros(); desenhar();
 }
 function atalho(tipo){
   const j = janela(tipo); F.de = j.de; F.ate = j.ate;
-  guardarEscolha(); DRILLS.geral.caminho = []; DRILLS.analise.caminho = [];
+  guardarEscolha(); DRILLS.analise.caminho = [];
   montarFiltros(); desenhar();
 }
 function alternarMov(){ F.mov = !F.mov; montarFiltros(); desenhar(); }
 function limpar(){
   delete escolhido[VISTA];
   F.amb = 'todos'; F.mov = false;
-  DRILLS.geral = novoDrill('geral'); DRILLS.analise = novoDrill('analise');
+  DRILLS.analise = novoDrill('analise');
   TAB = { venc:'', sit:'', forn:'', cat:'', amb:'' };
   aplicarPadraoDaVista(); montarFiltros(); desenhar();
 }
@@ -978,14 +999,14 @@ function faixas(){
   });
   return f;
 }
-function graficoFaixas(fx){
+function graficoFaixas(fx, alt){
   return colunasRotuladas([
     ['Vencido', fx.vencido[0], fx.vencido[1]],
     ['Até 30 dias', fx.ate30[0], fx.ate30[1]],
     ['31 a 60 dias', fx.d3160[0], fx.d3160[1]],
     ['61 a 90 dias', fx.d6190[0], fx.d6190[1]],
     ['Mais de 90', fx.mais90[0], fx.mais90[1]],
-  ], [C.vermelho, C.laranja, C.azul, C.azulCl, C.azulPal]);
+  ], [C.vermelho, C.laranja, C.azul, C.azulCl, C.azulPal], alt);
 }
 
 /* ===================== insights ===================== */
@@ -1098,24 +1119,23 @@ function vistaGeral(){
     '<div class="nota">O Conta Azul não devolve a data em que o dinheiro andou, só a de vencimento — '+
     'é ela que posiciona cada barra. Para contas pagas em dia, dá no mesmo.</div></div>'+
 
-  '<div class="card"><h2>Custos por categoria</h2>'+
-    '<div class="leg">Pela natureza do gasto, usando os grupos que o próprio Conta Azul classifica. '+
-    'Passe o mouse sobre uma fatia para ver valor, percentual e quantidade.</div>'+
-    '<div class="rosca-linha">'+
-      rosca(fatias, curto(custo).replace('R$ ',''), rotuloPeriodo().toUpperCase(), 290)+
-      '<div class="legenda-lado">'+fatias.map(f =>
-        '<div data-d="'+dica(f[0],[brl(f[1])+' · '+(100*f[1]/totFatias).toFixed(1)+'%'])+'">'+
-        '<i style="background:'+f[2]+'"></i><div><b>'+esc(f[0])+'</b>'+
-        '<span>'+brl(f[1])+' · '+(100*f[1]/totFatias).toFixed(1)+'%</span></div></div>').join('')+
-      '</div></div></div>'+
-
-  blocoDrill('geral', 'Análise de custos',
-    'Começa no corte mais macro e desce até o lançamento. Clique numa barra para abrir.', false)+
-
-  '<div class="card"><h2>Contas a pagar por faixa de vencimento</h2>'+
-    '<div class="leg">Quanto já venceu e quanto está chegando. Considera todas as contas em aberto, '+
-    'inclusive as que vencem depois do período filtrado.</div>'+
-    graficoFaixas(fx)+'</div>'+
+  // Estes dois são leituras rápidas, não análises: cabem lado a lado sem apertar.
+  '<div class="grade2">'+
+    '<div class="card"><h2>Custos por categoria</h2>'+
+      '<div class="leg">Pela natureza do gasto, usando os grupos que o próprio Conta Azul classifica. '+
+      'Passe o mouse sobre uma fatia para ver valor e percentual.</div>'+
+      '<div class="rosca-linha">'+
+        rosca(fatias, curto(custo).replace('R$ ',''), rotuloPeriodo().toUpperCase(), 250)+
+        '<div class="legenda-lado uma-coluna">'+fatias.map(f =>
+          '<div data-d="'+dica(f[0],[brl(f[1])+' · '+(100*f[1]/totFatias).toFixed(1)+'%'])+'">'+
+          '<i style="background:'+f[2]+'"></i><div><b>'+esc(f[0])+'</b>'+
+          '<span>'+brl(f[1])+' · '+(100*f[1]/totFatias).toFixed(1)+'%</span></div></div>').join('')+
+        '</div></div></div>'+
+    '<div class="card"><h2>Contas a pagar por faixa de vencimento</h2>'+
+      '<div class="leg">Quanto já venceu e quanto está chegando. Considera todas as contas em aberto, '+
+      'inclusive as que vencem depois do período filtrado.</div>'+
+      graficoFaixas(fx, 460)+'</div>'+
+  '</div>'+
 
   '<div class="card"><h2>Insights</h2>'+
     '<div class="leg">Escrito pela própria tela a partir dos números. Cada linha some sozinha quando '+
@@ -1183,12 +1203,14 @@ function vistaPagar(){
     kpiCusto('Vence em 30 dias', curto(fx.ate30[0]), null, fx.ate30[1]+' conta(s)', '',
       'O que chega antes do próximo fechamento.') +
   '</div>'+
-  '<div class="card"><h2>Como a dívida se distribui no tempo</h2>'+
-    '<div class="leg">Tudo que ainda tem saldo em aberto, na ordem em que chega.</div>'+
-    graficoFaixas(fx)+'</div>'+
-  '<div class="card"><h2>Para quem se deve mais</h2>'+
-    '<div class="leg">Somando só o que está em aberto. Os 12 maiores credores.</div>'+
-    ranking(rankForn, {corte:44, pe:320, alt:28})+'</div>'+
+  '<div class="grade2">'+
+    '<div class="card"><h2>Como a dívida se distribui no tempo</h2>'+
+      '<div class="leg">Tudo que ainda tem saldo em aberto, na ordem em que chega.</div>'+
+      graficoFaixas(fx, 460)+'</div>'+
+    '<div class="card"><h2>Para quem se deve mais</h2>'+
+      '<div class="leg">Somando só o que está em aberto. Os 12 maiores credores.</div>'+
+      ranking(rankForn, {corte:34, pe:400, alt:34})+'</div>'+
+  '</div>'+
   '<div class="card"><h2>Contas em aberto</h2>'+
     '<div class="leg">Por data de vencimento. Use os filtros abaixo para achar uma conta específica — '+
     'eles valem só para esta tabela.</div>'+
@@ -1210,9 +1232,10 @@ function vistaPagar(){
     (temFiltro ? '<div class="leg" style="margin-bottom:10px">Mostrando <b>'+visiveis.length+
       '</b> de '+ab.length+' contas · <b>'+brl(somaVisivel)+'</b> em aberto · '+
       '<a href="#" onclick="limparTabela();return false">limpar filtros da tabela</a></div>' : '')+
-    '<div class="rolar"><table><thead><tr><th>Vencimento</th><th>Situação</th><th>Fornecedor</th>'+
-    '<th>Descrição</th><th>Categoria</th><th>Centro de custo</th><th class="r">Total</th>'+
-    '<th class="r">Falta pagar</th></tr></thead><tbody>'+
+    '<div class="tabela-rolante"><table class="presa"><thead><tr><th>Vencimento</th>'+
+    '<th>Situação</th><th>Fornecedor</th><th>Descrição</th><th>Categoria</th>'+
+    '<th>Centro de custo</th><th class="r">Total</th><th class="r">Falta pagar</th>'+
+    '</tr></thead><tbody>'+
     (visiveis.length ? visiveis.slice(0,300).map(function(l){
       const s = situacaoDe(l);
       const sit = s==='vencido' ? '<span class="tag venc">vencido</span>'
