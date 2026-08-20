@@ -14,6 +14,7 @@ QUANDO A TELA DE REGRAS EXISTIR (Fase 3), o motor passa a ler de
 `honorarios_regras` no Supabase e este módulo vira apenas o seed inicial.
 """
 from __future__ import annotations
+import re
 import unicodedata
 
 ENDO = "Endovascular SP"
@@ -148,7 +149,7 @@ INDICACAO_DECIDIDA = {
     # "amil" está dentro de "c-amil-o". Era por isso que São Camilo contava como
     # lead da clínica — casava com o plano Amil, não com uma decisão de ninguém.
     "sao camilo":      ("medico", None),
-    "amil":            ("clinica", None),
+    "amil":            ("clinica", None),   # só palavra inteira, ver PALAVRA_INTEIRA
     "aplicativo":      ("clinica", None),
     "pelo convenio":   ("clinica", None),
     "doctoralia":      ("clinica", None),
@@ -174,6 +175,21 @@ INDICACAO_DECIDIDA = {
     "sheila moreno":        ("medico", None),
     "marcia dermato":       ("medico", None),
 }
+
+# Textos curtos que NÃO podem casar por pedaço: "amil" (o plano) está dentro de
+# "c-amil-o" e de "Dr Amilton", e isso já tirou repasse de médico sem ninguém ter
+# decidido nada — São Camilo virou lead da clínica por acidente, e o Dr. Amilton,
+# que é uma PESSOA, foi lido como plano de saúde. Corrigido em 20/08/2026 a pedido
+# do Thiago. Quem estiver aqui só casa cercado por não-letra: "Amil" sim,
+# "Amilton" e "Camilo" não.
+PALAVRA_INTEIRA = {"amil"}
+
+
+def casa_texto(texto: str, k: str) -> bool:
+    if texto in PALAVRA_INTEIRA:
+        return re.search(rf"(?<![a-z0-9]){re.escape(texto)}(?![a-z0-9])", k) is not None
+    return texto in k
+
 
 # Decisão do Dr. Igor, reafirmada em 03/08/2026: **na dúvida, conta como lead do
 # médico**. A clínica prefere pagar a mais a penalizar um médico por falha de
@@ -330,7 +346,7 @@ def lado_do_lead(indicacao, nomes_profissionais=(), executor=None) -> tuple:
         #    casa por comparação automática ("Dra Chris" não contém
         #    "christiane"). Sai daqui quando a tela de decisão existir.
         for texto, (lado, quem) in INDICACAO_DECIDIDA.items():
-            if texto not in k:
+            if not casa_texto(texto, k):
                 continue
             if lado == "casa":
                 if quem and quem in ex:

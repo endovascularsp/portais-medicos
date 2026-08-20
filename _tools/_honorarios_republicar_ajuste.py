@@ -189,8 +189,10 @@ def main() -> int:
         for inner in alvos:
             emp = inner["empresa"]
             path = P.alvo_individual(prof, emp)
-            blob = P.cifrar({G.slugify(prof): P.interno_individual(inner)},
-                            chaves[prof])
+            # profs_do_blob e nao {slug: inner}: quem enxerga outro profissional
+            # (P.VISIBILIDADE_EXTRA — a Simone ve a Nicole) perderia o outro nome
+            # do mes republicado se o blob fosse montado com um so.
+            blob = P.cifrar(P.profs_do_blob(obj, prof, emp), chaves[prof])
             res = P.injetar_individual(path, a.periodo, label, blob, a.escrever)
             aj = inner["resumo"].get("Ajustes (R$)")
             detalhes.append(f"{emp}: {res}"
