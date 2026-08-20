@@ -140,6 +140,14 @@ INDICACAO_DECIDIDA = {
     "chat gpt":        ("clinica", None),
     "chatgpt":         ("clinica", None),
     "fotona day":      ("clinica", None),
+    # São Camilo é o hospital onde o Dr. Manoel atende: quem chega por ali vem
+    # pelo nome dele, não pela clínica (Thiago, 20/08/2026). Uma linha só resolve
+    # as três grafias — "Sao Camilo", "Hosp São Camilo", "Hospital São Camilo -
+    # Dr Manoel" — porque a busca é por substring.
+    # TEM de vir antes de "amil": a busca para no primeiro texto que casa, e
+    # "amil" está dentro de "c-amil-o". Era por isso que São Camilo contava como
+    # lead da clínica — casava com o plano Amil, não com uma decisão de ninguém.
+    "sao camilo":      ("medico", None),
     "amil":            ("clinica", None),
     "aplicativo":      ("clinica", None),
     "pelo convenio":   ("clinica", None),
