@@ -55,6 +55,34 @@ CHAVES_EXTRAS = {
     "Nicole Tenenbaum Szajubok": "v8IjSyPxD3NUiUyU2WO2KRIFehv21y0-",
 }
 
+# Quem enxerga, dentro do PRÓPRIO portal, também os dados de outro profissional.
+#   {quem vê: [quem é visto]}
+# O portal continua cifrado com a chave de quem vê — quem é visto não ganha
+# acesso nenhum em troca, e o portal dele não muda. Na tela aparece um menu
+# "Profissional" para alternar entre os nomes, um de cada vez.
+# Simone x Nicole: pedido do Thiago em 20/08/2026.
+VISIBILIDADE_EXTRA = {
+    "Simone Matsuda Torricelli": ["Nicole Tenenbaum Szajubok"],
+}
+
+
+def profs_do_blob(obj: dict, prof: str, emp: str) -> dict:
+    """O conteúdo do blob individual: o dono primeiro, depois quem ele enxerga.
+
+    A ORDEM importa: o portal trata a primeira chave como o dono da tela."""
+    fonte = obj["profs"]
+    dentro = {}
+    meu = next((v for v in fonte.values()
+                if v["profissional"] == prof and v["empresa"] == emp), None)
+    if meu:
+        dentro[G.slugify(prof)] = interno_individual(meu)
+    for outro in VISIBILIDADE_EXTRA.get(prof, []):
+        v = next((x for x in fonte.values()
+                  if x["profissional"] == outro and x["empresa"] == emp), None)
+        if v:
+            dentro[G.slugify(outro)] = interno_individual(v)
+    return dentro
+
 
 # --------------------------------------------------------------------------
 # Cripto
@@ -294,7 +322,9 @@ def validar(periodo_id: str, chaves: dict) -> int:
         # período antigo, é preciso tirá-los do lado esperado — senão a
         # diferença aparece em toda linha e esconde as de verdade. Já num
         # período novo eles TÊM que estar lá, e aí a comparação é completa.
-        atual_inner = list(atual.values())[0]
+        # o blob pode trazer mais de um profissional (VISIBILIDADE_EXTRA);
+        # a comparação é sempre com o dono do portal
+        atual_inner = atual.get(G.slugify(prof)) or list(atual.values())[0]
         ja_tem_novos = bool((atual_inner.get("atendimentos") or [{}])[0].get("Regra aplicada"))
         esperado = interno_individual(inner)
         if not ja_tem_novos:
@@ -405,10 +435,13 @@ def main():
         if prof not in chaves:
             print(f"  [SEM CHAVE] {emp:16s} {prof}")
             continue
-        blob = cifrar({G.slugify(prof): interno_individual(inner)}, chaves[prof])
+        dentro = profs_do_blob(obj, prof, emp)
+        blob = cifrar(dentro, chaves[prof])
+        extras = len(dentro) - 1
         res = injetar_individual(path, a.periodo, label, blob, a.escrever)
         print(f"  {emp:16s} {prof[:30]:32s} {len(inner['atendimentos']):4d}ln  "
-              f"-> {str(path.relative_to(REPO)):46s} {res}")
+              f"-> {str(path.relative_to(REPO)):46s} {res}"
+              + (f"  (+{extras} visível)" if extras > 0 else ""))
 
     if a.piloto:
         print("\n(piloto: admins não tocados)")

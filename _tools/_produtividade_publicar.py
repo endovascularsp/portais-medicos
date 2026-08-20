@@ -113,13 +113,19 @@ def main(inst: str, piloto: str | None, escrever: bool):
             print(f"  [SEM PORTAL] {prof[:32]:34s} R$ {tot:>11,.2f} — "
                   f"criar com _produtividade_criar_portal.py")
             continue
+        # O dono primeiro; depois quem ele enxerga (P.VISIBILIDADE_EXTRA).
+        # O portal usa a primeira chave como dono da tela.
         obj = {prof: interno(prof, empresa, dados[prof])}
+        for outro in P.VISIBILIDADE_EXTRA.get(prof, []):
+            if outro in dados:
+                obj[outro] = interno(outro, empresa, dados[outro])
         blob = P.cifrar(obj, chaves[prof])
         res = injetar_individual(path, blob, escrever)
         pers = sorted(dados[prof])
         tot = sum(v["total"] for v in dados[prof].values())
         print(f"  {prof[:32]:34s} {len(pers)} meses ({pers[0][-2:]}-{pers[-1][-2:]}) "
-              f"R$ {tot:>11,.2f} -> {res}")
+              f"R$ {tot:>11,.2f} -> {res}"
+              + (f"  (+{len(obj)-1} visível)" if len(obj) > 1 else ""))
         if escrever and res == "OK":
             volta = P.decifrar(PDATA_RE.search(path.read_text(encoding="utf-8")).group(2),
                                chaves[prof])

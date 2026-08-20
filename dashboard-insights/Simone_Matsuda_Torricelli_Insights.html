@@ -242,6 +242,10 @@ html,body{overflow-x:hidden;max-width:100%;}
     <div class="greeting-sub">Top pacientes e top procedimentos com base nos seus atendimentos compensados</div>
 
     <div class="filtros">
+      <div style="display:flex;flex-direction:column;gap:6px;" id="grp-prof">
+        <span class="filtro-label">Profissional</span>
+        <div class="filtro-tabs" id="filtro-prof"></div>
+      </div>
       <div style="display:flex;flex-direction:column;gap:6px;">
         <span class="filtro-label">Origem</span>
         <div class="filtro-tabs" id="filtro-origem"></div>
@@ -284,6 +288,10 @@ const FONTES = [
 let _DADOS = {}; // { 'periodo-id': { label, atendimentos: { Endo: [...], Oxy: [...], Cir: [...] } } }
 let _ORIGEM_ATIVA = 'Todas';
 let _PERIODO_ATIVO = null;
+// Quem está na tela. Normalmente só o dono do portal; alguns perfis recebem no
+// mesmo PDATA os dados de outro profissional (a Simone enxerga a Nicole) e aí
+// aparecem as abas para trocar de nome, um de cada vez.
+let _PROF_ATIVO = null;
 
 async function _descriptografar(b64, senha){
   try {
@@ -379,7 +387,11 @@ async function tentarLogin() {
         // A "origem" real vem de prof.empresa quando disponível (Endovascular SP, Cirurgias, Oxy Recovery)
         const empProf = prof.empresa || origem;
         if (!_DADOS[periodoId].atendimentos[empProf]) _DADOS[periodoId].atendimentos[empProf] = [];
-        for (const att of atts) _DADOS[periodoId].atendimentos[empProf].push(att);
+        const nomeProf = prof.profissional || profSlug;
+        if (profSlug === SLUG) _PROF_ATIVO = nomeProf;   // o dono do portal abre por padrão
+        for (const att of atts) {
+          _DADOS[periodoId].atendimentos[empProf].push(Object.assign({}, att, {_prof: nomeProf}));
+        }
       }
     }
   }
@@ -389,12 +401,49 @@ async function tentarLogin() {
   inicializar();
 }
 
+function _profsPresentes() {
+  const nomes = new Set();
+  for (const pid of Object.keys(_DADOS)) {
+    for (const emp of Object.keys(_DADOS[pid].atendimentos)) {
+      for (const a of _DADOS[pid].atendimentos[emp] || []) if (a._prof) nomes.add(a._prof);
+    }
+  }
+  return Array.from(nomes);
+}
+
+function montarTabsProf() {
+  const cont = document.getElementById('filtro-prof');
+  const grp = document.getElementById('grp-prof');
+  if (!cont || !grp) return;
+  const nomes = _profsPresentes();
+  if (nomes.length < 2) { grp.style.display = 'none'; return; }
+  grp.style.display = '';
+  // o dono do portal primeiro; os demais em ordem alfabética
+  const dono = nomes.find(n => n.replace(/ /g, '_') === SLUG);
+  nomes.sort((a, b) => a === dono ? -1 : b === dono ? 1 : a.localeCompare(b, 'pt-BR'));
+  if (!nomes.includes(_PROF_ATIVO)) _PROF_ATIVO = nomes[0];
+  cont.innerHTML = '';
+  for (const nome of nomes) {
+    const btn = document.createElement('button');
+    btn.className = 'filtro-tab' + (nome === _PROF_ATIVO ? ' active' : '');
+    btn.textContent = nome;
+    btn.onclick = () => {
+      _PROF_ATIVO = nome;
+      _ORIGEM_ATIVA = 'Todas';   // as origens de um não valem para o outro
+      montarTabsProf(); montarTabsOrigem(); renderizar();
+    };
+    cont.appendChild(btn);
+  }
+}
+
 function montarTabsOrigem() {
   const cont = document.getElementById('filtro-origem');
   const origensPresentes = new Set();
   for (const pid of Object.keys(_DADOS)) {
     for (const emp of Object.keys(_DADOS[pid].atendimentos)) {
-      if ((_DADOS[pid].atendimentos[emp] || []).length > 0) origensPresentes.add(emp);
+      const arr = (_DADOS[pid].atendimentos[emp] || [])
+        .filter(a => !_PROF_ATIVO || !a._prof || a._prof === _PROF_ATIVO);
+      if (arr.length > 0) origensPresentes.add(emp);
     }
   }
   const opcoes = ['Todas'].concat(Array.from(origensPresentes).sort());
@@ -433,7 +482,10 @@ function coletarAtendimentos() {
     const empresas = _ORIGEM_ATIVA === 'Todas' ? Object.keys(_DADOS[pid].atendimentos) : [_ORIGEM_ATIVA];
     for (const emp of empresas) {
       const arr = _DADOS[pid].atendimentos[emp] || [];
-      for (const a of arr) out.push(a);
+      for (const a of arr) {
+        if (_PROF_ATIVO && a._prof && a._prof !== _PROF_ATIVO) continue;
+        out.push(a);
+      }
     }
   }
   return out;
@@ -492,6 +544,7 @@ function inicializar() {
     document.getElementById('top-procedimentos').innerHTML = '<li class="empty-state">Sem dados disponíveis.</li>';
     return;
   }
+  montarTabsProf();
   montarTabsOrigem();
   montarTabsPeriodo();
   renderizar();
