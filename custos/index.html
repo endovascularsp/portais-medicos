@@ -281,6 +281,10 @@
   /* Total no fim da linha, com um fio separando dos meses. */
   .dre th.total-col,.dre td.total-col{border-left:2px solid var(--borda);font-weight:700}
   .dre tr.filha td.total-col{font-weight:600}
+  .btn-copiar{margin-left:8px;padding:3px 10px;border:1px solid var(--borda);border-radius:6px;
+    background:#fff;color:var(--azul);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-copiar:hover{background:var(--azul-fundo)}
+  tr.total-row td{border-top:2px solid var(--borda);background:var(--azul-fundo)}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   @media(max-width:980px){
@@ -1987,6 +1991,52 @@ function dreDetalhe(L, ms){
   return html;
 }
 
+// A lista que o financeiro precisa para consertar NA FONTE. O conserto no Conta
+// Azul é na CATEGORIA, não no lançamento: basta dar um grupo a cada uma destas e
+// a linha "Sem classificação" se dissolve sozinha nas linhas certas da DRE.
+// Sai da mesma fonte da linha da DRE, então as duas nunca discordam.
+let SEM_GRUPO_TXT = '';
+function copiarSemGrupo(b){
+  const volta = () => { b.textContent = 'Copiar a lista'; };
+  const ok = () => { b.textContent = 'copiado ✓'; setTimeout(volta, 2000); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(SEM_GRUPO_TXT).then(ok, volta);
+  } else {
+    const t = document.createElement('textarea');
+    t.value = SEM_GRUPO_TXT; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); ok(); } catch(e) { volta(); }
+    document.body.removeChild(t);
+  }
+}
+
+function cardSemGrupo(ms){
+  const itens = lancamentosDaLinha('semGrupo', ms);
+  if(!itens.length){ SEM_GRUPO_TXT = ''; return ''; }
+  const cats = dreAgrupar(itens, 'cat', ms);
+  const total = cats.reduce((s,c) => s + c.total, 0);
+  const n = ms.length || 1;
+  SEM_GRUPO_TXT = 'Categorias sem grupo no Conta Azul — '+rotuloPeriodo()+'\n' +
+    'Atribuir um grupo a cada uma destas categorias:\n\n' +
+    cats.map(c => '- '+c.nome+'  ('+c.itens.length+' lançamentos · '+brl(c.total)+')').join('\n') +
+    '\n\nTotal: '+brl(total)+' em '+n+' meses.';
+  return '<div class="card"><h2>Categorias sem grupo no Conta Azul</h2>'+
+    '<div class="leg">É esta lista, e só ela, que forma a linha <b>Sem classificação</b> da DRE acima — '+
+    brl(total)+' no período, <b>'+brl(total/n)+' por mês</b>. O conserto é lá no Conta Azul e é na '+
+    '<b>categoria</b>, não no lançamento: dando um grupo a cada uma, elas se distribuem sozinhas nas '+
+    'linhas certas da DRE e o portal passa a bater com o fechamento da CFO sem ninguém ajustar nada '+
+    'à mão. <button class="btn-copiar" onclick="copiarSemGrupo(this)">Copiar a lista</button></div>'+
+    '<div class="rolar"><table><thead><tr><th>Categoria</th><th class="r">Lançamentos</th>'+
+    '<th class="r">Valor no período</th><th class="r">Por mês</th></tr></thead><tbody>'+
+    cats.map(c => '<tr><td>'+esc(c.nome)+'</td>'+
+      '<td class="r num">'+c.itens.length+'</td>'+
+      '<td class="r num">'+brl(c.total)+'</td>'+
+      '<td class="r num" style="color:var(--texto3)">'+brl(c.total/n)+'</td></tr>').join('')+
+    '<tr class="total-row"><td><b>Total</b></td><td class="r num"><b>'+itens.length+'</b></td>'+
+    '<td class="r num"><b>'+brl(total)+'</b></td>'+
+    '<td class="r num"><b>'+brl(total/n)+'</b></td></tr>'+
+    '</tbody></table></div></div>';
+}
+
 function vistaDre(){
   const ms = mesesNoFiltro();
   const dados = ms.map(dreDoMes);
@@ -2056,7 +2106,8 @@ function vistaDre(){
     'linha própria, <b>Sem classificação</b>, em vez de serem espalhadas. Duas linhas do PDF não existem '+
     'aqui, "Aportes" e "Despesas com sócios", porque não têm grupo no Conta Azul para separá-las. '+
     'E <b>Despesas com pessoal</b> é recortada por nome de categoria; a lista está em '+
-    '<b>O que entra na conta</b>.</div></div>';
+    '<b>O que entra na conta</b>.</div></div>'+
+    cardSemGrupo(ms);
 }
 
 /* ===================== VISTA: compras ===================== */
@@ -2148,8 +2199,12 @@ function vistaAjustes(){
     ['E as contas a pagar?', 'Por <b>vencimento</b>, e sem recorte de período: uma parcela antiga que '+
       'vence semana que vem continua saindo do caixa.'],
     ['DRE e fluxo de caixa', 'São <b>base caixa</b>: contam só a parte já paga de cada conta, no mês do '+
-      'vencimento — o Conta Azul não devolve a data em que o dinheiro andou. É o mesmo critério do '+
-      'fechamento mensal da CFO de Consultório, para os dois poderem ser postos lado a lado.'],
+      '<b>vencimento</b> — que aqui É o mês em que o dinheiro andou. Quem dá baixa no financeiro ajusta '+
+      'o vencimento para a data do pagamento antes de baixar (confirmado pelo Thiago em 21/08/2026), e '+
+      'foi por isso que, numa amostra de 120 contas pagas, data de pagamento e vencimento eram iguais '+
+      'nas 120. É o mesmo critério do fechamento mensal da CFO de Consultório, para os dois poderem ser '+
+      'postos lado a lado. <b>Efeito colateral:</b> nenhuma conta aparece paga em atraso, porque a data '+
+      'original do vencimento não fica guardada em lugar nenhum.'],
     ['Transferências e empréstimos', 'Ficam <b>fora</b> por padrão. É dinheiro andando entre contas da '+
       'própria casa — entra como despesa numa ponta e receita na outra.'],
     ['Comparação com o ano passado', 'Sempre o <b>mesmo intervalo</b> do ano anterior, nunca o ano '+
