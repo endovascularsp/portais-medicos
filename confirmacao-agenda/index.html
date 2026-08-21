@@ -501,10 +501,22 @@ const MOTIVO_TELEFONE = {
 const DIAS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 
 // "23/07/2026 18:30:00" -> { data:"23/07/2026", hora:"18:30", diaSemana:"Quinta-feira", ordem:... }
+// O SVN já devolveu a data em dois formatos: começou em "dd/mm/aaaa hh:mm" e
+// hoje manda ISO ("2026-08-24T18:30:00"). A troca não foi avisada e derrubou a
+// tela em agosto/2026 — nenhuma linha era lida, a lista de pacientes saía vazia
+// e a função de contatos respondia "Envie ao menos 1 pess_id", que não diz nada
+// a quem está usando. Aceitar os dois formatos tira a tela da mão deles.
 function partesData(dtInicio) {
-  const m = String(dtInicio || '').match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-  if (!m) return null;
-  const [, dd, mm, aaaa, hh, mi] = m;
+  const s = String(dtInicio || '').trim();
+  let dd, mm, aaaa, hh, mi;
+  let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})[\sT](\d{2}):(\d{2})/);
+  if (m) {
+    [, dd, mm, aaaa, hh, mi] = m;
+  } else {
+    m = s.match(/^(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2})/);
+    if (!m) return null;
+    [, aaaa, mm, dd, hh, mi] = m;
+  }
   const d = new Date(+aaaa, +mm - 1, +dd, +hh, +mi);
   return { data: `${dd}/${mm}/${aaaa}`, hora: `${hh}:${mi}`, diaSemana: DIAS[d.getDay()], ordem: d.getTime() };
 }
@@ -728,6 +740,15 @@ async function gerar() {
 
     // (Quem recebe mais de uma mensagem no dia é calculado em aplicarFiltro(),
     //  já sem os profissionais desmarcados no filtro.)
+
+    // Guarda-corpo: se o dia TEM "Marcado" mas nada virou linha, o problema é de
+    // leitura, não de agenda vazia. Melhor dizer isso do que chamar a função de
+    // contatos com lista vazia e repassar o erro cru dela.
+    if (!agendamentosConsolidados.length) {
+      throw new Error(`${marcados.length} agendamento(s) com situação "Marcado" nesse dia, mas ` +
+        `nenhum pôde ser lido — a data veio num formato inesperado ` +
+        `(ex.: "${marcados[0] && marcados[0].agen_dt_inicio}"). Avise o Thiago.`);
+    }
 
     // 3) Telefones
     const rCt = await fetch(EDGE_CONTATOS, {
