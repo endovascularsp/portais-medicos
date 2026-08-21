@@ -268,6 +268,19 @@
   .dre tr.filha td{background:#FAFCFE;font-size:11.5px;color:var(--texto2)}
   .dre tr.filha td.rotulo{padding-left:30px;font-weight:500}
   .dre tr.filha:hover td{background:#F4F8FC}
+  /* A profundidade do detalhamento é dita pelo RECUO, não por coluna nova:
+     a largura da tabela não muda por mais fundo que se desça. */
+  .dre tr.filha.n1 td.rotulo{padding-left:30px}
+  .dre tr.filha.n2 td.rotulo{padding-left:52px}
+  .dre tr.filha.n3 td.rotulo{padding-left:74px}
+  .dre tr.filha.n2 td{background:#F7FAFD}
+  .dre tr.filha.n3 td{background:#F3F7FB}
+  .dre tr.filha.folha td{font-size:11px;color:var(--texto3);font-weight:400}
+  .dre tr.filha.folha td.rotulo{font-weight:400;white-space:nowrap}
+  .dre .dia{color:var(--azul);font-variant-numeric:tabular-nums;margin-right:4px}
+  /* Total no fim da linha, com um fio separando dos meses. */
+  .dre th.total-col,.dre td.total-col{border-left:2px solid var(--borda);font-weight:700}
+  .dre tr.filha td.total-col{font-weight:600}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   @media(max-width:980px){
@@ -1851,24 +1864,127 @@ const LINHAS_DRE = [
 const SOMADAS = ['receita','tributos','deducoes','custo','admin','marketing','pessoal',
                  'semGrupo','recFinanceiras','financeiras','emprestimos','investimentos',
                  'recNaoOperacional','naoOperacional'];
+// Cada nível aberto é um caminho: 'tributos', 'tributos|Simples Nacional - DAS',
+// 'tributos|Simples Nacional - DAS|RECEITA FEDERAL'. Guardar o caminho inteiro (e
+// não só a linha) é o que deixa dois ramos abertos ao mesmo tempo sem um fechar
+// o outro.
 const DRE_ABERTAS = {};
-function dreAbrir(chave){ DRE_ABERTAS[chave] = !DRE_ABERTAS[chave]; desenhar(); }
+function dreAbrir(k){ k = decodeURIComponent(k); DRE_ABERTAS[k] = !DRE_ABERTAS[k]; desenhar(); }
+// encodeURIComponent não escapa apóstrofo, e nome de fornecedor tem ("D'Angelo").
+// Sem o %27 o onclick quebraria a string de JS no meio.
+const chaveAttr = k => encodeURIComponent(k).replace(/'/g, '%27');
 
-// As categorias que formam uma linha da DRE, com o valor de cada mês — o mesmo
-// caminho que a linha-mãe faz, só que sem somar tudo num número.
-function categoriasDaLinha(chave, meses){
-  const porCat = new Map();
-  const conta = lista => lista.forEach(function(l){
-    if(linhaDre(l) !== chave) return;
-    const m = meses.indexOf(l[VENC].slice(0,7));
-    if(m < 0 || !l[PAGO]) return;
-    let c = porCat.get(l[CAT]);
-    if(!c){ c = { nome: D.cat[l[CAT]], total:0, meses: meses.map(() => 0) }; porCat.set(l[CAT], c); }
-    c.total += l[PAGO]; c.meses[m] += l[PAGO];
+// Quantos lançamentos, no máximo, uma folha mostra. Passando disso a tela vira
+// listagem e ninguém lê. O que sobrar é dito em voz alta, nunca cortado calado.
+const DRE_MAX_FOLHAS = 60;
+
+// Os LANÇAMENTOS que formam uma linha da DRE — o mesmo caminho da linha-mãe, só
+// que sem somar. Preciso do índice original porque a descrição mora numa lista
+// paralela (`D.pagar_desc`), e `filtrar()` devolve cópia sem índice.
+function lancamentosDaLinha(chave, meses){
+  const out = [];
+  const varrer = function(lista, nomes, descs){
+    for(let i = 0; i < lista.length; i++){
+      const l = lista[i];
+      if(!l[PAGO] || !passa(l, VENC, true)) continue;
+      if(linhaDre(l) !== chave) continue;
+      const m = meses.indexOf(l[VENC].slice(0,7));
+      if(m < 0) continue;
+      out.push({ cat: D.cat[l[CAT]] || 'Sem categoria',
+                 pessoa: (nomes && nomes[l[PES]]) || 'Sem fornecedor',
+                 desc: (descs && descs[i]) || '',
+                 venc: l[VENC], valor: l[PAGO], mes: m });
+    }
+  };
+  varrer(D.pagar, D.forn, D.pagar_desc);
+  varrer(D.receber, D.cli, null);
+  return out;
+}
+
+// Agrupa por um campo mantendo o valor mês a mês e os itens que caíram ali —
+// é o que permite o nível seguinte sem varrer a base de novo.
+function dreAgrupar(itens, campo, meses){
+  const m = new Map();
+  itens.forEach(function(it){
+    let g = m.get(it[campo]);
+    if(!g){ g = { nome: it[campo], total:0, meses: meses.map(() => 0), itens: [] }; m.set(it[campo], g); }
+    g.total += it.valor; g.meses[it.mes] += it.valor; g.itens.push(it);
   });
-  conta(filtrar(D.receber, VENC, true));
-  conta(filtrar(D.pagar, VENC, true));
-  return Array.from(porCat.values()).sort((a,b) => b.total - a.total);
+  return Array.from(m.values()).sort((a,b) => b.total - a.total);
+}
+
+// O detalhamento de uma linha da DRE, em camadas, dentro das MESMAS colunas:
+//
+//   linha da DRE  ->  categoria  ->  fornecedor  ->  lançamento
+//
+// O que muda de um nível para o outro é só o recuo do rótulo. Foi de propósito —
+// abrir coluna nova a cada nível estouraria a largura da tela em três cliques,
+// e a DRE já tem doze meses lado a lado.
+//
+// O nível do fornecedor SOME quando não separa nada (a categoria inteira é de um
+// fornecedor só): clicar para ver a mesma coisa de novo é degrau à toa. Nesse
+// caso a categoria abre direto nos lançamentos.
+function dreDetalhe(L, ms){
+  const sinal = L[2] < 0 ? -1 : 1;
+  const itens = lancamentosDaLinha(L[1], ms);
+  if(!itens.length)
+    return '<tr class="filha"><td colspan="'+(ms.length+2)+'" style="color:var(--texto3)">'+
+           'Nenhum lançamento pago nesta linha no período.</td></tr>';
+
+  const linhaAgrupada = function(g, chave, nivel, abrivel){
+    const aberta = DRE_ABERTAS[chave];
+    const seta = abrivel ? '<span class="seta">'+(aberta?'▾':'▸')+'</span>' : '<span class="seta"></span>';
+    return '<tr class="filha n'+nivel+(abrivel?' abrivel':'')+'"'+
+      (abrivel ? ' onclick="dreAbrir(\''+chaveAttr(chave)+'\')" title="Abrir o que tem dentro"' : '')+'>'+
+      '<td class="rotulo">'+seta+esc(g.nome)+'</td>'+
+      g.meses.map(v => '<td class="r num">'+(v ? brl(v*sinal) : '—')+'</td>').join('')+
+      '<td class="r num total-col">'+brl(g.total*sinal)+'</td></tr>';
+  };
+
+  // A ponta: um lançamento por linha, na data em que foi pago. O valor aparece
+  // só na coluna do mês dele — é o que deixa a soma da coluna conferível a olho.
+  const folhas = function(lista, nivel, comPessoa){
+    const ord = lista.slice().sort((a,b) =>
+      a.venc < b.venc ? -1 : a.venc > b.venc ? 1 : b.valor - a.valor);
+    const mostra = ord.slice(0, DRE_MAX_FOLHAS);
+    let h = mostra.map(function(it){
+      // Conta a receber não tem descrição no Conta Azul. Nesse caso a folha fica
+      // só com a data: o nome já está na linha de cima, repetir vira ruído.
+      const txt = it.desc || (comPessoa ? it.pessoa : '');
+      return '<tr class="filha folha n'+nivel+'">'+
+        '<td class="rotulo" title="'+esc(it.pessoa + (it.desc ? ' · '+it.desc : ''))+'">'+
+        '<span class="seta"></span><span class="dia">'+fData(it.venc)+'</span>'+
+        (txt ? ' '+esc(cortar(txt,52)) : '')+'</td>'+
+        ms.map((m,i) => '<td class="r num">'+(i === it.mes ? brl(it.valor*sinal) : '—')+'</td>').join('')+
+        '<td class="r num total-col">'+brl(it.valor*sinal)+'</td></tr>';
+    }).join('');
+    if(ord.length > mostra.length){
+      const resto = ord.length - mostra.length;
+      const soma = ord.slice(mostra.length).reduce((a,x) => a + x.valor, 0);
+      h += '<tr class="filha folha n'+nivel+'"><td class="rotulo" style="color:var(--texto3)">'+
+        '<span class="seta"></span>e mais '+resto+' lançamento'+(resto>1?'s':'')+', somando '+
+        brl(soma*sinal)+'</td><td colspan="'+(ms.length+1)+'"></td></tr>';
+    }
+    return h;
+  };
+
+  let html = '';
+  dreAgrupar(itens, 'cat', ms).forEach(function(c){
+    const kc = L[1]+'|'+c.nome;
+    html += linhaAgrupada(c, kc, 1, true);
+    if(!DRE_ABERTAS[kc]) return;
+    const pessoas = dreAgrupar(c.itens, 'pessoa', ms);
+    if(pessoas.length > 1){
+      pessoas.forEach(function(f){
+        const kf = kc+'|'+f.nome;
+        html += linhaAgrupada(f, kf, 2, true);
+        if(DRE_ABERTAS[kf]) html += folhas(f.itens, 3, false);
+      });
+    } else {
+      html += folhas(c.itens, 2, true);
+    }
+  });
+  return html;
 }
 
 function vistaDre(){
@@ -1881,14 +1997,15 @@ function vistaDre(){
   const negReal = real.entradas.filter((e,i)=>e-real.saidas[i] < 0).length;
   const negOper = oper.entradas.filter((e,i)=>e-oper.saidas[i] < 0).length;
 
-  const celula = (d, chave, sinal) => {
+  const celula = (d, chave, sinal, extra) => {
+    const cls = 'r num' + (extra ? ' '+extra : '');
     if(chave.charAt(0) === '%'){
       const base = d.receitaLiquida;
       const v = base ? 100*d[chave.slice(1)]/base : 0;
-      return '<td class="r num">'+(base ? (v<0?'':'')+v.toFixed(0)+'%' : '—')+'</td>';
+      return '<td class="'+cls+'">'+(base ? (v<0?'':'')+v.toFixed(0)+'%' : '—')+'</td>';
     }
     const v = d[chave] * (sinal < 0 ? -1 : 1);
-    return '<td class="r num">'+(d[chave] ? brl(v) : '—')+'</td>';
+    return '<td class="'+cls+'">'+(d[chave] ? brl(v) : '—')+'</td>';
   };
 
   return '<div class="card"><h2>Fluxo de caixa — real</h2>'+
@@ -1910,9 +2027,12 @@ function vistaDre(){
     (F.amb==='todos' ? '' : ' · '+esc(D.amb[+F.amb]))+'</h2>'+
     '<div class="leg">Mesma estrutura do fechamento mensal da CFO de Consultório. <b>Base caixa</b>: '+
     'conta o que foi efetivamente pago e recebido, não o que foi lançado. Troque o centro de custo no '+
-    'filtro acima para ver a DRE de um centro de custo só.</div>'+
-    '<div class="rolar"><table class="dre"><thead><tr><th>DRE</th><th class="r">Total</th>'+
-    ms.map(m => '<th class="r mes">'+fMes(m)+'</th>').join('')+'</tr></thead><tbody>'+
+    'filtro acima para ver a DRE de um centro de custo só. <b>Clique numa linha para abrir as '+
+    'categorias</b>, e siga clicando: categoria → fornecedor → lançamento. As colunas são sempre as '+
+    'mesmas; o que muda é o recuo.</div>'+
+    '<div class="rolar"><table class="dre"><thead><tr><th>DRE</th>'+
+    ms.map(m => '<th class="r mes">'+fMes(m)+'</th>').join('')+
+    '<th class="r total-col">Total</th></tr></thead><tbody>'+
     LINHAS_DRE.map(function(L){
       const classe = L[3] === 'pct' ? 'pct' : L[3] === 'total' ? 'total' : L[3] === 'forte' ? 'forte' : '';
       // Linha somada (não é % e não é subtotal calculado) pode abrir e mostrar
@@ -1921,20 +2041,11 @@ function vistaDre(){
       const aberta = DRE_ABERTAS[L[1]];
       const seta = abrivel ? '<span class="seta">'+(aberta?'▾':'▸')+'</span>' : '<span class="seta"></span>';
       let html = '<tr class="'+classe+(abrivel?' abrivel':'')+'"'+
-        (abrivel ? ' onclick="dreAbrir(\''+L[1]+'\')" title="Ver as categorias desta linha"' : '')+'>'+
+        (abrivel ? ' onclick="dreAbrir(\''+chaveAttr(L[1])+'\')" title="Ver as categorias desta linha"' : '')+'>'+
         '<td class="rotulo">'+seta+esc(L[0])+'</td>'+
-        celula(tot, L[1], L[2]) + ms.map((m,i) => celula(dados[i], L[1], L[2])).join('')+'</tr>';
-      if(abrivel && aberta){
-        const sub = categoriasDaLinha(L[1], ms);
-        html += sub.length ? sub.map(function(c){
-          return '<tr class="filha"><td class="rotulo">'+esc(c.nome)+'</td>'+
-            '<td class="r num">'+brl(c.total * (L[2]<0?-1:1))+'</td>'+
-            c.meses.map(v => '<td class="r num">'+(v ? brl(v*(L[2]<0?-1:1)) : '—')+'</td>').join('')+
-            '</tr>';
-        }).join('')
-        : '<tr class="filha"><td colspan="'+(ms.length+2)+'" style="color:var(--texto3)">'+
-          'Nenhum lançamento pago nesta linha no período.</td></tr>';
-      }
+        ms.map((m,i) => celula(dados[i], L[1], L[2])).join('') +
+        celula(tot, L[1], L[2], 'total-col')+'</tr>';
+      if(abrivel && aberta) html += dreDetalhe(L, ms);
       return html;
     }).join('')+
     '</tbody></table></div>'+
